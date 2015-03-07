@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name"><a href="/articles/2006/06/05/object-with_options" itemprop="url">ActiveSupportのObject#with_optionsの使いどころ</a></h1>
+<div class="meta">
+<time datetime="2006-06-05T17:45:51&#43;09:00">Jun  5, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/rubyonrails/" rel="tag" itemprop="keywords">rubyonrails</a></span>
+  
+  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
+  
+  <span class="tag"><a href="/articles/tag/activesupport/" rel="tag" itemprop="keywords">activesupport</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>個人的にActiveSupportが大好きなわけですが。</p>
+<p>1.1で追加されたwith_optionsがRouting以外でどーもカッコいい使いどころがなーとおもっていたんですが</p>
+<pre class="prettyprint ">with_options(:if =&gt; :validate_password?) do |me|
+me.validates_format_of :password #...
+me.validates_length_of :password # ...
+me.validates_confirmation_of :password #...
+me.validates_presence_of :password#...
+end</pre><p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
+<p>まぁ、やっぱり一番カッコいいのはto_procなんですけど。</p>
+
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name"><a href="/articles/2006/04/02/attribute-selectors-in-prototype" itemprop="url">$$で属性セレクタ</a></h1>
+<div class="meta">
+<time datetime="2006-04-02T01:37:07&#43;09:00">Apr  2, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>これはかなり嬉しい機能だなあ。
+最近Prototype.jsの$$で属性セレクタが使用できるようになりました。</p>
+<p>どんな風にかけるのか、コードをテストから引っ張ってきてみました。</p>
+<pre class="prettyprint ">$$('a[href="http://inforno.net/#"]')
+$$('a[class~=internal]')
+$$('*[xml:lang|="es"]')
+$$('*[xml:lang|="ES"]')
+$$('a[href!=#]')
+$$('div[style] p[id] strong')
+$$('a[class~=external][href="http://inforno.net/#"]')</pre><p>こんな感じです。
+値はクオートしてもしなくても大丈夫っぽいですね。</p>
+<p>すばらすい。inputに対する操作なんかで特に便利。今までちょっとボタン操作するためだけに、そのボタンにIDふったりクラスふったりしてたんですけど$$('#hoge input[type=submit]')でいけるんだなあ。そんなにパフォーマンスに気をつかわなくて良いページでは使ってみよう。</p>
+
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name"><a href="/articles/2006/03/31/current-development-in-element-extend" itemprop="url">Element.extendの動向。</a></h1>
+<div class="meta">
+<time datetime="2006-03-31T01:33:46&#43;09:00">Mar 31, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>最近prototype.jsではSelectorとDOMがよく動きます。
+仕事でも使っているし、重要な部分なのでここのところウォッチしています。</p>
+<p>最近、実は書こうと思ってたElement.extendの問題が解決されました。
+問題：`Incredible memory leak in IE &lt;<a class="reference external" href="http://dev.rubyonrails.org/ticket/4465">http://dev.rubyonrails.org/ticket/4465</a>&gt;`_</p>
+<p>これは見る人が見ればパッと見で「これはヤバいんじゃね？」と思ったんじゃないでしょうか。
+わからなかった人は上記のURLにも載っている
+<a class="reference external" href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp">http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp</a>
+を見ておくと今後悩むことが減るかもしれません。</p>
+<p>リンク先をみたらなにが問題かわかるのであえては書きません。</p>
+<p>もう一個、興味深いのは <a class="reference external" href="http://dev.rubyonrails.org/ticket/4477">Element.extend cripples $() performance</a> での議論です。
+<a class="reference external" href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements">前に書いた記事</a> と似た主張や議論がなされています。うちの会社にも英語苦手な人がいるので簡単に要旨を。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Element.extendはパフォーマンスに問題がある。前のままにしてほしい。</dt>
+<dd><ul class="first last">
+<li><p class="first"><a class="reference external" href="http://dev.rubyonrails.org/changeset/4094">http://dev.rubyonrails.org/changeset/4094</a> でだいぶマシになっているよ？</p>
+</li>
+<li><p class="first">解説：以前はそれぞれのElementについてElement.Methodsのメソッドにelementをbindしてコピーしていた。つまりElementの数に比例してメモリを使用する。しかし4094でキャッシュを導入したので一定数のメソッドしか生成しない。</p>
+</li>
+<li><p class="first">とりあえずElement.extendのパフォーマンスをあげることにフォーカスしよう。</p>
+</li>
+<li><dl class="first docutils">
+<dt>Element.extend = Prototype.Kってかけばとりあえず大丈夫じゃね？</dt>
+<dd><ul class="first last simple">
+<li>でもscriptaculousが完全にextendされてる前提でコードかいてるから動かなくなるじゃん。</li>
+<li>解説：scriptaculousは3月28日にprototype.js 1.5_pre1をバンドルしてバージョン1.6をリリースした。このバージョンではelement.setStyle({top: ''})とかelement.show();みたいにガンガンElement.extendを活用している。まぁとりあえずElement.extendが必要ないときはPrototype.Kにしとけばいい。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">FirefoxやSafariは高速化できる（前のエントリーとほぼ同じ）。しかしprototype.jsに組み込むとscriptaculousのElement.Methods拡張が反映されない。</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>というわけでElement.extendはこれでちょっと落ち着いた感じ。個人的にはElement.extend無効化して使っていきたいなーって思ってたりしてたんですけどscriptaculousがやっぱりガンガン使ってきたので、まぁ様子見てみます。</p>
+
+
+  </div>
+</article>
+
+
+
+
+
+<nav class="paging"><ul><li class="previous"><a href="/page/17/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li class="active">18</li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/19/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

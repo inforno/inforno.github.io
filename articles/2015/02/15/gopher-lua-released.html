@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: LuaのGo言語実装を公開しました</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">LuaのGo言語実装を公開しました</h1>
+<div class="meta">
+<time datetime="2015-02-15T22:43:19&#43;09:00">Feb 15, 2015</time>
+
+  
+  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
+  
+  <span class="tag"><a href="/articles/tag/lua/" rel="tag" itemprop="keywords">lua</a></span>
+  
+  <span class="tag"><a href="/articles/tag/gopherlua/" rel="tag" itemprop="keywords">gopherlua</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>LuaをGo言語のみで実装した <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> を公開しました。</p>
+<p>詳しくはGithubのREADMEを見ていただくとして、特徴としては以下になります。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Lua5.1ベース</dt>
+<dd><ul class="first last simple">
+<li>5.1の機能はほぼ実装済み</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">Compiler, VMともに完全にGo言語のみで実装</p>
+</li>
+<li><p class="first">引数の受け渡し以外でのスタック操作が不要で使いやすいAPI</p>
+</li>
+</ul>
+<section>
+<h1>なぜ作ろうと思ったか</h1>
+<p>もともとC言語でものを作るときにはLuaを設定ファイルの代わりとして取り入れていました。Goではあまり拡張言語実装がないので、jsonだったりiniだったりを設定ファイルとして使っていましたが、やっぱり微妙にめんどくさい。変数くらい欲しいなあ･･･とか。</p>
+<p>結局、固い言語だけでモノを作るのは難しく、やわらかさが必要になるポイントがあります。そういうところはまず、「設定ファイル」として外だしされます。そしてその設定ファイルがどんどん肥大化したり複雑化したりして･･･(XML地獄とか)。Cに対するLua、PythonやRuby、Javaに対するGroovyなど「固い言語」＋「拡張言語」は自分的に一番しっくりくる構成です。それをGoで実現するために実装してみました。</p>
+<p>もうひとつは単純にLuaに興味があったこと。正確にはLuaというよりレジスタ型VMに。スタック型VMは実装したことがあるのですが、レジスタ型で実装してみたかったのです。</p>
+<p>最後に、Go言語で処理系を実装してみたかったこと。実行ファイルが吐けるし、速度はそれなりに速いし、Go自体がGCを持っているのでかなり処理系作るのが楽だと思われるのでどんなものかな、と。</p>
+</section>
+<section>
+<h1>簡単な使い方</h1>
+<p>こうして</p>
+<pre class="prettyprint lang-go">import (
+    "github.com/yuin/gopher-lua"
+)</pre><p>こんな感じですね。</p>
+<pre class="prettyprint lang-go">L := lua.NewState()
+defer L.Close()
+if err := L.DoString(`print("hello")`); err != nil {
+    panic(err)
+}</pre><p>Go関数をLuaで呼ぶ場合は以下のような感じ。LuaとGoの間の引数と戻り値の受け渡しのみにスタックを使います。</p>
+<pre class="prettyprint lang-go">func Double(L lua.LState) int {
+    lv := L.ToInt(1)             // get argument
+    L.Push(lua.LNumber(lv * 2))  // push result
+    return 1                     // number of results
+}
+
+func main() {
+    L := lua.NewState()
+    defer L.Close()
+    L.SetGlobal("double", L.NewFunction(Double)) // Original lua_setglobal uses stack...
+}</pre><p>あとは <a class="reference external" href="https://github.com/yuin/gopher-lua">README</a> をみていただければ大体分かるかと思います。</p>
+</section>
+<section>
+<h1>実装について</h1>
+<section>
+<h2>全般の話</h2>
+<p>まず、そんなにLua自体のコードは読んでません(おい)。Luaは1パスでコード生成までできる文法で本家はそういう実装ですが、GopherLuaでは</p>
+<ol class="arabic simple">
+<li>トークナイズ(Lexer, 手書き)</li>
+<li>パース(go-yacc)</li>
+<li>コード生成</li>
+<li>最適化</li>
+</ol>
+<p>まったく違うパス構成なので実装は完全に独自実装です。またyaccなのでユーザが文法を簡単に変えられます。</p>
+<p>現状最適化はほとんどやっていません。複数JMPをまとめるくらい。</p>
+<p>あと、やっぱ三項演算子欲しい･･･。</p>
+</section>
+<section>
+<h2>データモデルの話</h2>
+<p>こういう言語を実装する場合はいわゆる共用体のような、1つの型で複数の型を判別できるものが必要となります。Cでは共用体やポインタの下位ビットを使いますが、Goでは以下の選択肢があります。</p>
+<ul class="simple">
+<li><code>reflect.Value</code></li>
+<li><code>interface</code></li>
+<li><code>unsafe.Pointer</code></li>
+</ul>
+<p>GopherLuaでは <code>interface</code> を使っています。 <code>interface</code> は</p>
+<ul class="simple">
+<li>Go側のAPIを考えたとき一番分かりやすい</li>
+</ul>
+<p>という利点がある一方</p>
+<ul class="simple">
+<li>ネイティブ型をラップした <code>interface</code> の場合、 <code>interface</code> への変換が発生して速度低下を招く</li>
+</ul>
+<p>という欠点があります。そこで簡単なベンチマークをしたのですが</p>
+<ul class="simple">
+<li>単純な例(フィボナッチ計算)では確かに <code>reflect.Value</code> などが速い。</li>
+<li>一方、複雑な例になればそれほど差が無いように見えた</li>
+</ul>
+<p>ため <code>interface</code> を採用しました。ただ、プロファイルをとるとかなりの部分が <code>interface</code> への変換に取られているので、ここが(Goが進化して)速くなればGopherLuaも速くなると思います。</p>
+</section>
+<section>
+<h2>速度の話</h2>
+<p>それほどパフォーマンスチューニングはしていませんが、フィボナッチではperlと同じくらいの性能は出ているようです。メモリ確保はそもそも気をつけて減らしているので後は</p>
+<ul class="simple">
+<li>関数をベタ書きする</li>
+</ul>
+<p>くらいかなあ。Goは短い関数をinline化してくれますが、そのinline化はそんなに賢くないのでやっぱりダメですね。ためしにVMの関数コール部分などをベタ書きすると1.2倍くらいの速度になりました。今のところそこまで速度を求めていないので元に戻しましたけど。</p>
+<p>やっぱマクロ欲しいなあ･･･</p>
+</section>
+</section>
+<section>
+<h1>とりあえず、使えるはずです</h1>
+<p>Lua5.1のテストは主要なものは通っているので使えるものになっているはずです。設定ファイルのかわりに使うもよし、プラグインの仕組みに使うのもよし。今後はGopherLuaのTableをGoのstructにマッピングするような( <code>json</code> や <code>xml</code> パッケージみたいな)ライブラリとか作りたいなと思っていたりします。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2015/02/24/channel-support-in-gopher-lua">GopherLuaでchannelを扱えるようにした</a></li>
+<li><a href="/articles/2014/10/06/cidre-my-new-webframework-in-golang">cidre: 軽量Go言語用WEBフレームワーク</a></li>
+<li><a href="/articles/2013/08/15/iceberg-released">コマンドラインランチャー作りました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2015/02/15/gopher-lua-released" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2015\/02\/15\/gopher-lua-released';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

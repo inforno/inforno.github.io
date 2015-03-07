@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: XREAで好きなバージョンのPythonを使う方法2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">XREAで好きなバージョンのPythonを使う方法2</h1>
+<div class="meta">
+<time datetime="2009-01-25T01:00:00&#43;09:00">Jan 25, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/xrea/" rel="tag" itemprop="keywords">xrea</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
+<p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
+<p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
+<section>
+<h1>Pythonをインストール</h1>
+<p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
+<pre class="prettyprint ">mkdir -p ~/root/usr/local/src
+cd ~/root/usr/local/src
+wget http://www.python.org/ftp/python/2.5.4/Python-2.5.4.tgz
+tar zxvf Python-2.5.4.tgz
+cd Python-2.5.4
+./configure --prefix=~/root/usr/local
+make
+make install</pre><p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
+</section>
+<section>
+<h1>hashlibをインストール</h1>
+<p>なんで、自前でhashlibを単体でいれます。</p>
+<pre class="prettyprint ">cd ~/root/usr/local/src
+wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
+tar zxvf hashlib-20081119.tar.gz
+cd hashlib-20081119
+vi setup.py</pre><p>はい、 <code>setup.py</code> を編集しましょう。普通にbuildするとこれでも <code>md5</code> が入りません。</p>
+<pre class="prettyprint ">105　　 if (ssl_inc_dir and
+106　　　　 ssl_lib is not None and
+107　　　　 openssl_ver &gt;= 0x00907000):
+108
+109　　　　 print 'Using OpenSSL version 0x%08x from' % openssl_ver
+110　　　　 print ' Headers:\t', ssl_inc_dir
+111　　　　 print ' Library:\t', ssl_lib
+112
+113　　　　 # The _hashlib module wraps optimized implementations
+114　　　　 # of hash functions from the OpenSSL library.
+115　　　　 exts.append( Extension('_hashlib', ['_hashopenssl.c'],
+116　　　　　　　　　　　　　　　　include_dirs = [ ssl_inc_dir ],
+117　　　　　　　　　　　　　　　　library_dirs = [ os.path.dirname(ssl_lib) ],
+118　　　　　　　　　　　　　　　　libraries = osNameLibsMap[os.name]) )
+119　　 exts.append( Extension('_sha', ['shamodule.c']) )
+120　　 exts.append( Extension('_md5',
+121　　　　　　　　　　 sources = ['md5module.c', 'md5.c'],
+122　　　　　　　　　　 depends = ['md5.h']) )</pre><p>119-120あたり、強制的に <code>_md5</code> を入れるようにします。あとは</p>
+<pre class="prettyprint ">~/root/usr/local/bin/python setup.py build
+~/root/usr/local/bin/python setup.py install</pre><p>で <code>hashlib</code> が入ります。</p>
+</section>
+<section>
+<h1>easy_installをインストール</h1>
+<p>これで <code>md5</code> が使えるようになったので</p>
+<pre class="prettyprint ">cd ~/root/usr/local/src
+wget http://peak.telecommunity.com/dist/ez_setup.py
+~/root/usr/local/bin/python ez_setup.py</pre><p>これで無事 <code>easy_install</code> が入ります。あとは</p>
+<pre class="prettyprint ">~/root/usr/local/bin/easy_install -U -Z MySQL_Python</pre><p>てな感じで必要なモジュールを入れていきましょう。</p>
+</section>
+<section>
+<h1>というわけで</h1>
+<p>わりと普通にxreaでPythonが使えています。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2009\/01\/25\/using-any-version-of-python-on-xrea-servers-part2';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

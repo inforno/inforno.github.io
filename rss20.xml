@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>inforno</title>
+    <link>http://inforno.net/</link>
+    <description>information &#43; inferno ... inforno</description>
+    <copyright>Yusuke Inuzuka</copyright>
+    
+    
+    <lastBuildDate>24 Feb 15 11:00 UTC</lastBuildDate>
+    
+    <generator>silkylog</generator>
+    
+    
+    <item>
+      <title>GopherLuaでchannelを扱えるようにした </title>
+      <link>http://inforno.net/articles/2015/02/24/channel-support-in-gopher-lua</link>
+      <description>
+&lt;p&gt;先日公開した &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; ですが。&lt;/p&gt;
+&lt;p&gt;GopherLuaはLuaなので、ホスト言語との親和性を重視しております。GolangなのにGoroutine関係のサポートがないとだめでしょ！ということで、とりあえずですが、channelを扱えるようにしました。&lt;/p&gt;
+&lt;p&gt;これもまたReadmeに書いてありますが、以下のように使います。
+selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ通信できます。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; func receiver(ch, quit chan lua.LValue) {
+     L := lua.NewState()
+     defer L.Close()
+     L.SetGlobal(&#34;ch&#34;, lua.LChannel(ch))
+     L.SetGlobal(&#34;quit&#34;, lua.LChannel(quit))
+     if err := L.DoString(`
+     local exit = false
+     while not exit do
+       channel.select(
+         {&#34;|&amp;lt;-&#34;, ch, function(ok, v)
+           if not ok then
+             print(&#34;channel closed&#34;)
+             exit = true
+           else
+             print(&#34;received:&#34;, v)
+           end
+         end},
+         {&#34;|&amp;lt;-&#34;, quit, function(ok, v)
+             print(&#34;quit&#34;)
+             exit = true
+         end}
+       )
+     end
+   `); err != nil {
+         panic(err)
+     }
+ }
+
+ func sender(ch, quit chan lua.LValue) {
+     L := lua.NewState()
+     defer L.Close()
+     L.SetGlobal(&#34;ch&#34;, lua.LChannel(ch))
+     L.SetGlobal(&#34;quit&#34;, lua.LChannel(quit))
+     if err := L.DoString(`
+     ch:send(&#34;1&#34;)
+     ch:send(&#34;2&#34;)
+   `); err != nil {
+         panic(err)
+     }
+     ch &amp;lt;- lua.LString(&#34;3&#34;)
+     quit &amp;lt;- lua.LTrue
+ }
+
+ func main() {
+     ch := make(chan lua.LValue)
+     quit := make(chan lua.LValue)
+     go receiver(ch, quit)
+     go sender(ch, quit)
+     time.Sleep(3 * time.Second)
+ }&lt;/pre&gt;&lt;p&gt;こんな感じですね。Luaと同じくState自体はスレッドセーフではないので、goroutineごとにStateをもってChannelで通信します。&lt;/p&gt;
+&lt;section&gt;
+&lt;h1&gt;実装について&lt;/h1&gt;
+&lt;p&gt;迷ったんですが、channelは &lt;strong&gt;基本型&lt;/strong&gt; として実装しています。 ユーザーデータ型でもよかったんですが、channelはGolangの特徴の一つですし、基本型にしたほうが親和性がよいので。&lt;/p&gt;
+&lt;p&gt;あと、内部的にはリフレクションなのでそんなに性能はよくないかもしれません。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;よければ使ってみてください&lt;/h1&gt;
+&lt;p&gt;実装してみたものの、正直私は職業プログラマでなく趣味プログラマなのであんまり使うシーンがないです。なんかいい使いどころがあれば使ってみてください。&lt;/p&gt;
+&lt;/section&gt;
+
+</description>
+      
+      <category>golang</category>
+      
+      <category>gopherlua</category>
+      
+      <category>lua</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2015/02/24/channel-support-in-gopher-lua</guid>
+      <pubDate>24 Feb 15 11:00 UTC</pubDate>
+    </item>
+    
+    <item>
+      <title>LuaのGo言語実装を公開しました </title>
+      <link>http://inforno.net/articles/2015/02/15/gopher-lua-released</link>
+      <description>
+&lt;p&gt;LuaをGo言語のみで実装した &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; を公開しました。&lt;/p&gt;
+&lt;p&gt;詳しくはGithubのREADMEを見ていただくとして、特徴としては以下になります。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;dl class=&#34;first docutils&#34;&gt;
+&lt;dt&gt;Lua5.1ベース&lt;/dt&gt;
+&lt;dd&gt;&lt;ul class=&#34;first last simple&#34;&gt;
+&lt;li&gt;5.1の機能はほぼ実装済み&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class=&#34;first&#34;&gt;Compiler, VMともに完全にGo言語のみで実装&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class=&#34;first&#34;&gt;引数の受け渡し以外でのスタック操作が不要で使いやすいAPI&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;section&gt;
+&lt;h1&gt;なぜ作ろうと思ったか&lt;/h1&gt;
+&lt;p&gt;もともとC言語でものを作るときにはLuaを設定ファイルの代わりとして取り入れていました。Goではあまり拡張言語実装がないので、jsonだったりiniだったりを設定ファイルとして使っていましたが、やっぱり微妙にめんどくさい。変数くらい欲しいなあ･･･とか。&lt;/p&gt;
+&lt;p&gt;結局、固い言語だけでモノを作るのは難しく、やわらかさが必要になるポイントがあります。そういうところはまず、「設定ファイル」として外だしされます。そしてその設定ファイルがどんどん肥大化したり複雑化したりして･･･(XML地獄とか)。Cに対するLua、PythonやRuby、Javaに対するGroovyなど「固い言語」＋「拡張言語」は自分的に一番しっくりくる構成です。それをGoで実現するために実装してみました。&lt;/p&gt;
+&lt;p&gt;もうひとつは単純にLuaに興味があったこと。正確にはLuaというよりレジスタ型VMに。スタック型VMは実装したことがあるのですが、レジスタ型で実装してみたかったのです。&lt;/p&gt;
+&lt;p&gt;最後に、Go言語で処理系を実装してみたかったこと。実行ファイルが吐けるし、速度はそれなりに速いし、Go自体がGCを持っているのでかなり処理系作るのが楽だと思われるのでどんなものかな、と。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;簡単な使い方&lt;/h1&gt;
+&lt;p&gt;こうして&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt;import (
+    &#34;github.com/yuin/gopher-lua&#34;
+)&lt;/pre&gt;&lt;p&gt;こんな感じですね。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt;L := lua.NewState()
+defer L.Close()
+if err := L.DoString(`print(&#34;hello&#34;)`); err != nil {
+    panic(err)
+}&lt;/pre&gt;&lt;p&gt;Go関数をLuaで呼ぶ場合は以下のような感じ。LuaとGoの間の引数と戻り値の受け渡しのみにスタックを使います。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt;func Double(L lua.LState) int {
+    lv := L.ToInt(1)             // get argument
+    L.Push(lua.LNumber(lv * 2))  // push result
+    return 1                     // number of results
+}
+
+func main() {
+    L := lua.NewState()
+    defer L.Close()
+    L.SetGlobal(&#34;double&#34;, L.NewFunction(Double)) // Original lua_setglobal uses stack...
+}&lt;/pre&gt;&lt;p&gt;あとは &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;README&lt;/a&gt; をみていただければ大体分かるかと思います。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;実装について&lt;/h1&gt;
+&lt;section&gt;
+&lt;h2&gt;全般の話&lt;/h2&gt;
+&lt;p&gt;まず、そんなにLua自体のコードは読んでません(おい)。Luaは1パスでコード生成までできる文法で本家はそういう実装ですが、GopherLuaでは&lt;/p&gt;
+&lt;ol class=&#34;arabic simple&#34;&gt;
+&lt;li&gt;トークナイズ(Lexer, 手書き)&lt;/li&gt;
+&lt;li&gt;パース(go-yacc)&lt;/li&gt;
+&lt;li&gt;コード生成&lt;/li&gt;
+&lt;li&gt;最適化&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;まったく違うパス構成なので実装は完全に独自実装です。またyaccなのでユーザが文法を簡単に変えられます。&lt;/p&gt;
+&lt;p&gt;現状最適化はほとんどやっていません。複数JMPをまとめるくらい。&lt;/p&gt;
+&lt;p&gt;あと、やっぱ三項演算子欲しい･･･。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;データモデルの話&lt;/h2&gt;
+&lt;p&gt;こういう言語を実装する場合はいわゆる共用体のような、1つの型で複数の型を判別できるものが必要となります。Cでは共用体やポインタの下位ビットを使いますが、Goでは以下の選択肢があります。&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;&lt;code&gt;reflect.Value&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;interface&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;unsafe.Pointer&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;GopherLuaでは &lt;code&gt;interface&lt;/code&gt; を使っています。 &lt;code&gt;interface&lt;/code&gt; は&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;Go側のAPIを考えたとき一番分かりやすい&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;という利点がある一方&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;ネイティブ型をラップした &lt;code&gt;interface&lt;/code&gt; の場合、 &lt;code&gt;interface&lt;/code&gt; への変換が発生して速度低下を招く&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;という欠点があります。そこで簡単なベンチマークをしたのですが&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;単純な例(フィボナッチ計算)では確かに &lt;code&gt;reflect.Value&lt;/code&gt; などが速い。&lt;/li&gt;
+&lt;li&gt;一方、複雑な例になればそれほど差が無いように見えた&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;ため &lt;code&gt;interface&lt;/code&gt; を採用しました。ただ、プロファイルをとるとかなりの部分が &lt;code&gt;interface&lt;/code&gt; への変換に取られているので、ここが(Goが進化して)速くなればGopherLuaも速くなると思います。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;速度の話&lt;/h2&gt;
+&lt;p&gt;それほどパフォーマンスチューニングはしていませんが、フィボナッチではperlと同じくらいの性能は出ているようです。メモリ確保はそもそも気をつけて減らしているので後は&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;関数をベタ書きする&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;くらいかなあ。Goは短い関数をinline化してくれますが、そのinline化はそんなに賢くないのでやっぱりダメですね。ためしにVMの関数コール部分などをベタ書きすると1.2倍くらいの速度になりました。今のところそこまで速度を求めていないので元に戻しましたけど。&lt;/p&gt;
+&lt;p&gt;やっぱマクロ欲しいなあ･･･&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;とりあえず、使えるはずです&lt;/h1&gt;
+&lt;p&gt;Lua5.1のテストは主要なものは通っているので使えるものになっているはずです。設定ファイルのかわりに使うもよし、プラグインの仕組みに使うのもよし。今後はGopherLuaのTableをGoのstructにマッピングするような( &lt;code&gt;json&lt;/code&gt; や &lt;code&gt;xml&lt;/code&gt; パッケージみたいな)ライブラリとか作りたいなと思っていたりします。&lt;/p&gt;
+&lt;/section&gt;
+
+</description>
+      
+      <category>golang</category>
+      
+      <category>lua</category>
+      
+      <category>gopherlua</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2015/02/15/gopher-lua-released</guid>
+      <pubDate>15 Feb 15 13:43 UTC</pubDate>
+    </item>
+    
+    <item>
+      <title>iceberg v0.9.6リリースしました </title>
+      <link>http://inforno.net/articles/2014/10/20/iceberg-0-9-6-released</link>
+      <description>
+&lt;p&gt;コマンドラインランチャー &lt;a class=&#34;reference external&#34; href=&#34;http://yuin.github.io/iceberg/&#34;&gt;iceberg&lt;/a&gt; のv0.9.6 をリリースしました。 GitHubの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/releases&#34;&gt;リリース一覧&lt;/a&gt; よりダウンロードできます。&lt;/p&gt;
+&lt;p&gt;v0.9.5からのバージョンアップ方法は同梱ドキュメントの更新履歴を参照してください。&lt;/p&gt;
+&lt;p&gt;更新点は以下です。&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;&lt;strong&gt;FIXED&lt;/strong&gt; : 一部のパスでアイコンが正しく読み込まれない問題を修正&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;FIXED&lt;/strong&gt; : 一部のパスを読み込んだ際にクラッシュする問題を修正&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;CHANGED&lt;/strong&gt; : 使用するコンパイラをMinGW-W64 4.9.1にアップグレード&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;IMPROVED&lt;/strong&gt; : 単一キーをホットキーに割り当てられるようになった&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;NEW&lt;/strong&gt; : パス補完とオプション補完でオートコンプリートを有効にする path_autocomplete と option_autocomplete を追加&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;ようやく重い腰をあげてgccのバージョンアップをしました…。icebergは今までmingw gcc4.5系を使っていて、これWindowsのくせにLP64なんですね。まぁそのおかげで＊nix生まれのライブラリでも割と普通に使えていました。&lt;/p&gt;
+&lt;p&gt;で4.9にあげたのでWindowsらしくLLP64になったわけで、fltkなんかは平気で &lt;code&gt;long&lt;/code&gt; を &lt;code&gt;void*&lt;/code&gt; にキャストしてるのでワーニング出まくりでした…。そんなクリティカルな場所はなかったので簡単なパッチ当てて終了。&lt;/p&gt;
+&lt;p&gt;鬼車も今まで使ってたバージョンは &lt;code&gt;long&lt;/code&gt; のポインタキャストがあって落ちるので最新に。&lt;/p&gt;
+&lt;p&gt;なんやかんやあったけど今のところきちんと動いている気がします。なにか問題ありましたらGithubの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/issues&#34;&gt;Issues&lt;/a&gt; までどうぞ。&lt;/p&gt;
+&lt;p&gt;あと、どうやらicebergはWindows8で動かないっぽいです(Windows7互換モードにすると動く)。 8の環境持ってないのでなんで動かないのかわかりません。コンパイラ変えただけで動くようになってたり…しないかなあ。というわけでWindows8使ってる方、もし互換モードなしで動いたらコメントください。&lt;/p&gt;
+
+</description>
+      
+      <category>iceberg</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2014/10/20/iceberg-0-9-6-released</guid>
+      <pubDate>20 Oct 14 11:15 UTC</pubDate>
+    </item>
+    
+    <item>
+      <title>cidre: 軽量Go言語用WEBフレームワーク </title>
+      <link>http://inforno.net/articles/2014/10/06/cidre-my-new-webframework-in-golang</link>
+      <description>
+&lt;p&gt;Go言語は標準の &lt;code&gt;net/http&lt;/code&gt; が結構よくできてるので、WEBフレームワークはなくてもいいだとかそういう話がありますし、 &lt;code&gt;net/http&lt;/code&gt; をラップした俺俺フレームワークが大量に作られています。&lt;/p&gt;
+&lt;p&gt;というわけで、俺も遅ればせながら俺俺フレームワークを作りました。&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://yuin.github.io/cidre/&#34;&gt;cidre&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;読み方は「シードル」。お酒の名前つけるのが慣習ですからね。よくあるこんな感じ。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint &#34;&gt;package main
+
+import (
+  &#34;github.com/yuin/cidre&#34;
+  &#34;net/http&#34;
+)
+
+func main() {
+    app := cidre.NewApp(cidre.DefaultAppConfig())
+    root := app.MountPoint(&#34;/&#34;)
+
+    root.Get(&#34;show_welcome&#34;, &#34;welcome&#34;, func(w http.ResponseWriter, r *http.Request) {
+        app.Renderer.Text(w, &#34;Welcome!&#34;)
+    })
+
+    app.Run()
+}&lt;/pre&gt;&lt;section&gt;
+&lt;h1&gt;特徴&lt;/h1&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p class=&#34;first&#34;&gt;よくあるSinatraチックなAPI&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class=&#34;first&#34;&gt;できるだけ標準インタフェースを使用。いろんな既存ライブラリとの相性が良い。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;dl class=&#34;first docutils&#34;&gt;
+&lt;dt&gt;他の薄いフレームワークではオプションな機能も一部内包。&lt;/dt&gt;
+&lt;dd&gt;&lt;ul class=&#34;first last simple&#34;&gt;
+&lt;li&gt;セッション、フラッシュメッセージ&lt;/li&gt;
+&lt;li&gt;レイアウト機能をサポートした &lt;code&gt;html/template&lt;/code&gt; のラッパー&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p class=&#34;first&#34;&gt;フック機能を提供していて、より柔軟に外部から拡張可能。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;開発経緯&lt;/h1&gt;
+&lt;p&gt;そもそもPythonistaの御多聞にもれず、2と3のはざまでもだえる中でGo言語書くことが多くなってたんですね。んでWEBもGo言語でさらっと書きたい、と。&lt;/p&gt;
+&lt;p&gt;Go言語のWEBフレームワークはいっぱいあって、軽量だとMartiniだとかGinだとかnegroniだとか、重量級だとbeegoだとかrevelだとか。俺の好みとしてやっぱりシンプルなものが好きなので軽量フレームワークを使いたいところだけど、Martiniはtoo magicだし、Ginは40 times fasterってのが詐欺っぽいし、negroniはツールであってフレームワークじゃないと言っているしで、あんまりしっくりくるのがありませんでした。&lt;/p&gt;
+&lt;p&gt;なので自分が最低限必要と思う機能を組み込んだフレームワークを作ったわけです。ミドルウェアで対応できるけど組み込まれてたほうが楽だし。SPAが流行ってるって言ってもさらっと作るときはフラッシュメッセージが楽だし、設定は外出ししときたいし、とか。&lt;/p&gt;
+&lt;p&gt;基本的に &lt;code&gt;http.Handler&lt;/code&gt; (もしくは &lt;code&gt;http.HandlerFunc&lt;/code&gt; )で構成されるので他のいわゆる「ミドルウェア」と呼ばれているものもすんなり組み込めます。せっかく組み込みライブラリがよくできてるんだから、なるべくフレームワーク特有のことは覚えたくないのもある。&lt;/p&gt;
+&lt;p&gt;テンプレートエンジンやSessionストアやロガーはInterfaceなので差し替え可能です。&lt;/p&gt;
+&lt;p&gt;あと、適当に今風のプロジェクトページ作りました。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;開発中に思ったこと&lt;/h1&gt;
+&lt;p&gt;俺俺フレームワークを書きたい方のために、cidreを書いてる時に思ったこと、検討したことを書いておきます。&lt;/p&gt;
+&lt;section&gt;
+&lt;h2&gt;Contextの持ち方&lt;/h2&gt;
+&lt;p&gt;どのフレームワークも &lt;code&gt;Context&lt;/code&gt; という構造体がだいたいある。これは入れ子になってる &lt;code&gt;http.Handler&lt;/code&gt; 間でデータを受け渡すのが主目的だ。&lt;/p&gt;
+&lt;p&gt;でContextの考え方は3種類ある。&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;&lt;ol class=&#34;first arabic&#34;&gt;
+&lt;li&gt;&lt;code&gt;http.Handler&lt;/code&gt; インタフェースを使わず独自インタフェースをつくって引数として渡す。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;ol class=&#34;first arabic&#34; start=&#34;2&#34;&gt;
+&lt;li&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/gorilla/context&#34;&gt;Gorilla context&lt;/a&gt; のようなスレッドローカル変数を使う。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;ol class=&#34;first arabic&#34; start=&#34;3&#34;&gt;
+&lt;li&gt;&lt;code&gt;http.Handler#ServeHTTP&lt;/code&gt; の引数である &lt;code&gt;http.ResponseWriter&lt;/code&gt; か &lt;code&gt;http.Request&lt;/code&gt; のどこかに埋め込む。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;1はGinやnegroniなど大半のフレームワークが採用している方法。これはこれでシンプルでよい。ただし独自インタフェースになる。&lt;/p&gt;
+&lt;p&gt;2はスレッドローカルにするためにgoなのにLock, Unlockが走りまくるのが難点だが見た目すごくクリーン。&lt;/p&gt;
+&lt;p&gt;3は生成時にトリックが必要だけど標準インタフェースを使えて、ロックも発生しない。というわけでcidreは3の方式をとっている。Goで外部からオブジェクトを埋め込むためには&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;それがインタフェースで&lt;/li&gt;
+&lt;li&gt;Public&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;じゃないといけない。というわけで &lt;code&gt;http.Request#Body&lt;/code&gt; に埋め込んでいる。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;拡張性&lt;/h2&gt;
+&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://justinas.org/writing-http-middleware-in-go/&#34;&gt;Writing HTTP Middleware in Go&lt;/a&gt; という記事があるように、 &lt;code&gt;http.Handler&lt;/code&gt; をPythonのWSGIミドルウェアのように扱う、というのは標準的な考え方だろう。&lt;/p&gt;
+&lt;p&gt;ただ、結局この方式はただのフィルタであって柔軟性がない。HTTPボディを書く前に処理を差し込みたい、とかできない。正確にはできないことないけどめんどくさい(独自ResponseWriterを作って次のミドルウェアに渡すことになる)。Martiniでは独自ResponseWriterにコールバックが設定できるようになっていてHTTPボディ書く前にヘッダ書くというのができる。&lt;/p&gt;
+&lt;p&gt;でも結局そういうポイントって随所にあって、統一的に扱える仕組みがあったほうがよいと思う。のでHookの仕組みをつくってサーバ起動時、とかいろんなところをフックできるようにしてある。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;設定オブジェクト&lt;/h2&gt;
+&lt;p&gt;これは何を今さら、な話で設定を表すオブジェクトをどう扱うか、ということ。例えば以下のようなstructがあるとして&lt;/p&gt;
+&lt;pre class=&#34;prettyprint &#34;&gt;type Config struct {
+    Host string
+    Port int
+    Timeout time.Duration
+}&lt;/pre&gt;&lt;p&gt;これにどうデフォルト値を適応するかっていうこと。&lt;/p&gt;
+&lt;p&gt;スクリプト言語ならundefinedなりnullなりnilなり未初期化を表す共通の値があるので、よいのだがCやGoではintは初期値0だし、0と設定したのか未設定なのかわからない。&lt;/p&gt;
+&lt;p&gt;なので以下のようなデフォルト設定を返す関数をつくってそれに設定を追加していく形がよいと思う。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint &#34;&gt;func DefaultConfig(init ...func(*Config)) *Config {
+    self := &amp;amp;Config {
+        Host: &#34;localhost&#34;,
+        Port: &#34;8080&#34;,
+        Timeout: 180 * time.Second,
+    }
+    if len(init) &amp;gt; 0 {
+        init[0](self)
+    }
+    return self
+}
+
+config := DefaultConfig()
+config.Timeout = 0&lt;/pre&gt;&lt;p&gt;あと利便性のためこういう書き方もできるようにしてある。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint &#34;&gt;app := NewApp(DefaultConfig(func (config *Config){
+    config.Timeout = 0
+})&lt;/pre&gt;&lt;p&gt;といろいろあるけどこんなところで。&lt;/p&gt;
+&lt;/section&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;今後について&lt;/h1&gt;
+&lt;p&gt;今後も細々メンテしていくつもりですし、ミドルウェアなんかも追加していきたいなあと思っています。やっぱGo言語はさらっと書けるそれなりに速いし、いいっす。&lt;/p&gt;
+&lt;/section&gt;
+
+</description>
+      
+      <category>golang</category>
+      
+      <category>cidre</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2014/10/06/cidre-my-new-webframework-in-golang</guid>
+      <pubDate>06 Oct 14 11:52 UTC</pubDate>
+    </item>
+    
+    <item>
+      <title>AlfredのWorkflow的なやつをWindowsで </title>
+      <link>http://inforno.net/articles/2013/11/07/iceberg-commands</link>
+      <description>
+&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://blog.ruedap.com/2013/10/30/alfred-workflow-for-front-end-developers&#34;&gt;フロントエンド開発者向けのAlfred Workflow&lt;/a&gt; という記事を見かけたので、それ &lt;a class=&#34;reference external&#34; href=&#34;http://yuin.github.io/iceberg/index.html&#34;&gt;iceberg&lt;/a&gt; でもできる &lt;strong&gt;かも&lt;/strong&gt; よ！ということでいくつか作ってみました(仕様上実装できないものもあったのでiceberg自体も改修して &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/releases/tag/v0.9.4&#34;&gt;v0.9.4としてリリース&lt;/a&gt; しています)。&lt;/p&gt;
+&lt;p&gt;簡単にできそうなものをピックアップしたつもりが以外と苦労したかもしれない…&lt;/p&gt;
+&lt;section&gt;
+&lt;h1&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg-ip&#34;&gt;iceberg-ip&lt;/a&gt;&lt;/h1&gt;
+&lt;img alt=&#34;http://inforno.net/statics/files/iceberg-ip.jpg&#34; src=&#34;http://inforno.net/statics/files/iceberg-ip.jpg&#34; /&gt;
+&lt;p&gt;IPアドレス一覧を表示するコマンド。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg-worldtime&#34;&gt;iceberg-worldtime&lt;/a&gt;&lt;/h1&gt;
+&lt;img alt=&#34;http://inforno.net/statics/files/iceberg-worldtime.jpg&#34; src=&#34;http://inforno.net/statics/files/iceberg-worldtime.jpg&#34; /&gt;
+&lt;p&gt;世界主要都市の現在時刻を表示する。頑張ってサマータイム対応したのだけど、これがめんどくさかった…&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg-encodedecode&#34;&gt;iceberg-encodedecode&lt;/a&gt;&lt;/h1&gt;
+&lt;img alt=&#34;http://inforno.net/statics/files/iceberg-encodedecode.jpg&#34; src=&#34;http://inforno.net/statics/files/iceberg-encodedecode.jpg&#34; /&gt;
+&lt;p&gt;Base64, URL, HTML entityでのエンコード結果を表示。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h1&gt;というわけで&lt;/h1&gt;
+&lt;p&gt;これらのコマンドはLuaのみで書かれています。&lt;/p&gt;
+&lt;p&gt;以下の &lt;code&gt;weather&lt;/code&gt; コマンドのようにHTTPで結果を取得してそれをリストに表示することもできます。加えてmigemoに対応しているので絞り込みも簡単です。&lt;/p&gt;
+&lt;img alt=&#34;http://inforno.net/statics/files/iceberg-weather.gif&#34; src=&#34;http://inforno.net/statics/files/iceberg-weather.gif&#34; /&gt;
+&lt;p&gt;Windows7以降はOS自体にWin&#43;Rより高度なコマンドラインランチャー的な機能が内蔵されたこともあって、こういうのがあるとコマンドラインランチャを使う意義みたいなのも高まるかな、と。&lt;/p&gt;
+&lt;/section&gt;
+
+</description>
+      
+      <category>iceberg</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2013/11/07/iceberg-commands</guid>
+      <pubDate>06 Nov 13 17:59 UTC</pubDate>
+    </item>
+    
+  </channel>
+</rss>

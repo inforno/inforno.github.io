@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Element.extendの動向。</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Element.extendの動向。</h1>
+<div class="meta">
+<time datetime="2006-03-31T01:33:46&#43;09:00">Mar 31, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>最近prototype.jsではSelectorとDOMがよく動きます。
+仕事でも使っているし、重要な部分なのでここのところウォッチしています。</p>
+<p>最近、実は書こうと思ってたElement.extendの問題が解決されました。
+問題：`Incredible memory leak in IE &lt;<a class="reference external" href="http://dev.rubyonrails.org/ticket/4465">http://dev.rubyonrails.org/ticket/4465</a>&gt;`_</p>
+<p>これは見る人が見ればパッと見で「これはヤバいんじゃね？」と思ったんじゃないでしょうか。
+わからなかった人は上記のURLにも載っている
+<a class="reference external" href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp">http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp</a>
+を見ておくと今後悩むことが減るかもしれません。</p>
+<p>リンク先をみたらなにが問題かわかるのであえては書きません。</p>
+<p>もう一個、興味深いのは <a class="reference external" href="http://dev.rubyonrails.org/ticket/4477">Element.extend cripples $() performance</a> での議論です。
+<a class="reference external" href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements">前に書いた記事</a> と似た主張や議論がなされています。うちの会社にも英語苦手な人がいるので簡単に要旨を。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Element.extendはパフォーマンスに問題がある。前のままにしてほしい。</dt>
+<dd><ul class="first last">
+<li><p class="first"><a class="reference external" href="http://dev.rubyonrails.org/changeset/4094">http://dev.rubyonrails.org/changeset/4094</a> でだいぶマシになっているよ？</p>
+</li>
+<li><p class="first">解説：以前はそれぞれのElementについてElement.Methodsのメソッドにelementをbindしてコピーしていた。つまりElementの数に比例してメモリを使用する。しかし4094でキャッシュを導入したので一定数のメソッドしか生成しない。</p>
+</li>
+<li><p class="first">とりあえずElement.extendのパフォーマンスをあげることにフォーカスしよう。</p>
+</li>
+<li><dl class="first docutils">
+<dt>Element.extend = Prototype.Kってかけばとりあえず大丈夫じゃね？</dt>
+<dd><ul class="first last simple">
+<li>でもscriptaculousが完全にextendされてる前提でコードかいてるから動かなくなるじゃん。</li>
+<li>解説：scriptaculousは3月28日にprototype.js 1.5_pre1をバンドルしてバージョン1.6をリリースした。このバージョンではelement.setStyle({top: ''})とかelement.show();みたいにガンガンElement.extendを活用している。まぁとりあえずElement.extendが必要ないときはPrototype.Kにしとけばいい。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">FirefoxやSafariは高速化できる（前のエントリーとほぼ同じ）。しかしprototype.jsに組み込むとscriptaculousのElement.Methods拡張が反映されない。</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>というわけでElement.extendはこれでちょっと落ち着いた感じ。個人的にはElement.extend無効化して使っていきたいなーって思ってたりしてたんですけどscriptaculousがやっぱりガンガン使ってきたので、まぁ様子見てみます。</p>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2006/03/31/current-development-in-element-extend" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2006\/03\/31\/current-development-in-element-extend';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

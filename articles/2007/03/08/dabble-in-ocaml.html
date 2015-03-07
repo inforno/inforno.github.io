@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: OCamlに手を出す</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">OCamlに手を出す</h1>
+<div class="meta">
+<time datetime="2007-03-08T01:59:06&#43;09:00">Mar  8, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/ocaml/" rel="tag" itemprop="keywords">ocaml</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>週末に引越し、ということで本なんかを送ってしまいました。</p>
+<p>読む本が無いので、前から手を出そうと思っていたOCamlに手を出してみました。</p>
+<section>
+<h1>導入</h1>
+<p>とりあえずDebianにaptで放り込む。</p>
+<pre class="prettyprint ">libcamomile-ocaml-data                          install
+libcamomile-ocaml-dev                           install
+libequeue-ocaml                                 install
+libequeue-ocaml-dev                             install
+libextlib-ocaml-dev                             install
+libfileutils-ocaml-dev                          install
+libocamlnet-ocaml                               install
+libocamlnet-ocaml-dev                           install
+libpcre-ocaml                                   install
+libpcre-ocaml-dev                               install
+ocaml                                           install
+ocaml-base                                      install
+ocaml-base-nox                                  install
+ocaml-findlib                                   install
+ocaml-interp                                    install
+ocaml-nox                                       install</pre><p>こんな感じ。どうやらfindlibというライブラリが重要らしい。パッケージ管理系のライブラリなんですけど。</p>
+<p>んでテンプレ的なのはこんな感じにしてみた。</p>
+<pre class="prettyprint ">#use "topfind"
+#camlp4o
+#require "camlp4.extend"
+#require "extlib"
+#require "camomile"
+
+open ExtLib</pre></section>
+<section>
+<h1>練習</h1>
+<p><a class="reference external" href="http://min-caml.sourceforge.net/index2.html">超特急: 一時間でわかるML超入門</a> を見てから、 <a class="reference external" href="http://www.sato.kuis.kyoto-u.ac.jp/~igarashi/class/isle4/mltext/ocaml.html">Objective Caml 入門</a> を読みながら、書いてみた。</p>
+<p>普通に書きやすい。練習問題は・・・。なんていうか、SICP。普通に関数型言語として使うところまでやってみた。</p>
+</section>
+<section>
+<h1>日本語</h1>
+<p>EUCとUTFは大丈夫っぽい。ここらへんはCamomileというモジュールを使うらしい。とりあえず</p>
+<pre class="prettyprint ">module Encoding = CamomileLibrary.Default.Camomile.CharEncoding
+module Enc = Encoding.Make (CamomileLibrary.UTF8)
+let unicode s = Enc.decode (Encoding.of_name "jauto") s;;
+let decode t n = Enc.encode (Encoding.of_name n) t;;</pre><p>などとPythonみたいな関数を定義してみた。 <code>jauto</code> でエンコーディングは自動的に判別してくれるらしい。コードをEUCで書いてUTF-8のコンソールに出力してみる。うんうん、ちゃんと日本語いけてる。ただ、UTF-8で書いたファイルで <code>unicode &quot;ああああ&quot;</code> ってしたら当然 <code>&quot;ああああ&quot;</code> のままだと思うんだけど、ダメだった。なんでなんだろう。詳しい人いたら教えて欲しいです。</p>
+</section>
+<section>
+<h1>今までの感想</h1>
+<p>結構いい。モジュールシステムなんかはきっちりしてんなー、と思いました。オブジェクトシステムなんかが特徴だと思うんだけど、まだ触ってないんですよねえ。てゆーか詳しく解説しているところがすくないんで、どーしようかなあ。</p>
+<p>あと、インタプリタの <code>#require &quot;camomile&quot;</code> みたいなのって、ネイティブコンパイラだとエラーになるんだけどこういうもんなんだろうか。つまりどっちか選びなさい、ってことでいいのかなあ・・・。ネイティブコンパイラでは無視してくれると一番ありがたいような気がするけど・・・</p>
+</section>
+
+
+
+    <div class="seealso">
+      
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2007/03/08/dabble-in-ocaml" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2007\/03\/08\/dabble-in-ocaml';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

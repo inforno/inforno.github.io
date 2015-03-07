@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: 基礎を終えた人のScalaミニtips</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">基礎を終えた人のScalaミニtips</h1>
+<div class="meta">
+<time datetime="2008-02-03T00:44:08&#43;09:00">Feb  3, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>どう書く？orgでScalaを書いてくれる人もでてきたので、超一部の方向けにScalaのことでも書いてみようと思います。言うなれば、基礎を終えた人のScalaミニtips。知っている人は知っている、でもあまり知られていないことを並べていきます。</p>
+<p>下に行くほどマニア度あがります、たぶん。FPよりの話が多いかもしれません。はやりのYコンビネータの話とか。たぶん。</p>
+<p>ではいってみましょう。</p>
+<section>
+<h1>Predefされているものは把握しておきましょう</h1>
+<p>Scalaにはscala.Predefというオブジェクトがあります。この中で定義されているものは常にインポートされていて使える状態になっているので把握しておきましょう。</p>
+<p>例：</p>
+<pre class="prettyprint ">def exit(status: Int): Nothing = {
+  java.lang.System.exit(status)
+  throw new Throwable()
+}
+
+def assert(assertion: Boolean) {
+  if (!assertion)
+    throw new java.lang.AssertionError("assertion failed")
+}
+
+def print(x: Any) = Console.print(x)
+def println() = Console.println()
+def println(x: Any) = Console.println(x)</pre></section>
+<section>
+<h1>C言語ライクなforはどうかくの？</h1>
+<p>こうです。</p>
+<pre class="prettyprint ">val a = Array(1,2,3,4,5)
+var i= -1;while({i += 1; i &lt; a.size;}) {
+  println(a(i))
+}</pre></section>
+<section>
+<h1>setterを使おう</h1>
+<p>setHogeみたいなのは、カッコわるいです。RubyのアクセッサーしかりPythonのpropertyしかり、 <code>instance.name = value</code> 形式で扱えるのがモダンな言語というものです。</p>
+<pre class="prettyprint ">class Test {
+  var _name = "default"
+  def name_=(newValue:String) { _name = newValue }
+  def name = _name
+}
+
+val a = new Test
+a.name = "new"
+println(a.name)</pre></section>
+<section>
+<h1>単項演算子も定義できます。</h1>
+<p>できます。</p>
+<pre class="prettyprint ">class Test {
+  var _name = "default"
+  def name_=(newValue:String) { _name = newValue }
+  def name = _name
+  def unary_- = "unary:" + name
+}
+
+val a = new Test
+a.name = "new"
+println(-a)</pre></section>
+<section>
+<h1>applyでオブジェクトをメソッドのように呼び出せるよね？  <code>hoge(index) = value</code> はオーバーライドできないの？</h1>
+<p>できますよ。なんとupdateというすげーふつーの名前のメソッドを定義するんです。</p>
+<pre class="prettyprint ">object dictionary {
+val data = Array(null, "A","B","C")
+
+def apply(x:String) = x match {
+  case "one" =&gt; data(1)
+  case "two" =&gt; data(2)
+  case "three" =&gt; data(3)
+}
+
+def update(x:String,y:String) = x match {
+  case "one" =&gt; data(1) = y
+  case "two" =&gt; data(2) = y
+  case "three" =&gt; data(3) = y
+}
+
+}
+dictionary("one") = "X"
+dictionary("two") = "Y"
+dictionary("three") = "Z"
+println(dictionary("one")+","+dictionary("two")+","+dictionary("three"))</pre></section>
+<section>
+<h1>可変長引数は取れますか。また、リストや配列を展開してメソッドにわたせますか。</h1>
+<p>もちろん。</p>
+<pre class="prettyprint ">def sumPlus(plus: Int, n: Int*) = plus + sum(n :_*)</pre></section>
+<section>
+<h1>JAVAのObject型可変長変数をとるメソッドはどう呼びますか？</h1>
+<p>ちょっとめんどくさいですが、こうです。</p>
+<pre class="prettyprint ">String.format("%d %s", List(1, "hoge").map(_.asInstanceOf[AnyRef]).toArray)</pre></section>
+<section>
+<h1>インスタンスのメソッドを束縛できますか？そのとき、メソッドがオーバーロードされている場合はどうしますか？</h1>
+<p>こうします。オーバーロードされている場合は <code>_</code> の後ろに型をつけます。</p>
+<pre class="prettyprint ">val format = (new SimpleDateFormat("dd")).format _:Date =&gt; String</pre><hr class="docutils" />
+<p>ここからFPよりです。</p>
+</section>
+<section>
+<h1>カリー化はできますか？</h1>
+<p>Function.curriedを使います。uncurriedもあります。</p>
+<pre class="prettyprint ">def test(i:int, j:int) = {
+  printf("i:{0}, j:{1}", i, j)
+}
+val f = Function.curried(test _)(1)
+f(1)</pre></section>
+<section>
+<h1>遅延評価は？</h1>
+<p>lazyを使います。Streamも使いこなせるとハッピーです。</p>
+<p>たとえば、無限フィボナッチ数列は以下のように定義します。</p>
+<pre class="prettyprint ">lazy val fib: Stream[Int] = Stream.cons(0,
+     Stream.cons(1, fib.zip(fib.tail).map(p =&gt; p._1 + p._2)))</pre></section>
+<section>
+<h1>先生、関数合成がしたいです･･･</h1>
+<p>Haskellでは短く直感的にかけるからいいですよね。</p>
+<p>Scalaでは正直、逆に長ったらしくなりますが、どうしてもというなら･･･</p>
+<pre class="prettyprint ">({ x:int =&gt; x + 1 } andThen { x:int =&gt; x * 2 })(3) // =&gt; 8
+({ x:int =&gt; x + 1 } compose { x:int =&gt; x * 2 })(3) // =&gt; 7</pre></section>
+<section>
+<h1>forはモナドに使える構文です。リスト内包表現用ではありません。</h1>
+<p>リストはモナドですし、HaskellのMaybeに相当するOptionというモナドもあります。map, flatMap, filterメソッドを実装すればforで書けるオブジェクトを定義できます。</p>
+</section>
+<section>
+<h1>Yコンビネータとかいうものの話が(一部で)盛り上がってますが、そういうのってScalaでできるんですか。型があるから複雑だと思うんだけど。</h1>
+<p>えーと、無名関数で再帰したいんでしょうか？こんな感じでどうでしょう？ふつーはこんなの使いませんけどね。</p>
+<pre class="prettyprint ">def Y[A,B](f:((A=&gt;B),A)=&gt;B,x:A):B = f((x1:A)=&gt;Y(f,x1),x)
+
+println(
+  Y(
+    (f:((int,int)) =&gt; int, arg:(int,int)) =&gt; arg match { case (x, y) =&gt; x match {
+      case 0 =&gt; y
+      case _ =&gt; f((x - 1, y + x))
+    }} , (10, 0))
+)</pre><hr class="docutils" />
+<p>さて、数少ない日本人Scala好きの皆さん。どれくらいご存知でしたでしょうか。まぁ、基礎からちょっとScalaやればこれくらいは皆さんご存知だと思うんですが、やはりScalaはカオスな言語なので、なかなか見つけられない機能も多いんで、最近Scalaやりはじめた人は参考にしてもらえるとうれしいです。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
+<li><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell">Scalaで無限リスト：Haskellライクに</a></li>
+<li><a href="/articles/2008/03/04/japanese-language-programing-in-scala">日本語プログラミング言語Scala</a></li>
+<li><a href="/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala">Scalaでスタック指向言語をサクッと実装する</a></li>
+<li><a href="/articles/2007/07/30/parser-combinators-in-scala">Scalaでパーサコンビネータ</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2008/02/03/some-scala-tips-for-beginners" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2008\/02\/03\/some-scala-tips-for-beginners';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

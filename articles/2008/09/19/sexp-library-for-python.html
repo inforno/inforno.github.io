@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python: S式パーサライブラリを作りました</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python: S式パーサライブラリを作りました</h1>
+<div class="meta">
+<time datetime="2008-09-19T17:51:25&#43;09:00">Sep 19, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/sexp/" rel="tag" itemprop="keywords">sexp</a></span>
+  
+  <span class="tag"><a href="/articles/tag/scheme/" rel="tag" itemprop="keywords">scheme</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p><a class="reference external" href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
+<p>実装には引き続き <code>re.Scanner</code> を活用しています。おかげで短い行数でキレイにかけているのではないかと。</p>
+<section>
+<h1>ダウンロード</h1>
+<p><a class="reference external" href="/statics/files/simplesexp.zip">simplesexp.py</a></p>
+<p>ソースはこんな感じ（テストのぞく）。</p>
+<pre class="prettyprint ">import re, sys
+from unicodedata import east_asian_width
+
+try:
+  from re import Scanner
+except ImportError:
+  from sre import Scanner
+
+class ParseError(StandardError): pass
+
+class Ident(unicode):
+  def __repr__(self):
+    return "Ident(%s)"%unicode.__repr__(self)
+
+class Symbol(unicode):
+  def __repr__(self):
+    return "Symbol(%s)"%unicode.__repr__(self)
+
+class Pair(list):
+  def __repr__(self):
+    return "Pair(%s)"%list.__repr__(self)
+
+class Token(object):
+  def __init__(self, value, pos):
+    self.value = value
+    self.pos   = pos
+  def __repr__(self):
+    return repr(self.value)
+
+class Binding(object):
+  def __init__(self, dct):
+    self.dct = dict(((k, k.__class__), v) for k,v in dct.iteritems())
+  __contains__ = lambda self, key: (key, key.__class__) in self.dct
+  __getitem__  = lambda self,key:  self.dct[(key, key.__class__)]
+
+default_binding = {"#t":True, "true":True, "#f":False, "false":False, "nil":None, "dict":Ident(u'alist-&gt;hash-table')}
+
+class Reader(object):
+  PAREN = {"]":"[", ")":"("}
+  def __init__(self, binding=None, symbol_marker="'", use_dict=True):
+    self.binding = binding or default_binding
+    self.symbol_marker = symbol_marker
+    self.use_dict = use_dict
+
+  def read(self, value):
+    self.result = []
+    self.paren_stack = []
+    self.source = value
+    self.pos = 0
+    self.scanner = Scanner([
+      (r"\s+", self("skip")),
+      (r";[^\n]*\n", self("skip")),
+      (r""""(((?&lt;=\\)")|[^"])*((?&lt;!\\)")""", self("str")),
+      (r"(\(|\[)", self("open")),
+      (r"(\)|\])", self("close")),
+      (r"(([\d]+|(((\d+)?\.[\d]+)|([\d]+\.)))e[\+\-]?[\d]+)|(((\d+)?\.[\d]+)|([\d]+\.))", self("number")),
+      (r"\-?((0x[\da-f]+)|(0[0-7]+)|([1-9][\d]*)|0)[l]?", self("number")),
+      (r"""%s([^\(\[\)\]\s"]+)"""%self.symbol_marker, self("symbol")),
+      (r"""([^\(\[\)\]\s"]+)""", self("ident")),
+      (r"""".*""", self("unterm_str")),
+      (r".*", self("unknown_token"))
+    ], re.M|re.S|re.I)
+    self.scanner.scan(self.source)
+    if self.paren_stack:
+      self.raise_error("missing closing parenthesis.")
+    return self.parse(self.result)
+
+  def append(self, v):
+    self.last().append(Token(v, self.pos))
+
+  def __call__(self, name):
+    def _(scanner, s):
+      self.pos += len(s)
+      return getattr(self, name)(s)
+    return _
+
+  def unknown_token(self,s): self.raise_error("unknown token: %s"%s)
+  def skip(self, _): pass
+  def open(self, s):
+      new_lst = []
+      self.last().append(new_lst)
+      self.paren_stack.append([s, new_lst])
+  def close(self, s):
+      if not self.paren_stack:
+        self.raise_error("missing opening parenthesis.")
+      if self.PAREN[s] != self.paren_stack.pop()[0]:
+        self.raise_error("missing closing parenthesis.")
+  def str(self, s): self.append(eval('u""'+s+'""'))
+  def unterm_str(self, s): self.raise_error("unterminated string literal.")
+  def number(self, s): self.append(eval(s))
+  def symbol(self, s): self.append(Symbol(s[1:]))
+  def ident(self, s):
+    if s in self.binding:
+      self.append(self.binding[s])
+    else:
+      self.append(Ident(s))
+
+  def last(self):
+    if self.paren_stack:
+      return self.paren_stack[-1][1]
+    else:
+      return self.result
+
+  def parse(self, rs):
+    def is_ident(value, expected):
+      return getattr(value,"value", None) == Ident(expected)
+    def is_pair(rs):
+      return getattr(rs, "__len__", lambda :0)()==3 and is_ident(rs[1], u".")
+
+    if isinstance(rs, list):
+      if not len(rs):
+        return []
+      elif self.use_dict and is_ident(rs[0], u"alist-&gt;hash-table"):
+        if len(rs) != 2:
+          self.raise_error("alist-&gt;hash-table: expected 1 arguments, got %d."%(len(rs)-1), rs[0].pos)
+        if not all(is_pair(a) for a in rs[1]):
+          self.raise_error("alist-&gt;hash-table: aruguments must be alist", rs[0].pos)
+        return dict((self.parse(i[0]), self.parse(i[2])) for i in rs[1])
+      elif len(rs)!=3 and any(is_ident(t, u".") for t in rs):
+        self.raise_error('illegal use of "."', rs[0].pos)
+      elif is_pair(rs):
+        parsed = self.parse(rs[2])
+        if not isinstance(rs[2], list):
+          return Pair([rs[0].value, parsed])
+        if isinstance(parsed, Pair):
+          return Pair([rs[0].value, parsed])
+        elif isinstance(parsed, list):
+          return [rs[0].value]+parsed
+        else:
+          return [rs[0].value, parsed]
+      else:
+        return map(self.parse, rs)
+    else:
+      return rs.value
+
+  def raise_error(self, msg="parse error", pos=None, range=3):
+    pos = pos or self.pos
+    lines = self.source.split("\n")
+    curline = self.source[:pos].count("\n")
+    linepos = pos - len("\n".join(lines[:curline]))
+    buf = ["\n"]
+    for i in xrange(max(0, curline-range), curline+1):
+      buf.append("% 5d: %s"%(i+1, lines[i]))
+    width = 7 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in unicode(lines[i]))
+    buf.append("%s~"%(" "*width))
+    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
+    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
+
+class Dumper(object):
+  def __init__(self, binding=None ,symbol_marker="'"):
+    binding = binding or default_binding
+    self.binding = Binding(dict(zip(binding.values(), binding)))
+    self.symbol_marker = symbol_marker
+
+  def dump(self, obj):
+    result = self.to_sexp(obj, [])
+    if isinstance(result, list) and len(result) and result[0]=="(":
+      result = result[1:-1]
+    return u" ".join(result)
+
+  def to_sexp(self, obj, result):
+    ap = result.append
+    tos = lambda v: self.to_sexp(v, result)
+    if isinstance(obj, Pair):
+      ap("(")
+      tos(obj[0])
+      ap(" . ")
+      tos(obj[1])
+      ap(")")
+    elif isinstance(obj, (tuple, list)):
+      ap("(")
+      map(tos, obj)
+      ap(")")
+    else:
+      if isinstance(obj, dict):
+        ap("( alist-&gt;hash-table ")
+        tos([(k, Ident(u"."), v) for k,v in obj.items()])
+        ap(" ) ")
+      elif obj in self.binding:
+        ap(unicode(Ident(self.binding[obj])))
+      elif isinstance(obj, Symbol):
+        ap(u"'%s"%unicode(obj))
+      elif isinstance(obj, (Ident,int, float, long)):
+        ap(unicode(obj))
+      else:
+        s = unicode(repr(obj)).decode("unicode_escape")
+        m = re.match(r"""^[u|r]?["|'](.*)["|']$""", s, re.M|re.S)
+        if m:
+          s = m.group(1)
+        ap("\"%s\""%s.replace('"','\\"').replace("\\'","'"))
+    return result
+
+dumper = Dumper()
+read = Reader().read
+dump = dumper.dump</pre></section>
+<section>
+<h1>概要</h1>
+<p>特徴は</p>
+<ul class="simple">
+<li>辞書を定義できる</li>
+<li>ドット対に対応</li>
+<li>識別子に対して、任意のバインディングを指定できる</li>
+<li>わりとちゃんとエラー表示される</li>
+<li>シンボル表記、数値表記(python表記)に対応</li>
+</ul>
+<p>といった当たりでしょうか。具体的にはテストコードを見てもらうと分かるかと。</p>
+<pre class="prettyprint ">(あああ hoge-&gt;fuga123 (1 . (2 . 3)) "hoge\\"hoge" ;comment2
+foo "aaa" #t &lt;= 'foo
+"hogehoge
+foo
+" (5 . (6 .()))
+)
+(dict (
+  ("いいい" .
+    (alist-&gt;hash-table (
+      ("a-1" . "vvv")
+      ("a-2" . (
+        hoge foo bar
+      ))
+    )))
+))
+(10 1L -45 010 0x10 -10 -0x10 3.14 10. .001 1e100 3.14e-10 0e0)
+; comment3 ()(
+
+""")</pre><p>という感じのS式が</p>
+<pre class="prettyprint ">[
+  [Ident(u'あああ'), Ident(u'hoge-&gt;fuga123'), Pair([1, Pair([2, 3])]), u'hoge"hoge',
+  Ident(u'foo'), u'aaa', True, Ident(u'&lt;='), Symbol(u'foo'),
+  u'hogehoge\nfoo\n', [5,6]],
+  {u'いいい':
+    {u'a-1': u'vvv',
+    u'a-2': [Ident(u'hoge'), Ident(u'foo'), Ident(u'bar')]}},
+  [10, 1L, -45, 010, 0x10, -10, -0x10, 3.14, 10., .001, 1e100, 3.14e-10, 0e0]
+]</pre><p>となります。 <code>Ident</code> や <code>Symbol</code> はunicodeのサブクラス、 <code>Pair</code> はリストのサブクラスになっているので、違和感なく使えると思います。</p>
+<p>また、 <code><span class="pre">alist-&gt;hash-table</span></code> で辞書が作れます。デフォルトで <code>dict</code> に <code><span class="pre">alist-&gt;hash-table</span></code> をバインドしてますので、 <code>dict</code> でも辞書が作れます。この機能はオンオフ切り替えも可能です。</p>
+<p>その他、 <code>#t</code> を <code>True</code> などSchemeっぽくデフォルトバインディングが用意してあります。もちろん、バインディングは変更可能ですのでCLっぽくもできます。</p>
+<hr class="docutils" />
+<p>と、こんな感じです。一番便利なのはやっぱり辞書ですかねえ。なので、YAML,JSONで書いてる設定ファイルをS式で置き換え･･･なんてことができるかもしれません。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2008/09/19/sexp-library-for-python" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2008\/09\/19\/sexp-library-for-python';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

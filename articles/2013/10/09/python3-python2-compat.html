@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python3 &amp;amp; 2互換性確保の見直し</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python3 &amp; 2互換性確保の見直し</h1>
+<div class="meta">
+<time datetime="2013-10-09T20:05:00&#43;09:00">Oct  9, 2013</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>Python3も3.3になり性能も向上して、移行が順調に進んできているように見える。それを考慮して最近Python3系と2系の互換性確保を見直した。</p>
+<p>ひとことでいうと「Python3中心」にした。</p>
+<section>
+<h1>今までの手法</h1>
+<p>基本的に3系と2系の互換性確保は「単一ソースコード」でやっていてそれは今も変わらず。</p>
+<p>で、今までは <strong>Python3とPython2の中間</strong> のコードを書いていた。組み込みの関数のリネームなどはしない、というような(例えば <code>zip</code> を <code>izip</code> で上書いてしまうとか)。ただこの手法だといざPython2系のサポートをdropする場合に処理的にもコード的にも無駄が多くなる。</p>
+</section>
+<section>
+<h1>今の手法</h1>
+<p><a class="reference external" href="https://github.com/yuin/rays">rays</a> の <a class="reference external" href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> では以下のような方針とした。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Python3中心。</dt>
+<dd><ul class="first last simple">
+<li>Python3の時に効率的に動作する</li>
+<li>Python2のサポートドロップ時にソース修正が容易</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>なのでガンガンPython2の関数はPython3に置き換える。( <code>map</code> を <code>imap</code> にしてしまうなど ) 大まかには <a class="reference external" href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> のコメント通り以下のようなコーディング。</p>
+<ul>
+<li><p class="first">文字列は <code>str</code> と <code>bytes</code> を使う。</p>
+</li>
+<li><p class="first"><code>range</code> , <code>map</code> , <code>zip</code> などはイテレータを返すものとする。</p>
+</li>
+<li><p class="first">コレクションの列挙は <code>iter_items</code> などの関数を通す。</p>
+</li>
+<li><p class="first"><code>iterator.next()</code> の代わりに <code>next</code> 関数を使う。</p>
+</li>
+<li><dl class="first docutils">
+<dt>クラスは <code>object</code> の代わりに <code>compatobject</code> を継承する。</dt>
+<dd><ul class="first last simple">
+<li><code>__str__</code> , <code>__nonzero__</code> , <code>__cmp__</code> など廃止・仕様変更されたメソッドは
+Python3の仕様で実装する。 <code>compatobject</code> が Python2の場合は自動で変換する。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>リネームされたモジュールのimportは <code>compat_import</code> メソッドを使う。</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>例: <code><span class="pre">compat_import(py2=&quot;email.MIMEMultipart&quot;,</span> <span class="pre">py3=&quot;email.mime.multipart&quot;)</span></code></dt>
+<dd><ul class="first last simple">
+<li>このようにするとPython2でも <code>email.mime.multipart</code> でアクセスできる。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code>urllib</code> は複雑にリネームされているので、 python2用 <code>urllib</code> を作ってしまう。</dt>
+<dd><ul class="first last simple">
+<li>Python2でも普通に <code>import urllib.request</code> のように書ける</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>キモは <code>compat_import</code> かなと。</p>
+<p>そうすると、以下のような感じでほぼPython3のみ対象としたのと同じソースコードになる。Python2サポートdrop時は単純なソースコード置換でいけるはず。</p>
+<pre class="prettyprint ">import urllib.request
+compat_import(py2="cookielib", py3="http.cookiejar")
+
+class Html(compatobject):
+  def __init__(self, text):
+    if isinstance(text, bytes):
+      text = text.decode("utf8")
+    self.text = text
+
+  def __str__(self):
+    return self.text
+
+cookie_jar = http.cookiejar.MozillaCookieJar()
+handlers = [urllib.request.HTTPCookieProcessor(cookie_jar)]
+opener = urllib.request.build_opener(*handlers)
+html = Html(opener.open("http://www.google.co.jp/").read())</pre><p>ソースコードの寿命をのばすためにもボチボチこの方針で書き変えていくつもり。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2013/10/09/python3-python2-compat" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2013\/10\/09\/python3-python2-compat';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

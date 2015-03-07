@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python:続・アクセサの生成</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python:続・アクセサの生成</h1>
+<div class="meta">
+<time datetime="2006-10-24T18:32:02&#43;09:00">Oct 24, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p><a class="reference external" href="/articles/2006/09/30/python-generating-accessors">以前書いてみたアクセサ</a> をpropertyを使って改良してみる。</p>
+<p>propertyというのはnew-styleクラスに対してのみ使える、メソッドで</p>
+<pre class="prettyprint ">class C(object):
+    def __init__(self): self.__x = None
+    def getx(self): return self.__x
+    def setx(self, value): self.__x = value
+    def delx(self): del self.__x
+    x = property(getx, setx, delx, "I'm the 'x' property.")</pre><p>こんな感じで使う。</p>
+<p>Rubyを使った人なら分かると思うけど、プロパティ名でのアクセス＝アクセサ呼び出しになるのは結構便利。
+ActiveRecordなんかでは、特に便利だと感じる。あ、このプロパティ、もういっそエンコードされた値を返したい、と思ったときにそのクラスにプロパティ名と同じメソッドを定義するだけでいいし。</p>
+<p>前につくったアクセサは「get_hoge()」や「set_hoge()」といった感じで呼び出されたけど、これにpropertyを使うことによってRubyと同じような属性アクセスが可能になる。</p>
+<p>とりあえずこんな感じ。</p>
+<pre class="prettyprint ">#!/usr/bin/python
+# vim: fileencoding=utf-8
+from itertools import *
+
+def property_accessor(cls, *names):
+  _property(cls, names)
+
+def property_reader(cls, *names):
+  _property(cls, names, True)
+
+def property_writer(cls, *names):
+  _property(cls, names, False, True)
+
+def _property(cls, names, error_setter = False, error_getter = False):
+  for attr_name, doc in _name_and_docs(names):
+    real_name = _real_name(cls, attr_name)
+    setter  = _add_setter(cls, attr_name, real_name, error_setter)
+    getter  = _add_getter(cls, attr_name, real_name, error_getter)
+    deleter = _add_deleter(cls, attr_name, real_name)
+    setattr(cls, attr_name, property(getter, setter, deleter, doc))
+
+def _name_and_docs(name_or_tuples):
+  return imap(_name_and_doc ,name_or_tuples)
+
+def _name_and_doc(name_or_tupple):
+  if isinstance(name_or_tupple, ("".__class__, u"".__class__)) :
+    return (name_or_tupple, "")
+  else:
+    return name_or_tupple
+
+def _real_name(cls, name) :
+  return "_%s__%s"%(cls.__name__, name)
+
+def _add_method(cls, verb, name, method_to_add):
+  method_name = "%s_%s" % (verb, name)
+  method = cls.__dict__.get(method_name)
+  if not method :
+    method = method_to_add
+    setattr(cls, method_name, method)
+  return method
+
+def _add_setter(cls, name, real_name, error = False) :
+  if error:
+    def setter(self, v):
+      raise AttributeError, "class %s: %s is a read-only attribute." % (cls.__name__, name)
+  else:
+    setter = lambda self, v : setattr(self, real_name, v)
+  return _add_method(cls, "set", name, setter)
+
+def _add_getter(cls, name, real_name, error = False) :
+  if error:
+    def getter(self):
+      raise AttributeError, "class %s: %s is a write-only attribute." % (cls.__name__, name)
+  else:
+    getter = lambda self : getattr(self, real_name)
+  return _add_method(cls, "get", name, getter)
+
+def _add_deleter(cls, name, real_name) :
+  deleter = lambda self : delattr(self, real_name)
+  return _add_method(cls, "delete", name, deleter)
+
+class AccessorType(type):
+  def __new__(cls, class_name, class_bases, classdict):
+    cls = type.__new__(cls, class_name, class_bases, classdict)
+    list = ["__accessor__", "__reader__", "__writer__"]
+    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
+    for accessor_type, method in izip(list, methods):
+        if classdict.has_key(accessor_type):
+          method(cls, *classdict[accessor_type])
+    return cls
+
+class Accessor(object):
+  __metaclass__ = AccessorType
+  def __init__(self, *args) :
+    list = ["__accessor__", "__reader__", "__writer__"]
+    for accessor_type in list:
+      if not self.__class__.__dict__.has_key(accessor_type) : continue
+      for name in self.__class__.__dict__.get(accessor_type):
+        attr_name, doc = _name_and_doc(name)
+        if not self.__dict__.get(attr_name):
+          exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>使い方は</p>
+<pre class="prettyprint ">#!/usr/bin/python
+# vim: fenc=utf-8
+import accessor
+
+class Test(accessor.Accessor) :
+  __accessor__ = [("x", "This is x value"), "y", "z"]
+  __reader__    = ["r"]
+
+  def __init__(self):
+    accessor.Accessor.__init__(self)
+
+  def get_y(self) :
+    return "new y value"
+
+obj = Test()
+obj.x = "hoge"
+
+print obj.x
+# =&gt; hoge
+
+print Test.x.__doc__
+# =&gt; This is x value
+
+print obj.y
+# =&gt; new y value
+
+obj.r = "value"
+# =&gt; AttributeError: class Test: r is a read-only attribute.</pre><p>こんな感じ。</p>
+<p><code>get_*` とか ``set_*</code> を定義すれば、独自のアクセサを定義できる。
+属性は全て <code>private(__*)</code> として保存されているので、 <code>self.__x</code> みたいな感じでクラス内ではアクセスできる。</p>
+<p>これやっててはまったのはココ。</p>
+<pre class="prettyprint ">exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
+<!-- sou
+
+exec("self.__%s = None" % (attr_name)) -->
+<p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code><span class="pre">self.__dict__[&quot;_classname__x&quot;]</span> = &quot;hoge&quot;</code> に変換される。</p>
+<p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
+<p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2006/10/24/python-generating-accessors-using-property" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2006\/10\/24\/python-generating-accessors-using-property';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

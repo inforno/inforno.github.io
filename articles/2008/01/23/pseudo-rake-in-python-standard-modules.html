@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python標準モジュールでRakeもどき</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python標準モジュールでRakeもどき</h1>
+<div class="meta">
+<time datetime="2008-01-23T04:30:23&#43;09:00">Jan 23, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>誰もが一度使うと便利さと気軽さに感動するRubyが誇るライブラリ、 <a class="reference external" href="http://raa.ruby-lang.org/project/rake/">Rake</a> 。</p>
+<p>プログラムのビルドもそうなんですが、雑多なタスクを簡単に書けて、整理できるのがなんといっても魅力的。RailsなんかではDBの作成から何から、ばんばんRakeタスクにされていますよね。</p>
+<p>さて、俺はPythonistasなので、PythonでRakeみたいなのがほしいわけです。ビルドに限っていえばPythonは <a class="reference external" href="http://www.scons.org/">Scons</a> という素晴らしいツールがあります。C言語はおろか、JAVA、PDF、PostScriptなどなど、さらにはSubversionもサポートしていますし、並列コンパイルもでき、実績も多数で申し分ありません。</p>
+<p>でも俺がしたいのは、雑多なタスクを放り込む、コレ。そういうのを簡単にやるライブラリってPythonではないんでしょうか。RubyではRakeが標準添付されるというのに。いえ、あります。前からあるんです。それが <a class="reference external" href="http://www.python.jp/doc/nightly/lib/module-distutils.html">distutils</a> 。</p>
+<p>distutils(およびその拡張のsetuptools)はPythonの標準的なパッケージ配布システムとして有名です。でも実は自分でコマンドを定義してRakeのように使うことができることはあまりしられていないのではないでしょうか。</p>
+<section>
+<h1>distutilsでコマンドを定義する</h1>
+<p>distutilsでコマンドを定義するにはdistutils.core.Commandクラスを継承し、色々オーバーライドします。説明もつけられますし、オプションもとれて、sub_commandsで依存関係(コマンド分割)を設定することもできます。</p>
+<pre class="prettyprint ">class MyCommand(Command):
+  description = "コマンドの説明"
+  user_options = [("host=", "h", "hostname")] # オプション
+  sub_commands = [("pre_task", None)] # サブコマンド
+  def run(self): pass # 実行する内容
+  def initialize_options(self): # オプションの初期化
+    self.host = None
+  def finalize_options(self):
+    if not self.host: raise "Error"
+
+setup(cmdclass={"my_command":MyCommand})</pre><p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
+</section>
+<section>
+<h1>もっと簡単にdistutilsでタスク</h1>
+<p>30行程度のテンプレを足して、簡単にタスクを定義できるようにしましょう。namespace機能はPython2.5以上限定です。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+from distutils.core import Command, setup
+from contextlib import contextmanager
+
+_cmds = {}
+_namespace = []
+_get_ns = lambda:_namespace and "_".join(_namespace)+"_" or ""
+class CommandType(type):
+  def __new__(cls, class_name, class_bases, classdict):
+    d = dict(user_options=[], finalize_options=lambda s:None)
+    d.update(classdict)
+    def _(self):
+      [setattr(self,i[0].rstrip("="),None) for i in d["user_options"]]
+    d["initialize_options"] = _
+    d["boolean_options"] = [i for i,j,k in d["user_options"] if not i.endswith("=")]
+    def _(self):
+      map(self.run_command, self.get_sub_commands())
+      return classdict["run"](self)
+    d["run"] = _
+    name = _get_ns()+class_name.lower()
+    cls = type.__new__(cls, name, class_bases + (object,), d)
+    cls.description = cls.__doc__
+    if class_name != "BaseCommand" : _cmds[name] = cls
+    return cls
+class BaseCommand(Command): __metaclass__ = CommandType
+
+@contextmanager
+def namespace(name):
+  _namespace.append(name)
+  yield _get_ns()
+  _namespace.pop()</pre><p>これだけです。これでかなり簡単にタスクが作れるようになります。例を示しましょう。</p>
+<pre class="prettyprint ">with namespace("db") as ns:
+  with namespace("create") as ns:
+    class Test1(BaseCommand):
+      """test1 discription
+      """
+      user_options = [ ("host=", "h", "hostname"),
+                      ("port=", "p", "port"),
+                      ("force", "f", "force execute")]
+      def run(self):
+        print self.host
+        print self.force
+        print "hello, ", self.__class__.__name__
+
+      sub_commands = [(ns+"test2",None)]
+
+    class Test2(BaseCommand):
+      """test2 discription
+      """
+      def run(self):
+        print "hello, ", self.__class__.__name__
+
+
+  class Test3(BaseCommand):
+    """test3 discription
+    """
+    def run(self):
+      print "hello, ", self.__class__.__name__
+
+class Test4(BaseCommand):
+  """test4 discription
+  """
+  user_options = [ ("host=", "h", "hostname") ]
+  def run(self):
+    print "hello, ", self.__class__.__name__
+
+  def finalize_options(self):
+    if not self.host:
+      raise ValueError("host must not be None")
+
+
+setup(cmdclass=_cmds)</pre><p>かなり直感的になったのではないでしょうか。withを使えば名前空間も結構簡単に実現できます。コマンドのヘルプを見てみましょう。</p>
+<pre class="prettyprint "># python task.py --help-commands
+Standard commands:
+  build            build everything needed to install
+  build_py         "build" pure Python modules (copy to build directory)
+  build_ext        build C/C++ extensions (compile/link to build directory)
+  build_clib       build C/C++ libraries used by Python extensions
+  build_scripts    "build" scripts (copy and fixup #! line)
+  clean            clean up temporary files from 'build' command
+  install          install everything from build directory
+  install_lib      install all Python modules (extensions and pure Python)
+  install_headers  install C/C++ header files
+  install_scripts  install scripts (Python or otherwise)
+  install_data     install data files
+  sdist            create a source distribution (tarball, zip file, etc.)
+  register         register the distribution with the Python package index
+  bdist            create a built (binary) distribution
+  bdist_dumb       create a "dumb" built distribution
+  bdist_rpm        create an RPM distribution
+  bdist_wininst    create an executable installer for MS Windows
+
+Extra commands:
+  db_test3         test3 discription
+
+  db_create_test2  test2 discription
+
+  db_create_test1  test1 discription
+
+  test4            test4 discription
+
+
+usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+  or: task.py --help [cmd1 cmd2 ...]
+  or: task.py --help-commands
+  or: task.py cmd --help</pre><p>こんな感じで、標準コマンドに加え「Extra commands」という形で定義したタスクが使えるようになります。もちろん、distutilsのビルド機能、パッケージ管理機能も使えますよ。</p>
+<p>db_create_test1のヘルプを見てみましょう。</p>
+<pre class="prettyprint "># python task.py db_create_test1 --help
+Common commands: (see '--help-commands' for more)
+
+  setup.py build      will build the package underneath 'build/'
+  setup.py install    will install the package
+
+Global options:
+  --verbose (-v)  run verbosely (default)
+  --quiet (-q)    run quietly (turns verbosity off)
+  --dry-run (-n)  don't actually do anything
+  --help (-h)     show detailed help message
+
+Options for 'db_create_test1' command:
+  --host (-h)   hostname
+  --port (-p)   port
+  --force (-f)  force execute
+
+usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+  or: task.py --help [cmd1 cmd2 ...]
+  or: task.py --help-commands
+  or: task.py cmd --help</pre><p>ちゃんとオプションが表示されていますね。最後に、db_create_test1タスクを実行してみましょう。</p>
+<pre class="prettyprint "># python task.py db_create_test1 --host=localhost
+running db_create_test1
+running db_create_test2
+hello,  Test2
+localhost
+None
+hello,  Test1</pre><p>サブコマンドのdb_create_test2が実行されていること、きちんとオプションがselfの属性として設定されていることがわかりますね。</p>
+<hr class="docutils" />
+<p>標準的な機能だけでもRakeのようなタスクはつくれますが、30行程度の工夫で断然便利になります。Rakeと違いrakeコマンドのような外部コマンドも必要なく、pythonのスクリプト1つで実現できるのも手軽です。というわけで、雑多なタスクはdistutilsでまとめてみてはいかがでしょうか。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2008\/01\/23\/pseudo-rake-in-python-standard-modules';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

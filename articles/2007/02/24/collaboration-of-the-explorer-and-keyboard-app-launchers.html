@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: コマンドライン型ランチャーとexplorerの連携</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">コマンドライン型ランチャーとexplorerの連携</h1>
+<div class="meta">
+<time datetime="2007-02-24T03:11:39&#43;09:00">Feb 24, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/craftlaunch/" rel="tag" itemprop="keywords">craftlaunch</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p><a class="reference external" href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">こちら</a> にも書いたとおり、Windowsではコマンドライン型ランチャーのcraftlaunchとexplorer.exeを連携させて使ってます。</p>
+<p>最前面のディレクトリ（アクティブなディレクトリ）に対して、キーボードで、Linuxと同じ感覚でmkdirとかrmとかしたいなー、ってのを実現してみました。</p>
+<p>今まではC言語で作った自前のライブラリで処理していたんですが、COMを使ったものに書き直しました。同様の目的にはAHKが使えるんですが、やっぱり使い慣れた言語でいろいろコマンドを作りたかったのでCOM＋Javascriptにしてみました。もちろん、COMなのでRubyでもPerlでもPythonでも同様の実装が作れます。</p>
+<p>craftlaunchを前提にしてますが、コマンドライン型のランチャーならなんでも適応できる方法だと思います。explorerを使っていてもキーボードだけでmkdir,rm,mvなんかが実行できちゃって、非常に便利です。</p>
+<ul class="simple">
+<li><a class="reference external" href="/statics/files/explorehelper.zip">ダウンロード</a></li>
+</ul>
+<p>簡単なコマンドラインランチャーもどきも同梱してますので、現在コマンドライン型ランチャーをいれていない人でも試せます。</p>
+<p>以下readmeからの転載です。</p>
+<section>
+<h1>利用方法</h1>
+<p>explorehelper.wsf,explorehelper.js,getadir.exeは同じフォルダになければ
+なりません。</p>
+<pre class="prettyprint ">explorehelper.wsf [command] [args]</pre><p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、
+ctrl-eなどにショートカット登録しておくと良いでしょう。すると、
+mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
+</section>
+<section>
+<h1>それぞれのファイルについて</h1>
+<section>
+<h2>simple_launcher.exe</h2>
+<p>コマンドライン型ランチャーを導入していない方でも試せるように、AHKで作った
+簡単なランチャーを同梱してあります。ただしこのランチャーは</p>
+<ul class="simple">
+<li>ホットキー（有効化）はalt+space</li>
+<li>コマンド実行はctrl+e</li>
+</ul>
+<p>に固定されています。つまり</p>
+<p>「起動」→(「alt+space」でアクティブに)→「command入力」→「ctrl+e」で実行</p>
+<p>という操作になります。気にいった人はちゃんとしたコマンドライン型ランチャー
+の導入をオススメします。</p>
+</section>
+<section>
+<h2>getahwnd.exe</h2>
+<p>最前面のExplorer.exeのウインドウハンドルを出力するだけのプログラムです。</p>
+</section>
+<section>
+<h2>explorehelper.js</h2>
+<p>JscriptによるCOMに対するヘルパーです。</p>
+</section>
+<section>
+<h2>explorehelper.wsf</h2>
+<p>Jscriptによるカスタムコマンドが定義されたファイルです。このファイルを編集
+することによってcommandが自由に追加できます。</p>
+</section>
+</section>
+<section>
+<h1>ビルトインコマンド</h1>
+<ul class="simple">
+<li>mv</li>
+<li>mkdir</li>
+<li>cmd</li>
+<li>touch</li>
+<li>rm</li>
+<li>chvm : 表示モードを変更します。</li>
+<li>ls : -x, -s, -tオプションのみ受け付けます。つまりフォルダ内をソートします。</li>
+<li>verbs : 右クリックメニューを出します。shift+F10と同じ効果です。</li>
+</ul>
+<p>説明の無いものはUnixのそれから類推してください。</p>
+</section>
+<section>
+<h1>カスタムコマンドの追加について</h1>
+<p>explorehelper.wsfを編集することによってcommandが自由に追加できます。</p>
+<pre class="prettyprint ">var procs = {
+  mv : function() {
+    var path = get_dir_and_focused_item_path();
+    var name = InputBox("新しい名前を入力してください。", path.item._base_name());
+    if(name) get_dir_and_focused_item().item.Name = name;
+  }._item_proc()._auto_win_activate(),
+
+  mkdir : function() {
+    var path = get_dir_and_focused_item_path();
+    var name = InputBox("フォルダ名を入力してください。");
+    if(name) fs().GetFolder(path.win).SubFolders.Add(name);
+  }._auto_win_activate(),
+  .
+  .
+  .
+  .</pre><p>commandは上記のように、procオブジェクトのプロパティとして定義されます。その際、
+command名がキー、値は引数なしの関数になります。キーに大文字は使用できません。</p>
+<p>commandを定義する際にはexplorehelper.jsで定義されたヘルパを使用することができます。
+カスタムcommandを定義しようとする人は当然、JScript(Javascript)が理解できる人
+だと思いますので、ヘルパの詳細はexplorehelper.jsを見てください。ここではリスト
+のみ紹介します。</p>
+<ul class="simple">
+<li>InputBox : 入力フォームを表示します。</li>
+<li>MessageBox : メッセージを表示します。</li>
+<li>Confirm : 確認フォームを表示します。</li>
+<li>shell : Shell.Applicationオブジェクト返します。</li>
+<li>wscript_shell : WScript.Shellオブジェクトを返します。</li>
+<li>fs : Scripting.FileSystemObjectを返します。</li>
+<li>win_activate : ディレクトリをアクティブにします。SendKeysする前に実行します。</li>
+<li>get_dir_and_focused_item : アクティブなディレクトリと選択されているアイテムを返します。</li>
+<li>get_dir_and_focused_item_lst : アクティブなディレクトリと選択されているアイテムのリストを返します。</li>
+<li>get_dir_and_focused_item_path : アクティブなディレクトリと選択されているアイテムのパスを返します。</li>
+<li>get_dir_and_focused_item_path_lst : アクティブなディレクトリと選択されているアイテムのパスのリストを返します。</li>
+<li>$wsh_args : argsを格納した配列です。</li>
+<li>Function.prototype._item_proc : アイテムに対する手続きであることを宣言します。アイテムを選択していない場合、処理が実行されなくなります。</li>
+<li>Function.prototype._auto_win_activate : 手続きを終了後、ウインドウをアクティブにします。</li>
+</ul>
+<hr class="docutils" />
+<p>こんな感じです。COMなら大概なんでもできるので、便利です。しかもJScriptとexeなのでUSBメモリなどにいれて持ち運べますので、俺ポータビリティもそこそこあります。</p>
+<p>また、いかにAHKスクリプトが簡単でも、普段使い慣れた言語でかけるほうが落ち着きます。AHKなんかをみてると、完全なDSLというのは俺的に扱うのがめんどくさくて（覚える熱意があればいいんだろうけど、趣味で使うものにそれほどの情熱がでるかというと・・・）なじみにくいようだ。Rakeみたいな言語内DSLがいいよね、やっぱ。ああ、2007年はRubyの年になるんでしょうかねえ。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2009/06/28/open-cmd-here">一瞬で今いるフォルダでcmd.exeを開く</a></li>
+<li><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware">vimでvmwareとWindowsのクリップボードを同期する</a></li>
+<li><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">キーボード派のWindows開発環境</a></li>
+<li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2007\/02\/24\/collaboration-of-the-explorer-and-keyboard-app-launchers';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name"><a href="/articles/2012/04/11/my-python-oss-development-environments" itemprop="url">俺的モダンなPythonのOSS開発環境</a></h1>
+<div class="meta">
+<time datetime="2012-04-11T19:01:55&#43;09:00">Apr 11, 2012</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>趣味プログラマです、こんにちわ。一応生きてます。</p>
+<p>さて、Pythonista各位におかれましてはmoratoriumをエンジョイされていますでしょうか。そろそろライブラリも著名なものはPython3に対応してきましたし、そろそろ本格的にPython3、となっているころ合いですね。というか、Python3に対応してないとちょっと恥ずかしくなってきましたね。</p>
+<p>とはいえ、Python2は根強く残るでしょう。というわけでPython2とPython3両方で動くコードを書きましょう。テストも書くのは当たり前ですし、せっかくなのでCIもしましょう。</p>
+<p>と私も最近思ったので快適に開発を進めるための環境についてメモです。</p>
+<ul class="simple">
+<li>github : 言わずもがなですね。</li>
+<li>travis : githubと連携してCIできるサービス。P言語にも対応していて、最近アツいです。</li>
+<li>tox    : 複数のPython処理系でvirtualenvを作りテストを流せる。</li>
+<li>distribute : 改良版setuptools。</li>
+<li>pytest : toxと親和性の高いテストツール。noseでもよいですが私はpytestを押します。</li>
+</ul>
+<section>
+<h1>Python2とPython3のインストール</h1>
+<p>あたりまえですが、Python2系とPython3系両方入れておきましょう。</p>
+</section>
+<section>
+<h1>toxのインストール</h1>
+<p>さて、早速toxを入れていくわけですがこれにはPython2系を使います。</p>
+<pre class="prettyprint ">$ wget http://python-distribute.org/distribute_setup.py
+$ python27 distribute_setup.py
+$ easy_install virtualenv tox</pre><p>簡単ですね。</p>
+</section>
+<section>
+<h1>プロジェクトを始める - ファイル・ディレクトリ構成</h1>
+<p>次に、プロジェクトの基本形を作りましょう。私は以下のような構成にしています。</p>
+<pre class="prettyprint ">/
+  + - .tox                        : toxにより生成されるディレクトリ。
+  + - docs                        : ドキュメント系はココ。
+           + - source             : ドキュメントのソース。
+           + - build
+                     + - html(link to gh-pages)
+                                  : sphinxで生成されたHTMLドキュメント。
+                                    gh-pagesブランチへのリンク。
+  + - src                         : ソースファイル類。
+           + - プロジェクト名
+           + - tests
+  - tox.ini                       : tox設定ファイル。
+  - .travis.yml                   : travis設定ファイル。
+  - setup.py                      : セットアップスクリプト。
+  - MANIFEST.in                   : 配布パッケージ生成用定義ファイル。
+  - README.rst                    : 私を読んで。
+  - CHANGES.rst                   : 変更履歴。</pre><p>普通です。ポイントは <code>docs/build/html</code> をgh-pagesへのリンクにすること。これでドキュメントの管理が非常に楽になります。</p>
+</section>
+<section>
+<h1>tox.iniの作成</h1>
+<p>tox.iniに依存関係と、どの処理系でテストするか、テストはなにを使ってやるかを書きましょう。だいたいの場合、それだけで十分です。</p>
+<pre class="prettyprint ">[tox]
+envlist = py27,py32
+
+[testenv]
+changedir=src/tests
+deps=pytest
+     pytest-cov
+     その他依存パッケージ
+commands=
+  py.test \
+    -rxs \
+    --cov-report term-missing \
+    --cov テスト対象パッケージ名\
+    --basetemp={envtmpdir}  \
+    []</pre><p>見ての通りの内容です。Pytnon27とPython32でテストします、と。この時処理系のパス(python.exeやpython27などのパス)はOSごとに <strong>デフォルト</strong> の場所が使われます。 <code><span class="pre">--configure</span></code> でprefixを指定していたり、Windowsで別フォルダにインストールしている場合は以下のようにします。</p>
+<pre class="prettyprint ">[tox]
+envlist = py27,py32
+
+[testenv:py27]
+basepython=処理系へのパス
+
+[testenv:py32]
+basepython=処理系へのパス
+
+[testenv]
+changedir=src/tests
+deps=pytest
+     pytest-cov
+     その他依存パッケージ
+commands=
+  py.test \
+    -rxs \
+    --cov-report term-missing \
+    --cov テスト対象パッケージ名\
+    --basetemp={envtmpdir}  \
+    []</pre></section>
+<section>
+<h1>とりあえず開発</h1>
+<p>とりあえず何かコードを書いて、テストも書きましょう。</p>
+</section>
+<section>
+<h1>toxでテスト</h1>
+<p>ではtoxでテストしましょう。tox.iniがあるディレクトリに移動してから</p>
+<pre class="prettyprint ">$ tox</pre><p>これで</p>
+<ul class="simple">
+<li>それぞれの処理系のvirtualenvの作成</li>
+<li>依存ライブラリのインストール</li>
+<li>テストの実行</li>
+</ul>
+<p>が行われ、結果が表示されます。py27だけ流したい場合は <code>tox <span class="pre">-e</span> py27</code> とするか環境変数 <code>TOXENV=py27</code> を設定したうえで <code>tox</code> とすればOK.</p>
+<p>拙作のwebフレームワーク <a class="reference external" href="http://yuin.github.com/rays.html">rays</a> ですと以下のような感じです(長いのでpy32の結果のみ)。pytest-covを入れているのでC0カバレッジも表示されます。</p>
+<pre class="prettyprint ">_________________________________________________________________________________________ [tox sdist] __________________________________________________________________________________________
+[TOX] ***creating sdist package
+[TOX] /home/yuin/github/rays$ /opt/python2.7.2/bin/python2.7 setup.py sdist --formats=zip --dist-dir .tox/dist &gt;.tox/log/0.log
+[TOX] ***copying new sdistfile to '/home/yuin/.tox/distshare/rays-0.4.0.zip'
+______________________________________________________________________________________ [tox testenv:py32] ______________________________________________________________________________________
+[TOX] ***creating virtualenv py32
+[TOX] /home/yuin/github/rays/.tox$ /opt/python3.2.2/bin/python3.2 /opt/python2.7.2/lib/python2.7/site-packages/virtualenv-1.7.1.2-py2.7.egg/virtualenv.py --no-site-packages py32 &gt;py32/log/0.log
+[TOX] ***installing dependencies: pytest, pytest-cov, webtest, sphinx
+[TOX] /home/yuin/github/rays/.tox/py32/log$ ../bin/pip install --download-cache=/home/yuin/github/rays/.tox/_download pytest pytest-cov webtest sphinx &gt;1.log
+[TOX] ***installing sdist
+[TOX] /home/yuin/github/rays/.tox/py32/log$ ../bin/pip install --download-cache=/home/yuin/github/rays/.tox/_download /home/yuin/github/rays/.tox/dist/rays-0.4.0.zip &gt;2.log
+[TOX] /home/yuin/github/rays/src/tests$ ../../.tox/py32/bin/py.test -rxs --cov-report term-missing --cov rays --basetemp=/home/yuin/github/rays/.tox/py32/tmp
+===================================================================================== test session starts ======================================================================================
+platform linux2 -- Python 3.2.2 -- pytest-2.2.3
+collected 120 items
+
+test_application.py ........................
+test_async_extension.py sss
+test_database.py .......
+test_defaultattrdict.py .....
+test_extension.py .
+test_functions.py .........
+test_hookable.py .....
+test_request.py .....................
+test_response.py ...............
+test_session.py ............
+test_staticfile_extension.py .....
+test_templating.py .............
+----------------------------------------------------------------------- coverage: platform linux2, python 3.2.2-final-0 ------------------------------------------------------------------------
+Name                                           Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------
+/home/yuin/github/rays/src/rays/__init__    1648    190    88%   82, 259, 807-808, 824-839, 842-888, 892-901, 909-917, 925-933, 946-954, 1408, 1509, 1595-1597, 1934-1943, 1973, 2033-2063, 2088-2089, 2547-2560, 2563-2571, 2574-2575, 2579-2585, 2589, 2593-2596, 2600, 2604-2615
+/home/yuin/github/rays/src/rays/compat        98     42    57%   11-13, 17, 19-20, 67-118
+----------------------------------------------------------------------------
+TOTAL                                           1746    232    87%
+=================================================================================== short test summary info ====================================================================================
+SKIP [3] /home/yuin/github/rays/.tox/py32/lib/python3.2/site-packages/_pytest/skipping.py:118: condition: SkipIf._no_gevent
+
+============================================================================ 117 passed, 3 skipped in 14.81 seconds ============================================================================
+________________________________________________________________________________________ [tox summary] _________________________________________________________________________________________</pre></section>
+<section>
+<h1>.travis.ymlの作成</h1>
+<p>無事、複数のインタプリタでテストできました。次はCIです。 <a class="reference external" href="http://travis-ci.org">Travis CI</a> を使うと、githubにpushしたタイミングでビルド＆テストが自動でできます。</p>
+<p>まずは、Travis CIにgithubのアカウントでログインして、対象のレポジトリでCIを有効にします。</p>
+<p>次に、Travis CIでのビルド＆テスト設定を.travis.ymlに書きます。ここではtoxを使っていますから、以下のようになります。</p>
+<pre class="prettyprint ">language: python
+env:
+  - TOXENV=py27
+  - TOXENV=py32
+install:
+  - pip install --use-mirrors tox
+script: tox</pre><p><code>TOXENV</code> でテストする環境を指定します。今回の例ではpy27とpy32です。</p>
+<p>これでgithubにpushするとTravis CIが動くようになりました。</p>
+</section>
+<section>
+<h1>Travis CI + tox快適です</h1>
+<p>ガンガンPython3対応をしましょう！</p>
+</section>
+
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name"><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2" itemprop="url">XREAで好きなバージョンのPythonを使う方法2</a></h1>
+<div class="meta">
+<time datetime="2009-01-25T01:00:00&#43;09:00">Jan 25, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/xrea/" rel="tag" itemprop="keywords">xrea</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
+<p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
+<p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
+<section>
+<h1>Pythonをインストール</h1>
+<p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
+<pre class="prettyprint ">mkdir -p ~/root/usr/local/src
+cd ~/root/usr/local/src
+wget http://www.python.org/ftp/python/2.5.4/Python-2.5.4.tgz
+tar zxvf Python-2.5.4.tgz
+cd Python-2.5.4
+./configure --prefix=~/root/usr/local
+make
+make install</pre><p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
+</section>
+<section>
+<h1>hashlibをインストール</h1>
+<p>なんで、自前でhashlibを単体でいれます。</p>
+<pre class="prettyprint ">cd ~/root/usr/local/src
+wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
+tar zxvf hashlib-20081119.tar.gz
+cd hashlib-20081119
+vi setup.py</pre><p>はい、 <code>setup.py</code> を編集しましょう。普通にbuildするとこれでも <code>md5</code> が入りません。</p>
+<pre class="prettyprint ">105　　 if (ssl_inc_dir and
+106　　　　 ssl_lib is not None and
+107　　　　 openssl_ver &gt;= 0x00907000):
+108
+109　　　　 print 'Using OpenSSL version 0x%08x from' % openssl_ver
+110　　　　 print ' Headers:\t', ssl_inc_dir
+111　　　　 print ' Library:\t', ssl_lib
+112
+113　　　　 # The _hashlib module wraps optimized implementations
+114　　　　 # of hash functions from the OpenSSL library.
+115　　　　 exts.append( Extension('_hashlib', ['_hashopenssl.c'],
+116　　　　　　　　　　　　　　　　include_dirs = [ ssl_inc_dir ],
+117　　　　　　　　　　　　　　　　library_dirs = [ os.path.dirname(ssl_lib) ],
+118　　　　　　　　　　　　　　　　libraries = osNameLibsMap[os.name]) )
+119　　 exts.append( Extension('_sha', ['shamodule.c']) )
+120　　 exts.append( Extension('_md5',
+121　　　　　　　　　　 sources = ['md5module.c', 'md5.c'],
+122　　　　　　　　　　 depends = ['md5.h']) )</pre><p>119-120あたり、強制的に <code>_md5</code> を入れるようにします。あとは</p>
+<pre class="prettyprint ">~/root/usr/local/bin/python setup.py build
+~/root/usr/local/bin/python setup.py install</pre><p>で <code>hashlib</code> が入ります。</p>
+</section>
+<section>
+<h1>easy_installをインストール</h1>
+<p>これで <code>md5</code> が使えるようになったので</p>
+<pre class="prettyprint ">cd ~/root/usr/local/src
+wget http://peak.telecommunity.com/dist/ez_setup.py
+~/root/usr/local/bin/python ez_setup.py</pre><p>これで無事 <code>easy_install</code> が入ります。あとは</p>
+<pre class="prettyprint ">~/root/usr/local/bin/easy_install -U -Z MySQL_Python</pre><p>てな感じで必要なモジュールを入れていきましょう。</p>
+</section>
+<section>
+<h1>というわけで</h1>
+<p>わりと普通にxreaでPythonが使えています。</p>
+</section>
+
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name"><a href="/articles/2009/11/11/go-language" itemprop="url">個人的Go雑感&amp;メモ</a></h1>
+<div class="meta">
+<time datetime="2009-11-11T20:00:00&#43;09:00">Nov 11, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/go/" rel="tag" itemprop="keywords">go</a></span>
+  
+  <span class="tag"><a href="/articles/tag/language/" rel="tag" itemprop="keywords">language</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>Googleが <a class="reference external" href="http://golang.org/">Goという新しいプログラミング言語</a> を出したようで。早速、インストールして軽くドキュメントを流し読みしてみました。</p>
+<p>英語なんて読みたくないよ、という人もいるかもしれないし、誰かの役に立つかもしれないので自分用メモおいときます。完全に自分用なんである程度他の言語の知識がある人向けな上、ざっくり流し読みなんで間違ってるかも。</p>
+<section>
+<h1>どんな言語？</h1>
+<ul>
+<li><p class="first">ネイティブコードを吐く、コンパイル型。</p>
+</li>
+<li><p class="first">速度はCレベル。</p>
+</li>
+<li><p class="first">GC搭載。ポインタはあるけど、ポインタ演算はできません。</p>
+</li>
+<li><dl class="first docutils">
+<dt>各種アーキに最適化された、それぞれのコンパイラセットを持ちます。例：</dt>
+<dd><ul class="first last simple">
+<li>6g, 6l : amd64</li>
+<li>8g, 8l : i386</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">linux, mac, naclに対応。</p>
+</li>
+<li><p class="first">動的型言語と静的型言語のおいしいとこどり。</p>
+</li>
+<li><p class="first">concurrent処理が組み込まれてます。</p>
+</li>
+</ul>
+</section>
+<section>
+<h1>個人的雑感</h1>
+<ul>
+<li><dl class="first docutils">
+<dt>こんな言語設計思想かなあと感じたり</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>とにかく、シンプルな言語に。</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>C++の複雑な部分などはできるだけはずしているような。</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>いわゆるクラスベースのオブジェクト指向はない。</dt>
+<dd><ul class="first last simple">
+<li>継承はない。</li>
+<li>あるのはフラットなインタフェース空間のみ。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">例外もない。</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">低レイヤからは離れすぎたくない。</p>
+</li>
+<li><p class="first">concurrentを言語的にサポートしたい。</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>以下の言語からの影響を感じたり</dt>
+<dd><ul class="first last simple">
+<li>言語コアはC。</li>
+<li>C++はパッケージの書き方、記法に影響がみられる。</li>
+<li>命名規則や記法にPythonの影響がみられる。</li>
+<li>concurrentな部分はErlangから影響をうけている。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section>
+<h1>言語仕様</h1>
+<p>自分なりに簡単にまとめて見ます。</p>
+<section>
+<h2>変数への代入</h2>
+<p>下へ行くほど省略形。 <code>var</code> もあるから <code>const</code> もあるでよ。</p>
+<pre class="prettyprint ">var s string = "";
+var s = "";
+s := "";</pre></section>
+<section>
+<h2>オブジェクト構造</h2>
+<p>値扱いの型と参照型があります。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>値扱い <span class="classifier-delimiter">:</span> <span class="classifier">代入、関数への私はコピーとなる。配列もまるごとコピーされる。</span></dt>
+<dd><ul class="first last simple">
+<li>各種数値 :  <code>int</code> ,  <code>float</code> といったプラットフォームごとにサイズがきまる型と <code>int32</code> のようにサイズ固定の型。</li>
+<li><code>string</code>  : 不変、UTF8、ただのバイト配列</li>
+<li>配列</li>
+<li><code>struct</code>  : ユーザ定義型</li>
+<li>などなど</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>参照 <span class="classifier-delimiter">:</span> <span class="classifier">3つのみ</span></dt>
+<dd><ul class="first last simple">
+<li><code>map</code>  : 辞書</li>
+<li><code>slice</code>  : 明示的なサイズを持たない、配列のようなもの</li>
+<li><code>channel</code>  : concurrentで使う</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>値扱い型のアロケート方法 :  <code>new <span class="pre">-&gt;</span> T*</code> を返す</p>
+<pre class="prettyprint ">var t *T = new(T);</pre><p>参照型のアロケート方法 :  <code>make <span class="pre">-&gt;</span> T</code> を返す</p>
+<pre class="prettyprint ">m := make(map[string]int);
+// これはダメ
+var m map[string]int;</pre></section>
+<section>
+<h2>配列とスライス</h2>
+<ul class="simple">
+<li>配列は「値」。でユーザがメモリ構造などを読める。スライスはコンパイラがよしなに確保する、参照型。</li>
+</ul>
+<p>例えば <code>int</code> 型配列のポインタを受け取る場合。</p>
+<p>標準配列(&amp;がいる)</p>
+<pre class="prettyprint ">s := sum(&amp;[3]int{1,2,3});
+s := sum(&amp;[...]int{1,2,3});</pre><p>スライス</p>
+<pre class="prettyprint ">s := sum([]int{1,2,3});</pre></section>
+<section>
+<h2>辞書型</h2>
+<pre class="prettyprint ">timeZone := map[string]int{
+  "UTC": 0*60*60,
+  "EST": -5*60*60,
+  "CST": -6*60*60,
+  "MST": -7*60*60,
+  "PST": -8*60*60,
+}
+
+seconds, ok = timeZone[tz]
+//値がなければokはfalse
+if seconds, ok := timeZone[tz]; ok {
+    return seconds
+}
+//消す場合
+timeZone["UTC"] = 0, false;</pre></section>
+<section>
+<h2>パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h2>
+<p>命名規則に特徴があります。 <strong>大文字始まり以外は外部から見えない</strong> が原則。単なる命名規則ではなく、そういう仕様。</p>
+<section>
+<h3>パッケージ</h3>
+<p>パッケージ文でファイルの先頭に書きます。これが基本的な単位となります。</p>
+<pre class="prettyprint ">package file</pre></section>
+<section>
+<h3>制御構造</h3>
+<p>特徴は</p>
+<ul class="simple">
+<li>()がいらない。</li>
+<li><code>if</code> や <code>switch</code> などの条件部に複数の文がかける</li>
+<li>ループは <code>for</code> のみ( <code>while</code> や <code>do</code> はない)</li>
+<li><code>switch</code> が強力に(内容的にif-else if-elseチェイン)</li>
+<li>concurrent用に <code>select</code> がある</li>
+</ul>
+<p>という点。かと。</p>
+<p>ifの例</p>
+<pre class="prettyprint ">if i % prime != 0 {
+    fmt.Printf("%d", i);
+}</pre><p>switchの例</p>
+<pre class="prettyprint ">switch nr, er := f.Read(&amp;buf); true {
+           case nr &lt; 0:
+               fmt.Fprintf(os.Stderr, "cat: error reading from %s: %s\n", f.String(), er.String());
+               os.Exit(1);
+           case nr == 0: // EOF
+               return;
+           case nr &gt; 0:
+               if nw, ew := file.Stdout.Write(buf[0:nr]); nw != nr {
+                   fmt.Fprintf(os.Stderr, "cat: error writing from %s: %s\n", f.String(), ew.String());
+               }
+}</pre><p>caseに条件式がかける。breakは自動でされる。</p>
+</section>
+<section>
+<h3>型定義</h3>
+<p><code>type</code> , <code>struct</code> キーワードを組み合わせる。 <strong>メンバにメソッドは含みません。</strong></p>
+<pre class="prettyprint ">type File struct {
+    fd int; // file descriptor number
+    name string; // file name at Open time
+}</pre><p>メンバ名が小文字なので、パッケージ外からは見えません。</p>
+</section>
+<section>
+<h3>関数とメソッド</h3>
+<ul class="simple">
+<li>両方とも <code>func</code> キーワードで定義。</li>
+<li>違いはレシーバを指定するか否か。 レシーバを明示的に書くところはPythonっぽい。</li>
+<li>多値が返せる。</li>
+</ul>
+<p>この多値がかえせる、というのがGoでは非常に重要な意味をもっています。</p>
+<p>関数定義: 多値を返しています。大文字始まりなので、外部に公開されます。</p>
+<pre class="prettyprint ">func Open(name string, mode int, perm int) (file *File, err os.Error) {
+     r, e := syscall.Open(name, mode, perm);
+     if e != 0 {
+         err = os.Errno(e);
+     }
+     return newFile(r, name), err
+}</pre><p>返す型に <code>(file *File, err os.Error)</code> と変数名がついてますね。これをつけておけば <code>return;</code> ってかくだけでその名前の変数を返してくれます。</p>
+<pre class="prettyprint ">func Open(name string, mode int, perm int) (file *File, err os.Error) {
+     r, e := syscall.Open(name, mode, perm);
+     if e != 0 {
+         err = os.Errno(e);
+     }
+     file = newFile(r, name)
+     return;
+}</pre><p>こんな風にもかけるってことです。おそらく、エラー処理が絡む場合とかこっちのほうが書きやすかったりするんじゃないですかね。</p>
+<p>クロージャにもなります。いわゆる関数ポインタをとるようなところで、関数がそのままかけて外部変数も見えます。</p>
+<pre class="prettyprint ">startServer(func(a, b int) int { return a + b });</pre><p>メソッド定義。 <code>(file *File)</code> がレシーバの指定。</p>
+<pre class="prettyprint ">func (file *File) Close() os.Error {
+    if file == nil {
+        return os.EINVAL
+    }
+    e := syscall.Close(file.fd);
+    file.fd = -1; // so it can't be closed again
+    if e != 0 {
+        return os.Errno(e);
+    }
+    return nil
+}</pre><p>メソッド定義が <code>struct</code> での型定義時ではないことに注目。つまり <strong>組み込み型などに対してもあとからメソッドを作成できるのです</strong> 。こんな感じ。</p>
+<pre class="prettyprint ">type IntArray []int
+func (p IntArray) Len() int { return len(p); }</pre></section>
+<section>
+<h3>インタフェース</h3>
+<p>これ重要。Goはいわゆるクラスがないので、継承などもなく  <strong>インタフェースによるダックタイピングでそれらを片付けます</strong> 。  <code>interface</code> キーワードで定義。</p>
+<pre class="prettyprint ">type reader interface {
+     Read(b []byte) (ret int, err os.Error);
+     String() string;
+}</pre><p>このように、 <code>Read</code> と <code>String</code> が定義されていればそれは <code>reader</code> なんだ、と考えます( <strong>ダックタイピング</strong> )。</p>
+<p>実行時、動的にインタフェースが実装されているかも検査できます。</p>
+<pre class="prettyprint ">   s, ok := v.(Stringer);
+
+``v`` が ``Stringer`` インタフェースを満たしていれば</pre><ul class="simple">
+<li><code>s</code> に <code>Stringer</code> オブジェクトとしてのv</li>
+<li><code>ok</code> に <code>true</code> が</li>
+</ul>
+<p>がかえってきます。</p>
+</section>
+</section>
+<section>
+<h2>Concurrency</h2>
+<p>concurrentプログラミングはGoの大きな特徴。 <strong>CSP(Communicating Sequential Processes)</strong> に基づいてます。並行して動く「goroutines」という軽量プロセスが「channel」を介してやりとり。ガードと多重化のためにselect文があります。</p>
+<p>channelは単体ではなくchan 受け渡しする型という感じで書きます。以下はチュートリアルのコードまんまです。</p>
+<pre class="prettyprint ">func generate(ch chan int) {
+    for i := 2; ; i++ {
+        ch &lt;- i // Send 'i' to channel 'ch'.
+    }
+}</pre><p><code>int</code> を扱う <code>channel</code> を受け取ってそれにiを送っていきます。</p>
+<pre class="prettyprint ">func filter(in, out chan int, prime int) {
+    for {
+        i := &lt;-in; // Receive value of new variable 'i' from 'in'.
+        if i % prime != 0 {
+            out &lt;- i // Send 'i' to channel 'out'.
+        }
+    }
+}</pre><p>送られた <code>i</code> が一定の条件を満たしていたら、 <code>int</code> を扱う <code>out</code> というchannelに送ります。</p>
+<pre class="prettyprint ">func main() {
+    ch := make(chan int); // Create a new channel.
+    go generate(ch); // Start generate() as a goroutine.
+    for {
+        prime := &lt;-ch;
+        fmt.Println(prime);
+        ch1 := make(chan int);
+        go filter(ch, ch1, prime);
+        ch = ch1
+    }
+}</pre><p>channelは参照型なので <code>make</code> で作ります。 <code>go</code> で実行します。これは丁寧に書いた感じ。クロージャを使えばもっとシンプル。</p>
+<pre class="prettyprint ">func generate() chan int {
+    ch := make(chan int);
+    go func(){
+        for i := 2; ; i++ {
+            ch &lt;- i
+        }
+    }();
+    return ch;
+}</pre><section>
+<h3>多重化とガード</h3>
+<p>複数のチャンネルをとりあつかって、それらをガードにより振り分けられます。ErlangやScalaでおなじみの書き方です。</p>
+<pre class="prettyprint ">func server(op binOp, service chan *request, quit chan bool) {
+    for {
+        select {
+        case req := &lt;-service:
+            go run(op, req); // don't wait for it
+        case &lt;-quit:
+            return;
+        }
+    }
+}</pre><p><code>request</code> 型のポインタを扱うchannelと <code>bool</code> 型を扱うchannelを使って、多重化しています。 <code>quit</code> チャンネルに値が送られてくるまでは、送られてきたものから良しなに処理してくれる、という感じですね。</p>
+</section>
+</section>
+</section>
+<section>
+<h1>というわけで</h1>
+<p>なぐり書きしたメモでした。変なことかいてたらすみません。まぁこんな感じな言語かなあ、という程度で。</p>
+<p>繰り替えしになりますが、C言語を元にシンプルに保ちながらconcurrentプログラミングしやすくしてます、って感じですね。完全にダックタイピングベースで多値を多様するスタイルはおもしろいですね。なんとなく見た目がキモく感じるのは私の気のせいでしょう。</p>
+<p>というか数ヶ月もブログ放置してたのかー。コード書いてないわけじゃないんですけど、たいしたもんかいてないんですよね。割合的には8割がたCかな。月一くらいはブログ書いていきたいなあ・・・</p>
+</section>
+
+
+  </div>
+</article>
+
+
+
+
+
+<nav class="paging"><ul><li class="previous"><a href="/page/3/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li><a href="/page/2/" class="page">2</a></li><li><a href="/page/3/" class="page">3</a></li><li class="active">4</li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/5/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

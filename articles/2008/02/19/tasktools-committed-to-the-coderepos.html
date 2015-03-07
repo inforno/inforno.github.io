@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python版Rake「tasktools」をCodeReposにコミットした</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python版Rake「tasktools」をCodeReposにコミットした</h1>
+<div class="meta">
+<time datetime="2008-02-19T01:13:10&#43;09:00">Feb 19, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/tasktools/" rel="tag" itemprop="keywords">tasktools</a></span>
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p><a class="reference external" href="http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules">以前紹介したPython版Rakeもどき</a> を改良してCodeReposに突っ込みました。まだ100行くらいです。自分では一番使っている自作モジュールなのでそろそろまとめようと思っていたのです。</p>
+<p><a class="reference external" href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.p">http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py</a></p>
+<section>
+<h1>改良点</h1>
+<ul class="simple">
+<li><code>setuptools</code> があるときはそっちを使うようにした。</li>
+<li><code>use_without_standard</code> メソッドによって <code>distutils</code> 標準タスクを消すことができる。これによって <code><span class="pre">--help-commands</span></code> の画面がすっきりする。また、この場合名前空間のセパレータに <code>:</code> を用いるようになった。</li>
+<li><code>global_description</code> によってタスクファイル自体に説明がつけられるようになった。</li>
+<li><code>load_path</code> メソッドで指定したディレクトリ以下を再帰的に検索し「 <code>tasks.py</code> 」という名前のファイルを読み込むことができるようになった。</li>
+<li><code><span class="pre">--help-commands</span></code> で表示されるコマンドの並び順をソートするようにした。</li>
+<li><code><span class="pre">--help-commands</span></code> でサブコマンドを一覧表示するようにした。</li>
+</ul>
+</section>
+<section>
+<h1>使用方法</h1>
+<p>以前書いたのとほとんど同じなんですが、まとめなおしておきます。</p>
+<section>
+<h2>tasktoolsとは？</h2>
+<p><code>distutils</code> および <code>setuptools</code> を拡張してextra commandを簡単に作成するためのユーティリティです。RubyにおけるRakeのようなものです。ビルド機能がほしい場合は <code>distutils</code> , <code>setuptools</code> の標準ビルド機能、もしくは <code>SCons</code> と組み合わせるとハッピーになれます。</p>
+<p>ちなみに、 <code>tasktools</code> というのは同じく <code>distutils</code> の拡張である <code>setuptools</code> の命名規則に習っています。 <code>task</code> 機能を強化するから <code>tasktools</code> です。</p>
+</section>
+<section>
+<h2>チュートリアル</h2>
+<p>典型的な <code>tasktools</code> の使い方です。</p>
+<p>まず <code>tasks.py</code> というファイルを作成します。典型的には以下の様になります。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+from tasktools import *
+
+global_description(u"""
+サンプルタスクファイルです。
+""")
+
+use_without_standard() # distutilsの標準コマンドを使用しないことを宣言します。
+load_path("./tasks") # "./tasks"以下のtasks.pyを再帰的に読み込みます
+
+
+with namespace("file") as ns:
+  class mktmpfile(Task):
+    u"""一時ファイルを作成します。
+    """
+    user_options = [("path=", "p", u"作成するパスです")]
+    def run(self):
+      print "create %s"%self.path
+
+    def finalize_options(self):
+      if not self.path: self.path = "/tmp/tmp.txt"
+
+  class mklogfile(Task):
+    u"""ログファイルを作成します。
+    """
+    def run(self):
+      print "create log file"
+
+  class init(Task):
+    u"""ファイルを初期化します。
+    """
+    def run(self):
+      pass
+
+    sub_commands = [("file:mktmpfile", None),
+                    ("file:mklogfile", None)]
+
+if __name__ == "__main__":
+  run()</pre><p>では <code>python tasks.py <span class="pre">--help-commands</span></code> と実行してみましょう</p>
+<pre class="prettyprint ">############################################################
+
+サンプルタスクファイルです。
+
+############################################################
+
+Commands:
+  file:init        ファイルを初期化します。
+        sub commands:
+                file:mktmpfile
+                file:mklogfile
+  file:mklogfile   ログファイルを作成します。
+  file:mktmpfile   一時ファイルを作成します。
+
+usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+  or: tasks.py --help [cmd1 cmd2 ...]
+  or: tasks.py --help-commands
+  or: tasks.py cmd --help</pre><p>この様に <code>global_description</code> で設定した説明と、定義したタスクの一覧が表示されます。</p>
+<p>次に <code>./tasks/tasks.py</code> を作成してみます。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+from tasktools import *
+
+use_without_standard()
+with namespace("subs") as ns:
+  class test1(Task):
+    u"""サブディレクトリで定義されたタスクです
+    """
+    def run(self):
+      print "sub test"
+
+if __name__ == "__main__":
+  run()</pre><p>このファイルは <code>./tasks.py</code> で <code><span class="pre">load_path(&quot;./tasks&quot;)</span></code> と宣言しているので <code>./tasks.py</code> を実行すると自動的に読み込まれます。
+もう一度 <code>python tasks.py <span class="pre">--help-commands</span></code> と実行してみましょう</p>
+<pre class="prettyprint ">############################################################
+
+サンプルタスクファイルです。
+
+############################################################
+
+Commands:
+  file:init        ファイルを初期化します。
+        sub commands:
+                file:mktmpfile
+                file:mklogfile
+  file:mklogfile   ログファイルを作成します。
+  file:mktmpfile   一時ファイルを作成します。
+  subs:test1       サブディレクトリで定義されたタスクです
+
+usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+  or: tasks.py --help [cmd1 cmd2 ...]
+  or: tasks.py --help-commands
+  or: tasks.py cmd --help</pre><p>確かに <code>subs:test1</code> コマンドが追加されています。</p>
+<p>ではタスクを実行してみましょう。 <code>python tasks.py file:init</code> を実行してみます。</p>
+<pre class="prettyprint ">running file:init
+running file:mktmpfile
+create /tmp/tmp.txt
+running file:mklogfile
+create log file</pre><p>おお、実行されましたね。</p>
+<p>user_optionsを定義しているタスクではオプションも渡せます。 <code>python tasks.py file:mktmpfile <span class="pre">--path=/tmp/change.txt</span></code> を実行してみましょう。</p>
+<pre class="prettyprint ">running file:mktmpfile
+create /tmp/change.txt</pre><p>ちゃんとオプションが渡されていますね。</p>
+<hr class="docutils" />
+<p>こんな感じです。distutilsの独自コマンドに関する説明は <a class="reference external" href="http://www.python.jp/doc/2.4/dist/node79.html">46 新しいDistutilsコマンドの作成</a> を参照してください。正直使えないページですが･･･。一応説明しておくとinitialize_optionsはuser_optionsの定義から自動生成するようになっています。また <code>distutils.core.Command</code> を継承しているのでこのクラスの機能も使えます。</p>
+<p>せっかくCodereposに突っ込んだのでバグなんかが見つかったらガンガン直しちゃってください。</p>
+</section>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2008/02/19/tasktools-committed-to-the-coderepos" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2008\/02\/19\/tasktools-committed-to-the-coderepos';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

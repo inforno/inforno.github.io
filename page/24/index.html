@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name"><a href="/articles/2006/01/24/inheritance-in-prototype-with-ease" itemprop="url">prototype.jsでの継承を楽にする</a></h1>
+<div class="meta">
+<time datetime="2006-01-24T00:19:36&#43;09:00">Jan 24, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>Mochikitも好きですが、普段はRails使いということもあってprototype.jsを使っています。</p>
+<p>そういえばjavascriptのライブラリでOOなもの、ということで初めて出会ったのは <a class="reference external" href="http://jsolait.net">jsolait</a> でした。
+当時の印象としては「んー確かにがんばってるんだけど・・・ちょっと大げさっていうか・・・」って感じでした。</p>
+<p>そして去年、prototype.jsに出会うわけですが「class-style OO」とうたっている部分がかなりシンプル（すぎ）で衝撃でした。</p>
+<p>ただ、やっぱりjavascriptにおいて「継承」というのはやっかいな問題です。
+というわけで誰か作ってると思うんですが、より簡単に継承できるライブラリを作ってみました。</p>
+<pre class="prettyprint ">Class.def = function(definition) {
+  var klass = Class.create();
+  if(definition.__extend__)
+    Class.inherit(klass, definition.__extend__);
+  if(definition.__static__)
+    Object.extend(klass, definition.__static__);
+  if(definition.__include__) {
+    if(definition.__include__.constructor != Array)
+      definition.__include__ = [definition.__include__];
+    definition.__include__.each(function(include){
+      Object.extend(klass.prototype, include);
+    });
+  }
+  ["__static__","__extend__","__include__"].each(function(n){delete definition[n];}
+  Object.extend(klass.prototype, definition);
+  return klass;
+}
+
+Class.inherit = function(child, parent) {
+  Object.extend(child, parent);
+  child.__super__ = parent.prototype;
+  var dummy = function(){};
+  dummy.prototype = parent.prototype;
+  child.prototype = new dummy();
+  child.prototype.constructor = child;
+  return child;
+}</pre><p>こんだけです。
+使い方はサンプルをみるほうがわかりやすいと思うので、サンプルをどーぞ。</p>
+<pre class="prettyprint ">var IncludedClass = Class.def({
+  __static__ : {
+    includedMethod : function() {
+      return "includedMethod:"+this.value;
+    }
+  }
+});
+
+var AClass = Class.def({__include__ : IncludedClass,
+  __static__ : {
+    A : "A static"
+  },
+
+  initialize : function(val) {
+    if(!val) throw "error";
+    this.val = val;
+    this.klass = "AClass";
+  },
+
+  inspect : function() {
+    return "&lt; "+this.klass+" : "+this.val+"&gt;";
+  }
+});
+
+var BClass = Class.def({ __extend__ : AClass,
+  __static__ : {
+    B : "B static"
+  },
+
+  initialize : function(val) {
+    BClass.__super__.initialize.call(this, val);
+    this.klass = "BClass";
+  }
+});
+
+var CClass = Class.def({ __extend__ : BClass,
+  __static__ : {
+    C : "C static"
+  },
+
+    initialize : function(val) {
+      CClass.__super__.initialize.call(this, val);
+      this.klass = "CClass";
+    }
+});
+
+var a = new AClass("aaaaaaa");
+var b = new BClass("bbbbbbb");
+var c = new CClass("ccccccc");
+alert("a inspect:"+a.inspect()); //=&gt; a inspect:
+alert("b inspect:"+b.inspect()); //=&gt; b inspect:
+alert("c inspect:"+c.inspect()); //=&gt; c inspect:
+alert("includedMethod:"+a.includedMethod()); //=&gt; includedMethod:included aaaaaa
+alert("CClass.A:"+CClass.A); //=&gt; CClass.A:A static
+alert("CClass.B:"+CClass.B); //=&gt; CClass.B:B static
+alert("CClass.C:"+CClass.C); //=&gt; CClass.C:C static
+alert("b.constructor = a.constructor:"+(b.constructor == a.constructor).toString()); //=&gt;b.constructor = a.constructor:false
+alert("b instanceof BClass:"+(b instanceof BClass).toString()); //=&gt;b instanceof BClass:true
+alert("b instanceof AClass:"+(b instanceof AClass).toString()); //=&gt;b instanceof AClass:true
+alert("c instanceof BClass:"+(c instanceof BClass).toString()); //=&gt;c instanceof BClass:true
+alert("c instanceof AClass:"+(c instanceof AClass).toString()); //=&gt;c instanceof AClass:true&lt;/div&gt;</pre><p>継承の処理がかなり楽になっていると思います。
+テキトーに場当たりで単純にnewを使って継承していたりすると</p>
+<p>「親クラスのコンストラクタに必須な引数があって、それがないとエラーでるから継承できねーよ、しゃーない適当に引数付けとくか」</p>
+<p>ということになったりするもんですが（俺はよくなってますｗ）このライブラリを使えば大丈夫。
+また、こんな変な書き方イヤだよ！！って方でも継承の部分はClass.inheritに独立させてあるのでそこだけつかえばオッケーです。</p>
+<p>一応動作は確認していますがおかしいところあったら報告していただけるとありがたいです。</p>
+
+
+  </div>
+</article>
+
+
+
+
+
+<nav class="paging"><ul><li class="previous"><a href="/page/23/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li><a href="/page/23/" class="page">23</a></li><li class="active">24</li><li class="next-off">Next&raquo;</li></ul></nav>
+
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

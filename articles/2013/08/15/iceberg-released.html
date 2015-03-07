@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: コマンドラインランチャー作りました</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">コマンドラインランチャー作りました</h1>
+<div class="meta">
+<time datetime="2013-08-15T19:17:04&#43;09:00">Aug 15, 2013</time>
+
+  
+  <span class="tag"><a href="/articles/tag/cpp/" rel="tag" itemprop="keywords">cpp</a></span>
+  
+  <span class="tag"><a href="/articles/tag/iceberg/" rel="tag" itemprop="keywords">iceberg</a></span>
+  
+  <span class="tag"><a href="/articles/tag/lua/" rel="tag" itemprop="keywords">lua</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>なんとなく思い立って、Windows用コマンドラインランチャー「iceberg」をリリースしました。設定はLuaな設定ファイルのみという硬派なソフトなのでエンジニア向けです。</p>
+<p>ダウンロードとドキュメントは以下から。とりあえずWindows64bit版しか今はないです。</p>
+<ul class="simple">
+<li>ダウンロード:  <a class="reference external" href="https://github.com/yuin/iceberg/releases">https://github.com/yuin/iceberg/releases</a></li>
+<li>ドキュメント:  <a class="reference external" href="http://yuin.github.com/iceberg/index.html">http://yuin.github.com/iceberg/index.html</a></li>
+</ul>
+<img alt="http://inforno.net/statics/files/screenshot_01.jpg" src="http://inforno.net/statics/files/screenshot_01.jpg" />
+<section>
+<h1>これはなに？</h1>
+<p>シンプルなコマンドライン型ランチャーです。かなり昔から自分用につくって細々使い続けてきたものなので、ソースは割と悲惨です。何回か頑張って書き直しましたが気力が持ちません。使い続けているだけあってそこそこ安定しているはずです。一方あんまり使っていない機能はしらないうちに動かなくなっているかも知れません。というか動かなくなっていたので公開にあたってちょこちょこ直しました。</p>
+<p>開発に至った思想は以下のような感じです。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>旧craftlaunchを使っていたのだが以下の不満があった。</dt>
+<dd><ul class="first last">
+<li><p class="first">アイコンくらいほしい。</p>
+</li>
+<li><p class="first">引数を渡すために <code>;</code> と書かなくてはならないのが嫌だった。</p>
+</li>
+<li><dl class="first docutils">
+<dt>拡張言語がなにかしらほしかった。</dt>
+<dd><ul class="first last simple">
+<li>そうこうしているうちにPythonで拡張できるcraftlaunchが出てきたが
+なんとなく自分の思ってたのと違った</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>設定をバージョン管理システムで管理したかった</dt>
+<dd><ul class="first last simple">
+<li>そうこうしているうちに(ry なcraftlaunchがでてきたんですが…</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">見た目がもう少し派手でもいいんじゃないかと…</p>
+</li>
+<li><p class="first">曖昧マッチ(firefoxにffでマッチするような）がほしかった</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>特徴としては以下かなと。</p>
+<ul>
+<li><p class="first">Luaで拡張できる</p>
+</li>
+<li><p class="first">「普通に」引数が渡せる。ダブルクオーテーションで囲えば空白もOK</p>
+</li>
+<li><p class="first">前方一致、部分一致、あいまい検索ができる</p>
+</li>
+<li><p class="first">migemo対応</p>
+</li>
+<li><p class="first">簡易ファイラとしても動作</p>
+</li>
+<li><dl class="first docutils">
+<dt>外部プログラムとの連携機能あり</dt>
+<dd><ul class="first last simple">
+<li>外部プログラムからicebergの入力欄に文字を入れるとか</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">空白にもコマンドを割り当てられる</p>
+</li>
+</ul>
+</section>
+<section>
+<h1>技術的な話</h1>
+<p>実装言語はC++ &amp; Luaです。なぜLuaかというとやはり組み込みやすさが段違いで、拡張言語としての扱いやすさはPythonより高いと思っているからです。そろそろC#に移行しないといけませんかねえ…。</p>
+<p>工夫した点というかハマったのは使用しているGUIライブラリであるfltkの挙動ですね。マルチバイトフォントのレンダリングがとてつもなく遅いのです。なのでリスト表示部分は自前でwin32のAPIを呼んでいます。コマンドラインランチャはサクサク感がウリですから、もたるのはちょっと。ただ入力欄はfltkのままなのでここに長い日本語を一気にぶち込むと少し固まります。とはいえ、こうしてハマってもすぐソースがよめるのがfltkの良いところだと思います。</p>
+<p>あと、内部的にutf8で処理してます。はっきりいって無駄が多いんですけど、utf8はいろんなライブラリ混ぜるなら楽ですね。fltkもutf8なら日本語通るし、Luaもutf8なら日本語OK。PCの性能もあがっているので文字コード変換が増えてもつくりが楽だしこれでいいかなあ、と。</p>
+<p>結構前から64bit Windowsの環境しかもってないのですが、もちろん昔は32bitで動かしていたのでたぶん、MinGWで  <code>git clone</code> ,  <code>./tool/install_requires.sh</code> ,  <code>make dist</code> ,  <code>make package</code> とやればコンパイルできる…はず。</p>
+<p>一応OS依存部分は分岐させてあるので、その気になればMacとかLinuxにも移植できる…はず。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2014/10/20/iceberg-0-9-6-released">iceberg v0.9.6リリースしました</a></li>
+<li><a href="/articles/2013/11/07/iceberg-commands">AlfredのWorkflow的なやつをWindowsで</a></li>
+<li><a href="/articles/2015/02/24/channel-support-in-gopher-lua">GopherLuaでchannelを扱えるようにした</a></li>
+<li><a href="/articles/2015/02/15/gopher-lua-released">LuaのGo言語実装を公開しました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2013/08/15/iceberg-released" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2013\/08\/15\/iceberg-released';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python:re.ScannerでS式パーサ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python:re.ScannerでS式パーサ</h1>
+<div class="meta">
+<time datetime="2008-08-08T20:38:00&#43;09:00">Aug  8, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
+<p>一方、Pythonにはexperimentalながら <code>re.Scanner</code> というクラスがあります( <code>&gt;= 2.4</code> )。experimentalなのでマニュアルにはのっていませんが。この <code>re.Scanner</code> はかなりシンプルなんですが典型的な <code>StringScanner</code> の使い方の範疇では、こちらのほうがキレイに書けるような気がします。</p>
+<section>
+<h1><code>re.Scanner</code> の使い方</h1>
+<p>使い方は非常に簡単で</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</dt>
+<dd><ul class="first last simple">
+<li><code>action</code> は(scanner, string_matched) =&gt; stringな関数、Noneを返せば結果は無視される。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">scanメソッドでスキャン。結果が配列で返ってくる</p>
+</li>
+</ul>
+<p>といった感じ。関数を渡すので、 <code>StringScanner</code> のようなwhileループを作る必要がなく、キレイにまとまります。</p>
+</section>
+<section>
+<h1>例：S式パーサ</h1>
+<p><code>re.Scanner</code> は簡単、ということでS式パーサでも。トークナイズ+αな処理をするので、 <code>action</code> をインスタンスメソッドにして状態を保存することにします。</p>
+<p>目標は</p>
+<ul class="simple">
+<li>数値(っぽいもの)、文字列、シンボルが使える</li>
+<li>シンボルのみ、新たにクラスを定義して(unicodeのサブクラス)それにマップ。それ以外は組み込み型に。</li>
+<li>パースエラーも分かりやすく</li>
+<li>結果はPythonのリストorオブジェクトとして返る</li>
+</ul>
+<p>で</p>
+<pre class="prettyprint ">import re, sys
+from unicodedata import east_asian_width
+
+try:
+  from re import Scanner
+except ImportError:
+  from sre import Scanner
+
+class ParseError(StandardError): pass
+
+class Symbol(unicode):
+  def __repr__(self):
+    return "Symbol(%s)"%unicode.__repr__(self)
+
+class TokenProcessor(object):
+  PAREN = {"]":"[", ")":"("}
+  def __init__(self, value):
+    self.result = []
+    self.append = self.result.append
+    self.string = value
+    self.paren_stack = []
+    self.pos = 0
+
+  def __call__(self, name):
+    def _(*a):
+      self.before(*a)
+      return getattr(self, name)(*a)
+    return _
+
+  def before(self, scanner, s):
+    self.pos += len(s)
+    self.skip(scanner, s)
+
+  def error(self, scanner, s): self.raise_error("unknown token: %s"%s)
+
+  def skip_whitespaces(self, scanner, s): self.append(",")
+
+  def skip(self, scanner, s):
+    last = "".join(self.result[-2:])
+    if last in ["[,", ",,", ",]"]:
+      self.result[-2:] = sorted(last, key=ord)[1]
+
+  def atom(self, scanner, s):
+    if s in ["(", "["]:
+      self.append("[")
+      self.paren_stack.append(s)
+    elif s in [")", "]"]:
+      if not self.paren_stack:
+        self.raise_error("missing opening parenthesis.")
+      if self.PAREN[s] != self.paren_stack.pop():
+        self.raise_error("missing closing parenthesis.")
+      self.append("]")
+    elif re.match(r"""^(".*)$""", s or ""):
+      self.append("u"+s)
+    elif re.match(r"""^((\-?\d[\de\.]+)|(\s*)|(.*"))$""", s or ""):
+      self.append(s)
+    else:
+      self.append("Symbol(u\"%s\")"%s)
+
+  def raise_error(self, msg="parse error", range=3):
+    lines = self.string.split("\n")
+    curline = self.string[:self.pos].count("\n")
+    linepos = self.pos - len("\n".join(lines[:curline]))
+    buf = ["\n"]
+    for i in xrange(max(0, curline-range), curline+1):
+      buf.append("% 5d: %s"%(i+1, lines[i]))
+    width = 6 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in lines[i])
+    buf.append("%s~"%(" "*width))
+    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
+    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
+
+def read_sexp(sexp):
+  processor = TokenProcessor(sexp)
+  scanner = Scanner([
+    (r"\s+", processor("skip_whitespaces")),
+    (r";[^\n]*\n", processor("skip")),
+    (r""""(?:[^"])*"|(\]|\[|\)|\(|[^\(\)\s]+)""", processor("atom")),
+    (r".*", processor("error"))
+  ], re.M)
+  scanner.scan(processor.string)
+  if processor.paren_stack:
+    processor.raise_error("missing closing parenthesis.")
+  result = eval("".join(processor.result).lstrip(","))
+  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]</pre><p>こんな感じ。非常にシンプルな気がします。</p>
+<pre class="prettyprint ">print read_sexp(u"""("ほげほげ"
+;comment
+  ;comment
+  (hogehoge 123) ;aaaaaaa
+  "hoge\\"aaaa"
+;comment
+;comment
+
+aaaa          b)""")</pre><p>output:</p>
+<pre class="prettyprint ">[u'\u307b\u3052\u307b\u3052', [Symbol(u'hogehoge'), 123], u'hoge"aaaa', Symbol(u'aaaa'), Symbol(u'b')]</pre><p>エラーも一応。</p>
+<pre class="prettyprint ">print read_sexp(u"""(
+aaaa
+bbbb (ccc ddd) )
+(eee
+ああああああ""")</pre><p>output:</p>
+<pre class="prettyprint ">__main__.ParseError:
+
+    2: aaaa
+    3: bbbb (ccc ddd) )
+    4: (eee
+    5: ああああああ
+                  ~
+line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
+</section>
+<section>
+<h1>というわけで</h1>
+<p>Pythonでトークナイズするときにはかなり便利なんじゃないかと思いました。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2008/08/08/sexp-parser-in-python-re-scanner" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2008\/08\/08\/sexp-parser-in-python-re-scanner';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: PythonによるNESエミュレータ開発2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">PythonによるNESエミュレータ開発2</h1>
+<div class="meta">
+<time datetime="2007-01-12T02:50:02&#43;09:00">Jan 12, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>実は既に結構挫折気味。</p>
+<p>やっぱりPythonではちょっと厳しいかもしれない。</p>
+<p>とりあえず一番ややこしいPPU周りの情報を調べて、ちょろちょろ書き始めたあたりでいったんCPU部分のパフォーマンスを調べてみました。</p>
+<p>かなり厳しいものがあります。CPU部分のコードはPython的な書き方で書いてたんですが、これじゃ話にならない。まず、アクセサなんてものはつかっちゃいけないのだ。</p>
+<p>以下環境はOS:WinXP,CPU:Athlon64 3000+,Memory:1G,Python2.4です。</p>
+<section>
+<h1>CPUのレジスタ関連の実装</h1>
+<p>NESのCPUである6502のレジスタはPCは16bit、それ以外は8bit。8bitの値なんてものはCならunsigned charで一発なんだけど、Pythonにはそんなものない。足し算したらどんどん大きくなるし、引き算したらどんどん小さくなる。ので</p>
+<pre class="prettyprint ">class Py6502(object):
+  def __init__(self):
+    self.A = 0
+    self.X = 0
+    self.Y = 0
+    self.PC = 0
+    #  .
+    #  .
+    #  .</pre><p>見たいなクラスにするとして、足し算するときなどは必ず <code>self.A = (self.A + x) &amp; 0xff</code> みたいにして8bitに収めないといけない。ここで</p>
+<pre class="prettyprint ">def _create_n_bit_property(name, mask):
+  rname = "_"+name
+  result = {
+    name:property(lambda self: getattr(self, rname),
+                  lambda self,v : setattr(self, rname, v &amp; mask),
+                  )
+  }
+  return result
+
+class ForceNbitType(type):
+  def __new__(cls, class_name, class_bases, classdict):
+    names = classdict.get("__16bit__")
+    for name in names:
+      classdict.update(_create_n_bit_property(name, 0xffff))
+    names = classdict.get("__8bit__")
+    for name in names:
+      classdict.update(_create_n_bit_property(name, 0xff))
+    cls = type.__new__(cls, class_name, class_bases, classdict)
+    return cls</pre><p>のようなmetaclassをつくって</p>
+<pre class="prettyprint ">class Py6502(object):
+  __metaclass__ = ForceNbitType
+  __8bit__ : "A", "X", "Y"
+  __16bit__ : "PC",
+  def __init__(self):
+    self._A = 0
+    self._X = 0
+    self._Y = 0
+    self._PC = 0
+    #  .
+    #  .
+    #  .</pre><p>とすれば <code>self.A += 10</code> とかしてもちゃんと8bitに収まる。</p>
+<p>非常に上手くかけるんですが、こんなのやってらんない。遅すぎる。1Frame分(28000サイクル程度)の実行に0.5秒（笑</p>
+</section>
+<section>
+<h1>getattr</h1>
+<p><code>getattr` は遅い。 ``getattr</code> の真価は第3引数でdefault値が指定できること（だと思う）。今回のように確実に属性が存在することが分かっているなら <code>self.__getattribute__(name)</code> を使うと結構違ってくる。ちなみにPythonのソースではこんな感じ。</p>
+<pre class="prettyprint ">static PyObject *
+slot_tp_getattro(PyObject *self, PyObject *name)
+{
+    static PyObject *getattribute_str = NULL;
+    return call_method(self, "__getattribute__", &amp;getattribute_str,
+                       "(O)", name);
+}
+
+static PyObject *
+slot_tp_getattr_hook(PyObject *self, PyObject *name)
+{
+    PyTypeObject *tp = self-&gt;ob_type;
+    PyObject *getattr, *getattribute, *res;
+    static PyObject *getattribute_str = NULL;
+    static PyObject *getattr_str = NULL;
+
+    if (getattr_str == NULL) {
+            getattr_str = PyString_InternFromString("__getattr__");
+            if (getattr_str == NULL)
+                    return NULL;
+    }
+    if (getattribute_str == NULL) {
+            getattribute_str =
+                    PyString_InternFromString("__getattribute__");
+            if (getattribute_str == NULL)
+                    return NULL;
+    }
+    getattr = _PyType_Lookup(tp, getattr_str);
+    if (getattr == NULL) {
+            /* No __getattr__ hook: use a simpler dispatcher */
+            tp-&gt;tp_getattro = slot_tp_getattro;
+            return slot_tp_getattro(self, name);
+    }
+    getattribute = _PyType_Lookup(tp, getattribute_str);
+    if (getattribute == NULL ||
+        (getattribute-&gt;ob_type == &amp;PyWrapperDescr_Type &amp;&amp;
+         ((PyWrapperDescrObject *)getattribute)-&gt;d_wrapped ==
+         (void *)PyObject_GenericGetAttr))
+            res = PyObject_GenericGetAttr(self, name);
+    else
+            res = PyObject_CallFunction(getattribute, "OO", self, name);
+    if (res == NULL &amp;&amp; PyErr_ExceptionMatches(PyExc_AttributeError)) {
+            PyErr_Clear();
+            res = PyObject_CallFunction(getattr, "OO", self, name);
+    }
+    return res;
+}</pre><p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
+</section>
+<section>
+<h1>実行ループ</h1>
+<p>CPUのエミュレータなんてのはだいたい同じようなパターンで割り込みを除いて簡単に書くと</p>
+<pre class="prettyprint ">def step_execute(self, clocks):
+  while (self.passed_clocks &lt; clocks):
+    opecode = read()# opecodeを取得
+    # 実行
+    count = CLOCK[opecode] # 実行に必要なクロック数を取得
+    self.passed_clocks += count
+  self.passed_clocks -= clocks</pre><p>なんてのになるわけで、ここが激しくループするわけで。ここはガリガリにちょっとでも節約できるものは節約。</p>
+<pre class="prettyprint ">def step_execute(self, clocks):
+  read = self.memory.read
+  get_method_by_opecode = self.get_method_by_opecode
+  while (self.passed_clocks &lt; clocks):
+    old = self._PC; self._PC += 1; self._PC &amp;= 0xffff
+    opecode = read(old)
+    method = get_method_by_opecode(opecode)
+    count = method()
+    count = count != None and count or CYCLES[opecode]
+    self.passed_clocks += count
+  self.passed_clocks -= clocks</pre><p>javascriptで.(ドット)演算が遅いとかいうのは最近（？）よく言われていることで、それはPythonにも当然当てはまる。なのでループ前にだせるものはローカルに出しておく。（これが簡単にできるのがRubyよりもPythonがいい部分だよなあ）</p>
+<p>あと、実行の部分。ここはCなら関数テーブルかswitch(コンパイラによるけど大差ないと思う）になるんだけど、あいにくPythonにはswitchがないので関数テーブル的なものか <code>if opecode == 0x01: ... elif opecode == <span class="pre">0x02:...</span> <span class="pre">elif...</span></code> かになる。</p>
+<p>関数テーブル的なものは</p>
+<pre class="prettyprint ">def ope_0x01(self):
+  #code
+def ope_0x02(self):
+  #code
+
+self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
+</section>
+<section>
+<h1>結局</h1>
+<p>そんな感じでいじってみてかつpsycoを入れて1Frame:0.15程度（PPUやAPUは中身がないので、最後までつくったらもっと遅くなる）。ほかにもいじれそうなところはあって、そこをいじれば0.1は切れそうな感じがしてます。</p>
+<p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに <code>A &amp; 0xff</code> みたいなことをやっていて、どーもめんどくさい。</p>
+<p>じゃぁLLでエミュレーターを書く意味ってなんだ、というと・・・うーん（笑　自己満足以外なにもないでしょうねえ。というわけで自己満足のために、今後もヒマができれば、ちょっとづつ書き進めてみようかなあ。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules">Python標準モジュールでRakeもどき</a></li>
+<li><a href="/articles/2008/02/19/tasktools-committed-to-the-coderepos">Python版Rake「tasktools」をCodeReposにコミットした</a></li>
+<li><a href="/articles/2007/03/02/nes-emulator-development-with-python-5">PythonによるNESエミュレータ開発5</a></li>
+<li><a href="/articles/2007/02/04/nes-emulator-development-with-python-4">PythonによるNESエミュレータ開発4</a></li>
+<li><a href="/articles/2007/01/31/nes-emulator-development-with-python-3">PythonによるNESエミュレータ開発3</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2007/01/12/nes-emulator-development-with-python-2" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2007\/01\/12\/nes-emulator-development-with-python-2';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</h1>
+<div class="meta">
+<time datetime="2008-02-21T18:42:22&#43;09:00">Feb 21, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
+  
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p><a class="reference external" href="http://d.hatena.ne.jp/kwatch/20080220/1203520081">Python で Rake を真似るとしたら</a> という反応を頂いたので、それにまつわるお話を。</p>
+<p>まず、CodeReposにコミットしてあるtasktoolsは__distutils及びsetuptoolsを拡張する__ということを念頭に置いています。ですのである程度distutils.core.Commandの思想というか、インターフェイスを残しています。</p>
+<ul class="simple">
+<li>タスクをクラスで定義すること</li>
+<li>オプションの定義方法</li>
+<li><code>sub_commands</code> や <code>finalize_options</code> といったメソッド</li>
+</ul>
+<p>などなどは元のまんまです。</p>
+<hr class="docutils" />
+<p>じゃあ、 <code>distutils</code> や <code>setuptools</code> を抜いて好きにRakeをPythonで真似るとしたら、というのが今回メインのお話。最初にこんな感じでコマンドを定義しますよ、というのを出してしまいます。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+from 今回作成したモジュール import *
+from subprocess import call
+
+# ここからタスク定義
+
+with namespace("test"):
+
+  @task
+  def build(t, depends = ["test:make"]):
+    """builds this modules. """
+    call(["ls"])
+    print t.name, ": build done"
+
+  @task
+  def make(t):
+    print "make"
+
+# 実行
+run()</pre><p>Rakeだとこうなる。</p>
+<pre class="prettyprint ">namespace "test" do
+
+  desc "builds this modules"
+  task "build" =&gt; "make" do |t|
+    sh("ls")
+    puts "#{t.name} done."
+  end
+
+  task "make" do |t|
+    puts "make"
+  end
+
+end</pre><p>Python版もなかなかシンプルで見やすいと思うんですがどうでしょう。あとちょっとtips。さっきの記事だと <code>os.system</code> を使ってますが、 <code>subprocess</code> モジュールの <code>call</code> や <code>check_call</code> のほうが便利じゃないかな、と思います。</p>
+<p>タスクのメタ情報は引数のデフォルト値を使います。ここで <code>&#64;task(depends = <span class="pre">[&quot;test:make&quot;])</span></code> ってしたほうがいいんじゃないの？と思う人もいるかもしれません。真っ当な意見だと思いますし、それがPythonicなやり方と思います。しかしそうするとこうなります。</p>
+<pre class="prettyprint ">with namespace("test"):
+
+  @task(depends = ["test:make"])
+  def build(t):
+    """builds this modules.  """
+    call(["ls"])
+    print t.name, ": build done"
+
+  @task() #&lt;= ここがキモくないですか？
+  def make(t):
+    print "make"</pre><p>Pythonではproperty以外では <code>()</code> をつけないとメソッドが呼び出せません。だから引数が何もない場合は空のカッコがつくわけです(まぁDescriptorでhogehogeすればできるんですがね)。これ、イケてないですよね。というわけで引数のデフォルト値を使います。</p>
+<p>ではこのタスク定義でタスクを実行するためのコードです。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+import inspect,new,sys
+from contextlib import contextmanager
+from optparse import OptionParser
+from itertools import *
+
+class _Tasks(dict):
+  def __getitem__(self,key):
+    if key in self: return dict.__getitem__(self, key)
+    _abort("Error: Unknown task: %s"%key)
+
+class Task(object):
+  def __init__(self, run, name, description,
+               depends = None, options = None):
+    self._run = new.instancemethod(run, self, self.__class__)
+    self.name = _get_current_ns()+name
+    self.description = description
+    self.depends = depends or []
+    self.options = options or []
+    tasks[self.name] = self
+
+  def run(self):
+    for depend in self.depends:
+      if tasks[depend].run() is False:
+        _abort("Error: faild %s"%depend)
+    return self._run()
+
+_namespace = []
+tasks = _Tasks()
+
+@contextmanager
+def namespace(name):
+  _namespace.append(name)
+  yield
+  _namespace.pop()
+
+def task(f):
+  names, _, _, values = inspect.getargspec(f)
+  Task(f, f.__name__, f.__doc__ or "no description", **dict(izip(names[1:], values or [])))
+
+def print_tasks():
+  maxlength = max(imap(len, tasks.iterkeys()))
+  for name in sorted(tasks.iterkeys()):
+    print name.ljust(maxlength), "#", tasks[name].description.strip()
+
+def run():
+  usage = "usage :%prog [options] targets"
+  parser = OptionParser(usage)
+  parser.add_option("-T", "--tasks", action="store_true",
+                    dest="print_tasks",
+    help="Display the tasks (matching optional PATTERN) with descriptions, then exit.")
+  (options, args) = parser.parse_args()
+  if options.print_tasks: _abort(print_tasks())
+  if not args:            _abort(parser.get_usage())
+
+  map(lambda t:t.run(), imap(tasks.__getitem__, args))
+
+def _abort(msg):
+  if msg : print msg
+  sys.exit(1)
+
+def _get_current_ns(): return _namespace and ":".join(_namespace)+":" or ""</pre><p>結構短いかな？。一応ちゃんと動きます。</p>
+<p><code>tasks.py <span class="pre">-T</span></code></p>
+<pre class="prettyprint ">test:build # builds this modules.
+test:make  # no description</pre><p><code>tasks.py test:build</code></p>
+<pre class="prettyprint ">make
+tasks.py
+test:build : build done</pre><p>うむ。</p>
+<hr class="docutils" />
+<p>結局、Rubyの言語内DSL構築能力は</p>
+<ul class="simple">
+<li><code>()</code> が省略できる</li>
+<li>ブロック(pythonではデコレータとwith_statementがありますが)</li>
+</ul>
+<p>によるものが多いと思っています。ことPythonとの対比では。「シンプルさ」「書きやすさ」なんかは好みかな、と(Rakeの例だとdocstringを持っている分Pythonの方がいい感じさえしてきます)。例えば <code>end</code> ってなんだよ、って言う人にはPythonのほうがウケがいいかもしれませんしそうじゃないかもしれません。</p>
+<p>そんなこんなで試しに書いてみたらいい感じだったんで、ちゃんと本格的にPython版Rakeとして開発を続けてみようかなあ。</p>
+<hr class="docutils" />
+<p>ところで言語内DSLといえばScalaでしょう。Rubyなんてちょろいもんですよ。なんてったってScalaは(ry</p>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2008/02/21/dsl-in-python-and-ruby" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2008\/02\/21\/dsl-in-python-and-ruby';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

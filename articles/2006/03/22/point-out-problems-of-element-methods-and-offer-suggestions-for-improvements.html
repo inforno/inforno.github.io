@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: 続Element.Methods。問題とちょっと改良</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">続Element.Methods。問題とちょっと改良</h1>
+<div class="meta">
+<time datetime="2006-03-22T01:28:03&#43;09:00">Mar 22, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p><a class="reference external" href="http://inforno.net/articles/2006/03/12/element-methods-in-prototype">以前のエントリー</a> でprototype.js1.5のElement.Methodsについて書きました。
+前回はいいところをプッシュして書いたんですが、皆さんご存じの通り問題児でもあります。</p>
+<p>Element.Methodsの問題点</p>
+<ul class="simple">
+<li>elementを拡張するかしないかが選択できない。</li>
+<li>プロトタイプチェーンがつながっていない。</li>
+<li>document.createElementが考慮されていない。</li>
+</ul>
+<p>■elementを拡張するかしないかが選択できない。</p>
+<p>まずわかりやすくこれから。elementは取得された時に拡張されるわけですが、当然パフォーマンスに影響があります。使いたくない人もいるでしょう。しかし、Element.extendによる拡張は$にも$$にも組み込まれていて選択できません。メソッドを置き換えて回避は可能ですが、組み込まれている、ということを考慮すると当然extendされている、ということを前提としたライブラリも出てくるでしょう。となった場合にやっかいです。別名のメソッドを定義してもいいですが・・・やっぱり$って名前がいいよね！（何</p>
+<p>■プロトタイプチェーンがつながっていない。</p>
+<p>これは当然の問題。Element.extendは文字通りelementにElement.Methodsのメソッドをコピーしているだけ。しかも一回取得すると、_extendedというフラグが立って次回からはもうextendされない（パフォーマンスを考慮してのこと）。つまり Element.Methodsへのメソッド追加が反映されない、メソッドの内容変更も反映されない。
+　つまり、恐らく$か$$されるだろう、window.onloadイベント前にElement.Methodsへのメソッド追加を完了させ、それ以降変化させない、という事に注意しないといけない。</p>
+<p>ではなぜプロトタイプチェーンがつながっていないのだろうか。Elementは拡張できないんだろうか。これはYesでありNoです。
+まず、このElement.Methodsによる害をある程度押さえ込むことのできるソースを示します。
+これはFirefoxなどMozilla系、safari、Operaで有効です。</p>
+<pre class="prettyprint ">(function() {
+if(!window.HTMLElement) window.HTMLElement = document.createElement("xxx").constructor;
+if(window.HTMLElement) {
+    var methods = Element.Methods, property;
+    var bind = function(name, method) {
+      HTMLElement.prototype[name] = function(){
+        Array.prototype.unshift.call(arguments, this);
+        return method.apply(null, arguments) || this;
+      }
+    }
+    for (property in methods) {
+      var value = methods[property];
+      if (typeof value == 'function') bind(property, value);
+    }
+    HTMLElement.prototype._extended = true;
+}
+
+})();</pre><p>このコードを <strong>最後に(window.onloadの直前で)実行すれば</strong> OKです（scriptaculousとかもElement.Methodsを拡張するので、その拡張が終わった後）。
+これでelementがプロトタイプチェーンでつながっているブラウザでは$による負荷を軽減できます。$(&quot;test&quot;).show()とかも実行できますし、引数操作によるパフォーマンス低下がいやならElement.show(&quot;test&quot;)と実行すれば良いだけです。しかも地味にreturn method.apply(null, arguments) || this;とすることによって$(&quot;test&quot;).update(&quot;hogehoge&quot;).show()とか書けるようにもしてみました（笑</p>
+<p>しかしIEはどうしようもありません。 <strong>そもそもIEはelementがプロトタイプチェーンをもっていません。</strong>
+document.createElement (&quot;div&quot;).constructorとやってもprototypeとやってもundefinedと抜かす強敵です。これは昔から対策が考えられていますが、つまるところElement.Methodsと同様にコピーするだけです。それをhtcをつかってみたり、コンストラクタを擬似的に作ってみたり、とかっていう方法で実装しているだけです。なのでElement prototypingしようと思うとIEでは現状これが限界です。</p>
+<p>■　document.createElementが考慮されていない。</p>
+<p>先ほど示したソースでelementがプロトタイプチェーンをもつブラウザでは当然document.createElementで作成した elementもElement.Methodsのメソッドが実行できます。しかしIEではそれができません。この document.createElementも考慮して先ほどのElement.Methods対策ソースを改良しましょう。</p>
+<pre class="prettyprint ">(function() {
+if(!window.HTMLElement) window.HTMLElement = document.createElement("xxx").constructor;
+if(window.HTMLElement) {
+    var methods = Element.Methods, property;
+    var bind = function(name, method) {
+      HTMLElement.prototype[name] = function(){
+        Array.prototype.unshift.call(arguments, this);
+        return method.apply(null, arguments) || this;
+      }
+    }
+    for (property in methods) {
+      var value = methods[property];
+      if (typeof value == 'function') bind(property, value);
+    }
+    HTMLElement.prototype._extended = true;
+}else {
+  document._createElement = document.createElement;
+  document.createElement = function(tag){
+    return Element.extend(document._createElement(tag));
+  }
+}
+
+})();</pre><p>赤色で示した部分が追加部分です。これでIEでもdocument.createElementした後に直接Element.Methodsのメソッドが実行できます。何度も言いますがパフォーマンス低下がいやな人はこの追加部分を省いてください。</p>
+<p>というわけで今回はElement.Methodsの問題への対応策を示してみました。要はIEがelementがプロトタイプチェーンを持つようにしてくれれば万事解決なわけなんですよね。でも結局IE7でも実装されていないようで、なかなか・・・</p>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2006\/03\/22\/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

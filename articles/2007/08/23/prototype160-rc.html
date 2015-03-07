@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Prototype 1.6.0 RC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Prototype 1.6.0 RC</h1>
+<div class="meta">
+<time datetime="2007-08-23T02:54:48&#43;09:00">Aug 23, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>でましたね。 <a class="reference external" href="http://prototypejs.org/2007/8/15/prototype-1-6-0-release-candidat">Prototype 1.6.0 release candidate</a></p>
+<p>WEB界隈から離れてしばらくたちますが、またいつWEB界隈に戻るかわからないので一応追ってます。</p>
+<p>1.6ではついにClass周りに手が入りました。Prototype.jsといえばシンプルすぎるClass周りとプロパティをコピーするというなんちゃって継承がウリ（？）だったわけですが、1.6からは違います。もう <a class="reference external" href="http://inforno.net/articles/2006/01/24/inheritance-in-prototype-with-ease">オレオレクラス定義ライブラリ</a> をわざわざ使わなくても大丈夫。</p>
+<p>公式にも例がありますが、こんな感じでちゃんと継承できるようになりました。</p>
+<pre class="prettyprint ">var Animal = Class.create({
+  initialize: function(name) {
+    this.name = name;
+  },
+  eat: function() {
+    return this.say("Yum!");
+  },
+  say: function(message) {
+    return this.name + ": " + message;
+  }
+});
+
+var Eatable = {
+  eaten : function() {
+    return this.say("help me!!!");
+  }
+}
+
+var Mouse = Class.create(Animal, {
+});
+//syntax sugar for Object.extend
+Class.mixin(Mouse.prototype, Eatable);
+
+// subclass that augments a method
+var Cat = Class.create(Animal, {
+  eat: function($super, food) {
+    if (food instanceof Mouse) return [food.eaten(),$super()].join("\n");
+    else return this.say("Yuk! I only eat mice.");
+  }
+});
+
+var a = new Cat("Tama");
+alert(a.eat(new Mouse("Nezumy mouse")));</pre><p>単にプロトタイプチェーンをつなげるだけではなくて、オーバライドされたメソッドの引数名を取得して（toStringしてgrepですね)、$superだった場合、自動的に親クラスのメソッドを$superとして渡してくれます。地味に便利。</p>
+<p>あとはsyntax sugarとしてClass.mixinがあります。まぁObject.extendなんですが、こっちの方がわかりやすいですよね。</p>
+<p>そのほかもいっぱい機能が追加れさてれてますね。個人的には <code><span class="pre">document.observe(&quot;contentloaded&quot;,</span> function() { ... })</code> て感じでサポートされたDOM完了時点でのイベントと、</p>
+<pre class="prettyprint ">$("container").observe("titleChanged", function(event) {
+  this.highlight({ duration: 0.5 });
+});
+
+$("title").fire("titleChanged");</pre><p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
+<hr class="docutils" />
+<p>資格の勉強とかもそろそろしなきゃなー、と思いつつ、Scalaでパーサコンビネータライブラリがついたので、Schemeの処理系でも実装したいなあ、と思い始めてる今日この頃。</p>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+<li><a href="/articles/2006/03/31/current-development-in-element-extend">Element.extendの動向。</a></li>
+<li><a href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements">続Element.Methods。問題とちょっと改良</a></li>
+<li><a href="/articles/2006/02/15/the-embed-javascript-implementation">埋め込みjavascriptを実装してみました。</a></li>
+<li><a href="/articles/2006/03/12/element-methods-in-prototype">prototype.js 1.5のElement.Methods</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2007/08/23/prototype160-rc" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2007\/08\/23\/prototype160-rc';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python版ニコニコ動画ライブラリを試しに公開してみる</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python版ニコニコ動画ライブラリを試しに公開してみる</h1>
+<div class="meta">
+<time datetime="2008-04-03T22:06:31&#43;09:00">Apr  3, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/nicovideo/" rel="tag" itemprop="keywords">nicovideo</a></span>
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>※あくまで試験的に公開しています</p>
+<p>まぁありきたりというか、なんというかなんですけどニコニコ動画の自分用ライブラリを以前から作っていました。公開してもよかったんですけど、需要があるかわかんないし、まとまってないですし、ニコニコ動画的にもこういうライブラリをつかってごにゃごにゃするのはちょっと･･･という感じらしいので公開してませんでした。</p>
+<p>なんですけど、公開されてるライブラリもありますし、せっかくなんで試験的に公開しておけばなんかの役に立つかな、と思いまして。使ってくれる人が多かったりすれば、まとめなおしてCodeReposに突っ込むかもしれません。</p>
+<section>
+<h1>ダウンロードしてみる奇特な方はどうぞ</h1>
+<p><a class="reference external" href="/statics/files/nicovideo.zip">nicovideo.zip</a></p>
+<section>
+<h2>必要なもの</h2>
+<pre class="prettyprint ">easy_install mechanize
+easy_install lxml</pre></section>
+<section>
+<h2>使い方</h2>
+<pre class="prettyprint ">import nicovideo as n
+client = n.NicoClient("mail", "pass", cookie_file="")
+
+print "nickname: %s" % client.nickname
+
+client.video("sm9").download(with_comments=True)
+
+print "search"
+for video in client.video_search("test", by=n.SEARCH_KEYWORD, sort=n.SORT_POSTED_AT, order=n.ORDER_DESC)[:10]:
+  print video.title
+
+print "ranking"
+for video in client.video_ranking(by=n.RANKING_MYLIST, span=n.RANKING_DAILY, category="all")[:10]:
+  print video.title
+
+print "new arrival"
+for video in client.video_newarrival()[100:110]:
+  print video.title
+
+print "mylist"
+for video in client.video_mylist(2792158)[100:110]:
+  print video.title
+
+print "random"
+for video in client.video_random():
+  print video.title</pre><p>こんな感じです。ニコニコ動画に負荷をかけないように、各httpリクエストの間に最低1秒待つので遅いです。ですが、できるかぎり情報はlazyにとりに行くようになっています。たとえば、 <code>video_search</code> でかえってくる <code>Video</code> はidとタイトルの情報のみもっていて、その他の情報(lengthなど)にアクセスすると自動的にメタ情報を取りにいきます。メタ情報は</p>
+<pre class="prettyprint ">print client.video("sm9").meta
+# =&gt;
+description レッツゴー！陰陽師（フルコーラスバージョン）
+tags {'#text': '', u'tag': [u'\u9670\u967d\u5e2b', u'\u30ec\u30c3\u30c4\u30b4\u30fc\uff01\u9670\u967d\u5e2b', u'\u516c\u5f0f', u'\u904b\u55b6\u516c\u8a8d\u52d5\u753b', u'\u3053\u306e\u52d5\u753b\u306e\u3046\uff50\u4e3b\u306fnicovideo', u'\u97f3\u697d', u'\u4f1d\u8aac\u306esm9', u'\u03b2\u6642\u4ee3\u306e\u82f1\u96c4', u'\u5439\u3044\u305f\u3089\u6210\u4ecf', u'\u30de\u30a4\u30ea\u30b9\uff15\uff10\u4e07\u796d\u308a\u4f1a\u5834']}
+file_type flv
+comment_num 2618200
+l 320
+is_premium 0
+thread_id 1173108780
+view_counter 3839233
+link http://www.smilevideo.jp/view/9/350170
+nickname name
+user_id 00000
+title 新・豪血寺一族 -煩悩解放 - レッツゴー！陰陽師
+url http://smile-clb42.nicovideo.jp/smile?v=9.0468
+posted_at 2007-03-06 00:33:00
+video_id sm9
+thumb_type video
+watch_url http://www.nicovideo.jp/watch/sm9
+first_retrieve 2007-03-06 00:33:00
+mylist_counter 49956
+length 00:05:20
+thumbnail_url http://tn-skr.smilevideo.jp/smile?i=9
+ms http://msg.nicovideo.jp/10/api/
+time 1207225894
+done true
+#text
+last_res_body 1人だけじゃね</pre><p>こんな感じのがとれます。基本的にthubnail APIからとってきて適当に型変換しています。thumbnail APIでの情報に加えて、file_typeなんかが付け加えられます。file_typeもちゃんと判別するのでflvでもmp4でもswfでももちろんちゃんとダウンロードできます。</p>
+<p>ほかにも <code><span class="pre">client.video_newarrival()[100:110]</span></code> とすると、自動的に何ページ目かを計算してそのページからhttpアクセスしてとりにいきます。</p>
+<p>あと、ちょっとダウンロード中の表示がリッチな感じです。</p>
+</section>
+</section>
+<section>
+<h1>ちょっと設計について</h1>
+<p>基本的に、NicoClientを拡張して機能を実装します。拡張方法は <code>NicoClientExtension</code> クラスを拡張したクラスを定義する、以上です。これでNicoClientに自動的にクラス名をunderscoreしたメソッドが生えます。</p>
+<p>たとえば <code>Video</code> も <code>NicoClientExtension</code> です。</p>
+<pre class="prettyprint ">class Video(NicoClientExtension):
+  URL_WATCH = NicoClient.URL_BASE + "watch/%s"
+  URL_API_GET_FLV = NicoClient.URL_BASE + "api/getflv/%s"
+  URL_API_GET_THUMB_INFO = NicoClient.URL_BASE + "api/getthumbinfo/%s"
+
+  FILE_TYPE_RE = re.compile(".*/smile\?([a-z]{1})\=.*")
+
+  def __init__(self, client, id, meta = None):
+    self.client = client
+    self.id = id
+    self.meta = meta or {}
+
+# ...</pre><p>という定義で <code>client.video</code> というメソッドが生えるという設計になっています。メタクラスにはこういう使い方があります。検索機能も、新着も、気まぐれも全部 <code>NicoClientExtension</code> として実装されています。</p>
+<section>
+<h2>問題点</h2>
+<ul class="simple">
+<li>まとまってません。1ファイルに適当につめこんでいます。</li>
+<li>全然テストしてません。</li>
+<li>sm9(陰陽師)が消されると動かなくなります</li>
+</ul>
+<hr class="docutils" />
+<p>こんな感じです。</p>
+</section>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
+<li><a href="/articles/2008/12/11/functional-pattern-matching-for-python">Python: パターンマッチしてみる</a></li>
+<li><a href="/articles/2008/09/19/sexp-library-for-python">Python: S式パーサライブラリを作りました</a></li>
+<li><a href="/articles/2007/11/08/instant-pluggable-python-class">Python:お手軽にPluggableにする</a></li>
+<li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2008/04/03/a-python-library-for-nicovideo-testing" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2008\/04\/03\/a-python-library-for-nicovideo-testing';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

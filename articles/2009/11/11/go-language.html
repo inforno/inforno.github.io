@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: 個人的Go雑感&amp;amp;メモ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">個人的Go雑感&amp;メモ</h1>
+<div class="meta">
+<time datetime="2009-11-11T20:00:00&#43;09:00">Nov 11, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/go/" rel="tag" itemprop="keywords">go</a></span>
+  
+  <span class="tag"><a href="/articles/tag/language/" rel="tag" itemprop="keywords">language</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>Googleが <a class="reference external" href="http://golang.org/">Goという新しいプログラミング言語</a> を出したようで。早速、インストールして軽くドキュメントを流し読みしてみました。</p>
+<p>英語なんて読みたくないよ、という人もいるかもしれないし、誰かの役に立つかもしれないので自分用メモおいときます。完全に自分用なんである程度他の言語の知識がある人向けな上、ざっくり流し読みなんで間違ってるかも。</p>
+<section>
+<h1>どんな言語？</h1>
+<ul>
+<li><p class="first">ネイティブコードを吐く、コンパイル型。</p>
+</li>
+<li><p class="first">速度はCレベル。</p>
+</li>
+<li><p class="first">GC搭載。ポインタはあるけど、ポインタ演算はできません。</p>
+</li>
+<li><dl class="first docutils">
+<dt>各種アーキに最適化された、それぞれのコンパイラセットを持ちます。例：</dt>
+<dd><ul class="first last simple">
+<li>6g, 6l : amd64</li>
+<li>8g, 8l : i386</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">linux, mac, naclに対応。</p>
+</li>
+<li><p class="first">動的型言語と静的型言語のおいしいとこどり。</p>
+</li>
+<li><p class="first">concurrent処理が組み込まれてます。</p>
+</li>
+</ul>
+</section>
+<section>
+<h1>個人的雑感</h1>
+<ul>
+<li><dl class="first docutils">
+<dt>こんな言語設計思想かなあと感じたり</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>とにかく、シンプルな言語に。</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>C++の複雑な部分などはできるだけはずしているような。</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>いわゆるクラスベースのオブジェクト指向はない。</dt>
+<dd><ul class="first last simple">
+<li>継承はない。</li>
+<li>あるのはフラットなインタフェース空間のみ。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">例外もない。</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">低レイヤからは離れすぎたくない。</p>
+</li>
+<li><p class="first">concurrentを言語的にサポートしたい。</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>以下の言語からの影響を感じたり</dt>
+<dd><ul class="first last simple">
+<li>言語コアはC。</li>
+<li>C++はパッケージの書き方、記法に影響がみられる。</li>
+<li>命名規則や記法にPythonの影響がみられる。</li>
+<li>concurrentな部分はErlangから影響をうけている。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section>
+<h1>言語仕様</h1>
+<p>自分なりに簡単にまとめて見ます。</p>
+<section>
+<h2>変数への代入</h2>
+<p>下へ行くほど省略形。 <code>var</code> もあるから <code>const</code> もあるでよ。</p>
+<pre class="prettyprint ">var s string = "";
+var s = "";
+s := "";</pre></section>
+<section>
+<h2>オブジェクト構造</h2>
+<p>値扱いの型と参照型があります。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>値扱い <span class="classifier-delimiter">:</span> <span class="classifier">代入、関数への私はコピーとなる。配列もまるごとコピーされる。</span></dt>
+<dd><ul class="first last simple">
+<li>各種数値 :  <code>int</code> ,  <code>float</code> といったプラットフォームごとにサイズがきまる型と <code>int32</code> のようにサイズ固定の型。</li>
+<li><code>string</code>  : 不変、UTF8、ただのバイト配列</li>
+<li>配列</li>
+<li><code>struct</code>  : ユーザ定義型</li>
+<li>などなど</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>参照 <span class="classifier-delimiter">:</span> <span class="classifier">3つのみ</span></dt>
+<dd><ul class="first last simple">
+<li><code>map</code>  : 辞書</li>
+<li><code>slice</code>  : 明示的なサイズを持たない、配列のようなもの</li>
+<li><code>channel</code>  : concurrentで使う</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>値扱い型のアロケート方法 :  <code>new <span class="pre">-&gt;</span> T*</code> を返す</p>
+<pre class="prettyprint ">var t *T = new(T);</pre><p>参照型のアロケート方法 :  <code>make <span class="pre">-&gt;</span> T</code> を返す</p>
+<pre class="prettyprint ">m := make(map[string]int);
+// これはダメ
+var m map[string]int;</pre></section>
+<section>
+<h2>配列とスライス</h2>
+<ul class="simple">
+<li>配列は「値」。でユーザがメモリ構造などを読める。スライスはコンパイラがよしなに確保する、参照型。</li>
+</ul>
+<p>例えば <code>int</code> 型配列のポインタを受け取る場合。</p>
+<p>標準配列(&amp;がいる)</p>
+<pre class="prettyprint ">s := sum(&amp;[3]int{1,2,3});
+s := sum(&amp;[...]int{1,2,3});</pre><p>スライス</p>
+<pre class="prettyprint ">s := sum([]int{1,2,3});</pre></section>
+<section>
+<h2>辞書型</h2>
+<pre class="prettyprint ">timeZone := map[string]int{
+  "UTC": 0*60*60,
+  "EST": -5*60*60,
+  "CST": -6*60*60,
+  "MST": -7*60*60,
+  "PST": -8*60*60,
+}
+
+seconds, ok = timeZone[tz]
+//値がなければokはfalse
+if seconds, ok := timeZone[tz]; ok {
+    return seconds
+}
+//消す場合
+timeZone["UTC"] = 0, false;</pre></section>
+<section>
+<h2>パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h2>
+<p>命名規則に特徴があります。 <strong>大文字始まり以外は外部から見えない</strong> が原則。単なる命名規則ではなく、そういう仕様。</p>
+<section>
+<h3>パッケージ</h3>
+<p>パッケージ文でファイルの先頭に書きます。これが基本的な単位となります。</p>
+<pre class="prettyprint ">package file</pre></section>
+<section>
+<h3>制御構造</h3>
+<p>特徴は</p>
+<ul class="simple">
+<li>()がいらない。</li>
+<li><code>if</code> や <code>switch</code> などの条件部に複数の文がかける</li>
+<li>ループは <code>for</code> のみ( <code>while</code> や <code>do</code> はない)</li>
+<li><code>switch</code> が強力に(内容的にif-else if-elseチェイン)</li>
+<li>concurrent用に <code>select</code> がある</li>
+</ul>
+<p>という点。かと。</p>
+<p>ifの例</p>
+<pre class="prettyprint ">if i % prime != 0 {
+    fmt.Printf("%d", i);
+}</pre><p>switchの例</p>
+<pre class="prettyprint ">switch nr, er := f.Read(&amp;buf); true {
+           case nr &lt; 0:
+               fmt.Fprintf(os.Stderr, "cat: error reading from %s: %s\n", f.String(), er.String());
+               os.Exit(1);
+           case nr == 0: // EOF
+               return;
+           case nr &gt; 0:
+               if nw, ew := file.Stdout.Write(buf[0:nr]); nw != nr {
+                   fmt.Fprintf(os.Stderr, "cat: error writing from %s: %s\n", f.String(), ew.String());
+               }
+}</pre><p>caseに条件式がかける。breakは自動でされる。</p>
+</section>
+<section>
+<h3>型定義</h3>
+<p><code>type</code> , <code>struct</code> キーワードを組み合わせる。 <strong>メンバにメソッドは含みません。</strong></p>
+<pre class="prettyprint ">type File struct {
+    fd int; // file descriptor number
+    name string; // file name at Open time
+}</pre><p>メンバ名が小文字なので、パッケージ外からは見えません。</p>
+</section>
+<section>
+<h3>関数とメソッド</h3>
+<ul class="simple">
+<li>両方とも <code>func</code> キーワードで定義。</li>
+<li>違いはレシーバを指定するか否か。 レシーバを明示的に書くところはPythonっぽい。</li>
+<li>多値が返せる。</li>
+</ul>
+<p>この多値がかえせる、というのがGoでは非常に重要な意味をもっています。</p>
+<p>関数定義: 多値を返しています。大文字始まりなので、外部に公開されます。</p>
+<pre class="prettyprint ">func Open(name string, mode int, perm int) (file *File, err os.Error) {
+     r, e := syscall.Open(name, mode, perm);
+     if e != 0 {
+         err = os.Errno(e);
+     }
+     return newFile(r, name), err
+}</pre><p>返す型に <code>(file *File, err os.Error)</code> と変数名がついてますね。これをつけておけば <code>return;</code> ってかくだけでその名前の変数を返してくれます。</p>
+<pre class="prettyprint ">func Open(name string, mode int, perm int) (file *File, err os.Error) {
+     r, e := syscall.Open(name, mode, perm);
+     if e != 0 {
+         err = os.Errno(e);
+     }
+     file = newFile(r, name)
+     return;
+}</pre><p>こんな風にもかけるってことです。おそらく、エラー処理が絡む場合とかこっちのほうが書きやすかったりするんじゃないですかね。</p>
+<p>クロージャにもなります。いわゆる関数ポインタをとるようなところで、関数がそのままかけて外部変数も見えます。</p>
+<pre class="prettyprint ">startServer(func(a, b int) int { return a + b });</pre><p>メソッド定義。 <code>(file *File)</code> がレシーバの指定。</p>
+<pre class="prettyprint ">func (file *File) Close() os.Error {
+    if file == nil {
+        return os.EINVAL
+    }
+    e := syscall.Close(file.fd);
+    file.fd = -1; // so it can't be closed again
+    if e != 0 {
+        return os.Errno(e);
+    }
+    return nil
+}</pre><p>メソッド定義が <code>struct</code> での型定義時ではないことに注目。つまり <strong>組み込み型などに対してもあとからメソッドを作成できるのです</strong> 。こんな感じ。</p>
+<pre class="prettyprint ">type IntArray []int
+func (p IntArray) Len() int { return len(p); }</pre></section>
+<section>
+<h3>インタフェース</h3>
+<p>これ重要。Goはいわゆるクラスがないので、継承などもなく  <strong>インタフェースによるダックタイピングでそれらを片付けます</strong> 。  <code>interface</code> キーワードで定義。</p>
+<pre class="prettyprint ">type reader interface {
+     Read(b []byte) (ret int, err os.Error);
+     String() string;
+}</pre><p>このように、 <code>Read</code> と <code>String</code> が定義されていればそれは <code>reader</code> なんだ、と考えます( <strong>ダックタイピング</strong> )。</p>
+<p>実行時、動的にインタフェースが実装されているかも検査できます。</p>
+<pre class="prettyprint ">   s, ok := v.(Stringer);
+
+``v`` が ``Stringer`` インタフェースを満たしていれば</pre><ul class="simple">
+<li><code>s</code> に <code>Stringer</code> オブジェクトとしてのv</li>
+<li><code>ok</code> に <code>true</code> が</li>
+</ul>
+<p>がかえってきます。</p>
+</section>
+</section>
+<section>
+<h2>Concurrency</h2>
+<p>concurrentプログラミングはGoの大きな特徴。 <strong>CSP(Communicating Sequential Processes)</strong> に基づいてます。並行して動く「goroutines」という軽量プロセスが「channel」を介してやりとり。ガードと多重化のためにselect文があります。</p>
+<p>channelは単体ではなくchan 受け渡しする型という感じで書きます。以下はチュートリアルのコードまんまです。</p>
+<pre class="prettyprint ">func generate(ch chan int) {
+    for i := 2; ; i++ {
+        ch &lt;- i // Send 'i' to channel 'ch'.
+    }
+}</pre><p><code>int</code> を扱う <code>channel</code> を受け取ってそれにiを送っていきます。</p>
+<pre class="prettyprint ">func filter(in, out chan int, prime int) {
+    for {
+        i := &lt;-in; // Receive value of new variable 'i' from 'in'.
+        if i % prime != 0 {
+            out &lt;- i // Send 'i' to channel 'out'.
+        }
+    }
+}</pre><p>送られた <code>i</code> が一定の条件を満たしていたら、 <code>int</code> を扱う <code>out</code> というchannelに送ります。</p>
+<pre class="prettyprint ">func main() {
+    ch := make(chan int); // Create a new channel.
+    go generate(ch); // Start generate() as a goroutine.
+    for {
+        prime := &lt;-ch;
+        fmt.Println(prime);
+        ch1 := make(chan int);
+        go filter(ch, ch1, prime);
+        ch = ch1
+    }
+}</pre><p>channelは参照型なので <code>make</code> で作ります。 <code>go</code> で実行します。これは丁寧に書いた感じ。クロージャを使えばもっとシンプル。</p>
+<pre class="prettyprint ">func generate() chan int {
+    ch := make(chan int);
+    go func(){
+        for i := 2; ; i++ {
+            ch &lt;- i
+        }
+    }();
+    return ch;
+}</pre><section>
+<h3>多重化とガード</h3>
+<p>複数のチャンネルをとりあつかって、それらをガードにより振り分けられます。ErlangやScalaでおなじみの書き方です。</p>
+<pre class="prettyprint ">func server(op binOp, service chan *request, quit chan bool) {
+    for {
+        select {
+        case req := &lt;-service:
+            go run(op, req); // don't wait for it
+        case &lt;-quit:
+            return;
+        }
+    }
+}</pre><p><code>request</code> 型のポインタを扱うchannelと <code>bool</code> 型を扱うchannelを使って、多重化しています。 <code>quit</code> チャンネルに値が送られてくるまでは、送られてきたものから良しなに処理してくれる、という感じですね。</p>
+</section>
+</section>
+</section>
+<section>
+<h1>というわけで</h1>
+<p>なぐり書きしたメモでした。変なことかいてたらすみません。まぁこんな感じな言語かなあ、という程度で。</p>
+<p>繰り替えしになりますが、C言語を元にシンプルに保ちながらconcurrentプログラミングしやすくしてます、って感じですね。完全にダックタイピングベースで多値を多様するスタイルはおもしろいですね。なんとなく見た目がキモく感じるのは私の気のせいでしょう。</p>
+<p>というか数ヶ月もブログ放置してたのかー。コード書いてないわけじゃないんですけど、たいしたもんかいてないんですよね。割合的には8割がたCかな。月一くらいはブログ書いていきたいなあ・・・</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala">Scalaでスタック指向言語をサクッと実装する</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2009/11/11/go-language" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2009\/11\/11\/go-language';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

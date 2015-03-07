@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: 埋め込みPythonを実装してみました</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">埋め込みPythonを実装してみました</h1>
+<div class="meta">
+<time datetime="2009-02-12T00:00:00&#43;09:00">Feb 12, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<section>
+<h1>更新履歴</h1>
+<ul>
+<li><dl class="first docutils">
+<dt>2009/02/20 version 1.0.0</dt>
+<dd><ul class="first last simple">
+<li><code>Renderer</code> と <code>Helper</code> を追加。詳しくはソースファイルヘッダ部分のドキュメントを参照してください。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>2009/02/17 version 0.5.0</dt>
+<dd><ul class="first last simple">
+<li><code>&lt;%= %&gt;</code> で自動的にフィルタを適応できるようになりました。また、 <code>render</code> メソッドが <code>unicode</code> オブジェクトではなく <code>unicode</code> のサブクラス <code>EmbpyString</code> オブジェクトを返すようになりました。filterは <code>EmbpyString</code> オブジェクトをスルーします。これにより2重でfilterが適応されることがなくなります。&lt;%=r %&gt;でフィルターをオフにできます。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<pre class="prettyprint ">Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
+# =&gt; "&amp;lt;b&amp;gt;"
+Embpy("&lt;%=r b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
+# =&gt; "&lt;b&gt;"
+
+result = Embpy("&lt;%=r b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
+# result.__class__ =&gt; EmbpyString
+Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
+# =&gt; "&lt;b&gt;"</pre><ul>
+<li><p class="first"><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</p>
+</li>
+<li><dl class="first docutils">
+<dt>2009/02/16 version 0.4.0</dt>
+<dd><ul class="first last simple">
+<li>パフォーマンス改善</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>2009/02/15 version 0.3.0</dt>
+<dd><ul class="first last simple">
+<li><a class="reference external" href="http://wids.net/lab/epy.html">epy</a> の中の人から「end.. orz」という反応をいただいたので、endの代わりに <code>&lt;% %&gt;</code> も使えるようにしました。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<pre class="prettyprint ">&lt;%- if True: -%&gt;
+   ok
+   &lt;% %&gt;</pre><p>と書けるようになりました。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>2009/02/14 version 0.2.0</dt>
+<dd><ul class="first last simple">
+<li>&quot;{&quot; と &quot;}&quot;が辞書リテラルとかぶっていたので、&quot;{:&quot;と&quot;:}&quot;に変更しました。</li>
+<li>変換後コードでなく、コンパイル済みcodeオブジェクトをキャッシュするようにしました。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section>
+<h1>はじめに</h1>
+<p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
+<p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a class="reference external" href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
+<p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= <span class="pre">&quot;hoge%&gt;&quot;</span></code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
+<ul class="simple">
+<li>キャッシュ</li>
+<li>インラインでPythonを書くことも出来る:  <code>def format(v) {: return <span class="pre">&quot;%4d&quot;%v;</span> :}</code> みたいに。</li>
+<li>eRubyのtrim modeの&quot;&lt;%-&quot;と&quot;-%&gt;&quot; : これがあると無いではテンプレートの見易さが段違い。</li>
+<li>自動的にフィルタを適応。しかも2重でフィルタが適応されない。</li>
+<li>もちろんマルチバイトでも大丈夫。</li>
+</ul>
+<p>といったところが特徴ですかね。</p>
+</section>
+<section>
+<h1>例</h1>
+<p>テンプレートはこんな感じにかけます。</p>
+<pre class="prettyprint ">&lt;%-
+class Hoge(object):
+  def __init__(self):
+    pass
+  end
+end
+hoge = Hoge()
+a = "&lt; title &gt;"
+-%&gt;
+&lt;%=r a %&gt;
+&lt;%- def format(v) {: return "%4d"%v; :} -%&gt;
+&lt;%- def format2(v) {: return "%2d"%v; :} -%&gt;
+  &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
+&lt;%- for x in xrange(1,xx): -%&gt;
+&lt;%= format2(x) -%&gt;
+  &lt;%- for y in xrange(1,xx): -%&gt;
+&lt;%= format(x*y) -%&gt;
+  &lt;%- end %&gt;
+&lt;%- end -%&gt;</pre><p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
+<pre class="prettyprint ">e = embpy.Embpy(codecs.open("path_to_template", encoding="utf8"),
+          cache_path = "path_to_cache_file",
+          template_globals = {}, filter=cgi.escape)
+print e.render({"xx": "10"})</pre><p>出力はこう。</p>
+<pre class="prettyprint ">    1   2   3   4   5   6   7   8   9
+1   1   2   3   4   5   6   7   8   9
+2   2   4   6   8  10  12  14  16  18
+3   3   6   9  12  15  18  21  24  27
+4   4   8  12  16  20  24  28  32  36
+5   5  10  15  20  25  30  35  40  45
+6   6  12  18  24  30  36  42  48  54
+7   7  14  21  28  35  42  49  56  63
+8   8  16  24  32  40  48  56  64  72
+9   9  18  27  36  45  54  63  72  81</pre></section>
+<section>
+<h1>ダウンロード</h1>
+<p><a class="reference external" href="/statics/files/embpy.zip">embpy</a></p>
+</section>
+<section>
+<h1>コード</h1>
+<p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
+<p>あと <code><span class="pre">&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</span></code> という正規表現は自分的には常套句。&quot;で囲まれていて\&quot;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2008/12/11/functional-pattern-matching-for-python">Python: パターンマッチしてみる</a></li>
+<li><a href="/articles/2008/09/19/sexp-library-for-python">Python: S式パーサライブラリを作りました</a></li>
+<li><a href="/articles/2007/11/08/instant-pluggable-python-class">Python:お手軽にPluggableにする</a></li>
+<li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
+<li><a href="/articles/2008/04/03/a-python-library-for-nicovideo-testing">Python版ニコニコ動画ライブラリを試しに公開してみる</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2009/02/12/the-embedded-python-implementation" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2009\/02\/12\/the-embedded-python-implementation';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Python: パターンマッチしてみる</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="http://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..."/>
+          <input type="hidden" name="q" value="site:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h1 itemprop="name">Python: パターンマッチしてみる</h1>
+<div class="meta">
+<time datetime="2008-12-11T01:25:07&#43;09:00">Dec 11, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    
+<p>なんか、趣味では最近はC言語ばっかりだったりするわけですが。</p>
+<p>さて、関数型言語系をカジった人なら誰しも取り付かれる、モノ、それがパターンマッチ。パターンマッチが使えると、とにかく直感的にコードをかけますよね。</p>
+<p>つーわけで、Pythonでパターンマッチを実装してみました。機能的には</p>
+<ul class="simple">
+<li>リスト,タプルに対するパターンマッチ</li>
+<li>パターン変数への束縛</li>
+<li>ガード条件</li>
+<li>任意のオブジェクトに対するパターンマッチ</li>
+<li>部分パターンの束縛(Ocamlのas)</li>
+</ul>
+<p>あたりを実装してみました。これだけあれば、かなり便利にコードをかけます。できるだけ、手軽に書けるように工夫してみました。こんな感じです。</p>
+<p>変数束縛とガード。 <code>getattr</code> でごにょごにょしてるので簡単にかけます。</p>
+<pre class="prettyprint ">m = Match([1,2,3])
+if m.when([1,2,m.var]) and m.var &gt; 2:
+  print m.var
+# &gt;&gt; 3</pre><p>こう使えば、Pythonに念願のswitchが！</p>
+<pre class="prettyprint ">m = Match(10)
+if m(9):
+  print 1
+elif m(10):
+  print 2
+else:
+  False
+# &gt;&gt; 2</pre><p>部分パターンを束縛してみます。 <code>[1,2,m.var]</code> 全体を <code>all</code> というパターン変数に束縛します。</p>
+<pre class="prettyprint ">m = Match([1,2,3])
+if m.when([1,2,m.var]) and m.var &gt; 5:
+  False
+elif m.when(m._as_all([1,2,m.var])):
+  print m.all
+  print m.var
+else:
+  raise StandardError("")
+# &gt;&gt; [1, 2, 3]
+# &gt;&gt; 3</pre><p>任意のオブジェクトにも使えます。いわゆるレコードに対するマッチも簡単にできるということです。</p>
+<pre class="prettyprint ">class Test(object):
+  def __init__(self, v1, v2):
+    self.v1 = v1
+    self.v2 = v2
+  def __repr__(self):
+    return "Test(%s, %s)"%(repr(self.v1), repr(self.v2))
+m = Match([1, Test(2, 3)])
+if m.when([1, m._class(Test, {"v1":2, "v2": m.v2})]):
+  print m.v2
+else:
+  False
+# &gt;&gt; 3</pre><p>オブジェクトに対するパターンマッチは <code>__match__</code> メソッドを定義するとカスタマイズできます。ここらのアイデアはScalaからいただきました。</p>
+<pre class="prettyprint ">class Test2(Test):
+  def __match__(self):
+    return {"value": self.v1 + self.v2}
+m = Match([1, 2, Test2(3,4)])
+if m.when([1,2, m._class(Test2, {"value": m.var})]):
+  m.var
+else:
+  False
+# &gt;&gt; 7</pre><p>結構いい感じな気がします。</p>
+<section>
+<h1>ダウンロード</h1>
+<p><a class="reference external" href="/statics/files/patternmatch.zip">patternmatch.py</a></p>
+</section>
+<section>
+<h1>実装のお話</h1>
+<p>ソースコードはこんな感じ。</p>
+<pre class="prettyprint ">class Match(object):
+  class _var(str): pass
+  class _class(object):
+    def __init__(self, klass, attrs):
+      self.klass= klass
+      self.attrs= sorted(attrs.iteritems())
+    def match(self, m, obj):
+      props = getattr(obj, "__match__", lambda: obj.__dict__)()
+      return issubclass(obj.__class__, self.klass) and \
+            m.when(self.attrs, sorted(props.iteritems()))
+  class _as(object):
+    def __init__(self, name, pattern = None):
+      self.name = name
+      self.pattern = pattern
+    def __call__(self, pattern):
+      self.pattern = pattern
+      return self
+
+  def __init__(self, obj):
+    self.obj = obj
+    self.bind = {}
+
+  def __getitem__(self, key):
+    if not self.bind.has_key(key):
+      if key.startswith("_as_"):
+        return self._as(self._var(key[4:]))
+      return self._var(key)
+    return self.bind[key]
+  __getattr__ = __getitem__
+  __call__ = lambda self, *a, **k : self.when(*a, **k)
+
+  def when(self, pattern, obj = None):
+    if not obj: obj = self.obj
+    if isinstance(pattern, (self._var, self._class, self._as)):
+      if isinstance(obj, (list, tuple)):
+        pattern = [pattern]
+        obj     = [obj]
+
+    if not isinstance(obj, (list, tuple)) and \
+      not isinstance(pattern, (list, tuple)) :
+      obj = [obj]
+      pattern = [pattern]
+
+    if not isinstance(obj, (list, tuple)) or  \
+      not isinstance(pattern, (list, tuple)) :
+      self.bind = {}
+      return False
+
+    if len(obj) != len(pattern):
+      if not ((pattern[-1].__class__ == self._var) and pattern[-1].startswith("__")):
+        self.bind = {}
+        return False
+
+    for i, (value, pat) in enumerate(zip(obj, pattern)):
+      if value == pat:
+        continue
+      elif pat.__class__ == self._var and pat.startswith("__"):
+        self.bind[str(pat)] = obj[i:]
+        return True
+      elif pat.__class__ == self._var:
+        self.bind[str(pat)] = value
+      elif pat.__class__ == self._class:
+        if not pat.match(self, value):
+          self.bind ={}
+          return False
+      elif pat.__class__ == self._as:
+        if not self.when(pat.pattern, value):
+          self.bind ={}
+          return False
+        self.bind[str(pat.name)] = value
+      elif isinstance(value, (list, tuple)) and isinstance(pat, (list,tuple)):
+        if not self.when(pat, value):
+          self.bind = {}
+          return False
+      else:
+        self.bind = {}
+        return False
+
+    return True</pre><p>まぁわりかしシンプルですね。</p>
+<hr class="docutils" />
+<p>今年も終わりが近づいてまいりました。年をとると時間がすぎるのが速いナァ･･･と痛感しております。</p>
+</section>
+
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
+<li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
+<li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
+<li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2008/12/11/functional-pattern-matching-for-python" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2008\/12\/11\/functional-pattern-matching-for-python';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  <script type="text/javascript"> 
+      if(!islocal) {
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        var pageTracker = _gat._getTracker("UA-251608-1");
+        pageTracker._initData();
+        pageTracker._trackPageview();
+      }
+  </script>
+  </body>
+</html>
