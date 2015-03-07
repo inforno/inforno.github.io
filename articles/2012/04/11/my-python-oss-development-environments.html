@@ -74,18 +74,18 @@
 <li>pytest : toxと親和性の高いテストツール。noseでもよいですが私はpytestを押します。</li>
 </ul>
 <section>
-<h1>Python2とPython3のインストール</h1>
+<h2>Python2とPython3のインストール</h2>
 <p>あたりまえですが、Python2系とPython3系両方入れておきましょう。</p>
 </section>
 <section>
-<h1>toxのインストール</h1>
+<h2>toxのインストール</h2>
 <p>さて、早速toxを入れていくわけですがこれにはPython2系を使います。</p>
 <pre class="prettyprint ">$ wget http://python-distribute.org/distribute_setup.py
 $ python27 distribute_setup.py
 $ easy_install virtualenv tox</pre><p>簡単ですね。</p>
 </section>
 <section>
-<h1>プロジェクトを始める - ファイル・ディレクトリ構成</h1>
+<h2>プロジェクトを始める - ファイル・ディレクトリ構成</h2>
 <p>次に、プロジェクトの基本形を作りましょう。私は以下のような構成にしています。</p>
 <pre class="prettyprint ">/
   + - .tox                        : toxにより生成されるディレクトリ。
@@ -106,7 +106,7 @@ $ easy_install virtualenv tox</pre><p>簡単ですね。</p>
   - CHANGES.rst                   : 変更履歴。</pre><p>普通です。ポイントは <code>docs/build/html</code> をgh-pagesへのリンクにすること。これでドキュメントの管理が非常に楽になります。</p>
 </section>
 <section>
-<h1>tox.iniの作成</h1>
+<h2>tox.iniの作成</h2>
 <p>tox.iniに依存関係と、どの処理系でテストするか、テストはなにを使ってやるかを書きましょう。だいたいの場合、それだけで十分です。</p>
 <pre class="prettyprint ">[tox]
 envlist = py27,py32
@@ -145,11 +145,11 @@ commands=
     --basetemp={envtmpdir}  \
     []</pre></section>
 <section>
-<h1>とりあえず開発</h1>
+<h2>とりあえず開発</h2>
 <p>とりあえず何かコードを書いて、テストも書きましょう。</p>
 </section>
 <section>
-<h1>toxでテスト</h1>
+<h2>toxでテスト</h2>
 <p>ではtoxでテストしましょう。tox.iniがあるディレクトリに移動してから</p>
 <pre class="prettyprint ">$ tox</pre><p>これで</p>
 <ul class="simple">
@@ -200,7 +200,7 @@ SKIP [3] /home/yuin/github/rays/.tox/py32/lib/python3.2/site-packages/_pytest/sk
 ============================================================================ 117 passed, 3 skipped in 14.81 seconds ============================================================================
 ________________________________________________________________________________________ [tox summary] _________________________________________________________________________________________</pre></section>
 <section>
-<h1>.travis.ymlの作成</h1>
+<h2>.travis.ymlの作成</h2>
 <p>無事、複数のインタプリタでテストできました。次はCIです。 <a class="reference external" href="http://travis-ci.org">Travis CI</a> を使うと、githubにpushしたタイミングでビルド＆テストが自動でできます。</p>
 <p>まずは、Travis CIにgithubのアカウントでログインして、対象のレポジトリでCIを有効にします。</p>
 <p>次に、Travis CIでのビルド＆テスト設定を.travis.ymlに書きます。ここではtoxを使っていますから、以下のようになります。</p>
@@ -214,7 +214,7 @@ script: tox</pre><p><code>TOXENV</code> でテストする環境を指定しま�
 <p>これでgithubにpushするとTravis CIが動くようになりました。</p>
 </section>
 <section>
-<h1>Travis CI + tox快適です</h1>
+<h2>Travis CI + tox快適です</h2>
 <p>ガンガンPython3対応をしましょう！</p>
 </section>
 

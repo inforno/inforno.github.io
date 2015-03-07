@@ -67,12 +67,12 @@
 <p>Python3も3.3になり性能も向上して、移行が順調に進んできているように見える。それを考慮して最近Python3系と2系の互換性確保を見直した。</p>
 <p>ひとことでいうと「Python3中心」にした。</p>
 <section>
-<h1>今までの手法</h1>
+<h2>今までの手法</h2>
 <p>基本的に3系と2系の互換性確保は「単一ソースコード」でやっていてそれは今も変わらず。</p>
 <p>で、今までは <strong>Python3とPython2の中間</strong> のコードを書いていた。組み込みの関数のリネームなどはしない、というような(例えば <code>zip</code> を <code>izip</code> で上書いてしまうとか)。ただこの手法だといざPython2系のサポートをdropする場合に処理的にもコード的にも無駄が多くなる。</p>
 </section>
 <section>
-<h1>今の手法</h1>
+<h2>今の手法</h2>
 <p><a class="reference external" href="https://github.com/yuin/rays">rays</a> の <a class="reference external" href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> では以下のような方針とした。</p>
 <ul>
 <li><dl class="first docutils">
@@ -182,7 +182,7 @@ html = Html(opener.open("http://www.google.co.jp/").read())</pre><p>ソースコ
 <li>ブログシステムを入れ替え</li>
 </ul>
 <section>
-<h1>silkylog</h1>
+<h2>silkylog</h2>
 <p>このブログはxreaのレンタルサーバで動かしているのだけど、しばらく見ないうちにxreaもサーバがすごく増えて、新しいサーバではpython2.7.5が使えるようになっていた。</p>
 <p>なので自作のwebフレームワーク <a class="reference external" href="https://github.com/yuin/rays">rays</a> を使った新しいブログシステム <a class="reference external" href="https://github.com/yuin/silkylog">silkylog</a> に移行した。silkylogはpython3.3でも動くのでしばらくは安心。これまで使っていたのはpython2系でしか動かないし、かといってpython3対応させる気力も起きないしでどーしたものかと思っていた。</p>
 <p>流行に乗ってOctpressとかにしようかなあ、と思いつつせっかく作ったのだしと思って。ただなんとなく悔しかったのでsilkylogにOctpressと同等の完全に静的なサイトを出力できる機能も付けた。</p>
@@ -190,7 +190,7 @@ html = Html(opener.open("http://www.google.co.jp/").read())</pre><p>ソースコ
 <p>手前味噌ながらraysの機能を余すところなくつかって、シンプルに作れたと思う。</p>
 </section>
 <section>
-<h1>html5化(デザイン)</h1>
+<h2>html5化(デザイン)</h2>
 <p>ようやくhtml5に。デザインも見直し。シンプルでよいデザインにできた･･･と思う。cssはscssでまとめた。
 レスポンシブルデザインにも対応。コメントはDisqus、シンタックスハイライトはgoogle code prettifyと外部だよりに。</p>
 <p>マークアップはreStructuredTextに統一した。普及度を考えるとmarkdownなのだけどやはりmarkdownは表現力が低くて。いろんな方言が乱立してるし、独自に拡張をするしくみに乏しいので使いづらかった。</p>
@@ -235,7 +235,7 @@ html = Html(opener.open("http://www.google.co.jp/").read())</pre><p>ソースコ
 </ul>
 <img alt="http://inforno.net/statics/files/screenshot_01.jpg" src="http://inforno.net/statics/files/screenshot_01.jpg" />
 <section>
-<h1>これはなに？</h1>
+<h2>これはなに？</h2>
 <p>シンプルなコマンドライン型ランチャーです。かなり昔から自分用につくって細々使い続けてきたものなので、ソースは割と悲惨です。何回か頑張って書き直しましたが気力が持ちません。使い続けているだけあってそこそこ安定しているはずです。一方あんまり使っていない機能はしらないうちに動かなくなっているかも知れません。というか動かなくなっていたので公開にあたってちょこちょこ直しました。</p>
 <p>開発に至った思想は以下のような感じです。</p>
 <ul>
@@ -297,7 +297,7 @@ html = Html(opener.open("http://www.google.co.jp/").read())</pre><p>ソースコ
 </ul>
 </section>
 <section>
-<h1>技術的な話</h1>
+<h2>技術的な話</h2>
 <p>実装言語はC++ &amp; Luaです。なぜLuaかというとやはり組み込みやすさが段違いで、拡張言語としての扱いやすさはPythonより高いと思っているからです。そろそろC#に移行しないといけませんかねえ…。</p>
 <p>工夫した点というかハマったのは使用しているGUIライブラリであるfltkの挙動ですね。マルチバイトフォントのレンダリングがとてつもなく遅いのです。なのでリスト表示部分は自前でwin32のAPIを呼んでいます。コマンドラインランチャはサクサク感がウリですから、もたるのはちょっと。ただ入力欄はfltkのままなのでここに長い日本語を一気にぶち込むと少し固まります。とはいえ、こうしてハマってもすぐソースがよめるのがfltkの良いところだと思います。</p>
 <p>あと、内部的にutf8で処理してます。はっきりいって無駄が多いんですけど、utf8はいろんなライブラリ混ぜるなら楽ですね。fltkもutf8なら日本語通るし、Luaもutf8なら日本語OK。PCの性能もあがっているので文字コード変換が増えてもつくりが楽だしこれでいいかなあ、と。</p>

@@ -100,20 +100,20 @@
 </li>
 </ul>
 <section>
-<h1>ダウンロード</h1>
+<h2>ダウンロード</h2>
 <p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
 <ul class="simple">
 <li><a class="reference external" href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
 </ul>
 </section>
 <section>
-<h1>実装について</h1>
+<h2>実装について</h2>
 <p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
 <p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
 <p>通信にはjsonを使いました。</p>
 </section>
 <section>
-<h1>基本的な動かし方</h1>
+<h2>基本的な動かし方</h2>
 <pre class="prettyprint ">import kademlia_tcp
 kademlia_tcp.DEBUG = True
 n = kademlia_tcp.KademliaNode("ip address", port)
@@ -128,12 +128,12 @@ n.store(other_node, key, value)
 n.find_node(other_node)</pre><p>というようなメソッドが使えます。</p>
 </section>
 <section>
-<h1>動かしてみて</h1>
+<h2>動かしてみて</h2>
 <p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
 <p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
 </section>
 <section>
-<h1>というわけで</h1>
+<h2>というわけで</h2>
 <p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
 </section>
 

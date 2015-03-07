@@ -67,7 +67,7 @@
 <p>Googleが <a class="reference external" href="http://golang.org/">Goという新しいプログラミング言語</a> を出したようで。早速、インストールして軽くドキュメントを流し読みしてみました。</p>
 <p>英語なんて読みたくないよ、という人もいるかもしれないし、誰かの役に立つかもしれないので自分用メモおいときます。完全に自分用なんである程度他の言語の知識がある人向けな上、ざっくり流し読みなんで間違ってるかも。</p>
 <section>
-<h1>どんな言語？</h1>
+<h2>どんな言語？</h2>
 <ul>
 <li><p class="first">ネイティブコードを吐く、コンパイル型。</p>
 </li>
@@ -93,7 +93,7 @@
 </ul>
 </section>
 <section>
-<h1>個人的雑感</h1>
+<h2>個人的雑感</h2>
 <ul>
 <li><dl class="first docutils">
 <dt>こんな言語設計思想かなあと感じたり</dt>
@@ -145,16 +145,16 @@
 </ul>
 </section>
 <section>
-<h1>言語仕様</h1>
+<h2>言語仕様</h2>
 <p>自分なりに簡単にまとめて見ます。</p>
 <section>
-<h2>変数への代入</h2>
+<h3>変数への代入</h3>
 <p>下へ行くほど省略形。 <code>var</code> もあるから <code>const</code> もあるでよ。</p>
 <pre class="prettyprint ">var s string = "";
 var s = "";
 s := "";</pre></section>
 <section>
-<h2>オブジェクト構造</h2>
+<h3>オブジェクト構造</h3>
 <p>値扱いの型と参照型があります。</p>
 <ul>
 <li><dl class="first docutils">
@@ -186,7 +186,7 @@ s := "";</pre></section>
 // これはダメ
 var m map[string]int;</pre></section>
 <section>
-<h2>配列とスライス</h2>
+<h3>配列とスライス</h3>
 <ul class="simple">
 <li>配列は「値」。でユーザがメモリ構造などを読める。スライスはコンパイラがよしなに確保する、参照型。</li>
 </ul>
@@ -196,7 +196,7 @@ var m map[string]int;</pre></section>
 s := sum(&amp;[...]int{1,2,3});</pre><p>スライス</p>
 <pre class="prettyprint ">s := sum([]int{1,2,3});</pre></section>
 <section>
-<h2>辞書型</h2>
+<h3>辞書型</h3>
 <pre class="prettyprint ">timeZone := map[string]int{
   "UTC": 0*60*60,
   "EST": -5*60*60,
@@ -213,14 +213,14 @@ if seconds, ok := timeZone[tz]; ok {
 //消す場合
 timeZone["UTC"] = 0, false;</pre></section>
 <section>
-<h2>パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h2>
+<h3>パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h3>
 <p>命名規則に特徴があります。 <strong>大文字始まり以外は外部から見えない</strong> が原則。単なる命名規則ではなく、そういう仕様。</p>
 <section>
-<h3>パッケージ</h3>
+<h4>パッケージ</h4>
 <p>パッケージ文でファイルの先頭に書きます。これが基本的な単位となります。</p>
 <pre class="prettyprint ">package file</pre></section>
 <section>
-<h3>制御構造</h3>
+<h4>制御構造</h4>
 <p>特徴は</p>
 <ul class="simple">
 <li>()がいらない。</li>
@@ -247,7 +247,7 @@ timeZone["UTC"] = 0, false;</pre></section>
 }</pre><p>caseに条件式がかける。breakは自動でされる。</p>
 </section>
 <section>
-<h3>型定義</h3>
+<h4>型定義</h4>
 <p><code>type</code> , <code>struct</code> キーワードを組み合わせる。 <strong>メンバにメソッドは含みません。</strong></p>
 <pre class="prettyprint ">type File struct {
     fd int; // file descriptor number
@@ -255,7 +255,7 @@ timeZone["UTC"] = 0, false;</pre></section>
 }</pre><p>メンバ名が小文字なので、パッケージ外からは見えません。</p>
 </section>
 <section>
-<h3>関数とメソッド</h3>
+<h4>関数とメソッド</h4>
 <ul class="simple">
 <li>両方とも <code>func</code> キーワードで定義。</li>
 <li>違いはレシーバを指定するか否か。 レシーバを明示的に書くところはPythonっぽい。</li>
@@ -294,7 +294,7 @@ timeZone["UTC"] = 0, false;</pre></section>
 <pre class="prettyprint ">type IntArray []int
 func (p IntArray) Len() int { return len(p); }</pre></section>
 <section>
-<h3>インタフェース</h3>
+<h4>インタフェース</h4>
 <p>これ重要。Goはいわゆるクラスがないので、継承などもなく  <strong>インタフェースによるダックタイピングでそれらを片付けます</strong> 。  <code>interface</code> キーワードで定義。</p>
 <pre class="prettyprint ">type reader interface {
      Read(b []byte) (ret int, err os.Error);
@@ -311,7 +311,7 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
 </section>
 </section>
 <section>
-<h2>Concurrency</h2>
+<h3>Concurrency</h3>
 <p>concurrentプログラミングはGoの大きな特徴。 <strong>CSP(Communicating Sequential Processes)</strong> に基づいてます。並行して動く「goroutines」という軽量プロセスが「channel」を介してやりとり。ガードと多重化のためにselect文があります。</p>
 <p>channelは単体ではなくchan 受け渡しする型という感じで書きます。以下はチュートリアルのコードまんまです。</p>
 <pre class="prettyprint ">func generate(ch chan int) {
@@ -347,7 +347,7 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
     }();
     return ch;
 }</pre><section>
-<h3>多重化とガード</h3>
+<h4>多重化とガード</h4>
 <p>複数のチャンネルをとりあつかって、それらをガードにより振り分けられます。ErlangやScalaでおなじみの書き方です。</p>
 <pre class="prettyprint ">func server(op binOp, service chan *request, quit chan bool) {
     for {
@@ -363,7 +363,7 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
 </section>
 </section>
 <section>
-<h1>というわけで</h1>
+<h2>というわけで</h2>
 <p>なぐり書きしたメモでした。変なことかいてたらすみません。まぁこんな感じな言語かなあ、という程度で。</p>
 <p>繰り替えしになりますが、C言語を元にシンプルに保ちながらconcurrentプログラミングしやすくしてます、って感じですね。完全にダックタイピングベースで多値を多様するスタイルはおもしろいですね。なんとなく見た目がキモく感じるのは私の気のせいでしょう。</p>
 <p>というか数ヶ月もブログ放置してたのかー。コード書いてないわけじゃないんですけど、たいしたもんかいてないんですよね。割合的には8割がたCかな。月一くらいはブログ書いていきたいなあ・・・</p>

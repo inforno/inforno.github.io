@@ -72,14 +72,14 @@
 <p>まぁありきたりというか、なんというかなんですけどニコニコ動画の自分用ライブラリを以前から作っていました。公開してもよかったんですけど、需要があるかわかんないし、まとまってないですし、ニコニコ動画的にもこういうライブラリをつかってごにゃごにゃするのはちょっと･･･という感じらしいので公開してませんでした。</p>
 <p>なんですけど、公開されてるライブラリもありますし、せっかくなんで試験的に公開しておけばなんかの役に立つかな、と思いまして。使ってくれる人が多かったりすれば、まとめなおしてCodeReposに突っ込むかもしれません。</p>
 <section>
-<h1>ダウンロードしてみる奇特な方はどうぞ</h1>
+<h2>ダウンロードしてみる奇特な方はどうぞ</h2>
 <p><a class="reference external" href="/statics/files/nicovideo.zip">nicovideo.zip</a></p>
 <section>
-<h2>必要なもの</h2>
+<h3>必要なもの</h3>
 <pre class="prettyprint ">easy_install mechanize
 easy_install lxml</pre></section>
 <section>
-<h2>使い方</h2>
+<h3>使い方</h3>
 <pre class="prettyprint ">import nicovideo as n
 client = n.NicoClient("mail", "pass", cookie_file="")
 
@@ -139,7 +139,7 @@ last_res_body 1人だけじゃね</pre><p>こんな感じのがとれます。�
 </section>
 </section>
 <section>
-<h1>ちょっと設計について</h1>
+<h2>ちょっと設計について</h2>
 <p>基本的に、NicoClientを拡張して機能を実装します。拡張方法は <code>NicoClientExtension</code> クラスを拡張したクラスを定義する、以上です。これでNicoClientに自動的にクラス名をunderscoreしたメソッドが生えます。</p>
 <p>たとえば <code>Video</code> も <code>NicoClientExtension</code> です。</p>
 <pre class="prettyprint ">class Video(NicoClientExtension):
@@ -156,7 +156,7 @@ last_res_body 1人だけじゃね</pre><p>こんな感じのがとれます。�
 
 # ...</pre><p>という定義で <code>client.video</code> というメソッドが生えるという設計になっています。メタクラスにはこういう使い方があります。検索機能も、新着も、気まぐれも全部 <code>NicoClientExtension</code> として実装されています。</p>
 <section>
-<h2>問題点</h2>
+<h3>問題点</h3>
 <ul class="simple">
 <li>まとまってません。1ファイルに適当につめこんでいます。</li>
 <li>全然テストしてません。</li>
@@ -200,7 +200,7 @@ last_res_body 1人だけじゃね</pre><p>こんな感じのがとれます。�
 <p>Scalaにはご存知のとおり <code>scala.util.parsing.combinator</code> というパーサコンビネータライブラリがある。さらには <code>scala.util.parsing.ast</code> というのもあるわけだけど、これは激しく開発中な感じ。Scalaはバージョンがあがるとこういう開発中ライブラリはごそっと変わったりするので今はおいておく。ちなみに、2.7.1では前のパーサコンビネータは <code>scala.util.parsing.combinatorold</code> といういかにも使いたくない名前にされてしまった。</p>
 <p>パーサコンビネータといえば言語処理系だ（そうか？）。というわけで <code>scala.util.parsing.ast</code> は置いておいて、とりあえずASTについてほとんど考える必要がない、簡単なスタック指向言語を実装してみることにする。実行はScala 2.7.1.finalで。</p>
 <section>
-<h1>スタック指向言語とは</h1>
+<h2>スタック指向言語とは</h2>
 <p>こんなブログを見ている人は、だいたいスタック指向言語を知っているだろうから俺みたいな素人が書いてもなんだけど、一応。
 スタック指向言語にはForthやPostScriptやFactorがある。素晴らしく簡単にいうと、 <strong>「とりあえずスタックがあればなんとかなるよね」</strong> という言語だ。</p>
 <p>んでスタック使うなら逆ポーランドで書いてあったら、処理も楽だしいいんじゃね、読みにくい？Lispだって慣れてる人は無問題なんだし、慣れの問題じゃね、という感じである。</p>
@@ -208,7 +208,7 @@ last_res_body 1人だけじゃね</pre><p>こんな感じのがとれます。�
 <p>今回は <code>Factor</code> ライクなスタック指向言語処理系（インタプリタ）「SimpleFactor」を作ってみることに。文法とかはだいたいFactorと一緒なのでさきにFactorの文法を学んでおくと分かりやすい。</p>
 </section>
 <section>
-<h1>まずはレクサ</h1>
+<h2>まずはレクサ</h2>
 <p>まずはレクサを作る。サポートするリテラルは文字列、整数値、真偽値で以下のような感じ。</p>
 <ul class="simple">
 <li>文字列： <code>&quot;hoge&quot;</code></li>
@@ -256,7 +256,7 @@ class Lexer extends StdLexical with ImplicitConversions {
 }</pre><p>Scalaで処理系を作る場合はとりあえず <code>StdLexical</code> を継承して拡張すれば、だいたいOK。ここでは <code>Token</code> を返すパーサを定義する。 <code>Keyword</code> や <code>StringLit</code> といった <code>Token</code> を継承したケースクラスは <code>scala.util.parsing.sytax.StdTokens</code> で定義されていて、 <code>StdLexical</code> は <code>StdTokens</code> をMix-inしている。</p>
 </section>
 <section>
-<h1>抽象構文木をつくる</h1>
+<h2>抽象構文木をつくる</h2>
 <p>次に、このトークンの並びから文法を定義して、それに従って抽象構文木を作るわけだけど、スタック指向言語の場合、ここで難しいことはあまりない。</p>
 <p>とりあえず、処理(といっても4種類、しかもうち2種類は意味なし）と、抽象構文木をあらわすケースクラスを作る。インタプリタなのでオペコードとかする意味はないけど、こうしとくとVMにしようと思ったとき楽なのでそうした。というよりエミュとかを作ることが好きなので、こういう数値を見ると安心するのである。</p>
 <pre class="prettyprint ">import scala.util.logging.ConsoleLogger
@@ -459,13 +459,13 @@ class NamedTable extends HashMap[String, Named] {
 <p>あとは自明なので省略。</p>
 </section>
 <section>
-<h1>実行</h1>
+<h2>実行</h2>
 <p>そんなこんなでソースコードから <code>NodeProgram</code> が作れるようになった。次に <code>NodeProgram</code> からTOPレベル環境を作る。</p>
 <p>ここでは、 <code>NodeProgram</code> に含まれるquotationを(実行する際の）簡単さのためNamedWordに変換し、変換後のNamedWordの呼び出しに変換する。組み込みwordもここで定義している。これはこの部分で定義すると、クロージャになるため定義が簡単だから( <code>pop</code> や <code>push</code> といった <code>SimpleFactorInterp</code> のメソッドがそのまま書ける)である。また、パターンマッチを活用することで非常に直感的に書けていることが見て取れるかと。やっぱりパターンマッチ最高だわぁ･･･。そして出揃ったTOPレベルのwordを <code>NamedTable</code> にマッピングし、TOPレベル環境の作成が完了する。</p>
 <p>あとは <code>main</code> wordを呼び出すだけ。</p>
 </section>
 <section>
-<h1>サンプルコード</h1>
+<h2>サンプルコード</h2>
 <p>こんな感じ。サンプルでは10の階乗を計算している。</p>
 <pre class="prettyprint ">object SimpleFactor extends ConsoleLogger{
   def main(args: Array[String]) = {
@@ -525,7 +525,7 @@ SimpleFactor.main(Array("10"))</pre><p>ここで使っているwordを簡単に�
 <p>ForthはSUNのOpen Firmware、Firefox4で採用が予定されているJavascriptの処理系Tamarinの中など、今でもあまり表には見えてこない部分で使用されているので、これを機会にスタック指向言語を嗜んでみては。Forthは基本だけど、今なら注目され始めている(？)Factorかなあ。</p>
 </section>
 <section>
-<h1>簡単に作れます</h1>
+<h2>簡単に作れます</h2>
 <p>というわけでScalaで簡単なスタック指向言語処理系を作ってみたわけだけど、非常に簡単。さくっと作れる。 <code>scala.util.parsing.ast</code> ができたら、またなんか処理系を試し書きしてみようかな。</p>
 </section>
 
@@ -563,11 +563,11 @@ SimpleFactor.main(Array("10"))</pre><p>ここで使っているwordを簡単に�
     
 <p>まぁ需要はないと思うんですが一応。内部的には <code><span class="pre">WebService::Simple</span></code> みたいになってるんでサクッと対応できます。</p>
 <section>
-<h1>ダウンロード</h1>
+<h2>ダウンロード</h2>
 <p><a class="reference external" href="/statics/files/yahooapi_0_2.zip">yahooapi</a></p>
 </section>
 <section>
-<h1>使い方</h1>
+<h2>使い方</h2>
 <pre class="prettyprint ">import yahooapi.jlp as jlp
 
 client = jlp.JIMServiceAPI("your_apikey")

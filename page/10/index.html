@@ -72,7 +72,7 @@
 <p>でも俺がしたいのは、雑多なタスクを放り込む、コレ。そういうのを簡単にやるライブラリってPythonではないんでしょうか。RubyではRakeが標準添付されるというのに。いえ、あります。前からあるんです。それが <a class="reference external" href="http://www.python.jp/doc/nightly/lib/module-distutils.html">distutils</a> 。</p>
 <p>distutils(およびその拡張のsetuptools)はPythonの標準的なパッケージ配布システムとして有名です。でも実は自分でコマンドを定義してRakeのように使うことができることはあまりしられていないのではないでしょうか。</p>
 <section>
-<h1>distutilsでコマンドを定義する</h1>
+<h2>distutilsでコマンドを定義する</h2>
 <p>distutilsでコマンドを定義するにはdistutils.core.Commandクラスを継承し、色々オーバーライドします。説明もつけられますし、オプションもとれて、sub_commandsで依存関係(コマンド分割)を設定することもできます。</p>
 <pre class="prettyprint ">class MyCommand(Command):
   description = "コマンドの説明"
@@ -87,7 +87,7 @@
 setup(cmdclass={"my_command":MyCommand})</pre><p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
 </section>
 <section>
-<h1>もっと簡単にdistutilsでタスク</h1>
+<h2>もっと簡単にdistutilsでタスク</h2>
 <p>30行程度のテンプレを足して、簡単にタスクを定義できるようにしましょう。namespace機能はPython2.5以上限定です。</p>
 <pre class="prettyprint ">from __future__ import with_statement
 from distutils.core import Command, setup
@@ -256,7 +256,7 @@ hello,  Test1</pre><p>サブコマンドのdb_create_test2が実行されてい�
 <p>下に行くほどマニア度あがります、たぶん。FPよりの話が多いかもしれません。はやりのYコンビネータの話とか。たぶん。</p>
 <p>ではいってみましょう。</p>
 <section>
-<h1>Predefされているものは把握しておきましょう</h1>
+<h2>Predefされているものは把握しておきましょう</h2>
 <p>Scalaにはscala.Predefというオブジェクトがあります。この中で定義されているものは常にインポートされていて使える状態になっているので把握しておきましょう。</p>
 <p>例：</p>
 <pre class="prettyprint ">def exit(status: Int): Nothing = {
@@ -273,14 +273,14 @@ def print(x: Any) = Console.print(x)
 def println() = Console.println()
 def println(x: Any) = Console.println(x)</pre></section>
 <section>
-<h1>C言語ライクなforはどうかくの？</h1>
+<h2>C言語ライクなforはどうかくの？</h2>
 <p>こうです。</p>
 <pre class="prettyprint ">val a = Array(1,2,3,4,5)
 var i= -1;while({i += 1; i &lt; a.size;}) {
   println(a(i))
 }</pre></section>
 <section>
-<h1>setterを使おう</h1>
+<h2>setterを使おう</h2>
 <p>setHogeみたいなのは、カッコわるいです。RubyのアクセッサーしかりPythonのpropertyしかり、 <code>instance.name = value</code> 形式で扱えるのがモダンな言語というものです。</p>
 <pre class="prettyprint ">class Test {
   var _name = "default"
@@ -292,7 +292,7 @@ val a = new Test
 a.name = "new"
 println(a.name)</pre></section>
 <section>
-<h1>単項演算子も定義できます。</h1>
+<h2>単項演算子も定義できます。</h2>
 <p>できます。</p>
 <pre class="prettyprint ">class Test {
   var _name = "default"
@@ -305,7 +305,7 @@ val a = new Test
 a.name = "new"
 println(-a)</pre></section>
 <section>
-<h1>applyでオブジェクトをメソッドのように呼び出せるよね？  <code>hoge(index) = value</code> はオーバーライドできないの？</h1>
+<h2>applyでオブジェクトをメソッドのように呼び出せるよね？  <code>hoge(index) = value</code> はオーバーライドできないの？</h2>
 <p>できますよ。なんとupdateというすげーふつーの名前のメソッドを定義するんです。</p>
 <pre class="prettyprint ">object dictionary {
 val data = Array(null, "A","B","C")
@@ -328,21 +328,21 @@ dictionary("two") = "Y"
 dictionary("three") = "Z"
 println(dictionary("one")+","+dictionary("two")+","+dictionary("three"))</pre></section>
 <section>
-<h1>可変長引数は取れますか。また、リストや配列を展開してメソッドにわたせますか。</h1>
+<h2>可変長引数は取れますか。また、リストや配列を展開してメソッドにわたせますか。</h2>
 <p>もちろん。</p>
 <pre class="prettyprint ">def sumPlus(plus: Int, n: Int*) = plus + sum(n :_*)</pre></section>
 <section>
-<h1>JAVAのObject型可変長変数をとるメソッドはどう呼びますか？</h1>
+<h2>JAVAのObject型可変長変数をとるメソッドはどう呼びますか？</h2>
 <p>ちょっとめんどくさいですが、こうです。</p>
 <pre class="prettyprint ">String.format("%d %s", List(1, "hoge").map(_.asInstanceOf[AnyRef]).toArray)</pre></section>
 <section>
-<h1>インスタンスのメソッドを束縛できますか？そのとき、メソッドがオーバーロードされている場合はどうしますか？</h1>
+<h2>インスタンスのメソッドを束縛できますか？そのとき、メソッドがオーバーロードされている場合はどうしますか？</h2>
 <p>こうします。オーバーロードされている場合は <code>_</code> の後ろに型をつけます。</p>
 <pre class="prettyprint ">val format = (new SimpleDateFormat("dd")).format _:Date =&gt; String</pre><hr class="docutils" />
 <p>ここからFPよりです。</p>
 </section>
 <section>
-<h1>カリー化はできますか？</h1>
+<h2>カリー化はできますか？</h2>
 <p>Function.curriedを使います。uncurriedもあります。</p>
 <pre class="prettyprint ">def test(i:int, j:int) = {
   printf("i:{0}, j:{1}", i, j)
@@ -350,23 +350,23 @@ println(dictionary("one")+","+dictionary("two")+","+dictionary("three"))</pre></
 val f = Function.curried(test _)(1)
 f(1)</pre></section>
 <section>
-<h1>遅延評価は？</h1>
+<h2>遅延評価は？</h2>
 <p>lazyを使います。Streamも使いこなせるとハッピーです。</p>
 <p>たとえば、無限フィボナッチ数列は以下のように定義します。</p>
 <pre class="prettyprint ">lazy val fib: Stream[Int] = Stream.cons(0,
      Stream.cons(1, fib.zip(fib.tail).map(p =&gt; p._1 + p._2)))</pre></section>
 <section>
-<h1>先生、関数合成がしたいです･･･</h1>
+<h2>先生、関数合成がしたいです･･･</h2>
 <p>Haskellでは短く直感的にかけるからいいですよね。</p>
 <p>Scalaでは正直、逆に長ったらしくなりますが、どうしてもというなら･･･</p>
 <pre class="prettyprint ">({ x:int =&gt; x + 1 } andThen { x:int =&gt; x * 2 })(3) // =&gt; 8
 ({ x:int =&gt; x + 1 } compose { x:int =&gt; x * 2 })(3) // =&gt; 7</pre></section>
 <section>
-<h1>forはモナドに使える構文です。リスト内包表現用ではありません。</h1>
+<h2>forはモナドに使える構文です。リスト内包表現用ではありません。</h2>
 <p>リストはモナドですし、HaskellのMaybeに相当するOptionというモナドもあります。map, flatMap, filterメソッドを実装すればforで書けるオブジェクトを定義できます。</p>
 </section>
 <section>
-<h1>Yコンビネータとかいうものの話が(一部で)盛り上がってますが、そういうのってScalaでできるんですか。型があるから複雑だと思うんだけど。</h1>
+<h2>Yコンビネータとかいうものの話が(一部で)盛り上がってますが、そういうのってScalaでできるんですか。型があるから複雑だと思うんだけど。</h2>
 <p>えーと、無名関数で再帰したいんでしょうか？こんな感じでどうでしょう？ふつーはこんなの使いませんけどね。</p>
 <pre class="prettyprint ">def Y[A,B](f:((A=&gt;B),A)=&gt;B,x:A):B = f((x1:A)=&gt;Y(f,x1),x)
 

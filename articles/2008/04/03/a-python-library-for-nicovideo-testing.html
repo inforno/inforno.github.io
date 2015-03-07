@@ -70,14 +70,14 @@
 <p>まぁありきたりというか、なんというかなんですけどニコニコ動画の自分用ライブラリを以前から作っていました。公開してもよかったんですけど、需要があるかわかんないし、まとまってないですし、ニコニコ動画的にもこういうライブラリをつかってごにゃごにゃするのはちょっと･･･という感じらしいので公開してませんでした。</p>
 <p>なんですけど、公開されてるライブラリもありますし、せっかくなんで試験的に公開しておけばなんかの役に立つかな、と思いまして。使ってくれる人が多かったりすれば、まとめなおしてCodeReposに突っ込むかもしれません。</p>
 <section>
-<h1>ダウンロードしてみる奇特な方はどうぞ</h1>
+<h2>ダウンロードしてみる奇特な方はどうぞ</h2>
 <p><a class="reference external" href="/statics/files/nicovideo.zip">nicovideo.zip</a></p>
 <section>
-<h2>必要なもの</h2>
+<h3>必要なもの</h3>
 <pre class="prettyprint ">easy_install mechanize
 easy_install lxml</pre></section>
 <section>
-<h2>使い方</h2>
+<h3>使い方</h3>
 <pre class="prettyprint ">import nicovideo as n
 client = n.NicoClient("mail", "pass", cookie_file="")
 
@@ -137,7 +137,7 @@ last_res_body 1人だけじゃね</pre><p>こんな感じのがとれます。�
 </section>
 </section>
 <section>
-<h1>ちょっと設計について</h1>
+<h2>ちょっと設計について</h2>
 <p>基本的に、NicoClientを拡張して機能を実装します。拡張方法は <code>NicoClientExtension</code> クラスを拡張したクラスを定義する、以上です。これでNicoClientに自動的にクラス名をunderscoreしたメソッドが生えます。</p>
 <p>たとえば <code>Video</code> も <code>NicoClientExtension</code> です。</p>
 <pre class="prettyprint ">class Video(NicoClientExtension):
@@ -154,7 +154,7 @@ last_res_body 1人だけじゃね</pre><p>こんな感じのがとれます。�
 
 # ...</pre><p>という定義で <code>client.video</code> というメソッドが生えるという設計になっています。メタクラスにはこういう使い方があります。検索機能も、新着も、気まぐれも全部 <code>NicoClientExtension</code> として実装されています。</p>
 <section>
-<h2>問題点</h2>
+<h3>問題点</h3>
 <ul class="simple">
 <li>まとまってません。1ファイルに適当につめこんでいます。</li>
 <li>全然テストしてません。</li>

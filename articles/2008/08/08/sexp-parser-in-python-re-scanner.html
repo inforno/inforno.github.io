@@ -67,7 +67,7 @@
 <p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
 <p>一方、Pythonにはexperimentalながら <code>re.Scanner</code> というクラスがあります( <code>&gt;= 2.4</code> )。experimentalなのでマニュアルにはのっていませんが。この <code>re.Scanner</code> はかなりシンプルなんですが典型的な <code>StringScanner</code> の使い方の範疇では、こちらのほうがキレイに書けるような気がします。</p>
 <section>
-<h1><code>re.Scanner</code> の使い方</h1>
+<h2><code>re.Scanner</code> の使い方</h2>
 <p>使い方は非常に簡単で</p>
 <ul>
 <li><dl class="first docutils">
@@ -84,7 +84,7 @@
 <p>といった感じ。関数を渡すので、 <code>StringScanner</code> のようなwhileループを作る必要がなく、キレイにまとまります。</p>
 </section>
 <section>
-<h1>例：S式パーサ</h1>
+<h2>例：S式パーサ</h2>
 <p><code>re.Scanner</code> は簡単、ということでS式パーサでも。トークナイズ+αな処理をするので、 <code>action</code> をインスタンスメソッドにして状態を保存することにします。</p>
 <p>目標は</p>
 <ul class="simple">
@@ -203,7 +203,7 @@ bbbb (ccc ddd) )
 line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
 </section>
 <section>
-<h1>というわけで</h1>
+<h2>というわけで</h2>
 <p>Pythonでトークナイズするときにはかなり便利なんじゃないかと思いました。</p>
 </section>
 

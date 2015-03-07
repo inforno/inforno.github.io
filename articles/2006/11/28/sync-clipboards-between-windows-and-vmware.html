@@ -72,7 +72,7 @@
 から。</p>
 <p>上記のサイトのをもってきて.vimrcをちょろっと書けばいいんだけど、テキストを受信するサーバーは常時立ち上げていそうで、スクリプトだとなんとなくアレなので、exeがいいなあ。簡単にできそうなので、とりあえず探すよりは作ってみるメソッド。</p>
 <section>
-<h1>ファイル一式</h1>
+<h2>ファイル一式</h2>
 <p><a class="reference external" href="/statics/files/clsync.zip">clsync.zip</a></p>
 <p>内容は</p>
 <ul class="simple">
@@ -82,7 +82,7 @@
 </ul>
 </section>
 <section>
-<h1>使い方など</h1>
+<h2>使い方など</h2>
 <p>Windows側ではclipboard_server.iniで適当にポートを設定して（当然外部から見えないやつを）、clipboard_server.exeを起動しておいてください。タスクトレイにアイコンが表示されてますので、そこから終了できます。</p>
 <p>vmware上のLinuxですが、まずnkfがインストールされている必要があります。すみません、クライアント側手抜きするために使っています。そしてclsync.pyをパスの通ったところにおきます。clsync.pyにはホストのWindows側で動いてるサーバーのポートとIPを設定する箇所があるので、適宜書き換えます。またポートとIPはオプションでも渡せます（詳しくはclsync.py -hで）。</p>
 <p>あとは</p>

@@ -110,7 +110,7 @@
 <p>近頃、 <a class="reference external" href="http://d.hatena.ne.jp/yukoba/20071108/p1">JavascriptでOreScript</a> なんてのがちょっとはやっていたりしまして。</p>
 <p>OreScript書くのにある程度ちゃんと動くパーサコンビネータがあれば便利かも、とおもったので以前書いたパーサコンビネータをいじってみました。</p>
 <section>
-<h1>変更点</h1>
+<h2>変更点</h2>
 <ul class="simple">
 <li>メソッド名などをHaskellにあわせた</li>
 <li>よくもわるくも、記号含有率をあげた(and -&gt; $に、or -&gt; l に)</li>
@@ -121,12 +121,12 @@
 <p>ということで、そこそこの用途に耐えるものになったと思います。</p>
 </section>
 <section>
-<h1>ダウンロード</h1>
+<h2>ダウンロード</h2>
 <p>完全にアンドキュメントです。すみません。ただ、ソースは200行くらいなんで見ればわかるかと。というか、HaskellのParsecのマニュアルを読めば基本一緒なので使い方がわかると思います。</p>
 <p><a class="reference external" href="/statics/files/parsec0-1-0.js">ダウンロード</a></p>
 </section>
 <section>
-<h1>サンプル</h1>
+<h2>サンプル</h2>
 <p><a class="reference external" href="http://d.hatena.ne.jp/amachang/20070829/1188400850">id:amachangさんが書いていたような数式パーサ</a> を定義してみましょう。</p>
 <p>残念ながらLexerはつくっていないので、空白は受け入れられません。</p>
 <pre class="prettyprint ">var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){

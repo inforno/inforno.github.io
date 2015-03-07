@@ -87,7 +87,7 @@ func main() {
 
     app.Run()
 }</pre><section>
-<h1>特徴</h1>
+<h2>特徴</h2>
 <ul>
 <li><p class="first">よくあるSinatraチックなAPI</p>
 </li>
@@ -107,7 +107,7 @@ func main() {
 </ul>
 </section>
 <section>
-<h1>開発経緯</h1>
+<h2>開発経緯</h2>
 <p>そもそもPythonistaの御多聞にもれず、2と3のはざまでもだえる中でGo言語書くことが多くなってたんですね。んでWEBもGo言語でさらっと書きたい、と。</p>
 <p>Go言語のWEBフレームワークはいっぱいあって、軽量だとMartiniだとかGinだとかnegroniだとか、重量級だとbeegoだとかrevelだとか。俺の好みとしてやっぱりシンプルなものが好きなので軽量フレームワークを使いたいところだけど、Martiniはtoo magicだし、Ginは40 times fasterってのが詐欺っぽいし、negroniはツールであってフレームワークじゃないと言っているしで、あんまりしっくりくるのがありませんでした。</p>
 <p>なので自分が最低限必要と思う機能を組み込んだフレームワークを作ったわけです。ミドルウェアで対応できるけど組み込まれてたほうが楽だし。SPAが流行ってるって言ってもさらっと作るときはフラッシュメッセージが楽だし、設定は外出ししときたいし、とか。</p>
@@ -116,10 +116,10 @@ func main() {
 <p>あと、適当に今風のプロジェクトページ作りました。</p>
 </section>
 <section>
-<h1>開発中に思ったこと</h1>
+<h2>開発中に思ったこと</h2>
 <p>俺俺フレームワークを書きたい方のために、cidreを書いてる時に思ったこと、検討したことを書いておきます。</p>
 <section>
-<h2>Contextの持ち方</h2>
+<h3>Contextの持ち方</h3>
 <p>どのフレームワークも <code>Context</code> という構造体がだいたいある。これは入れ子になってる <code>http.Handler</code> 間でデータを受け渡すのが主目的だ。</p>
 <p>でContextの考え方は3種類ある。</p>
 <ul class="simple">
@@ -146,13 +146,13 @@ func main() {
 <p>じゃないといけない。というわけで <code>http.Request#Body</code> に埋め込んでいる。</p>
 </section>
 <section>
-<h2>拡張性</h2>
+<h3>拡張性</h3>
 <p><a class="reference external" href="http://justinas.org/writing-http-middleware-in-go/">Writing HTTP Middleware in Go</a> という記事があるように、 <code>http.Handler</code> をPythonのWSGIミドルウェアのように扱う、というのは標準的な考え方だろう。</p>
 <p>ただ、結局この方式はただのフィルタであって柔軟性がない。HTTPボディを書く前に処理を差し込みたい、とかできない。正確にはできないことないけどめんどくさい(独自ResponseWriterを作って次のミドルウェアに渡すことになる)。Martiniでは独自ResponseWriterにコールバックが設定できるようになっていてHTTPボディ書く前にヘッダ書くというのができる。</p>
 <p>でも結局そういうポイントって随所にあって、統一的に扱える仕組みがあったほうがよいと思う。のでHookの仕組みをつくってサーバ起動時、とかいろんなところをフックできるようにしてある。</p>
 </section>
 <section>
-<h2>設定オブジェクト</h2>
+<h3>設定オブジェクト</h3>
 <p>これは何を今さら、な話で設定を表すオブジェクトをどう扱うか、ということ。例えば以下のようなstructがあるとして</p>
 <pre class="prettyprint ">type Config struct {
     Host string
@@ -181,7 +181,7 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
 </section>
 </section>
 <section>
-<h1>今後について</h1>
+<h2>今後について</h2>
 <p>今後も細々メンテしていくつもりですし、ミドルウェアなんかも追加していきたいなあと思っています。やっぱGo言語はさらっと書けるそれなりに速いし、いいっす。</p>
 </section>
 
