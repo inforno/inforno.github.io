@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -67,8 +76,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
+    <p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
 <p>Kademliaはいろいろ実装があるので、ソースを読んじゃうと答えみちゃった感じになるかなーと思って、元論文と <a class="reference external" href="http://www.shudo.net/article/Kademlia-20040727/shudo-Kademlia.pdf">首藤様の資料</a> くらいしか見ずに実装してみました。ので、いろいろ間違ってるかも知れませんが･･･。</p>
 <p>本家Kademliaとの主な違いは</p>
 <ul>
@@ -100,20 +108,20 @@
 </li>
 </ul>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
 <ul class="simple">
 <li><a class="reference external" href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
 </ul>
 </section>
 <section>
-<h2>実装について</h2>
+<h1>実装について</h1>
 <p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
 <p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
 <p>通信にはjsonを使いました。</p>
 </section>
 <section>
-<h2>基本的な動かし方</h2>
+<h1>基本的な動かし方</h1>
 <pre class="prettyprint ">import kademlia_tcp
 kademlia_tcp.DEBUG = True
 n = kademlia_tcp.KademliaNode("ip address", port)
@@ -128,15 +136,14 @@ n.store(other_node, key, value)
 n.find_node(other_node)</pre><p>というようなメソッドが使えます。</p>
 </section>
 <section>
-<h2>動かしてみて</h2>
+<h1>動かしてみて</h1>
 <p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
 <p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
 </section>
 <section>
-<h2>というわけで</h2>
+<h1>というわけで</h1>
 <p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -205,15 +212,6 @@ n.find_node(other_node)</pre><p>というようなメソッドが使えます。
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

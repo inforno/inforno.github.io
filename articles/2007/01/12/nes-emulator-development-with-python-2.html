@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -67,14 +76,13 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>実は既に結構挫折気味。</p>
+    <p>実は既に結構挫折気味。</p>
 <p>やっぱりPythonではちょっと厳しいかもしれない。</p>
 <p>とりあえず一番ややこしいPPU周りの情報を調べて、ちょろちょろ書き始めたあたりでいったんCPU部分のパフォーマンスを調べてみました。</p>
 <p>かなり厳しいものがあります。CPU部分のコードはPython的な書き方で書いてたんですが、これじゃ話にならない。まず、アクセサなんてものはつかっちゃいけないのだ。</p>
 <p>以下環境はOS:WinXP,CPU:Athlon64 3000+,Memory:1G,Python2.4です。</p>
 <section>
-<h2>CPUのレジスタ関連の実装</h2>
+<h1>CPUのレジスタ関連の実装</h1>
 <p>NESのCPUである6502のレジスタはPCは16bit、それ以外は8bit。8bitの値なんてものはCならunsigned charで一発なんだけど、Pythonにはそんなものない。足し算したらどんどん大きくなるし、引き算したらどんどん小さくなる。ので</p>
 <pre class="prettyprint ">class Py6502(object):
   def __init__(self):
@@ -119,7 +127,7 @@ class ForceNbitType(type):
 <p>非常に上手くかけるんですが、こんなのやってらんない。遅すぎる。1Frame分(28000サイクル程度)の実行に0.5秒（笑</p>
 </section>
 <section>
-<h2>getattr</h2>
+<h1>getattr</h1>
 <p><code>getattr` は遅い。 ``getattr</code> の真価は第3引数でdefault値が指定できること（だと思う）。今回のように確実に属性が存在することが分かっているなら <code>self.__getattribute__(name)</code> を使うと結構違ってくる。ちなみにPythonのソースではこんな感じ。</p>
 <pre class="prettyprint ">static PyObject *
 slot_tp_getattro(PyObject *self, PyObject *name)
@@ -170,7 +178,7 @@ slot_tp_getattr_hook(PyObject *self, PyObject *name)
 }</pre><p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
 </section>
 <section>
-<h2>実行ループ</h2>
+<h1>実行ループ</h1>
 <p>CPUのエミュレータなんてのはだいたい同じようなパターンで割り込みを除いて簡単に書くと</p>
 <pre class="prettyprint ">def step_execute(self, clocks):
   while (self.passed_clocks &lt; clocks):
@@ -200,12 +208,11 @@ def ope_0x02(self):
 self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
 </section>
 <section>
-<h2>結局</h2>
+<h1>結局</h1>
 <p>そんな感じでいじってみてかつpsycoを入れて1Frame:0.15程度（PPUやAPUは中身がないので、最後までつくったらもっと遅くなる）。ほかにもいじれそうなところはあって、そこをいじれば0.1は切れそうな感じがしてます。</p>
 <p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに <code>A &amp; 0xff</code> みたいなことをやっていて、どーもめんどくさい。</p>
 <p>じゃぁLLでエミュレーターを書く意味ってなんだ、というと・・・うーん（笑　自己満足以外なにもないでしょうねえ。というわけで自己満足のために、今後もヒマができれば、ちょっとづつ書き進めてみようかなあ。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -274,15 +281,6 @@ self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やって
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

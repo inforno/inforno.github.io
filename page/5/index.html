@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -63,17 +72,16 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>Windows XPを使用していると、とにかく開いているフォルダでcmd.exeを起動したい、となることは多いです。</p>
+    <p>Windows XPを使用していると、とにかく開いているフォルダでcmd.exeを起動したい、となることは多いです。</p>
 <p>よくあるのは右クリックから開く、というやつ。まぁ当然、キーボード派の私にはありえない選択です。</p>
 <p>んで、昔からCのプログラムとWSHをくみあわせてキーボードから開けるようにしていたのですが、やっぱWSHが絡むので遅い。</p>
 <p>というわけでCだけで作ってみました。せっかくなのでおいておきます。</p>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p><a class="reference external" href="/statics/files/explorexe.zip">explorexe.zip</a></p>
 </section>
 <section>
-<h2>使い方</h2>
+<h1>使い方</h1>
 <p>解凍してできたexplorexe.exeのショートカットをデスクトップにつくります。</p>
 <p>んで、ショートカットを右クリックして、</p>
 <ul>
@@ -98,10 +106,9 @@
 <p>あとは、コマンドライン型ランチャーなんかに同様に登録するとめっさ快適です。</p>
 </section>
 <section>
-<h2>応用？</h2>
+<h1>応用？</h1>
 <p>えー、見てのとおり引数の文字列に <code>printf</code> しているだけなので、cmd.exe以外にも使えます。 <code>%s</code> にあたるカレントフォルダのパスは空白が含まれている場合は自動的に「&quot;」で囲まれます。</p>
 </section>
-
 
   </div>
 </article>
@@ -131,8 +138,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
+    <p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
 <p>Kademliaはいろいろ実装があるので、ソースを読んじゃうと答えみちゃった感じになるかなーと思って、元論文と <a class="reference external" href="http://www.shudo.net/article/Kademlia-20040727/shudo-Kademlia.pdf">首藤様の資料</a> くらいしか見ずに実装してみました。ので、いろいろ間違ってるかも知れませんが･･･。</p>
 <p>本家Kademliaとの主な違いは</p>
 <ul>
@@ -164,20 +170,20 @@
 </li>
 </ul>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
 <ul class="simple">
 <li><a class="reference external" href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
 </ul>
 </section>
 <section>
-<h2>実装について</h2>
+<h1>実装について</h1>
 <p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
 <p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
 <p>通信にはjsonを使いました。</p>
 </section>
 <section>
-<h2>基本的な動かし方</h2>
+<h1>基本的な動かし方</h1>
 <pre class="prettyprint ">import kademlia_tcp
 kademlia_tcp.DEBUG = True
 n = kademlia_tcp.KademliaNode("ip address", port)
@@ -192,15 +198,14 @@ n.store(other_node, key, value)
 n.find_node(other_node)</pre><p>というようなメソッドが使えます。</p>
 </section>
 <section>
-<h2>動かしてみて</h2>
+<h1>動かしてみて</h1>
 <p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
 <p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
 </section>
 <section>
-<h2>というわけで</h2>
+<h1>というわけで</h1>
 <p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
 </section>
-
 
   </div>
 </article>
@@ -228,9 +233,8 @@ n.find_node(other_node)</pre><p>というようなメソッドが使えます。
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<section>
-<h2>更新履歴</h2>
+    <section>
+<h1>更新履歴</h1>
 <ul>
 <li><dl class="first docutils">
 <dt>2009/02/20 version 1.0.0</dt>
@@ -293,7 +297,7 @@ Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
 </ul>
 </section>
 <section>
-<h2>はじめに</h2>
+<h1>はじめに</h1>
 <p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
 <p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a class="reference external" href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
 <p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= <span class="pre">&quot;hoge%&gt;&quot;</span></code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
@@ -307,7 +311,7 @@ Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
 <p>といったところが特徴ですかね。</p>
 </section>
 <section>
-<h2>例</h2>
+<h1>例</h1>
 <p>テンプレートはこんな感じにかけます。</p>
 <pre class="prettyprint ">&lt;%-
 class Hoge(object):
@@ -343,15 +347,14 @@ print e.render({"xx": "10"})</pre><p>出力はこう。</p>
 8   8  16  24  32  40  48  56  64  72
 9   9  18  27  36  45  54  63  72  81</pre></section>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p><a class="reference external" href="/statics/files/embpy.zip">embpy</a></p>
 </section>
 <section>
-<h2>コード</h2>
+<h1>コード</h1>
 <p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
 <p>あと <code><span class="pre">&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</span></code> という正規表現は自分的には常套句。&quot;で囲まれていて\&quot;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
 </section>
-
 
   </div>
 </article>
@@ -389,15 +392,6 @@ print e.render({"xx": "10"})</pre><p>出力はこう。</p>
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

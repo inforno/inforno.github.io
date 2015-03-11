@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,12 +74,11 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>via  <a class="reference external" href="http://hamasta.g.hatena.ne.jp/hamasta/20070526/p">雑誌記事　「日本のプログラマーの未来時給」を見て人生ｵﾜﾀ＼(＾o＾)／</a></p>
+    <p>via  <a class="reference external" href="http://hamasta.g.hatena.ne.jp/hamasta/20070526/p">雑誌記事　「日本のプログラマーの未来時給」を見て人生ｵﾜﾀ＼(＾o＾)／</a></p>
 <p>プログラマの未来自給は651円らしい。</p>
 <p>個人的には「そういう職業なんだろうなあ」という感じ。</p>
 <section>
-<h2>プログラマとミュージシャン</h2>
+<h1>プログラマとミュージシャン</h1>
 <p>音楽をやっていたせいか、どうもプログラマとミュージシャンを重ねてしまう。</p>
 <p>一般的にプログラマというと、プログラミング言語でなにか書く人。音楽でいうと楽器のプレーヤー。</p>
 <p>ギターやってるなら、ベースもOKっていう人も多いはず。ついでにピアノなんかもできたり。もっといっぱい、ドラムもたたけるし、バイオリンもひけまっせ、みたいな人もいるかもしれない。そういう人はあんまりいないから目立つけど、実際はギターとベースくらいがいいところかなあ、と。プログラミング言語でもそうだと思う。</p>
@@ -84,7 +92,6 @@
 <hr class="docutils" />
 <p>有名なプログラマーや技術者はその数少ない売れてるミュージシャンだと思う。これは名曲だ！といわしめる曲とか、もしくは新しい音楽のジャンルを作るような革新さえ起こしそうな、そんな人たちだと思う。そういう人はやっぱりお金も貰えるだろうし、ある程度自由もきくと思う。でもやっぱり、音楽学校を出た人が全員一線級のプロになれないように、多くの人、情報系を出た人でさえそのような才能を持った人はすくない。ホントは熱いロックをやりたくてもそれをやる自由もなくJ-POPのバックでやったりするんだろう。プログラマって、つくづくそんなジャンルの職業なんじゃないかなあ、と思う。きっとこういう音楽に似た部分が俺をプログラミングに引き込んだんだろうな。</p>
 </section>
-
 
   </div>
 </article>
@@ -110,8 +117,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>でましたね。 <a class="reference external" href="http://prototypejs.org/2007/8/15/prototype-1-6-0-release-candidat">Prototype 1.6.0 release candidate</a></p>
+    <p>でましたね。 <a class="reference external" href="http://prototypejs.org/2007/8/15/prototype-1-6-0-release-candidat">Prototype 1.6.0 release candidate</a></p>
 <p>WEB界隈から離れてしばらくたちますが、またいつWEB界隈に戻るかわからないので一応追ってます。</p>
 <p>1.6ではついにClass周りに手が入りました。Prototype.jsといえばシンプルすぎるClass周りとプロパティをコピーするというなんちゃって継承がウリ（？）だったわけですが、1.6からは違います。もう <a class="reference external" href="http://inforno.net/articles/2006/01/24/inheritance-in-prototype-with-ease">オレオレクラス定義ライブラリ</a> をわざわざ使わなくても大丈夫。</p>
 <p>公式にも例がありますが、こんな感じでちゃんと継承できるようになりました。</p>
@@ -158,7 +164,6 @@ $("title").fire("titleChanged");</pre><p>って感じのカスタムイベント
 <hr class="docutils" />
 <p>資格の勉強とかもそろそろしなきゃなー、と思いつつ、Scalaでパーサコンビネータライブラリがついたので、Schemeの処理系でも実装したいなあ、と思い始めてる今日この頃。</p>
 
-
   </div>
 </article>
 
@@ -183,8 +188,7 @@ $("title").fire("titleChanged");</pre><p>って感じのカスタムイベント
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>Scala 2.6.0-RC1 でscala.util.parsing.combinatorが標準パッケージになりました。というわけでリファレンスとちょっとしたサンプルくらしかなかったのだけど、とりあえず書いてみた。</p>
+    <p>Scala 2.6.0-RC1 でscala.util.parsing.combinatorが標準パッケージになりました。というわけでリファレンスとちょっとしたサンプルくらしかなかったのだけど、とりあえず書いてみた。</p>
 <p><a class="reference external" href="http://ja.doukaku.org/33/">どう書く?org</a> に投稿した、ExcelライクCSVのパーサ。</p>
 <pre class="prettyprint ">import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
 import scala.util.parsing.input.CharArrayReader
@@ -229,7 +233,6 @@ CharArrayReader(data.toCharArray)).map(file =&gt; {
 })</pre><p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
 <p>時間が出来たらもうちょっといじってみよう。よさげな解説してるサイトがあったら是非教えてください。</p>
 
-
   </div>
 </article>
 
@@ -266,15 +269,6 @@ CharArrayReader(data.toCharArray)).map(file =&gt; {
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -63,12 +72,11 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
+    <p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
 <p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
 <p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
 <section>
-<h2>Pythonをインストール</h2>
+<h1>Pythonをインストール</h1>
 <p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
 <pre class="prettyprint ">mkdir -p ~/root/usr/local/src
 cd ~/root/usr/local/src
@@ -80,7 +88,7 @@ make
 make install</pre><p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
 </section>
 <section>
-<h2>hashlibをインストール</h2>
+<h1>hashlibをインストール</h1>
 <p>なんで、自前でhashlibを単体でいれます。</p>
 <pre class="prettyprint ">cd ~/root/usr/local/src
 wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
@@ -109,7 +117,7 @@ vi setup.py</pre><p>はい、 <code>setup.py</code> を編集しましょう。�
 ~/root/usr/local/bin/python setup.py install</pre><p>で <code>hashlib</code> が入ります。</p>
 </section>
 <section>
-<h2>easy_installをインストール</h2>
+<h1>easy_installをインストール</h1>
 <p>これで <code>md5</code> が使えるようになったので</p>
 <pre class="prettyprint ">cd ~/root/usr/local/src
 wget http://peak.telecommunity.com/dist/ez_setup.py
@@ -117,10 +125,9 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
 <pre class="prettyprint ">~/root/usr/local/bin/easy_install -U -Z MySQL_Python</pre><p>てな感じで必要なモジュールを入れていきましょう。</p>
 </section>
 <section>
-<h2>というわけで</h2>
+<h1>というわけで</h1>
 <p>わりと普通にxreaでPythonが使えています。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -189,15 +196,6 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -69,8 +78,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>nil.to_sが&quot;nil&quot;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。
+    <p>nil.to_sが&quot;nil&quot;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。
 Rubyより関数志向での開発がしやすくて楽しいですよねえ。</p>
 <p>リハビリを兼ねてweb.pyで個人的なツールを作ってます。web.pyはシンプルで軽いので、個人用途（非公開でツールとして使う）だったらレンタルサーバーでCGIとして動作させても問題なさそうです。(XREAでは簡単なものなら負荷率0ptでした。Railsとかならいれるだけでダメなんで、素晴らしい)</p>
 <p>そこで、scriptaculousのAjax.InPlaceEditorを使っているわけですが、困ったことがひとつ。InPlace___Editor___なわけで、値を当然入力します。でその値がサーバー側でバリデーションエラーな時どうしたもんかと。</p>
@@ -135,7 +143,6 @@ if len(errors) != 0:
 <p>豆知識ですが、以上のようにサーバー側でtext/javascriptでレスポンスを返すとprototype.jsでは自動的にjavascriptとして評価してくれます。</p>
 <p>うーむ、まさに場当たり的。いろいろまずそうだけど、まぁ動いてるっぽいし気にしないことにしとこう・・・・</p>
 
-
   </div>
 </article>
 
@@ -162,8 +169,7 @@ if len(errors) != 0:
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>Typoでのlive search文字化けについては多くのブログで解決策が示されています。</p>
+    <p>Typoでのlive search文字化けについては多くのブログで解決策が示されています。</p>
 <ul class="simple">
 <li><a class="reference external" href="http://www.flatz.jp/articles/2005/12/14/live-search%E3%82%92%E7%9B%B4%E3%81%97%E3%81%9F%E3%82%88%E3%80%82">live searchの文字化けを修正</a></li>
 <li><a class="reference external" href="http://typo.ctrl.jp/articles/2005/11/14/typo2.6.0-release-to-live-search-no-nihongo-bug">Typo2.6.0リリースとLive Searhの日本語バグ</a></li>
@@ -183,7 +189,6 @@ if len(errors) != 0:
 あ、このファイルはテーマにも含まれてますので注意です。
 てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・
 ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
-
 
   </div>
 </article>
@@ -213,8 +218,7 @@ if len(errors) != 0:
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
+    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
 <p>同様の実装として <a class="reference external" href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
 <p><a class="reference external" href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
 <p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。
@@ -265,7 +269,6 @@ if len(errors) != 0:
 <p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。
 prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
 
-
   </div>
 </article>
 
@@ -302,15 +305,6 @@ prototype.jsのAjax.Updaterあたりをハックすれば結構使えるもの�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

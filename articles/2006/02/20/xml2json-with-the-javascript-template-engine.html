@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -67,8 +76,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
+    <p><a class="reference external" href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
 <p>ということで早速ハックしてみました。</p>
 <p><a class="reference external" href="http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation">前のエントリーで書いた</a> Javascriptテンプレートと組み合わせてめちゃくちゃ簡単にRSSを表示できます。</p>
 <p><a class="reference external" href="/statics/files/xml2json.zip">サンプルはこちら</a></p>
@@ -95,7 +103,6 @@ templateは <a class="reference external" href="/articles/2006/02/15/the-embed-j
   &lt;/textarea&gt;</pre><p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。
 またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで
 おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
-
 
 
     <div class="seealso">
@@ -164,15 +171,6 @@ templateは <a class="reference external" href="/articles/2006/02/15/the-embed-j
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

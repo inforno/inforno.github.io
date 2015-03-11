@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -69,14 +78,13 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>まぁ需要はないと思うんですが一応。内部的には <code><span class="pre">WebService::Simple</span></code> みたいになってるんでサクッと対応できます。</p>
+    <p>まぁ需要はないと思うんですが一応。内部的には <code><span class="pre">WebService::Simple</span></code> みたいになってるんでサクッと対応できます。</p>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p><a class="reference external" href="/statics/files/yahooapi_0_2.zip">yahooapi</a></p>
 </section>
 <section>
-<h2>使い方</h2>
+<h1>使い方</h1>
 <pre class="prettyprint ">import yahooapi.jlp as jlp
 
 client = jlp.JIMServiceAPI("your_apikey")
@@ -99,7 +107,6 @@ for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
 #哉
 #金</pre><p>うむ。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -168,15 +175,6 @@ for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

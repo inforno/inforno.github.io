@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -63,8 +72,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>Go言語は標準の <code>net/http</code> が結構よくできてるので、WEBフレームワークはなくてもいいだとかそういう話がありますし、 <code>net/http</code> をラップした俺俺フレームワークが大量に作られています。</p>
+    <p>Go言語は標準の <code>net/http</code> が結構よくできてるので、WEBフレームワークはなくてもいいだとかそういう話がありますし、 <code>net/http</code> をラップした俺俺フレームワークが大量に作られています。</p>
 <p>というわけで、俺も遅ればせながら俺俺フレームワークを作りました。</p>
 <ul class="simple">
 <li><a class="reference external" href="http://yuin.github.io/cidre/">cidre</a></li>
@@ -87,7 +95,7 @@ func main() {
 
     app.Run()
 }</pre><section>
-<h2>特徴</h2>
+<h1>特徴</h1>
 <ul>
 <li><p class="first">よくあるSinatraチックなAPI</p>
 </li>
@@ -107,7 +115,7 @@ func main() {
 </ul>
 </section>
 <section>
-<h2>開発経緯</h2>
+<h1>開発経緯</h1>
 <p>そもそもPythonistaの御多聞にもれず、2と3のはざまでもだえる中でGo言語書くことが多くなってたんですね。んでWEBもGo言語でさらっと書きたい、と。</p>
 <p>Go言語のWEBフレームワークはいっぱいあって、軽量だとMartiniだとかGinだとかnegroniだとか、重量級だとbeegoだとかrevelだとか。俺の好みとしてやっぱりシンプルなものが好きなので軽量フレームワークを使いたいところだけど、Martiniはtoo magicだし、Ginは40 times fasterってのが詐欺っぽいし、negroniはツールであってフレームワークじゃないと言っているしで、あんまりしっくりくるのがありませんでした。</p>
 <p>なので自分が最低限必要と思う機能を組み込んだフレームワークを作ったわけです。ミドルウェアで対応できるけど組み込まれてたほうが楽だし。SPAが流行ってるって言ってもさらっと作るときはフラッシュメッセージが楽だし、設定は外出ししときたいし、とか。</p>
@@ -116,10 +124,10 @@ func main() {
 <p>あと、適当に今風のプロジェクトページ作りました。</p>
 </section>
 <section>
-<h2>開発中に思ったこと</h2>
+<h1>開発中に思ったこと</h1>
 <p>俺俺フレームワークを書きたい方のために、cidreを書いてる時に思ったこと、検討したことを書いておきます。</p>
 <section>
-<h3>Contextの持ち方</h3>
+<h2>Contextの持ち方</h2>
 <p>どのフレームワークも <code>Context</code> という構造体がだいたいある。これは入れ子になってる <code>http.Handler</code> 間でデータを受け渡すのが主目的だ。</p>
 <p>でContextの考え方は3種類ある。</p>
 <ul class="simple">
@@ -146,13 +154,13 @@ func main() {
 <p>じゃないといけない。というわけで <code>http.Request#Body</code> に埋め込んでいる。</p>
 </section>
 <section>
-<h3>拡張性</h3>
+<h2>拡張性</h2>
 <p><a class="reference external" href="http://justinas.org/writing-http-middleware-in-go/">Writing HTTP Middleware in Go</a> という記事があるように、 <code>http.Handler</code> をPythonのWSGIミドルウェアのように扱う、というのは標準的な考え方だろう。</p>
 <p>ただ、結局この方式はただのフィルタであって柔軟性がない。HTTPボディを書く前に処理を差し込みたい、とかできない。正確にはできないことないけどめんどくさい(独自ResponseWriterを作って次のミドルウェアに渡すことになる)。Martiniでは独自ResponseWriterにコールバックが設定できるようになっていてHTTPボディ書く前にヘッダ書くというのができる。</p>
 <p>でも結局そういうポイントって随所にあって、統一的に扱える仕組みがあったほうがよいと思う。のでHookの仕組みをつくってサーバ起動時、とかいろんなところをフックできるようにしてある。</p>
 </section>
 <section>
-<h3>設定オブジェクト</h3>
+<h2>設定オブジェクト</h2>
 <p>これは何を今さら、な話で設定を表すオブジェクトをどう扱うか、ということ。例えば以下のようなstructがあるとして</p>
 <pre class="prettyprint ">type Config struct {
     Host string
@@ -181,10 +189,9 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
 </section>
 </section>
 <section>
-<h2>今後について</h2>
+<h1>今後について</h1>
 <p>今後も細々メンテしていくつもりですし、ミドルウェアなんかも追加していきたいなあと思っています。やっぱGo言語はさらっと書けるそれなりに速いし、いいっす。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -250,15 +257,6 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

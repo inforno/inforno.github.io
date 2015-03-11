@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,8 +74,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>先日公開した <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが。</p>
+    <p>先日公開した <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが。</p>
 <p>GopherLuaはLuaなので、ホスト言語との親和性を重視しております。GolangなのにGoroutine関係のサポートがないとだめでしょ！ということで、とりあえずですが、channelを扱えるようにしました。</p>
 <p>これもまたReadmeに書いてありますが、以下のように使います。
 selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ通信できます。</p>
@@ -121,15 +129,14 @@ selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ�
      time.Sleep(3 * time.Second)
  }</pre><p>こんな感じですね。Luaと同じくState自体はスレッドセーフではないので、goroutineごとにStateをもってChannelで通信します。</p>
 <section>
-<h2>実装について</h2>
+<h1>実装について</h1>
 <p>迷ったんですが、channelは <strong>基本型</strong> として実装しています。 ユーザーデータ型でもよかったんですが、channelはGolangの特徴の一つですし、基本型にしたほうが親和性がよいので。</p>
 <p>あと、内部的にはリフレクションなのでそんなに性能はよくないかもしれません。</p>
 </section>
 <section>
-<h2>よければ使ってみてください</h2>
+<h1>よければ使ってみてください</h1>
 <p>実装してみたものの、正直私は職業プログラマでなく趣味プログラマなのであんまり使うシーンがないです。なんかいい使いどころがあれば使ってみてください。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -196,15 +203,6 @@ selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,11 +74,10 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules">以前紹介したPython版Rakeもどき</a> を改良してCodeReposに突っ込みました。まだ100行くらいです。自分では一番使っている自作モジュールなのでそろそろまとめようと思っていたのです。</p>
+    <p><a class="reference external" href="http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules">以前紹介したPython版Rakeもどき</a> を改良してCodeReposに突っ込みました。まだ100行くらいです。自分では一番使っている自作モジュールなのでそろそろまとめようと思っていたのです。</p>
 <p><a class="reference external" href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.p">http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py</a></p>
 <section>
-<h2>改良点</h2>
+<h1>改良点</h1>
 <ul class="simple">
 <li><code>setuptools</code> があるときはそっちを使うようにした。</li>
 <li><code>use_without_standard</code> メソッドによって <code>distutils</code> 標準タスクを消すことができる。これによって <code><span class="pre">--help-commands</span></code> の画面がすっきりする。また、この場合名前空間のセパレータに <code>:</code> を用いるようになった。</li>
@@ -80,15 +88,15 @@
 </ul>
 </section>
 <section>
-<h2>使用方法</h2>
+<h1>使用方法</h1>
 <p>以前書いたのとほとんど同じなんですが、まとめなおしておきます。</p>
 <section>
-<h3>tasktoolsとは？</h3>
+<h2>tasktoolsとは？</h2>
 <p><code>distutils</code> および <code>setuptools</code> を拡張してextra commandを簡単に作成するためのユーティリティです。RubyにおけるRakeのようなものです。ビルド機能がほしい場合は <code>distutils</code> , <code>setuptools</code> の標準ビルド機能、もしくは <code>SCons</code> と組み合わせるとハッピーになれます。</p>
 <p>ちなみに、 <code>tasktools</code> というのは同じく <code>distutils</code> の拡張である <code>setuptools</code> の命名規則に習っています。 <code>task</code> 機能を強化するから <code>tasktools</code> です。</p>
 </section>
 <section>
-<h3>チュートリアル</h3>
+<h2>チュートリアル</h2>
 <p>典型的な <code>tasktools</code> の使い方です。</p>
 <p>まず <code>tasks.py</code> というファイルを作成します。典型的には以下の様になります。</p>
 <pre class="prettyprint ">from __future__ import with_statement
@@ -198,7 +206,6 @@ create /tmp/change.txt</pre><p>ちゃんとオプションが渡されていま�
 </section>
 
 
-
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
@@ -265,15 +272,6 @@ create /tmp/change.txt</pre><p>ちゃんとオプションが渡されていま�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

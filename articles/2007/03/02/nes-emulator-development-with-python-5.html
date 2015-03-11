@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -67,13 +76,12 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>もうすぐ引越しです。頑張って部屋を片付けないと・・・</p>
+    <p>もうすぐ引越しです。頑張って部屋を片付けないと・・・</p>
 <p>しばらくドタバタすると思し、これ以上作りこむモチベーションもないので、ここまで作ったものをあげておこうと思いました。</p>
 <p><strong>ダウンロード</strong></p>
 <p><a class="reference external" href="/statics/files/pynes-0-0-1.zip">pynes-0-0-1.zip</a></p>
 <section>
-<h2>試し方</h2>
+<h1>試し方</h1>
 <p>インストールはダウンロードしたzipファイルを展開するだけです。</p>
 <p>必要なライブラリは</p>
 <ul class="simple">
@@ -107,11 +115,10 @@
 <p>とにかく、めちゃくちゃ遅いので、固まったと思ってもしばらくすると画面がちゃんと切り替わったりします。</p>
 </section>
 <section>
-<h2>よもや話</h2>
+<h1>よもや話</h1>
 <p>かなり適当です。前回（PythonによるNESエミュレータ開発4)から変わってません。マッパーっぽいのが用意してありますが、これはダミーです。他のエミュのソースを参考に必要そうな部分に適当にいれただけです。</p>
 <p>一応、速度を重視しているものの、わかりやすく書いてるつもりなんで、Pythonが分かっていてかつ、エミュレータの基本的な構造が知りたい人には参考になるかもしれません。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -180,15 +187,6 @@
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

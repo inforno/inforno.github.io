@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -67,12 +76,11 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a>  とか  <a class="reference external" href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a>
+    <p><a class="reference external" href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a>  とか  <a class="reference external" href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a>
 から。</p>
 <p>上記のサイトのをもってきて.vimrcをちょろっと書けばいいんだけど、テキストを受信するサーバーは常時立ち上げていそうで、スクリプトだとなんとなくアレなので、exeがいいなあ。簡単にできそうなので、とりあえず探すよりは作ってみるメソッド。</p>
 <section>
-<h2>ファイル一式</h2>
+<h1>ファイル一式</h1>
 <p><a class="reference external" href="/statics/files/clsync.zip">clsync.zip</a></p>
 <p>内容は</p>
 <ul class="simple">
@@ -82,7 +90,7 @@
 </ul>
 </section>
 <section>
-<h2>使い方など</h2>
+<h1>使い方など</h1>
 <p>Windows側ではclipboard_server.iniで適当にポートを設定して（当然外部から見えないやつを）、clipboard_server.exeを起動しておいてください。タスクトレイにアイコンが表示されてますので、そこから終了できます。</p>
 <p>vmware上のLinuxですが、まずnkfがインストールされている必要があります。すみません、クライアント側手抜きするために使っています。そしてclsync.pyをパスの通ったところにおきます。clsync.pyにはホストのWindows側で動いてるサーバーのポートとIPを設定する箇所があるので、適宜書き換えます。またポートとIPはオプションでも渡せます（詳しくはclsync.py -hで）。</p>
 <p>あとは</p>
@@ -106,7 +114,6 @@ nmap ,c :call SyncClipboard()&lt;CR&gt;</pre><p>こんな感じなのを.vimrc�
 <p>というわけでこのツールは使われないまま終わる（笑
 coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -175,15 +182,6 @@ coLinuxはよく知らないけど、coLinuxにこういうホストOSへのク�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -61,8 +70,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>via</p>
+    <p>via</p>
 <ul class="simple">
 <li><a class="reference external" href="http://wiredvision.jp/blog/masui/200803/200803030100.htm">第20回 日本語でおk</a></li>
 <li><a class="reference external" href="http://d.hatena.ne.jp/sumim/20080303/p">Ruby もいいけど Smalltalk でも、おｋ。</a></li>
@@ -98,7 +106,6 @@ implicit def any2japanese[A](v:A) = new Japanese(v)
 100 のな 平方根 のな 逆数 をな 表示 すんねん
 // =&gt; 0.1</pre><p>とでもしてください。</p>
 <p>いやー日本人にやさしいプログラミング言語ですね、Scalaは！最近日本の人たちに注目されてきている理由もわかります！</p>
-
 
 
     <div class="seealso">
@@ -167,15 +174,6 @@ implicit def any2japanese[A](v:A) = new Japanese(v)
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

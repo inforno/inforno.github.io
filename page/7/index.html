@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,11 +74,10 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
+    <p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
 <p>一方、Pythonにはexperimentalながら <code>re.Scanner</code> というクラスがあります( <code>&gt;= 2.4</code> )。experimentalなのでマニュアルにはのっていませんが。この <code>re.Scanner</code> はかなりシンプルなんですが典型的な <code>StringScanner</code> の使い方の範疇では、こちらのほうがキレイに書けるような気がします。</p>
 <section>
-<h2><code>re.Scanner</code> の使い方</h2>
+<h1><code>re.Scanner</code> の使い方</h1>
 <p>使い方は非常に簡単で</p>
 <ul>
 <li><dl class="first docutils">
@@ -86,7 +94,7 @@
 <p>といった感じ。関数を渡すので、 <code>StringScanner</code> のようなwhileループを作る必要がなく、キレイにまとまります。</p>
 </section>
 <section>
-<h2>例：S式パーサ</h2>
+<h1>例：S式パーサ</h1>
 <p><code>re.Scanner</code> は簡単、ということでS式パーサでも。トークナイズ+αな処理をするので、 <code>action</code> をインスタンスメソッドにして状態を保存することにします。</p>
 <p>目標は</p>
 <ul class="simple">
@@ -205,10 +213,9 @@ bbbb (ccc ddd) )
 line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
 </section>
 <section>
-<h2>というわけで</h2>
+<h1>というわけで</h1>
 <p>Pythonでトークナイズするときにはかなり便利なんじゃないかと思いました。</p>
 </section>
-
 
   </div>
 </article>
@@ -236,8 +243,7 @@ line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ�
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://inforno.net/articles/2008/07/04/strong-arm-approach-toward-gae-transactions">前のエントリー</a> でGAEにおけるトランザクションの問題は一応解決をみた。</p>
+    <p><a class="reference external" href="http://inforno.net/articles/2008/07/04/strong-arm-approach-toward-gae-transactions">前のエントリー</a> でGAEにおけるトランザクションの問題は一応解決をみた。</p>
 <p>その後、GAEで開発を続けた結果、やはりGAEにブログを移行するのは断念した。理由としては</p>
 <ul class="simple">
 <li><code>os.listdir</code> などで不審な挙動が見られた</li>
@@ -286,7 +292,6 @@ line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ�
 <hr class="docutils" />
 <p>あまりテストもせず試験的に移行してみたのでおかしい部分もあるかと思いますが、そこはおいおい。パーマリンクはそのままになっていると思います。基本的にURLは変更していません。また、CGIで動かしていますので、負荷が高ければ前のに戻す予定です。</p>
 
-
   </div>
 </article>
 
@@ -311,8 +316,7 @@ line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ�
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://inforno.net/articles/2008/06/30/gae-model-improvements">前のエントリー</a> で書いたように、GoogleAppEngineのトランザクションは使い勝手が悪い。しかし、GAEにブログを移行しようと思うとこれは乗り越えなければならない。</p>
+    <p><a class="reference external" href="http://inforno.net/articles/2008/06/30/gae-model-improvements">前のエントリー</a> で書いたように、GoogleAppEngineのトランザクションは使い勝手が悪い。しかし、GAEにブログを移行しようと思うとこれは乗り越えなければならない。</p>
 <p>GAEでトランザクションを行う条件を簡単にまとめると</p>
 <ul class="simple">
 <li>db.run_in_transactionにトランザクションとして実行したい関数を渡すがその関数内では</li>
@@ -425,7 +429,6 @@ def create(cls, *a, **k):
 <p>ここまでやってしまったので、やっぱり今のブログはGAEに移行しようかなあ、と思い始めたり。デザインも今と似ているけどやっぱ一から自分でマークアップしたから好みだし、なによりXHTMLとしてValidだ。機能的にはあと、スパム対策さえあれば大丈夫。</p>
 <p>実はOpenIDも自分でサーバ立ててたりするので、それもGAEで実装しなおしたいなあとか色々やりたいことは尽きない。GAEでの開発はこのモデルの問題さえつぶしてしまえばかなり楽だし、夢がひろがるなあ。</p>
 
-
   </div>
 </article>
 
@@ -462,15 +465,6 @@ def create(cls, *a, **k):
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

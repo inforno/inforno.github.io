@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -63,8 +72,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>システム開発の話ではありません。</p>
+    <p>システム開発の話ではありません。</p>
 <p>最近、やっぱりというかなんというか初音ミクに刺激されて音楽をもう一回やりたくなったんです。</p>
 <p>中学高校と音楽ばっかりやっていたので、大学の４年間やってないくらいで忘れてないだろう、と思ってたんです。</p>
 <p>でも、いろいろ忘れているわけですよ、実際。</p>
@@ -78,7 +86,6 @@
 <p>これは幅広くやろうとしてしまう人の宿命だよなあ。言語にしても、実は自分用メモを見ないとまったく書けない、というレベルになってしまっているものもあるんだよねえ(HaskellとかSmalltalkとか･･･最近はどう書く？orgでコードを見るおかげでそこまでひどくないが)。</p>
 <hr class="docutils" />
 <p>どう書く？orgと言えば主に <a class="reference external" href="http://ja.doukaku.org/user/82/">Scalaで参戦</a> してるわけですが、ブログでほとんどScalaに言及してないな。まぁ、Scalaの記事とか読みたい人もあんまりいないだろうし、いいか。</p>
-
 
   </div>
 </article>
@@ -106,11 +113,10 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>近頃、 <a class="reference external" href="http://d.hatena.ne.jp/yukoba/20071108/p1">JavascriptでOreScript</a> なんてのがちょっとはやっていたりしまして。</p>
+    <p>近頃、 <a class="reference external" href="http://d.hatena.ne.jp/yukoba/20071108/p1">JavascriptでOreScript</a> なんてのがちょっとはやっていたりしまして。</p>
 <p>OreScript書くのにある程度ちゃんと動くパーサコンビネータがあれば便利かも、とおもったので以前書いたパーサコンビネータをいじってみました。</p>
 <section>
-<h2>変更点</h2>
+<h1>変更点</h1>
 <ul class="simple">
 <li>メソッド名などをHaskellにあわせた</li>
 <li>よくもわるくも、記号含有率をあげた(and -&gt; $に、or -&gt; l に)</li>
@@ -121,12 +127,12 @@
 <p>ということで、そこそこの用途に耐えるものになったと思います。</p>
 </section>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p>完全にアンドキュメントです。すみません。ただ、ソースは200行くらいなんで見ればわかるかと。というか、HaskellのParsecのマニュアルを読めば基本一緒なので使い方がわかると思います。</p>
 <p><a class="reference external" href="/statics/files/parsec0-1-0.js">ダウンロード</a></p>
 </section>
 <section>
-<h2>サンプル</h2>
+<h1>サンプル</h1>
 <p><a class="reference external" href="http://d.hatena.ne.jp/amachang/20070829/1188400850">id:amachangさんが書いていたような数式パーサ</a> を定義してみましょう。</p>
 <p>残念ながらLexerはつくっていないので、空白は受け入れられません。</p>
 <pre class="prettyprint ">var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){
@@ -157,7 +163,6 @@ if(parseResult.success()) {
 <p>こういうのを最近はやりの <a class="reference external" href="http://coderepos.org/share">CodeRepos</a> でやればいいのかなあ。</p>
 </section>
 
-
   </div>
 </article>
 
@@ -180,8 +185,7 @@ if(parseResult.success()) {
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>最近は手が空いたときにまとめてお題をとくようになってきました。 <a class="reference external" href="http://ja.doukaku.org/">どう書く？org</a> です。あいかわらず、Scalaです。はい。</p>
+    <p>最近は手が空いたときにまとめてお題をとくようになってきました。 <a class="reference external" href="http://ja.doukaku.org/">どう書く？org</a> です。あいかわらず、Scalaです。はい。</p>
 <p>そのどう書く？orgですが、今のままだとちょっと「多言語クックブック」にはならない気がしてます。クックブックってのが曖昧ですが、あくまで俺の中のイメージのクックブックです。</p>
 <p>一般投稿が可になった時に、ちょっと感じてたんですがやっぱり最近ある傾向が顕著で。というのは数学パズル系とか、(数学的な、事務処理などではない)アルゴリズム勝負！なお題ばっかりなんですよね。プログラミング自体が好きな人ってやっぱり関数型言語界隈の方々だったり、数学的なバックグラウンド持っている人が多いですから。一般投稿が可になればまぁそういう方々がお題を投稿してくださることが多いのかな、と思ってます。</p>
 <p>もちろん、頭使ってそういうアルゴリズム考えたりするのは楽しいんですけどね、そればっかりだとちょっと･･･。ならお前がお題考えろ、ですよね、ほんとすみません。</p>
@@ -194,7 +198,6 @@ if(parseResult.success()) {
 <p>一方、数学パズル系とかだとほとんどがリスト処理とか、コレクションの処理になっちゃう。ぶっちゃけていえば、「その言語だから」っていうのが少なくなるって言うか・・・。大抵そのままほかの言語に移植可能だったり･･･。もちろん、Haskellだから、遅延評価だから、Lispだから、マクロだから、Ｃだからビット演算だから、とかはあると思うんですがね。</p>
 <p>実用系のお題とパズル系のお題が3:7くらいだと一番個人的にはうれしいかなあ。</p>
 <p>そんな私は、最近、ボーナスがでた勢いで（音楽用）キーボード、エレキギターを相次いで購入。あれほど音楽はもうやめよっかな、と思っていたのに。機材を実家においてきたのに。ほんとに好きなものって、やっぱやめられないんですね。願わくば、俺にとってプログラミングもそうであらんことを。</p>
-
 
   </div>
 </article>
@@ -232,15 +235,6 @@ if(parseResult.success()) {
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

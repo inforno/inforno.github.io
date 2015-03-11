@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -61,11 +70,10 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>週末に引越し、ということで本なんかを送ってしまいました。</p>
+    <p>週末に引越し、ということで本なんかを送ってしまいました。</p>
 <p>読む本が無いので、前から手を出そうと思っていたOCamlに手を出してみました。</p>
 <section>
-<h2>導入</h2>
+<h1>導入</h1>
 <p>とりあえずDebianにaptで放り込む。</p>
 <pre class="prettyprint ">libcamomile-ocaml-data                          install
 libcamomile-ocaml-dev                           install
@@ -92,12 +100,12 @@ ocaml-nox                                       install</pre><p>こんな感じ�
 
 open ExtLib</pre></section>
 <section>
-<h2>練習</h2>
+<h1>練習</h1>
 <p><a class="reference external" href="http://min-caml.sourceforge.net/index2.html">超特急: 一時間でわかるML超入門</a> を見てから、 <a class="reference external" href="http://www.sato.kuis.kyoto-u.ac.jp/~igarashi/class/isle4/mltext/ocaml.html">Objective Caml 入門</a> を読みながら、書いてみた。</p>
 <p>普通に書きやすい。練習問題は・・・。なんていうか、SICP。普通に関数型言語として使うところまでやってみた。</p>
 </section>
 <section>
-<h2>日本語</h2>
+<h1>日本語</h1>
 <p>EUCとUTFは大丈夫っぽい。ここらへんはCamomileというモジュールを使うらしい。とりあえず</p>
 <pre class="prettyprint ">module Encoding = CamomileLibrary.Default.Camomile.CharEncoding
 module Enc = Encoding.Make (CamomileLibrary.UTF8)
@@ -105,11 +113,10 @@ let unicode s = Enc.decode (Encoding.of_name "jauto") s;;
 let decode t n = Enc.encode (Encoding.of_name n) t;;</pre><p>などとPythonみたいな関数を定義してみた。 <code>jauto</code> でエンコーディングは自動的に判別してくれるらしい。コードをEUCで書いてUTF-8のコンソールに出力してみる。うんうん、ちゃんと日本語いけてる。ただ、UTF-8で書いたファイルで <code>unicode &quot;ああああ&quot;</code> ってしたら当然 <code>&quot;ああああ&quot;</code> のままだと思うんだけど、ダメだった。なんでなんだろう。詳しい人いたら教えて欲しいです。</p>
 </section>
 <section>
-<h2>今までの感想</h2>
+<h1>今までの感想</h1>
 <p>結構いい。モジュールシステムなんかはきっちりしてんなー、と思いました。オブジェクトシステムなんかが特徴だと思うんだけど、まだ触ってないんですよねえ。てゆーか詳しく解説しているところがすくないんで、どーしようかなあ。</p>
 <p>あと、インタプリタの <code>#require &quot;camomile&quot;</code> みたいなのって、ネイティブコンパイラだとエラーになるんだけどこういうもんなんだろうか。つまりどっちか選びなさい、ってことでいいのかなあ・・・。ネイティブコンパイラでは無視してくれると一番ありがたいような気がするけど・・・</p>
 </section>
-
 
 
     <div class="seealso">
@@ -172,15 +179,6 @@ let decode t n = Enc.encode (Encoding.of_name n) t;;</pre><p>などとPythonみ�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

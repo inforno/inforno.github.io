@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -61,8 +70,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>趣味プログラマです、こんにちわ。一応生きてます。</p>
+    <p>趣味プログラマです、こんにちわ。一応生きてます。</p>
 <p>さて、Pythonista各位におかれましてはmoratoriumをエンジョイされていますでしょうか。そろそろライブラリも著名なものはPython3に対応してきましたし、そろそろ本格的にPython3、となっているころ合いですね。というか、Python3に対応してないとちょっと恥ずかしくなってきましたね。</p>
 <p>とはいえ、Python2は根強く残るでしょう。というわけでPython2とPython3両方で動くコードを書きましょう。テストも書くのは当たり前ですし、せっかくなのでCIもしましょう。</p>
 <p>と私も最近思ったので快適に開発を進めるための環境についてメモです。</p>
@@ -74,18 +82,18 @@
 <li>pytest : toxと親和性の高いテストツール。noseでもよいですが私はpytestを押します。</li>
 </ul>
 <section>
-<h2>Python2とPython3のインストール</h2>
+<h1>Python2とPython3のインストール</h1>
 <p>あたりまえですが、Python2系とPython3系両方入れておきましょう。</p>
 </section>
 <section>
-<h2>toxのインストール</h2>
+<h1>toxのインストール</h1>
 <p>さて、早速toxを入れていくわけですがこれにはPython2系を使います。</p>
 <pre class="prettyprint ">$ wget http://python-distribute.org/distribute_setup.py
 $ python27 distribute_setup.py
 $ easy_install virtualenv tox</pre><p>簡単ですね。</p>
 </section>
 <section>
-<h2>プロジェクトを始める - ファイル・ディレクトリ構成</h2>
+<h1>プロジェクトを始める - ファイル・ディレクトリ構成</h1>
 <p>次に、プロジェクトの基本形を作りましょう。私は以下のような構成にしています。</p>
 <pre class="prettyprint ">/
   + - .tox                        : toxにより生成されるディレクトリ。
@@ -106,7 +114,7 @@ $ easy_install virtualenv tox</pre><p>簡単ですね。</p>
   - CHANGES.rst                   : 変更履歴。</pre><p>普通です。ポイントは <code>docs/build/html</code> をgh-pagesへのリンクにすること。これでドキュメントの管理が非常に楽になります。</p>
 </section>
 <section>
-<h2>tox.iniの作成</h2>
+<h1>tox.iniの作成</h1>
 <p>tox.iniに依存関係と、どの処理系でテストするか、テストはなにを使ってやるかを書きましょう。だいたいの場合、それだけで十分です。</p>
 <pre class="prettyprint ">[tox]
 envlist = py27,py32
@@ -145,11 +153,11 @@ commands=
     --basetemp={envtmpdir}  \
     []</pre></section>
 <section>
-<h2>とりあえず開発</h2>
+<h1>とりあえず開発</h1>
 <p>とりあえず何かコードを書いて、テストも書きましょう。</p>
 </section>
 <section>
-<h2>toxでテスト</h2>
+<h1>toxでテスト</h1>
 <p>ではtoxでテストしましょう。tox.iniがあるディレクトリに移動してから</p>
 <pre class="prettyprint ">$ tox</pre><p>これで</p>
 <ul class="simple">
@@ -200,7 +208,7 @@ SKIP [3] /home/yuin/github/rays/.tox/py32/lib/python3.2/site-packages/_pytest/sk
 ============================================================================ 117 passed, 3 skipped in 14.81 seconds ============================================================================
 ________________________________________________________________________________________ [tox summary] _________________________________________________________________________________________</pre></section>
 <section>
-<h2>.travis.ymlの作成</h2>
+<h1>.travis.ymlの作成</h1>
 <p>無事、複数のインタプリタでテストできました。次はCIです。 <a class="reference external" href="http://travis-ci.org">Travis CI</a> を使うと、githubにpushしたタイミングでビルド＆テストが自動でできます。</p>
 <p>まずは、Travis CIにgithubのアカウントでログインして、対象のレポジトリでCIを有効にします。</p>
 <p>次に、Travis CIでのビルド＆テスト設定を.travis.ymlに書きます。ここではtoxを使っていますから、以下のようになります。</p>
@@ -214,10 +222,9 @@ script: tox</pre><p><code>TOXENV</code> でテストする環境を指定しま�
 <p>これでgithubにpushするとTravis CIが動くようになりました。</p>
 </section>
 <section>
-<h2>Travis CI + tox快適です</h2>
+<h1>Travis CI + tox快適です</h1>
 <p>ガンガンPython3対応をしましょう！</p>
 </section>
-
 
 
     <div class="seealso">
@@ -286,15 +293,6 @@ script: tox</pre><p><code>TOXENV</code> でテストする環境を指定しま�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

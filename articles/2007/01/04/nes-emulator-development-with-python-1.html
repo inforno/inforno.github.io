@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -67,15 +76,13 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>正月だというのにひたすらCPUの命令を実装・・・。ここはひたすら地道な作業が続く。やっぱりこういう単純作業は苦手だ・・・</p>
+    <p>正月だというのにひたすらCPUの命令を実装・・・。ここはひたすら地道な作業が続く。やっぱりこういう単純作業は苦手だ・・・</p>
 <p>実装の際には <a class="reference external" href="http://www.geocities.co.jp/SiliconValley/5604/infones.html">InfoNES</a> や <a class="reference external" href="http://fms.komkon.org/EMUL8/">6502 Emulation Package</a> のソースコード、そして <a class="reference external" href="http://crystal.freespace.jp/pgate1/nes/nes_cpu.htm">NES on FPGAのCPUのページ</a> に大変お世話になりました。特にNES on FPGAのページは非常に分かりやすくまとめられていて助かりました。</p>
 <p>実装方針は前にも書いたとおり「できるだけPythonっぽく」。着々とエミュレーターっぽくないソースが出来上がってきています（笑　エミュレータのソースコードというとそれはもう、C言語でマクロ全開、register指定、inline(もしくはstatic)で出力されるコードを極限まで速く、なんて感じですが全く逆です。分かりやすさ優先。とりあえず書いてみて、ダメそうなら諦めるか頑張ってチューニングするか考えよう。</p>
 <p>今日までで、CPUの全命令は実装しました（したつもり）。ただ、Indexed Absolute AddressingのX,Y、そしてIndirect Indexed Addressingでページクロスしたとき1クロック余計に発生する、という件は今のところスルー。</p>
 <p>メモリ周りもIO以外はだいたい作ったので、今日の時点で単純なコードなら実行可能に。早速アセンブラを書いてNESASMで.NESファイルを作成。それを読み込んで動かしてみました。とりあえず動くことは動く・・・が全命令が正しく実装されているかはまだ分からないです（笑</p>
 <p>というわけで次はデバッグ環境を整えて、命令のテストをしないとなあ。</p>
 <p>余談。いやー卒論という重圧がないのは非常にプログラミングがはかどる。別にギリギリなわけでもないのに「卒論完全に出来上がってないのにこんなことしてていいのかなーって感じちゃう」的なものがないし。</p>
-
 
 
     <div class="seealso">
@@ -144,15 +151,6 @@
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,14 +74,13 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>放置して久しいこのブログ、やっと重い腰をあげていろいろ手をいれた。</p>
+    <p>放置して久しいこのブログ、やっと重い腰をあげていろいろ手をいれた。</p>
 <ul class="simple">
 <li>HTML5化</li>
 <li>ブログシステムを入れ替え</li>
 </ul>
 <section>
-<h2>silkylog</h2>
+<h1>silkylog</h1>
 <p>このブログはxreaのレンタルサーバで動かしているのだけど、しばらく見ないうちにxreaもサーバがすごく増えて、新しいサーバではpython2.7.5が使えるようになっていた。</p>
 <p>なので自作のwebフレームワーク <a class="reference external" href="https://github.com/yuin/rays">rays</a> を使った新しいブログシステム <a class="reference external" href="https://github.com/yuin/silkylog">silkylog</a> に移行した。silkylogはpython3.3でも動くのでしばらくは安心。これまで使っていたのはpython2系でしか動かないし、かといってpython3対応させる気力も起きないしでどーしたものかと思っていた。</p>
 <p>流行に乗ってOctpressとかにしようかなあ、と思いつつせっかく作ったのだしと思って。ただなんとなく悔しかったのでsilkylogにOctpressと同等の完全に静的なサイトを出力できる機能も付けた。</p>
@@ -80,7 +88,7 @@
 <p>手前味噌ながらraysの機能を余すところなくつかって、シンプルに作れたと思う。</p>
 </section>
 <section>
-<h2>html5化(デザイン)</h2>
+<h1>html5化(デザイン)</h1>
 <p>ようやくhtml5に。デザインも見直し。シンプルでよいデザインにできた･･･と思う。cssはscssでまとめた。
 レスポンシブルデザインにも対応。コメントはDisqus、シンタックスハイライトはgoogle code prettifyと外部だよりに。</p>
 <p>マークアップはreStructuredTextに統一した。普及度を考えるとmarkdownなのだけどやはりmarkdownは表現力が低くて。いろんな方言が乱立してるし、独自に拡張をするしくみに乏しいので使いづらかった。</p>
@@ -88,7 +96,6 @@
 <hr class="docutils" />
 <p>ともかく、これでしばらくは手をいれなくてすむ・・・はず。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -157,15 +164,6 @@
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

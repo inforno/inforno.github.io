@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,8 +74,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>Pythonのコードをwindows用exeにするには当然、 <a class="reference external" href="http://www.py2exe.org/">py2exe</a> を使います。</p>
+    <p>Pythonのコードをwindows用exeにするには当然、 <a class="reference external" href="http://www.py2exe.org/">py2exe</a> を使います。</p>
 <p>で、そのとき、</p>
 <pre class="prettyprint ">python setup.py py2exe --windows</pre><p>とすれば、コンソールを表示しないようにできます。</p>
 <div class="note">
@@ -108,7 +116,6 @@ out_file.write(io.read())
 io.close()
 out_file.close()</pre><p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ
 pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
-
 
 
     <div class="seealso">
@@ -177,15 +184,6 @@ pythonではバイナリを扱うときはstructモジュールを使う、と�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

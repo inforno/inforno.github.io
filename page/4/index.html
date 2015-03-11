@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -63,8 +72,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>趣味プログラマです、こんにちわ。一応生きてます。</p>
+    <p>趣味プログラマです、こんにちわ。一応生きてます。</p>
 <p>さて、Pythonista各位におかれましてはmoratoriumをエンジョイされていますでしょうか。そろそろライブラリも著名なものはPython3に対応してきましたし、そろそろ本格的にPython3、となっているころ合いですね。というか、Python3に対応してないとちょっと恥ずかしくなってきましたね。</p>
 <p>とはいえ、Python2は根強く残るでしょう。というわけでPython2とPython3両方で動くコードを書きましょう。テストも書くのは当たり前ですし、せっかくなのでCIもしましょう。</p>
 <p>と私も最近思ったので快適に開発を進めるための環境についてメモです。</p>
@@ -76,18 +84,18 @@
 <li>pytest : toxと親和性の高いテストツール。noseでもよいですが私はpytestを押します。</li>
 </ul>
 <section>
-<h2>Python2とPython3のインストール</h2>
+<h1>Python2とPython3のインストール</h1>
 <p>あたりまえですが、Python2系とPython3系両方入れておきましょう。</p>
 </section>
 <section>
-<h2>toxのインストール</h2>
+<h1>toxのインストール</h1>
 <p>さて、早速toxを入れていくわけですがこれにはPython2系を使います。</p>
 <pre class="prettyprint ">$ wget http://python-distribute.org/distribute_setup.py
 $ python27 distribute_setup.py
 $ easy_install virtualenv tox</pre><p>簡単ですね。</p>
 </section>
 <section>
-<h2>プロジェクトを始める - ファイル・ディレクトリ構成</h2>
+<h1>プロジェクトを始める - ファイル・ディレクトリ構成</h1>
 <p>次に、プロジェクトの基本形を作りましょう。私は以下のような構成にしています。</p>
 <pre class="prettyprint ">/
   + - .tox                        : toxにより生成されるディレクトリ。
@@ -108,7 +116,7 @@ $ easy_install virtualenv tox</pre><p>簡単ですね。</p>
   - CHANGES.rst                   : 変更履歴。</pre><p>普通です。ポイントは <code>docs/build/html</code> をgh-pagesへのリンクにすること。これでドキュメントの管理が非常に楽になります。</p>
 </section>
 <section>
-<h2>tox.iniの作成</h2>
+<h1>tox.iniの作成</h1>
 <p>tox.iniに依存関係と、どの処理系でテストするか、テストはなにを使ってやるかを書きましょう。だいたいの場合、それだけで十分です。</p>
 <pre class="prettyprint ">[tox]
 envlist = py27,py32
@@ -147,11 +155,11 @@ commands=
     --basetemp={envtmpdir}  \
     []</pre></section>
 <section>
-<h2>とりあえず開発</h2>
+<h1>とりあえず開発</h1>
 <p>とりあえず何かコードを書いて、テストも書きましょう。</p>
 </section>
 <section>
-<h2>toxでテスト</h2>
+<h1>toxでテスト</h1>
 <p>ではtoxでテストしましょう。tox.iniがあるディレクトリに移動してから</p>
 <pre class="prettyprint ">$ tox</pre><p>これで</p>
 <ul class="simple">
@@ -202,7 +210,7 @@ SKIP [3] /home/yuin/github/rays/.tox/py32/lib/python3.2/site-packages/_pytest/sk
 ============================================================================ 117 passed, 3 skipped in 14.81 seconds ============================================================================
 ________________________________________________________________________________________ [tox summary] _________________________________________________________________________________________</pre></section>
 <section>
-<h2>.travis.ymlの作成</h2>
+<h1>.travis.ymlの作成</h1>
 <p>無事、複数のインタプリタでテストできました。次はCIです。 <a class="reference external" href="http://travis-ci.org">Travis CI</a> を使うと、githubにpushしたタイミングでビルド＆テストが自動でできます。</p>
 <p>まずは、Travis CIにgithubのアカウントでログインして、対象のレポジトリでCIを有効にします。</p>
 <p>次に、Travis CIでのビルド＆テスト設定を.travis.ymlに書きます。ここではtoxを使っていますから、以下のようになります。</p>
@@ -216,10 +224,9 @@ script: tox</pre><p><code>TOXENV</code> でテストする環境を指定しま�
 <p>これでgithubにpushするとTravis CIが動くようになりました。</p>
 </section>
 <section>
-<h2>Travis CI + tox快適です</h2>
+<h1>Travis CI + tox快適です</h1>
 <p>ガンガンPython3対応をしましょう！</p>
 </section>
-
 
   </div>
 </article>
@@ -245,12 +252,11 @@ script: tox</pre><p><code>TOXENV</code> でテストする環境を指定しま�
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
+    <p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
 <p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
 <p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
 <section>
-<h2>Pythonをインストール</h2>
+<h1>Pythonをインストール</h1>
 <p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
 <pre class="prettyprint ">mkdir -p ~/root/usr/local/src
 cd ~/root/usr/local/src
@@ -262,7 +268,7 @@ make
 make install</pre><p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
 </section>
 <section>
-<h2>hashlibをインストール</h2>
+<h1>hashlibをインストール</h1>
 <p>なんで、自前でhashlibを単体でいれます。</p>
 <pre class="prettyprint ">cd ~/root/usr/local/src
 wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
@@ -291,7 +297,7 @@ vi setup.py</pre><p>はい、 <code>setup.py</code> を編集しましょう。�
 ~/root/usr/local/bin/python setup.py install</pre><p>で <code>hashlib</code> が入ります。</p>
 </section>
 <section>
-<h2>easy_installをインストール</h2>
+<h1>easy_installをインストール</h1>
 <p>これで <code>md5</code> が使えるようになったので</p>
 <pre class="prettyprint ">cd ~/root/usr/local/src
 wget http://peak.telecommunity.com/dist/ez_setup.py
@@ -299,10 +305,9 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
 <pre class="prettyprint ">~/root/usr/local/bin/easy_install -U -Z MySQL_Python</pre><p>てな感じで必要なモジュールを入れていきましょう。</p>
 </section>
 <section>
-<h2>というわけで</h2>
+<h1>というわけで</h1>
 <p>わりと普通にxreaでPythonが使えています。</p>
 </section>
-
 
   </div>
 </article>
@@ -328,11 +333,10 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>Googleが <a class="reference external" href="http://golang.org/">Goという新しいプログラミング言語</a> を出したようで。早速、インストールして軽くドキュメントを流し読みしてみました。</p>
+    <p>Googleが <a class="reference external" href="http://golang.org/">Goという新しいプログラミング言語</a> を出したようで。早速、インストールして軽くドキュメントを流し読みしてみました。</p>
 <p>英語なんて読みたくないよ、という人もいるかもしれないし、誰かの役に立つかもしれないので自分用メモおいときます。完全に自分用なんである程度他の言語の知識がある人向けな上、ざっくり流し読みなんで間違ってるかも。</p>
 <section>
-<h2>どんな言語？</h2>
+<h1>どんな言語？</h1>
 <ul>
 <li><p class="first">ネイティブコードを吐く、コンパイル型。</p>
 </li>
@@ -358,7 +362,7 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
 </ul>
 </section>
 <section>
-<h2>個人的雑感</h2>
+<h1>個人的雑感</h1>
 <ul>
 <li><dl class="first docutils">
 <dt>こんな言語設計思想かなあと感じたり</dt>
@@ -410,16 +414,16 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
 </ul>
 </section>
 <section>
-<h2>言語仕様</h2>
+<h1>言語仕様</h1>
 <p>自分なりに簡単にまとめて見ます。</p>
 <section>
-<h3>変数への代入</h3>
+<h2>変数への代入</h2>
 <p>下へ行くほど省略形。 <code>var</code> もあるから <code>const</code> もあるでよ。</p>
 <pre class="prettyprint ">var s string = "";
 var s = "";
 s := "";</pre></section>
 <section>
-<h3>オブジェクト構造</h3>
+<h2>オブジェクト構造</h2>
 <p>値扱いの型と参照型があります。</p>
 <ul>
 <li><dl class="first docutils">
@@ -451,7 +455,7 @@ s := "";</pre></section>
 // これはダメ
 var m map[string]int;</pre></section>
 <section>
-<h3>配列とスライス</h3>
+<h2>配列とスライス</h2>
 <ul class="simple">
 <li>配列は「値」。でユーザがメモリ構造などを読める。スライスはコンパイラがよしなに確保する、参照型。</li>
 </ul>
@@ -461,7 +465,7 @@ var m map[string]int;</pre></section>
 s := sum(&amp;[...]int{1,2,3});</pre><p>スライス</p>
 <pre class="prettyprint ">s := sum([]int{1,2,3});</pre></section>
 <section>
-<h3>辞書型</h3>
+<h2>辞書型</h2>
 <pre class="prettyprint ">timeZone := map[string]int{
   "UTC": 0*60*60,
   "EST": -5*60*60,
@@ -478,14 +482,14 @@ if seconds, ok := timeZone[tz]; ok {
 //消す場合
 timeZone["UTC"] = 0, false;</pre></section>
 <section>
-<h3>パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h3>
+<h2>パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h2>
 <p>命名規則に特徴があります。 <strong>大文字始まり以外は外部から見えない</strong> が原則。単なる命名規則ではなく、そういう仕様。</p>
 <section>
-<h4>パッケージ</h4>
+<h3>パッケージ</h3>
 <p>パッケージ文でファイルの先頭に書きます。これが基本的な単位となります。</p>
 <pre class="prettyprint ">package file</pre></section>
 <section>
-<h4>制御構造</h4>
+<h3>制御構造</h3>
 <p>特徴は</p>
 <ul class="simple">
 <li>()がいらない。</li>
@@ -512,7 +516,7 @@ timeZone["UTC"] = 0, false;</pre></section>
 }</pre><p>caseに条件式がかける。breakは自動でされる。</p>
 </section>
 <section>
-<h4>型定義</h4>
+<h3>型定義</h3>
 <p><code>type</code> , <code>struct</code> キーワードを組み合わせる。 <strong>メンバにメソッドは含みません。</strong></p>
 <pre class="prettyprint ">type File struct {
     fd int; // file descriptor number
@@ -520,7 +524,7 @@ timeZone["UTC"] = 0, false;</pre></section>
 }</pre><p>メンバ名が小文字なので、パッケージ外からは見えません。</p>
 </section>
 <section>
-<h4>関数とメソッド</h4>
+<h3>関数とメソッド</h3>
 <ul class="simple">
 <li>両方とも <code>func</code> キーワードで定義。</li>
 <li>違いはレシーバを指定するか否か。 レシーバを明示的に書くところはPythonっぽい。</li>
@@ -559,7 +563,7 @@ timeZone["UTC"] = 0, false;</pre></section>
 <pre class="prettyprint ">type IntArray []int
 func (p IntArray) Len() int { return len(p); }</pre></section>
 <section>
-<h4>インタフェース</h4>
+<h3>インタフェース</h3>
 <p>これ重要。Goはいわゆるクラスがないので、継承などもなく  <strong>インタフェースによるダックタイピングでそれらを片付けます</strong> 。  <code>interface</code> キーワードで定義。</p>
 <pre class="prettyprint ">type reader interface {
      Read(b []byte) (ret int, err os.Error);
@@ -576,7 +580,7 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
 </section>
 </section>
 <section>
-<h3>Concurrency</h3>
+<h2>Concurrency</h2>
 <p>concurrentプログラミングはGoの大きな特徴。 <strong>CSP(Communicating Sequential Processes)</strong> に基づいてます。並行して動く「goroutines」という軽量プロセスが「channel」を介してやりとり。ガードと多重化のためにselect文があります。</p>
 <p>channelは単体ではなくchan 受け渡しする型という感じで書きます。以下はチュートリアルのコードまんまです。</p>
 <pre class="prettyprint ">func generate(ch chan int) {
@@ -612,7 +616,7 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
     }();
     return ch;
 }</pre><section>
-<h4>多重化とガード</h4>
+<h3>多重化とガード</h3>
 <p>複数のチャンネルをとりあつかって、それらをガードにより振り分けられます。ErlangやScalaでおなじみの書き方です。</p>
 <pre class="prettyprint ">func server(op binOp, service chan *request, quit chan bool) {
     for {
@@ -628,12 +632,11 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
 </section>
 </section>
 <section>
-<h2>というわけで</h2>
+<h1>というわけで</h1>
 <p>なぐり書きしたメモでした。変なことかいてたらすみません。まぁこんな感じな言語かなあ、という程度で。</p>
 <p>繰り替えしになりますが、C言語を元にシンプルに保ちながらconcurrentプログラミングしやすくしてます、って感じですね。完全にダックタイピングベースで多値を多様するスタイルはおもしろいですね。なんとなく見た目がキモく感じるのは私の気のせいでしょう。</p>
 <p>というか数ヶ月もブログ放置してたのかー。コード書いてないわけじゃないんですけど、たいしたもんかいてないんですよね。割合的には8割がたCかな。月一くらいはブログ書いていきたいなあ・・・</p>
 </section>
-
 
   </div>
 </article>
@@ -671,15 +674,6 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

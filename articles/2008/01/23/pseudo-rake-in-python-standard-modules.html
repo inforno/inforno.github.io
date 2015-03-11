@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -63,14 +72,13 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>誰もが一度使うと便利さと気軽さに感動するRubyが誇るライブラリ、 <a class="reference external" href="http://raa.ruby-lang.org/project/rake/">Rake</a> 。</p>
+    <p>誰もが一度使うと便利さと気軽さに感動するRubyが誇るライブラリ、 <a class="reference external" href="http://raa.ruby-lang.org/project/rake/">Rake</a> 。</p>
 <p>プログラムのビルドもそうなんですが、雑多なタスクを簡単に書けて、整理できるのがなんといっても魅力的。RailsなんかではDBの作成から何から、ばんばんRakeタスクにされていますよね。</p>
 <p>さて、俺はPythonistasなので、PythonでRakeみたいなのがほしいわけです。ビルドに限っていえばPythonは <a class="reference external" href="http://www.scons.org/">Scons</a> という素晴らしいツールがあります。C言語はおろか、JAVA、PDF、PostScriptなどなど、さらにはSubversionもサポートしていますし、並列コンパイルもでき、実績も多数で申し分ありません。</p>
 <p>でも俺がしたいのは、雑多なタスクを放り込む、コレ。そういうのを簡単にやるライブラリってPythonではないんでしょうか。RubyではRakeが標準添付されるというのに。いえ、あります。前からあるんです。それが <a class="reference external" href="http://www.python.jp/doc/nightly/lib/module-distutils.html">distutils</a> 。</p>
 <p>distutils(およびその拡張のsetuptools)はPythonの標準的なパッケージ配布システムとして有名です。でも実は自分でコマンドを定義してRakeのように使うことができることはあまりしられていないのではないでしょうか。</p>
 <section>
-<h2>distutilsでコマンドを定義する</h2>
+<h1>distutilsでコマンドを定義する</h1>
 <p>distutilsでコマンドを定義するにはdistutils.core.Commandクラスを継承し、色々オーバーライドします。説明もつけられますし、オプションもとれて、sub_commandsで依存関係(コマンド分割)を設定することもできます。</p>
 <pre class="prettyprint ">class MyCommand(Command):
   description = "コマンドの説明"
@@ -85,7 +93,7 @@
 setup(cmdclass={"my_command":MyCommand})</pre><p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
 </section>
 <section>
-<h2>もっと簡単にdistutilsでタスク</h2>
+<h1>もっと簡単にdistutilsでタスク</h1>
 <p>30行程度のテンプレを足して、簡単にタスクを定義できるようにしましょう。namespace機能はPython2.5以上限定です。</p>
 <pre class="prettyprint ">from __future__ import with_statement
 from distutils.core import Command, setup
@@ -227,7 +235,6 @@ hello,  Test1</pre><p>サブコマンドのdb_create_test2が実行されてい�
 </section>
 
 
-
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
@@ -294,15 +301,6 @@ hello,  Test1</pre><p>サブコマンドのdb_create_test2が実行されてい�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -67,8 +76,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
+    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
 <p>同様の実装として <a class="reference external" href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
 <p><a class="reference external" href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
 <p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。
@@ -118,7 +126,6 @@
 &lt; %= render({file :"./sample2.jhtml"}, context)%&gt; &lt;!--ココに注目--!&gt;</pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
 <p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。
 prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
-
 
 
     <div class="seealso">
@@ -187,15 +194,6 @@ prototype.jsのAjax.Updaterあたりをハックすれば結構使えるもの�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

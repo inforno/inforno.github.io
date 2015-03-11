@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -69,11 +78,10 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
+    <p><a class="reference external" href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
 <p>実装には引き続き <code>re.Scanner</code> を活用しています。おかげで短い行数でキレイにかけているのではないかと。</p>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p><a class="reference external" href="/statics/files/simplesexp.zip">simplesexp.py</a></p>
 <p>ソースはこんな感じ（テストのぞく）。</p>
 <pre class="prettyprint ">import re, sys
@@ -272,7 +280,7 @@ dumper = Dumper()
 read = Reader().read
 dump = dumper.dump</pre></section>
 <section>
-<h2>概要</h2>
+<h1>概要</h1>
 <p>特徴は</p>
 <ul class="simple">
 <li>辞書を定義できる</li>
@@ -315,7 +323,6 @@ foo
 <hr class="docutils" />
 <p>と、こんな感じです。一番便利なのはやっぱり辞書ですかねえ。なので、YAML,JSONで書いてる設定ファイルをS式で置き換え･･･なんてことができるかもしれません。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -384,15 +391,6 @@ foo
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

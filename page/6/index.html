@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,8 +74,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>なんか、趣味では最近はC言語ばっかりだったりするわけですが。</p>
+    <p>なんか、趣味では最近はC言語ばっかりだったりするわけですが。</p>
 <p>さて、関数型言語系をカジった人なら誰しも取り付かれる、モノ、それがパターンマッチ。パターンマッチが使えると、とにかく直感的にコードをかけますよね。</p>
 <p>つーわけで、Pythonでパターンマッチを実装してみました。機能的には</p>
 <ul class="simple">
@@ -122,11 +130,11 @@ else:
   False
 # &gt;&gt; 7</pre><p>結構いい感じな気がします。</p>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p><a class="reference external" href="/statics/files/patternmatch.zip">patternmatch.py</a></p>
 </section>
 <section>
-<h2>実装のお話</h2>
+<h1>実装のお話</h1>
 <p>ソースコードはこんな感じ。</p>
 <pre class="prettyprint ">class Match(object):
   class _var(str): pass
@@ -211,7 +219,6 @@ else:
 <p>今年も終わりが近づいてまいりました。年をとると時間がすぎるのが速いナァ･･･と痛感しております。</p>
 </section>
 
-
   </div>
 </article>
 
@@ -234,8 +241,7 @@ else:
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>Python2.6きましたね。ということで、自分用にも主な変更点メモ。なぐり書きなのでミス多いかも。個人的な注目部分は</p>
+    <p>Python2.6きましたね。ということで、自分用にも主な変更点メモ。なぐり書きなのでミス多いかも。個人的な注目部分は</p>
 <ul class="simple">
 <li>with文</li>
 <li>multiprocessing</li>
@@ -246,7 +252,7 @@ else:
 </ul>
 <p>あたりですかね。ではどうぞ。</p>
 <section>
-<h2>Python 3.0由来の変更点</h2>
+<h1>Python 3.0由来の変更点</h1>
 <ul class="simple">
 <li>複素数へオブジェクトを変換する <code>__complex__</code> メソッド。</li>
 <li>例外補足のためのもう一つ書き方： <code>except TypeError as exc</code></li>
@@ -256,7 +262,7 @@ else:
 <p>また、 <code><span class="pre">-3</span></code> コマンドラインスイッチにより <code>3.0</code> で削除される機能を使っている場合、警告を出せる。</p>
 </section>
 <section>
-<h2>PEP 343: 'with' statement</h2>
+<h1>PEP 343: 'with' statement</h1>
 <pre class="prettyprint ">with open('/etc/passwd', 'r') as f:
     for line in f:
         print line
@@ -266,16 +272,16 @@ else:
 </ul>
 </section>
 <section>
-<h2>PEP 399: メインモジュールからの明示的相対的import</h2>
+<h1>PEP 399: メインモジュールからの明示的相対的import</h1>
 <p>Pythonでは <code><span class="pre">-m</span></code> スイッチでモジュールをスクリプトとして動かせる。が、パッケージ内部のモジュールを動かそうとした場合、相対的importが上手く働かない。本修正で、 <code>__package__</code> 属性がモジュールに追加された。この属性がある場合、 <code>__name__</code> の代わりにこの値からの相対importを行う。</p>
 <p>PEP302スタイルのインポータは <code>__package__</code> を必要に応じてセットできる。 <code>runpy</code> モジュールの <code><span class="pre">-m</span></code> スイッチはこれを行っているので、パッケージ内からスクリプトを実行しても相対的importは正しく動く。</p>
 </section>
 <section>
-<h2>PEP 371: multiprocessing module</h2>
+<h1>PEP 371: multiprocessing module</h1>
 <p>プロセス間通信を実装したモジュール。並列計算などを実装できる。詳しくは <a class="reference external" href="http://coreblog.org/ats/multiprocessing-package">Atsushiさんの記事</a> 参照</p>
 </section>
 <section>
-<h2>PEP3101: さらに高度な文字列フォーマット</h2>
+<h1>PEP3101: さらに高度な文字列フォーマット</h1>
 <p>3.0では <code>%</code> オペレータはさらに高機能になる。2.6ではこの <code>%</code> を <code>str.format</code> メソッドで実装している。</p>
 <pre class="prettyprint ">"User ID: {0}".format("root") -&gt; "User ID: root"
 
@@ -294,14 +300,14 @@ fmt.format('Registration', 35) -&gt;
   'Registration    $    35'</pre><p>くわしくは <a class="reference external" href="http://www.python.org/dev/peps/pep-3101">PEP3101</a> 参照。</p>
 </section>
 <section>
-<h2>PEP3105: 関数としての <code>print</code></h2>
+<h1>PEP3105: 関数としての <code>print</code></h1>
 <p>3.0で <code>print</code> 文は <code>print</code> 関数になる。2.6では <code>__future__</code> に定義されている。</p>
 <pre class="prettyprint ">from __future__ import print_function
 print('# of entries', len(dictionary), file=sys.stderr)
 
 def print(*args, sep=' ', end='\n', file=None)</pre></section>
 <section>
-<h2>PEP 3112: Byte リテラル</h2>
+<h1>PEP 3112: Byte リテラル</h1>
 <p>3.0` では文字列はデフォルトでUnicodeになり、8bitリテラルは別に用意される。 <code>b'string'</code> か <code>byte</code> コンストラクタだ。2.6 ではstrとおなじ <code>bytes</code> 型を定義し、 <code>b''</code> 記法をサポートする。</p>
 <p>また、 <code>__future__</code> で文字列リテラルを全てUnicodeにすることができる。</p>
 <pre class="prettyprint ">from __future__ import unicode_literals
@@ -311,7 +317,7 @@ s = ('\u751f\u3080\u304e\u3000\u751f\u3054'
 
 print len(s)               # 12 Unicode characters</pre></section>
 <section>
-<h2>PEP 3116: 新しいI/Oライブラリ</h2>
+<h1>PEP 3116: 新しいI/Oライブラリ</h1>
 <p>Pythonではダックタイピングにより、ファイル-likeオブジェクトは <code>read()</code> , <code>write()</code> が定義されていればよかった。ただ、文字列を扱う場合 <code>readline()</code> が定義されていたほうがよい。このようなケースに応じた基底クラスがPython3.0では <code>io</code> モジュールに用意される。</p>
 <ul class="simple">
 <li>RawIOBase</li>
@@ -322,7 +328,7 @@ print len(s)               # 12 Unicode characters</pre></section>
 <p>くわしくは <a class="reference external" href="http://www.python.org/dev/peps/pep-3116">PEP 3116</a> 参照。</p>
 </section>
 <section>
-<h2>PEP 3119: Abstract Base Classes</h2>
+<h1>PEP 3119: Abstract Base Classes</h1>
 <p>Abstract Base Class(ABC)はJAVAのインターフェースのようなもの。ABCのサポートは <code>ABCMeta</code> というメタクラスを含む <code>abc</code> モジュールで構成される。 <code>ABCMeta</code> は <code>isinstance</code> と <code>issubclass</code> のbuilt-in関数で特別に扱われる。</p>
 <p>ABCは通常の継承のように</p>
 <pre class="prettyprint ">import collections
@@ -353,11 +359,11 @@ class Drawable():
         self.draw(x, y, scale=2.0)</pre><p>これでDrawableから派生したクラスでdrawメソッド、readonlyプロパティが定義されていなければ <code>TypeError</code> が出るようになる。</p>
 </section>
 <section>
-<h2>PEP 3127: 数値リテラル及び文法</h2>
+<h1>PEP 3127: 数値リテラル及び文法</h1>
 <p>3.0では8進数は0開始でなく <code>0o or 0O</code> 開始になり、2進数リテラル <code>0b or 0B</code> がサポートされる。2.6では0開始8進数表記も使えるが <code>0o or 0O</code> 開始も使えるし、 <code>oct()</code> 関数は0開始も文字列を返す。ただし、 <code>future_builtins.oct</code> は0o開始の文字列を返す。また、 <code>int</code> , <code>long</code> 関数は <code>0o</code> と <code>0b</code> 開始文字列も扱えるようになった。</p>
 </section>
 <section>
-<h2>PEP 3129: クラスデコレータ</h2>
+<h1>PEP 3129: クラスデコレータ</h1>
 <pre class="prettyprint ">@foo
 @bar
 class A:
@@ -368,7 +374,7 @@ class A:
 A = foo(bar(A))</pre><p>と同義になる。</p>
 </section>
 <section>
-<h2>PEP 3141: 数値の型階層</h2>
+<h1>PEP 3141: 数値の型階層</h1>
 <p>3.0ではSchemeに習った数値の型階層が導入される。これらの型は <code>numbers</code> モジュールを通して <code>2.6</code> にバックポートされた。</p>
 <ul>
 <li><dl class="first docutils">
@@ -418,7 +424,7 @@ Fraction(5, 3)
 &gt;&gt;&gt; (1./3) .as_integer_ratio()
 (6004799503160661L, 18014398509481984L)</pre></section>
 <section>
-<h2>その他の言語の変更</h2>
+<h1>その他の言語の変更</h1>
 <ul class="simple">
 <li><code>**kw</code> 引数にPythonの辞書以外の <code>UserDict</code> のようなどんなマッピングでも使えるようになった。</li>
 <li><code>next(iterator, [default])</code> メソッド追加。見ての通りiteratorの次の要素を、なければdefaultを返す。</li>
@@ -462,7 +468,7 @@ class D(C):
 </ul>
 </section>
 <section>
-<h2>新規、改善、非推奨モジュール</h2>
+<h1>新規、改善、非推奨モジュール</h1>
 <ul>
 <li><dl class="first docutils">
 <dt>3.0警告モードで以下のモジュールは非推奨。</dt>
@@ -639,7 +645,7 @@ variable(id=1, name='amplitude', type='int', size=4)</pre><ul>
 </ul>
 </section>
 <section>
-<h2>Python2.6への移行</h2>
+<h1>Python2.6への移行</h1>
 <ul class="simple">
 <li>ハッシュできないクラスは <code>__hash__=None</code> を行うべき。</li>
 <li><code>collection.deque.__init__()</code> は、iterableの要素を追加する前に自身の内容をクリアする。これは <code>list.__init__()</code> と同じ。</li>
@@ -660,7 +666,6 @@ variable(id=1, name='amplitude', type='int', size=4)</pre><ul>
 <li>3.0警告モード: 2つの辞書や、比較メソッドを実装していないオブジェクト間で比較演算子を適応すると警告。ただし、 <code>dict1 == dict2</code> は動く。</li>
 </ul>
 </section>
-
 
   </div>
 </article>
@@ -692,11 +697,10 @@ variable(id=1, name='amplitude', type='int', size=4)</pre><ul>
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
+    <p><a class="reference external" href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
 <p>実装には引き続き <code>re.Scanner</code> を活用しています。おかげで短い行数でキレイにかけているのではないかと。</p>
 <section>
-<h2>ダウンロード</h2>
+<h1>ダウンロード</h1>
 <p><a class="reference external" href="/statics/files/simplesexp.zip">simplesexp.py</a></p>
 <p>ソースはこんな感じ（テストのぞく）。</p>
 <pre class="prettyprint ">import re, sys
@@ -895,7 +899,7 @@ dumper = Dumper()
 read = Reader().read
 dump = dumper.dump</pre></section>
 <section>
-<h2>概要</h2>
+<h1>概要</h1>
 <p>特徴は</p>
 <ul class="simple">
 <li>辞書を定義できる</li>
@@ -939,7 +943,6 @@ foo
 <p>と、こんな感じです。一番便利なのはやっぱり辞書ですかねえ。なので、YAML,JSONで書いてる設定ファイルをS式で置き換え･･･なんてことができるかもしれません。</p>
 </section>
 
-
   </div>
 </article>
 
@@ -976,15 +979,6 @@ foo
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

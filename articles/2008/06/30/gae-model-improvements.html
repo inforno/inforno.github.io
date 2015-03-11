@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -63,8 +72,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p>なんの幸運か、Softbank（しかもJ-phone時代からの）ユーザだったので、SMS認証もアッサリ通ってGAEのアカウントをゲットしたわけですが･･･（ただしiPhoneには興味ほぼなし)。</p>
+    <p>なんの幸運か、Softbank（しかもJ-phone時代からの）ユーザだったので、SMS認証もアッサリ通ってGAEのアカウントをゲットしたわけですが･･･（ただしiPhoneには興味ほぼなし)。</p>
 <p>というわけで <a class="reference external" href="http://www.metareal.org/2008/05/20/porting-weblog-to-google-app-engine/">ishikawaさんがブログをGAEに移行された</a> 、というのを知って俺も移行しようかなあとか思いつつブログアプリ作りました。すでに今ブログで使っている機能は全て実装済みだったりします。デザインも全頁XHTMLTr validでCSSもvalidなことを確認済みだったりします。しかも <code>Django</code> じゃなくて <code>web.py</code> だったりします。慣れてるしね。</p>
 <p>それはおいといて、データストアまわりがそのままだと</p>
 <ul class="simple">
@@ -135,7 +143,6 @@ stab = Test.stab() #nameがなくても作成できる</pre><p>こんな感じ�
 <p>その他にもなんとなくGoogleの罠じゃないかとかいろいろ気になって移行に踏み切れないでいる今日この頃。実際に本格的にGAEに移行した人の感想がききたいなあ。</p>
 
 
-
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2008/07/28/use-my-own-blog-software-on-a-trial-basis">試験的に自作ブログに移行しました</a></li>
@@ -202,15 +209,6 @@ stab = Test.stab() #nameがなくても作成できる</pre><p>こんな感じ�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

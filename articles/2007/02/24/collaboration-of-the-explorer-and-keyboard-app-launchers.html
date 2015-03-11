@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,8 +74,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">こちら</a> にも書いたとおり、Windowsではコマンドライン型ランチャーのcraftlaunchとexplorer.exeを連携させて使ってます。</p>
+    <p><a class="reference external" href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">こちら</a> にも書いたとおり、Windowsではコマンドライン型ランチャーのcraftlaunchとexplorer.exeを連携させて使ってます。</p>
 <p>最前面のディレクトリ（アクティブなディレクトリ）に対して、キーボードで、Linuxと同じ感覚でmkdirとかrmとかしたいなー、ってのを実現してみました。</p>
 <p>今まではC言語で作った自前のライブラリで処理していたんですが、COMを使ったものに書き直しました。同様の目的にはAHKが使えるんですが、やっぱり使い慣れた言語でいろいろコマンドを作りたかったのでCOM＋Javascriptにしてみました。もちろん、COMなのでRubyでもPerlでもPythonでも同様の実装が作れます。</p>
 <p>craftlaunchを前提にしてますが、コマンドライン型のランチャーならなんでも適応できる方法だと思います。explorerを使っていてもキーボードだけでmkdir,rm,mvなんかが実行できちゃって、非常に便利です。</p>
@@ -76,7 +84,7 @@
 <p>簡単なコマンドラインランチャーもどきも同梱してますので、現在コマンドライン型ランチャーをいれていない人でも試せます。</p>
 <p>以下readmeからの転載です。</p>
 <section>
-<h2>利用方法</h2>
+<h1>利用方法</h1>
 <p>explorehelper.wsf,explorehelper.js,getadir.exeは同じフォルダになければ
 なりません。</p>
 <pre class="prettyprint ">explorehelper.wsf [command] [args]</pre><p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、
@@ -84,9 +92,9 @@ ctrl-eなどにショートカット登録しておくと良いでしょう。�
 mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
 </section>
 <section>
-<h2>それぞれのファイルについて</h2>
+<h1>それぞれのファイルについて</h1>
 <section>
-<h3>simple_launcher.exe</h3>
+<h2>simple_launcher.exe</h2>
 <p>コマンドライン型ランチャーを導入していない方でも試せるように、AHKで作った
 簡単なランチャーを同梱してあります。ただしこのランチャーは</p>
 <ul class="simple">
@@ -99,21 +107,21 @@ mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成で
 の導入をオススメします。</p>
 </section>
 <section>
-<h3>getahwnd.exe</h3>
+<h2>getahwnd.exe</h2>
 <p>最前面のExplorer.exeのウインドウハンドルを出力するだけのプログラムです。</p>
 </section>
 <section>
-<h3>explorehelper.js</h3>
+<h2>explorehelper.js</h2>
 <p>JscriptによるCOMに対するヘルパーです。</p>
 </section>
 <section>
-<h3>explorehelper.wsf</h3>
+<h2>explorehelper.wsf</h2>
 <p>Jscriptによるカスタムコマンドが定義されたファイルです。このファイルを編集
 することによってcommandが自由に追加できます。</p>
 </section>
 </section>
 <section>
-<h2>ビルトインコマンド</h2>
+<h1>ビルトインコマンド</h1>
 <ul class="simple">
 <li>mv</li>
 <li>mkdir</li>
@@ -127,7 +135,7 @@ mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成で
 <p>説明の無いものはUnixのそれから類推してください。</p>
 </section>
 <section>
-<h2>カスタムコマンドの追加について</h2>
+<h1>カスタムコマンドの追加について</h1>
 <p>explorehelper.wsfを編集することによってcommandが自由に追加できます。</p>
 <pre class="prettyprint ">var procs = {
   mv : function() {
@@ -170,7 +178,6 @@ command名がキー、値は引数なしの関数になります。キーに大�
 <p>こんな感じです。COMなら大概なんでもできるので、便利です。しかもJScriptとexeなのでUSBメモリなどにいれて持ち運べますので、俺ポータビリティもそこそこあります。</p>
 <p>また、いかにAHKスクリプトが簡単でも、普段使い慣れた言語でかけるほうが落ち着きます。AHKなんかをみてると、完全なDSLというのは俺的に扱うのがめんどくさくて（覚える熱意があればいいんだろうけど、趣味で使うものにそれほどの情熱がでるかというと・・・）なじみにくいようだ。Rakeみたいな言語内DSLがいいよね、やっぱ。ああ、2007年はRubyの年になるんでしょうかねえ。</p>
 </section>
-
 
 
     <div class="seealso">
@@ -239,15 +246,6 @@ command名がキー、値は引数なしの関数になります。キーに大�
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>

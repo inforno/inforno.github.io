@@ -20,6 +20,15 @@
         load("\/include\/menu", "menu-body");
       });
 
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
     </script>
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,11 +42,11 @@
   </header>
   <div class="wrapper clearfix">
     <div role="search">
-      <form action="http://google.com/search" method="get">
+      <form action="https://google.com/search" method="get">
         <fieldset>
           <span class="add-on"><i class="icon-search"></i></span>
-          <input class="search" type="text" name="q" placeholder="Search..."/>
-          <input type="hidden" name="q" value="site:http://inforno.net/" />
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
         </fieldset>
       </form>
     </div>
@@ -65,8 +74,7 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    
-<p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a class="reference external" href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。
+    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a class="reference external" href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。
 WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
 <p>こちらもTinyMCEと同じく</p>
 <ul class="simple">
@@ -93,7 +101,6 @@ Event.observe(window, "load", function(){
 &lt;/script&gt;[/js]</pre><p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
 <a class="reference external image-reference" href="/statics/files/fck.jpg"><img alt="/statics/files/fck.thumbnail.jpg" src="/statics/files/fck.thumbnail.jpg" /></a>
 <p>海外ではAPIを使ったデスクトップクライアントが結構人気みたいですけど、日本じゃあんまり使ってる人聞かない・・・Typoもデフォルトはデスクトップクライアント使え！みたいな感じなんですけどFCKeditorで一件落着。便利便利。</p>
-
 
 
     <div class="seealso">
@@ -162,15 +169,6 @@ Event.observe(window, "load", function(){
     s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
     (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
-  </script>
-  <script type="text/javascript"> 
-      if(!islocal) {
-        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        var pageTracker = _gat._getTracker("UA-251608-1");
-        pageTracker._initData();
-        pageTracker._trackPageview();
-      }
   </script>
   </body>
 </html>
