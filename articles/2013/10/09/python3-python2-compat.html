@@ -73,12 +73,12 @@
     <p>Python3も3.3になり性能も向上して、移行が順調に進んできているように見える。それを考慮して最近Python3系と2系の互換性確保を見直した。</p>
 <p>ひとことでいうと「Python3中心」にした。</p>
 <section>
-<h1>今までの手法</h1>
+<h2>今までの手法</h2>
 <p>基本的に3系と2系の互換性確保は「単一ソースコード」でやっていてそれは今も変わらず。</p>
 <p>で、今までは <strong>Python3とPython2の中間</strong> のコードを書いていた。組み込みの関数のリネームなどはしない、というような(例えば <code>zip</code> を <code>izip</code> で上書いてしまうとか)。ただこの手法だといざPython2系のサポートをdropする場合に処理的にもコード的にも無駄が多くなる。</p>
 </section>
 <section>
-<h1>今の手法</h1>
+<h2>今の手法</h2>
 <p><a class="reference external" href="https://github.com/yuin/rays">rays</a> の <a class="reference external" href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> では以下のような方針とした。</p>
 <ul>
 <li><dl class="first docutils">

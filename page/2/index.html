@@ -97,7 +97,7 @@ func main() {
 
     app.Run()
 }</pre><section>
-<h1>特徴</h1>
+<h2>特徴</h2>
 <ul>
 <li><p class="first">よくあるSinatraチックなAPI</p>
 </li>
@@ -117,7 +117,7 @@ func main() {
 </ul>
 </section>
 <section>
-<h1>開発経緯</h1>
+<h2>開発経緯</h2>
 <p>そもそもPythonistaの御多聞にもれず、2と3のはざまでもだえる中でGo言語書くことが多くなってたんですね。んでWEBもGo言語でさらっと書きたい、と。</p>
 <p>Go言語のWEBフレームワークはいっぱいあって、軽量だとMartiniだとかGinだとかnegroniだとか、重量級だとbeegoだとかrevelだとか。俺の好みとしてやっぱりシンプルなものが好きなので軽量フレームワークを使いたいところだけど、Martiniはtoo magicだし、Ginは40 times fasterってのが詐欺っぽいし、negroniはツールであってフレームワークじゃないと言っているしで、あんまりしっくりくるのがありませんでした。</p>
 <p>なので自分が最低限必要と思う機能を組み込んだフレームワークを作ったわけです。ミドルウェアで対応できるけど組み込まれてたほうが楽だし。SPAが流行ってるって言ってもさらっと作るときはフラッシュメッセージが楽だし、設定は外出ししときたいし、とか。</p>
@@ -126,10 +126,10 @@ func main() {
 <p>あと、適当に今風のプロジェクトページ作りました。</p>
 </section>
 <section>
-<h1>開発中に思ったこと</h1>
+<h2>開発中に思ったこと</h2>
 <p>俺俺フレームワークを書きたい方のために、cidreを書いてる時に思ったこと、検討したことを書いておきます。</p>
 <section>
-<h2>Contextの持ち方</h2>
+<h3>Contextの持ち方</h3>
 <p>どのフレームワークも <code>Context</code> という構造体がだいたいある。これは入れ子になってる <code>http.Handler</code> 間でデータを受け渡すのが主目的だ。</p>
 <p>でContextの考え方は3種類ある。</p>
 <ul class="simple">
@@ -156,13 +156,13 @@ func main() {
 <p>じゃないといけない。というわけで <code>http.Request#Body</code> に埋め込んでいる。</p>
 </section>
 <section>
-<h2>拡張性</h2>
+<h3>拡張性</h3>
 <p><a class="reference external" href="http://justinas.org/writing-http-middleware-in-go/">Writing HTTP Middleware in Go</a> という記事があるように、 <code>http.Handler</code> をPythonのWSGIミドルウェアのように扱う、というのは標準的な考え方だろう。</p>
 <p>ただ、結局この方式はただのフィルタであって柔軟性がない。HTTPボディを書く前に処理を差し込みたい、とかできない。正確にはできないことないけどめんどくさい(独自ResponseWriterを作って次のミドルウェアに渡すことになる)。Martiniでは独自ResponseWriterにコールバックが設定できるようになっていてHTTPボディ書く前にヘッダ書くというのができる。</p>
 <p>でも結局そういうポイントって随所にあって、統一的に扱える仕組みがあったほうがよいと思う。のでHookの仕組みをつくってサーバ起動時、とかいろんなところをフックできるようにしてある。</p>
 </section>
 <section>
-<h2>設定オブジェクト</h2>
+<h3>設定オブジェクト</h3>
 <p>これは何を今さら、な話で設定を表すオブジェクトをどう扱うか、ということ。例えば以下のようなstructがあるとして</p>
 <pre class="prettyprint ">type Config struct {
     Host string
@@ -191,7 +191,7 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
 </section>
 </section>
 <section>
-<h1>今後について</h1>
+<h2>今後について</h2>
 <p>今後も細々メンテしていくつもりですし、ミドルウェアなんかも追加していきたいなあと思っています。やっぱGo言語はさらっと書けるそれなりに速いし、いいっす。</p>
 </section>
 
@@ -220,22 +220,22 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
     <p><a class="reference external" href="http://blog.ruedap.com/2013/10/30/alfred-workflow-for-front-end-developers">フロントエンド開発者向けのAlfred Workflow</a> という記事を見かけたので、それ <a class="reference external" href="http://yuin.github.io/iceberg/index.html">iceberg</a> でもできる <strong>かも</strong> よ！ということでいくつか作ってみました(仕様上実装できないものもあったのでiceberg自体も改修して <a class="reference external" href="https://github.com/yuin/iceberg/releases/tag/v0.9.4">v0.9.4としてリリース</a> しています)。</p>
 <p>簡単にできそうなものをピックアップしたつもりが以外と苦労したかもしれない…</p>
 <section>
-<h1><a class="reference external" href="https://github.com/yuin/iceberg-ip">iceberg-ip</a></h1>
+<h2><a class="reference external" href="https://github.com/yuin/iceberg-ip">iceberg-ip</a></h2>
 <img alt="http://inforno.net/statics/files/iceberg-ip.jpg" src="http://inforno.net/statics/files/iceberg-ip.jpg" />
 <p>IPアドレス一覧を表示するコマンド。</p>
 </section>
 <section>
-<h1><a class="reference external" href="https://github.com/yuin/iceberg-worldtime">iceberg-worldtime</a></h1>
+<h2><a class="reference external" href="https://github.com/yuin/iceberg-worldtime">iceberg-worldtime</a></h2>
 <img alt="http://inforno.net/statics/files/iceberg-worldtime.jpg" src="http://inforno.net/statics/files/iceberg-worldtime.jpg" />
 <p>世界主要都市の現在時刻を表示する。頑張ってサマータイム対応したのだけど、これがめんどくさかった…</p>
 </section>
 <section>
-<h1><a class="reference external" href="https://github.com/yuin/iceberg-encodedecode">iceberg-encodedecode</a></h1>
+<h2><a class="reference external" href="https://github.com/yuin/iceberg-encodedecode">iceberg-encodedecode</a></h2>
 <img alt="http://inforno.net/statics/files/iceberg-encodedecode.jpg" src="http://inforno.net/statics/files/iceberg-encodedecode.jpg" />
 <p>Base64, URL, HTML entityでのエンコード結果を表示。</p>
 </section>
 <section>
-<h1>というわけで</h1>
+<h2>というわけで</h2>
 <p>これらのコマンドはLuaのみで書かれています。</p>
 <p>以下の <code>weather</code> コマンドのようにHTTPで結果を取得してそれをリストに表示することもできます。加えてmigemoに対応しているので絞り込みも簡単です。</p>
 <img alt="http://inforno.net/statics/files/iceberg-weather.gif" src="http://inforno.net/statics/files/iceberg-weather.gif" />
@@ -268,20 +268,20 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
 <p>この手のツールはハマりポイント＋よく使うイディオムを抑えるのが大事。Pythonプロダクトらしく非常にドキュメントが充実しているのだけど、充実しすぎているのでポイントを自分のためにもまとめておくことにする。</p>
 <p>例はおもに <a class="reference external" href="http://www.ansibleworks.com/">Ansible</a> のドキュメントから引用させていただきました。</p>
 <section>
-<h1>設定ファイルを書きかえる（一行)</h1>
+<h2>設定ファイルを書きかえる（一行)</h2>
 <p><code>lineinfile</code> モジュールを使う。使い方は以下のような形になる。</p>
 <pre class="prettyprint lang-yaml"> name: enalbe sudo without password if user belongs to the wheel group
  lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"</pre><p><code>state</code> を <code>absent</code> にすれば削除することができる。動きとしては <code>regexp</code> にマッチする行をみつけたら <code>line</code> に書きかえる、という動作になる。またデフォルトでは <code>regexp</code> にマッチする行がない場合最終行に追加される。</p>
 <p>上記のほかにも <code>regexp</code> にマッチする業の前後に追記するなど柔軟な動作が可能。</p>
 </section>
 <section>
-<h1>ファイルコピーを行う（再帰的)</h1>
+<h2>ファイルコピーを行う（再帰的)</h2>
 <p><code>copy</code> モジュールを使えばファイルコピーできるのは当たり前なのだが、じゃあディレクトリの場合どうするかというとてっとりばやくは以下のようにするとよい。</p>
 <pre class="prettyprint lang-yaml"> shell: rsync -a /path_to/source/  /path_to/dest/ creates=/path_to/dest/hoge</pre><p>このとおり、 <code>rsync</code> してしまうのがよい。上記はターゲットマシン上どうしでの <code>rsync</code> で、playbookを実行しているホスト→ターゲットマシンで実行する場合は以下。</p>
 <pre class="prettyprint lang-yaml"> local_action: command rsync -a /path_to/source/ {{ inventory_hostname }}:/path_to/dest/</pre><p><code>local_action</code> を使うとターゲット上でなくplaybookを実行しているホスト上でコマンドを実行できる。</p>
 </section>
 <section>
-<h1>make installする</h1>
+<h2>make installする</h2>
 <p><code>make install</code> するソフトウェアをどうするか。一つ目のパターンはよく見る形で以下のように1個ずつタスクにする。</p>
 <pre class="prettyprint lang-yaml"> - name: "wget hoge src"
    command: wget -O http://example.com/hoge.tar.gz  creates=hoge.tar.gz
@@ -302,13 +302,13 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
    chdir=/usr/local/src creates=/usr/local/python3.3.2/bin/python3.3</pre><p>もちろん、途中でこけると中途半端なことになるのだがそうそうコケないのでこれでよいと思っている。</p>
 </section>
 <section>
-<h1>変数を使いこなす</h1>
+<h2>変数を使いこなす</h2>
 <p>ターゲット固有の情報はデフォルトで収集される。内容を見たければ <code>ansible hostname <span class="pre">-m</span> setup</code> と実行すればよい。</p>
 <p>他のホストの情報は以下のようにすればアクセスできる。</p>
 <pre class="prettyprint lang-yaml"> {{ hostvars['test.example.com']['ansible_distribution'] }}</pre><p>変数は実行時にコマンドラインオプションで上書きできる。</p>
 <pre class="prettyprint lang-yaml"> ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"</pre></section>
 <section>
-<h1>ループを使いこなす</h1>
+<h2>ループを使いこなす</h2>
 <p>Ansibleは結構複雑なループが使える。ただ実用的な範囲で言うと以下ぐらいを抑えておくとよいのでは。</p>
 <p><code>with_items</code> による単純ループ</p>
 <pre class="prettyprint lang-yaml"> name: add several users
@@ -340,7 +340,7 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
  with_fileglob:
    - /playbooks/files/fooapp/*</pre></section>
 <section>
-<h1>条件分岐を使いこなす</h1>
+<h2>条件分岐を使いこなす</h2>
 <p>これまた条件分岐もいろいろできることはあるのだが、以下のパターンを抑えておくとよいと思う。</p>
 <p>単純な変数による分岐</p>
 <pre class="prettyprint lang-yaml"> - name: "shutdown Debian flavored systems"
@@ -372,7 +372,7 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
    - shell: echo "hi does not found"
      when: result.stdout.find('hi') != -1</pre></section>
 <section>
-<h1>複数ターゲットが関連するタスクを実行する</h1>
+<h2>複数ターゲットが関連するタスクを実行する</h2>
 <p>ローリングアップデートのように複数ターゲットが連動して動くタスクがある。その場合、playbookを実行するマシンを核としてタスクを作ればよい。</p>
 <pre class="prettyprint lang-yaml"> - hosts: webservers
    serial: 5

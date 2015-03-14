@@ -73,7 +73,7 @@
     <p>週末に引越し、ということで本なんかを送ってしまいました。</p>
 <p>読む本が無いので、前から手を出そうと思っていたOCamlに手を出してみました。</p>
 <section>
-<h1>導入</h1>
+<h2>導入</h2>
 <p>とりあえずDebianにaptで放り込む。</p>
 <pre class="prettyprint ">libcamomile-ocaml-data                          install
 libcamomile-ocaml-dev                           install
@@ -100,12 +100,12 @@ ocaml-nox                                       install</pre><p>こんな感じ�
 
 open ExtLib</pre></section>
 <section>
-<h1>練習</h1>
+<h2>練習</h2>
 <p><a class="reference external" href="http://min-caml.sourceforge.net/index2.html">超特急: 一時間でわかるML超入門</a> を見てから、 <a class="reference external" href="http://www.sato.kuis.kyoto-u.ac.jp/~igarashi/class/isle4/mltext/ocaml.html">Objective Caml 入門</a> を読みながら、書いてみた。</p>
 <p>普通に書きやすい。練習問題は・・・。なんていうか、SICP。普通に関数型言語として使うところまでやってみた。</p>
 </section>
 <section>
-<h1>日本語</h1>
+<h2>日本語</h2>
 <p>EUCとUTFは大丈夫っぽい。ここらへんはCamomileというモジュールを使うらしい。とりあえず</p>
 <pre class="prettyprint ">module Encoding = CamomileLibrary.Default.Camomile.CharEncoding
 module Enc = Encoding.Make (CamomileLibrary.UTF8)
@@ -113,7 +113,7 @@ let unicode s = Enc.decode (Encoding.of_name "jauto") s;;
 let decode t n = Enc.encode (Encoding.of_name n) t;;</pre><p>などとPythonみたいな関数を定義してみた。 <code>jauto</code> でエンコーディングは自動的に判別してくれるらしい。コードをEUCで書いてUTF-8のコンソールに出力してみる。うんうん、ちゃんと日本語いけてる。ただ、UTF-8で書いたファイルで <code>unicode &quot;ああああ&quot;</code> ってしたら当然 <code>&quot;ああああ&quot;</code> のままだと思うんだけど、ダメだった。なんでなんだろう。詳しい人いたら教えて欲しいです。</p>
 </section>
 <section>
-<h1>今までの感想</h1>
+<h2>今までの感想</h2>
 <p>結構いい。モジュールシステムなんかはきっちりしてんなー、と思いました。オブジェクトシステムなんかが特徴だと思うんだけど、まだ触ってないんですよねえ。てゆーか詳しく解説しているところがすくないんで、どーしようかなあ。</p>
 <p>あと、インタプリタの <code>#require &quot;camomile&quot;</code> みたいなのって、ネイティブコンパイラだとエラーになるんだけどこういうもんなんだろうか。つまりどっちか選びなさい、ってことでいいのかなあ・・・。ネイティブコンパイラでは無視してくれると一番ありがたいような気がするけど・・・</p>
 </section>

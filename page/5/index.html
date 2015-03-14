@@ -77,11 +77,11 @@
 <p>んで、昔からCのプログラムとWSHをくみあわせてキーボードから開けるようにしていたのですが、やっぱWSHが絡むので遅い。</p>
 <p>というわけでCだけで作ってみました。せっかくなのでおいておきます。</p>
 <section>
-<h1>ダウンロード</h1>
+<h2>ダウンロード</h2>
 <p><a class="reference external" href="/statics/files/explorexe.zip">explorexe.zip</a></p>
 </section>
 <section>
-<h1>使い方</h1>
+<h2>使い方</h2>
 <p>解凍してできたexplorexe.exeのショートカットをデスクトップにつくります。</p>
 <p>んで、ショートカットを右クリックして、</p>
 <ul>
@@ -106,7 +106,7 @@
 <p>あとは、コマンドライン型ランチャーなんかに同様に登録するとめっさ快適です。</p>
 </section>
 <section>
-<h1>応用？</h1>
+<h2>応用？</h2>
 <p>えー、見てのとおり引数の文字列に <code>printf</code> しているだけなので、cmd.exe以外にも使えます。 <code>%s</code> にあたるカレントフォルダのパスは空白が含まれている場合は自動的に「&quot;」で囲まれます。</p>
 </section>
 
@@ -170,20 +170,20 @@
 </li>
 </ul>
 <section>
-<h1>ダウンロード</h1>
+<h2>ダウンロード</h2>
 <p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
 <ul class="simple">
 <li><a class="reference external" href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
 </ul>
 </section>
 <section>
-<h1>実装について</h1>
+<h2>実装について</h2>
 <p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
 <p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
 <p>通信にはjsonを使いました。</p>
 </section>
 <section>
-<h1>基本的な動かし方</h1>
+<h2>基本的な動かし方</h2>
 <pre class="prettyprint ">import kademlia_tcp
 kademlia_tcp.DEBUG = True
 n = kademlia_tcp.KademliaNode("ip address", port)
@@ -198,12 +198,12 @@ n.store(other_node, key, value)
 n.find_node(other_node)</pre><p>というようなメソッドが使えます。</p>
 </section>
 <section>
-<h1>動かしてみて</h1>
+<h2>動かしてみて</h2>
 <p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
 <p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
 </section>
 <section>
-<h1>というわけで</h1>
+<h2>というわけで</h2>
 <p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
 </section>
 
@@ -234,7 +234,7 @@ n.find_node(other_node)</pre><p>というようなメソッドが使えます。
 </header>
   <div itemprop="articleBody">
     <section>
-<h1>更新履歴</h1>
+<h2>更新履歴</h2>
 <ul>
 <li><dl class="first docutils">
 <dt>2009/02/20 version 1.0.0</dt>
@@ -297,7 +297,7 @@ Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
 </ul>
 </section>
 <section>
-<h1>はじめに</h1>
+<h2>はじめに</h2>
 <p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
 <p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a class="reference external" href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
 <p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= <span class="pre">&quot;hoge%&gt;&quot;</span></code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
@@ -311,7 +311,7 @@ Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
 <p>といったところが特徴ですかね。</p>
 </section>
 <section>
-<h1>例</h1>
+<h2>例</h2>
 <p>テンプレートはこんな感じにかけます。</p>
 <pre class="prettyprint ">&lt;%-
 class Hoge(object):
@@ -347,11 +347,11 @@ print e.render({"xx": "10"})</pre><p>出力はこう。</p>
 8   8  16  24  32  40  48  56  64  72
 9   9  18  27  36  45  54  63  72  81</pre></section>
 <section>
-<h1>ダウンロード</h1>
+<h2>ダウンロード</h2>
 <p><a class="reference external" href="/statics/files/embpy.zip">embpy</a></p>
 </section>
 <section>
-<h1>コード</h1>
+<h2>コード</h2>
 <p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
 <p>あと <code><span class="pre">&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</span></code> という正規表現は自分的には常套句。&quot;で囲まれていて\&quot;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
 </section>

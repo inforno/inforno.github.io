@@ -76,7 +76,7 @@
 <p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
 <p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
 <section>
-<h1>Pythonをインストール</h1>
+<h2>Pythonをインストール</h2>
 <p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
 <pre class="prettyprint ">mkdir -p ~/root/usr/local/src
 cd ~/root/usr/local/src
@@ -88,7 +88,7 @@ make
 make install</pre><p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
 </section>
 <section>
-<h1>hashlibをインストール</h1>
+<h2>hashlibをインストール</h2>
 <p>なんで、自前でhashlibを単体でいれます。</p>
 <pre class="prettyprint ">cd ~/root/usr/local/src
 wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
@@ -117,7 +117,7 @@ vi setup.py</pre><p>はい、 <code>setup.py</code> を編集しましょう。�
 ~/root/usr/local/bin/python setup.py install</pre><p>で <code>hashlib</code> が入ります。</p>
 </section>
 <section>
-<h1>easy_installをインストール</h1>
+<h2>easy_installをインストール</h2>
 <p>これで <code>md5</code> が使えるようになったので</p>
 <pre class="prettyprint ">cd ~/root/usr/local/src
 wget http://peak.telecommunity.com/dist/ez_setup.py
@@ -125,7 +125,7 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
 <pre class="prettyprint ">~/root/usr/local/bin/easy_install -U -Z MySQL_Python</pre><p>てな感じで必要なモジュールを入れていきましょう。</p>
 </section>
 <section>
-<h1>というわけで</h1>
+<h2>というわけで</h2>
 <p>わりと普通にxreaでPythonが使えています。</p>
 </section>
 

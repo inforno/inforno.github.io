@@ -77,7 +77,7 @@
     <p><a class="reference external" href="http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules">以前紹介したPython版Rakeもどき</a> を改良してCodeReposに突っ込みました。まだ100行くらいです。自分では一番使っている自作モジュールなのでそろそろまとめようと思っていたのです。</p>
 <p><a class="reference external" href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.p">http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py</a></p>
 <section>
-<h1>改良点</h1>
+<h2>改良点</h2>
 <ul class="simple">
 <li><code>setuptools</code> があるときはそっちを使うようにした。</li>
 <li><code>use_without_standard</code> メソッドによって <code>distutils</code> 標準タスクを消すことができる。これによって <code><span class="pre">--help-commands</span></code> の画面がすっきりする。また、この場合名前空間のセパレータに <code>:</code> を用いるようになった。</li>
@@ -88,15 +88,15 @@
 </ul>
 </section>
 <section>
-<h1>使用方法</h1>
+<h2>使用方法</h2>
 <p>以前書いたのとほとんど同じなんですが、まとめなおしておきます。</p>
 <section>
-<h2>tasktoolsとは？</h2>
+<h3>tasktoolsとは？</h3>
 <p><code>distutils</code> および <code>setuptools</code> を拡張してextra commandを簡単に作成するためのユーティリティです。RubyにおけるRakeのようなものです。ビルド機能がほしい場合は <code>distutils</code> , <code>setuptools</code> の標準ビルド機能、もしくは <code>SCons</code> と組み合わせるとハッピーになれます。</p>
 <p>ちなみに、 <code>tasktools</code> というのは同じく <code>distutils</code> の拡張である <code>setuptools</code> の命名規則に習っています。 <code>task</code> 機能を強化するから <code>tasktools</code> です。</p>
 </section>
 <section>
-<h2>チュートリアル</h2>
+<h3>チュートリアル</h3>
 <p>典型的な <code>tasktools</code> の使い方です。</p>
 <p>まず <code>tasks.py</code> というファイルを作成します。典型的には以下の様になります。</p>
 <pre class="prettyprint ">from __future__ import with_statement

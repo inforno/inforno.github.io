@@ -78,7 +78,7 @@
 <p>でも俺がしたいのは、雑多なタスクを放り込む、コレ。そういうのを簡単にやるライブラリってPythonではないんでしょうか。RubyではRakeが標準添付されるというのに。いえ、あります。前からあるんです。それが <a class="reference external" href="http://www.python.jp/doc/nightly/lib/module-distutils.html">distutils</a> 。</p>
 <p>distutils(およびその拡張のsetuptools)はPythonの標準的なパッケージ配布システムとして有名です。でも実は自分でコマンドを定義してRakeのように使うことができることはあまりしられていないのではないでしょうか。</p>
 <section>
-<h1>distutilsでコマンドを定義する</h1>
+<h2>distutilsでコマンドを定義する</h2>
 <p>distutilsでコマンドを定義するにはdistutils.core.Commandクラスを継承し、色々オーバーライドします。説明もつけられますし、オプションもとれて、sub_commandsで依存関係(コマンド分割)を設定することもできます。</p>
 <pre class="prettyprint ">class MyCommand(Command):
   description = "コマンドの説明"
@@ -93,7 +93,7 @@
 setup(cmdclass={"my_command":MyCommand})</pre><p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
 </section>
 <section>
-<h1>もっと簡単にdistutilsでタスク</h1>
+<h2>もっと簡単にdistutilsでタスク</h2>
 <p>30行程度のテンプレを足して、簡単にタスクを定義できるようにしましょう。namespace機能はPython2.5以上限定です。</p>
 <pre class="prettyprint ">from __future__ import with_statement
 from distutils.core import Command, setup

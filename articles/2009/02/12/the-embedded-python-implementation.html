@@ -75,7 +75,7 @@
 </header>
   <div itemprop="articleBody">
     <section>
-<h1>更新履歴</h1>
+<h2>更新履歴</h2>
 <ul>
 <li><dl class="first docutils">
 <dt>2009/02/20 version 1.0.0</dt>
@@ -138,7 +138,7 @@ Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
 </ul>
 </section>
 <section>
-<h1>はじめに</h1>
+<h2>はじめに</h2>
 <p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
 <p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a class="reference external" href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
 <p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= <span class="pre">&quot;hoge%&gt;&quot;</span></code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
@@ -152,7 +152,7 @@ Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
 <p>といったところが特徴ですかね。</p>
 </section>
 <section>
-<h1>例</h1>
+<h2>例</h2>
 <p>テンプレートはこんな感じにかけます。</p>
 <pre class="prettyprint ">&lt;%-
 class Hoge(object):
@@ -188,11 +188,11 @@ print e.render({"xx": "10"})</pre><p>出力はこう。</p>
 8   8  16  24  32  40  48  56  64  72
 9   9  18  27  36  45  54  63  72  81</pre></section>
 <section>
-<h1>ダウンロード</h1>
+<h2>ダウンロード</h2>
 <p><a class="reference external" href="/statics/files/embpy.zip">embpy</a></p>
 </section>
 <section>
-<h1>コード</h1>
+<h2>コード</h2>
 <p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
 <p>あと <code><span class="pre">&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</span></code> という正規表現は自分的には常套句。&quot;で囲まれていて\&quot;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
 </section>

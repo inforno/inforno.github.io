@@ -84,7 +84,7 @@
 <p>簡単なコマンドラインランチャーもどきも同梱してますので、現在コマンドライン型ランチャーをいれていない人でも試せます。</p>
 <p>以下readmeからの転載です。</p>
 <section>
-<h1>利用方法</h1>
+<h2>利用方法</h2>
 <p>explorehelper.wsf,explorehelper.js,getadir.exeは同じフォルダになければ
 なりません。</p>
 <pre class="prettyprint ">explorehelper.wsf [command] [args]</pre><p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、
@@ -92,9 +92,9 @@ ctrl-eなどにショートカット登録しておくと良いでしょう。�
 mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
 </section>
 <section>
-<h1>それぞれのファイルについて</h1>
+<h2>それぞれのファイルについて</h2>
 <section>
-<h2>simple_launcher.exe</h2>
+<h3>simple_launcher.exe</h3>
 <p>コマンドライン型ランチャーを導入していない方でも試せるように、AHKで作った
 簡単なランチャーを同梱してあります。ただしこのランチャーは</p>
 <ul class="simple">
@@ -107,21 +107,21 @@ mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成で
 の導入をオススメします。</p>
 </section>
 <section>
-<h2>getahwnd.exe</h2>
+<h3>getahwnd.exe</h3>
 <p>最前面のExplorer.exeのウインドウハンドルを出力するだけのプログラムです。</p>
 </section>
 <section>
-<h2>explorehelper.js</h2>
+<h3>explorehelper.js</h3>
 <p>JscriptによるCOMに対するヘルパーです。</p>
 </section>
 <section>
-<h2>explorehelper.wsf</h2>
+<h3>explorehelper.wsf</h3>
 <p>Jscriptによるカスタムコマンドが定義されたファイルです。このファイルを編集
 することによってcommandが自由に追加できます。</p>
 </section>
 </section>
 <section>
-<h1>ビルトインコマンド</h1>
+<h2>ビルトインコマンド</h2>
 <ul class="simple">
 <li>mv</li>
 <li>mkdir</li>
@@ -135,7 +135,7 @@ mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成で
 <p>説明の無いものはUnixのそれから類推してください。</p>
 </section>
 <section>
-<h1>カスタムコマンドの追加について</h1>
+<h2>カスタムコマンドの追加について</h2>
 <p>explorehelper.wsfを編集することによってcommandが自由に追加できます。</p>
 <pre class="prettyprint ">var procs = {
   mv : function() {

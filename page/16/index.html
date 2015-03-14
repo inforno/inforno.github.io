@@ -83,7 +83,7 @@
 <p><strong>ダウンロード</strong></p>
 <p><a class="reference external" href="/statics/files/pynes-0-0-1.zip">pynes-0-0-1.zip</a></p>
 <section>
-<h1>試し方</h1>
+<h2>試し方</h2>
 <p>インストールはダウンロードしたzipファイルを展開するだけです。</p>
 <p>必要なライブラリは</p>
 <ul class="simple">
@@ -117,7 +117,7 @@
 <p>とにかく、めちゃくちゃ遅いので、固まったと思ってもしばらくすると画面がちゃんと切り替わったりします。</p>
 </section>
 <section>
-<h1>よもや話</h1>
+<h2>よもや話</h2>
 <p>かなり適当です。前回（PythonによるNESエミュレータ開発4)から変わってません。マッパーっぽいのが用意してありますが、これはダミーです。他のエミュのソースを参考に必要そうな部分に適当にいれただけです。</p>
 <p>一応、速度を重視しているものの、わかりやすく書いてるつもりなんで、Pythonが分かっていてかつ、エミュレータの基本的な構造が知りたい人には参考になるかもしれません。</p>
 </section>
@@ -147,7 +147,7 @@
     <p>週末に引越し、ということで本なんかを送ってしまいました。</p>
 <p>読む本が無いので、前から手を出そうと思っていたOCamlに手を出してみました。</p>
 <section>
-<h1>導入</h1>
+<h2>導入</h2>
 <p>とりあえずDebianにaptで放り込む。</p>
 <pre class="prettyprint ">libcamomile-ocaml-data                          install
 libcamomile-ocaml-dev                           install
@@ -174,12 +174,12 @@ ocaml-nox                                       install</pre><p>こんな感じ�
 
 open ExtLib</pre></section>
 <section>
-<h1>練習</h1>
+<h2>練習</h2>
 <p><a class="reference external" href="http://min-caml.sourceforge.net/index2.html">超特急: 一時間でわかるML超入門</a> を見てから、 <a class="reference external" href="http://www.sato.kuis.kyoto-u.ac.jp/~igarashi/class/isle4/mltext/ocaml.html">Objective Caml 入門</a> を読みながら、書いてみた。</p>
 <p>普通に書きやすい。練習問題は・・・。なんていうか、SICP。普通に関数型言語として使うところまでやってみた。</p>
 </section>
 <section>
-<h1>日本語</h1>
+<h2>日本語</h2>
 <p>EUCとUTFは大丈夫っぽい。ここらへんはCamomileというモジュールを使うらしい。とりあえず</p>
 <pre class="prettyprint ">module Encoding = CamomileLibrary.Default.Camomile.CharEncoding
 module Enc = Encoding.Make (CamomileLibrary.UTF8)
@@ -187,7 +187,7 @@ let unicode s = Enc.decode (Encoding.of_name "jauto") s;;
 let decode t n = Enc.encode (Encoding.of_name n) t;;</pre><p>などとPythonみたいな関数を定義してみた。 <code>jauto</code> でエンコーディングは自動的に判別してくれるらしい。コードをEUCで書いてUTF-8のコンソールに出力してみる。うんうん、ちゃんと日本語いけてる。ただ、UTF-8で書いたファイルで <code>unicode &quot;ああああ&quot;</code> ってしたら当然 <code>&quot;ああああ&quot;</code> のままだと思うんだけど、ダメだった。なんでなんだろう。詳しい人いたら教えて欲しいです。</p>
 </section>
 <section>
-<h1>今までの感想</h1>
+<h2>今までの感想</h2>
 <p>結構いい。モジュールシステムなんかはきっちりしてんなー、と思いました。オブジェクトシステムなんかが特徴だと思うんだけど、まだ触ってないんですよねえ。てゆーか詳しく解説しているところがすくないんで、どーしようかなあ。</p>
 <p>あと、インタプリタの <code>#require &quot;camomile&quot;</code> みたいなのって、ネイティブコンパイラだとエラーになるんだけどこういうもんなんだろうか。つまりどっちか選びなさい、ってことでいいのかなあ・・・。ネイティブコンパイラでは無視してくれると一番ありがたいような気がするけど・・・</p>
 </section>
@@ -225,7 +225,7 @@ let decode t n = Enc.encode (Encoding.of_name n) t;;</pre><p>などとPythonみ�
 <p>さて、ここまできたので基本的にはこの企画も終了かなー、という感じがします。目的はPythonのパフォーマンスについて知ることだったので。</p>
 <p>作成の過程でかなりPythonのパフォーマンス関連について勉強ができてよかったと思います。</p>
 <section>
-<h1>速度</h1>
+<h2>速度</h2>
 <p>サウンドは作っていないので、それを除くと1frameだいたい0.4秒弱くらいで動きます(もちろんpsycoを導入して)。変にベタ書きしたりはしていません。わりとメソッドはちゃんと分割しています。ただ、LDA $ssss(absolute addressingのLDA)だけ、実行回数が多いので完全にベタ書きしました。</p>
 <p>んで感じたのは</p>
 <ul class="simple">
@@ -248,7 +248,7 @@ write = self.memory.write
 <p>10年くらいして、マシンがもっと速くなることに期待しましょう、ということで（笑</p>
 </section>
 <section>
-<h1>その他雑感</h1>
+<h2>その他雑感</h2>
 <p>現時点でも単純なゲームくらいなら、そこそこ動くのでコンピューターの仕組みの基礎を学ぶには、もしかしたらLLでエミュレータってのはいいかも。当然ですけど、デバッグの段階ではアセンブリ言語を書くことになりますし、そのアセンブリ言語の内容も完全に自分で処理するわけですから、単に本で読むよりは格段CPUやメモリについて詳しくなれると思います。ただ、CPUの仕組みを勉強しながら書くのはきついものがあるかもしれませんが・・・</p>
 <p>他の利点としては「俺エミュレータ書いたんだぜ」と自慢できる（笑）、自分の書いたエミュレータでゲームが動くと結構感動できる、というくらいでしょうか。</p>
 <hr class="docutils" />

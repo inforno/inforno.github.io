@@ -84,7 +84,7 @@
 <p>かなり厳しいものがあります。CPU部分のコードはPython的な書き方で書いてたんですが、これじゃ話にならない。まず、アクセサなんてものはつかっちゃいけないのだ。</p>
 <p>以下環境はOS:WinXP,CPU:Athlon64 3000+,Memory:1G,Python2.4です。</p>
 <section>
-<h1>CPUのレジスタ関連の実装</h1>
+<h2>CPUのレジスタ関連の実装</h2>
 <p>NESのCPUである6502のレジスタはPCは16bit、それ以外は8bit。8bitの値なんてものはCならunsigned charで一発なんだけど、Pythonにはそんなものない。足し算したらどんどん大きくなるし、引き算したらどんどん小さくなる。ので</p>
 <pre class="prettyprint ">class Py6502(object):
   def __init__(self):
@@ -129,7 +129,7 @@ class ForceNbitType(type):
 <p>非常に上手くかけるんですが、こんなのやってらんない。遅すぎる。1Frame分(28000サイクル程度)の実行に0.5秒（笑</p>
 </section>
 <section>
-<h1>getattr</h1>
+<h2>getattr</h2>
 <p><code>getattr` は遅い。 ``getattr</code> の真価は第3引数でdefault値が指定できること（だと思う）。今回のように確実に属性が存在することが分かっているなら <code>self.__getattribute__(name)</code> を使うと結構違ってくる。ちなみにPythonのソースではこんな感じ。</p>
 <pre class="prettyprint ">static PyObject *
 slot_tp_getattro(PyObject *self, PyObject *name)
@@ -180,7 +180,7 @@ slot_tp_getattr_hook(PyObject *self, PyObject *name)
 }</pre><p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
 </section>
 <section>
-<h1>実行ループ</h1>
+<h2>実行ループ</h2>
 <p>CPUのエミュレータなんてのはだいたい同じようなパターンで割り込みを除いて簡単に書くと</p>
 <pre class="prettyprint ">def step_execute(self, clocks):
   while (self.passed_clocks &lt; clocks):
@@ -210,7 +210,7 @@ def ope_0x02(self):
 self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
 </section>
 <section>
-<h1>結局</h1>
+<h2>結局</h2>
 <p>そんな感じでいじってみてかつpsycoを入れて1Frame:0.15程度（PPUやAPUは中身がないので、最後までつくったらもっと遅くなる）。ほかにもいじれそうなところはあって、そこをいじれば0.1は切れそうな感じがしてます。</p>
 <p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに <code>A &amp; 0xff</code> みたいなことをやっていて、どーもめんどくさい。</p>
 <p>じゃぁLLでエミュレーターを書く意味ってなんだ、というと・・・うーん（笑　自己満足以外なにもないでしょうねえ。というわけで自己満足のために、今後もヒマができれば、ちょっとづつ書き進めてみようかなあ。</p>

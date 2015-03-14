@@ -74,20 +74,20 @@
 <p>この手のツールはハマりポイント＋よく使うイディオムを抑えるのが大事。Pythonプロダクトらしく非常にドキュメントが充実しているのだけど、充実しすぎているのでポイントを自分のためにもまとめておくことにする。</p>
 <p>例はおもに <a class="reference external" href="http://www.ansibleworks.com/">Ansible</a> のドキュメントから引用させていただきました。</p>
 <section>
-<h1>設定ファイルを書きかえる（一行)</h1>
+<h2>設定ファイルを書きかえる（一行)</h2>
 <p><code>lineinfile</code> モジュールを使う。使い方は以下のような形になる。</p>
 <pre class="prettyprint lang-yaml"> name: enalbe sudo without password if user belongs to the wheel group
  lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"</pre><p><code>state</code> を <code>absent</code> にすれば削除することができる。動きとしては <code>regexp</code> にマッチする行をみつけたら <code>line</code> に書きかえる、という動作になる。またデフォルトでは <code>regexp</code> にマッチする行がない場合最終行に追加される。</p>
 <p>上記のほかにも <code>regexp</code> にマッチする業の前後に追記するなど柔軟な動作が可能。</p>
 </section>
 <section>
-<h1>ファイルコピーを行う（再帰的)</h1>
+<h2>ファイルコピーを行う（再帰的)</h2>
 <p><code>copy</code> モジュールを使えばファイルコピーできるのは当たり前なのだが、じゃあディレクトリの場合どうするかというとてっとりばやくは以下のようにするとよい。</p>
 <pre class="prettyprint lang-yaml"> shell: rsync -a /path_to/source/  /path_to/dest/ creates=/path_to/dest/hoge</pre><p>このとおり、 <code>rsync</code> してしまうのがよい。上記はターゲットマシン上どうしでの <code>rsync</code> で、playbookを実行しているホスト→ターゲットマシンで実行する場合は以下。</p>
 <pre class="prettyprint lang-yaml"> local_action: command rsync -a /path_to/source/ {{ inventory_hostname }}:/path_to/dest/</pre><p><code>local_action</code> を使うとターゲット上でなくplaybookを実行しているホスト上でコマンドを実行できる。</p>
 </section>
 <section>
-<h1>make installする</h1>
+<h2>make installする</h2>
 <p><code>make install</code> するソフトウェアをどうするか。一つ目のパターンはよく見る形で以下のように1個ずつタスクにする。</p>
 <pre class="prettyprint lang-yaml"> - name: "wget hoge src"
    command: wget -O http://example.com/hoge.tar.gz  creates=hoge.tar.gz
@@ -108,13 +108,13 @@
    chdir=/usr/local/src creates=/usr/local/python3.3.2/bin/python3.3</pre><p>もちろん、途中でこけると中途半端なことになるのだがそうそうコケないのでこれでよいと思っている。</p>
 </section>
 <section>
-<h1>変数を使いこなす</h1>
+<h2>変数を使いこなす</h2>
 <p>ターゲット固有の情報はデフォルトで収集される。内容を見たければ <code>ansible hostname <span class="pre">-m</span> setup</code> と実行すればよい。</p>
 <p>他のホストの情報は以下のようにすればアクセスできる。</p>
 <pre class="prettyprint lang-yaml"> {{ hostvars['test.example.com']['ansible_distribution'] }}</pre><p>変数は実行時にコマンドラインオプションで上書きできる。</p>
 <pre class="prettyprint lang-yaml"> ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"</pre></section>
 <section>
-<h1>ループを使いこなす</h1>
+<h2>ループを使いこなす</h2>
 <p>Ansibleは結構複雑なループが使える。ただ実用的な範囲で言うと以下ぐらいを抑えておくとよいのでは。</p>
 <p><code>with_items</code> による単純ループ</p>
 <pre class="prettyprint lang-yaml"> name: add several users
@@ -146,7 +146,7 @@
  with_fileglob:
    - /playbooks/files/fooapp/*</pre></section>
 <section>
-<h1>条件分岐を使いこなす</h1>
+<h2>条件分岐を使いこなす</h2>
 <p>これまた条件分岐もいろいろできることはあるのだが、以下のパターンを抑えておくとよいと思う。</p>
 <p>単純な変数による分岐</p>
 <pre class="prettyprint lang-yaml"> - name: "shutdown Debian flavored systems"
@@ -178,7 +178,7 @@
    - shell: echo "hi does not found"
      when: result.stdout.find('hi') != -1</pre></section>
 <section>
-<h1>複数ターゲットが関連するタスクを実行する</h1>
+<h2>複数ターゲットが関連するタスクを実行する</h2>
 <p>ローリングアップデートのように複数ターゲットが連動して動くタスクがある。その場合、playbookを実行するマシンを核としてタスクを作ればよい。</p>
 <pre class="prettyprint lang-yaml"> - hosts: webservers
    serial: 5
