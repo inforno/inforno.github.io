@@ -61,6 +61,143 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/07/04/strong-arm-approach-toward-gae-transactions" itemprop="url">GoogleAppEngineのトランザクションをねじふせる</a></h3>
+<div class="meta">
+<time datetime="2008-07-04T02:19:49&#43;09:00">Jul  4, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/gae/" rel="tag" itemprop="keywords">gae</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://inforno.net/articles/2008/06/30/gae-model-improvements">前のエントリー</a> で書いたように、GoogleAppEngineのトランザクションは使い勝手が悪い。しかし、GAEにブログを移行しようと思うとこれは乗り越えなければならない。</p>
+<p>GAEでトランザクションを行う条件を簡単にまとめると</p>
+<ul class="simple">
+<li>db.run_in_transactionにトランザクションとして実行したい関数を渡すがその関数内では</li>
+<li>同じエンティティグループに属しているモデルで</li>
+<li>get, put, deleteのみ</li>
+</ul>
+<p>しか実行できない。なのでトランザクションのページに紹介されているような</p>
+<pre class="prettyprint ">from google.appengine.ext import db
+
+class Accumulator(db.Model):
+  counter = db.IntegerProperty()
+
+def increment_counter(key, amount):
+  obj = db.get(key)
+  obj.counter += amount
+  obj.put()
+
+q = db.GqlQuery("SELECT * FROM Accumulator")
+acc = q.get()
+
+db.run_in_transaction(increment_counter, acc.key(), 5)</pre><p>先にGQLを発行しておいて、 <code>run_in_transaction</code> に渡す関数ではGQLの結果として取得した <code>key</code> を引数にとる、という回りくどいコードになる。コレは書きづらい。</p>
+<p>これも前のエントリーに書いたように、今回作ったブログアプリでは月別アーカイブやタグアーカイブの記事数をエントリのCRUD時に操作している。</p>
+<p>エントリ作成時なら</p>
+<pre class="prettyprint ">@classmethod
+def create(cls, *a, **k):
+  obj = super(Entry, cls).create(*a, **k)
+  TagCount.inc(obj.status, *obj.tags)
+  MonthCount.inc(obj.status, obj.created_month)
+  return obj</pre><p>というような感じだ( <code>status</code> は公開、とか非公開とかが入る)。当然、この <code>create</code> メソッドでは <code>TagCount</code> , <code>MonthCount</code> と <code>obj</code> について一貫性が保たれなければならない。しかし、 <code>TagCount.inc</code> では対象のタグを検索して、なければ作成し <code>put</code> する、という操作を行う。「対象のタグを検索して」というトランザクション内で許可されていない操作が入っているのだ。</p>
+<p>さて、こういうときはとりあえず？力技で乗り切ろう。かなり強引だが、下のようなコードで乗り切ってみた。一応、サーバにアップロードして動作することは確認している。</p>
+<pre class="prettyprint ">class RootModel(db.Model):
+  id = db.IntegerProperty(default=1)
+  def __call__(self, k):
+    v = k or {}
+    v.update(parent=with_parent)
+    return v
+with_parent = RootModel.get_or_insert("id", id=1)</pre><p>まず、全てのエンティティを同一エンティティグループに所属させることにする。そのため、全てのエンティティの親となるエンティティを作成する。</p>
+<p>次は強引さの根源のようなクラスだ。</p>
+<pre class="prettyprint ">class Transaction(object):
+  MAGIC_NAME = "__magic__lst__"
+  SEARCH_MAX = 12
+  def __init__(self, f):
+    self.f = f
+
+  def execute(self):
+    __magic__lst__ = []
+    result = self.f()
+    def commit():
+      for dbop in __magic__lst__:
+        dbop()
+      return True
+    committed = db.run_in_transaction(commit)
+    if committed is None:
+      raise db.Rollback()
+    return result</pre><p>これだけでは分からないと思うが、 <code>execute</code> 内で <code>run_in_transaction</code> が実行されている。その引数には <code>commit</code> 。 <code>commit</code> の中では <code>__magic__lst__</code> というリスト内の関数を実行しているようだが、 <code>__magic__lst__</code> に要素が追加されている形跡がない。</p>
+<p>そして、全てのモデルの親となる基本モデルを定義する。</p>
+<pre class="prettyprint ">class BaseModel(db.Model):
+  @classmethod
+  def create(cls, *a, **k):
+    obj = cls(*a, **with_parent(k))
+    obj.put()
+    return obj
+
+  def _with_transaction(self, name):
+    i = 1
+    f = sys._getframe(i)
+    while f and i &lt; Transaction.SEARCH_MAX:
+      if Transaction.MAGIC_NAME in f.f_locals:
+        f.f_locals[Transaction.MAGIC_NAME].append( \
+          lambda : getattr(super(BaseModel, self), name)())
+        return
+      i += 1
+      f = sys._getframe(i)
+    return getattr(super(BaseModel, self),name)()
+
+  def put(self):
+    return self._with_transaction("put")
+
+  def delete(self):
+    return self._with_transaction("delete")
+
+  def update(self, **k):
+    for prop in self.properties().values():
+      if prop.name in k:
+        prop.__set__(self, k[prop.name])
+    self.put()
+
+  @classmethod
+  def get_by_id(cls, id):
+    return super(BaseModel, cls).get_by_id(id, parent=with_parent)</pre><p>この基本クラスではまず、 <code>create</code> というメソッドを定義し、エンティティはすべてこのメソッドを通して作成するようにしている。 <code>create</code> では必ず親エンティティとして <code>with_parent</code> を指定する。これにより全てのエンティティは同一エンティティグループに属することになる。</p>
+<ul class="simple">
+<li>同じエンティティグループに属しているモデルで</li>
+</ul>
+<p>という条件はクリアしたことになる。次は</p>
+<ul class="simple">
+<li>get, put, deleteのみ</li>
+</ul>
+<p>という条件だ。これは <code>_with_transaction</code> というメソッドでクリアしている。 <code>put</code> と <code>delete</code> をオーバーライドして <code>_with_transaction</code> を呼び出すようにしている。さて、この <code>_with_transaction</code> ではフレームをさかのぼって、 <code>__magic__lst__</code> という名前のローカル変数が存在するフレームがないか探索する。そのフレームが存在した場合、一連のトランザクション内での実行とみなし、 <code>__magic__lst__</code> に <code>put</code> , <code>delete</code> を行うthunkを登録し、終了する。存在しない場合は通常の実行ということで、その場で <code>put</code> ,  <code>delete</code> を行う。つまり、トランザクション内で実行されたことを検出して <code>put</code> , <code>delete</code> の評価を遅延させるのだ。</p>
+<p>さきほどの <code>create</code> は</p>
+<pre class="prettyprint ">@classmethod
+def create(cls, *a, **k):
+  def _():
+    obj = super(Entry, cls).create(*a, **k)
+    TagCount.inc(obj.status, *obj.tags)
+    MonthCount.inc(obj.status, obj.created_month)
+    return obj
+  return Transaction(_).execute()</pre><p>と若干のコード挿入のみできちんと一貫性が保証されるようになる。</p>
+<hr class="docutils" />
+<p>というわけで、かなり強引な気がするけどトランザクションの問題は一応クリアされた。めんどくさければHTTPリクエストを受けてから、レスポンスを返すまでを関数でラップし、 <code>Transaction.execute</code> すれば大丈夫だ。</p>
+<p>ここまでやってしまったので、やっぱり今のブログはGAEに移行しようかなあ、と思い始めたり。デザインも今と似ているけどやっぱ一から自分でマークアップしたから好みだし、なによりXHTMLとしてValidだ。機能的にはあと、スパム対策さえあれば大丈夫。</p>
+<p>実はOpenIDも自分でサーバ立ててたりするので、それもGAEで実装しなおしたいなあとか色々やりたいことは尽きない。GAEでの開発はこのモデルの問題さえつぶしてしまえばかなり楽だし、夢がひろがるなあ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/06/30/gae-model-improvements" itemprop="url">GoogleAppEngineのモデルをいじってみた</a></h3>
 <div class="meta">
 <time datetime="2008-06-30T23:51:58&#43;09:00">Jun 30, 2008</time>
@@ -304,142 +441,6 @@ test:build : build done</pre><p>うむ。</p>
 <p>そんなこんなで試しに書いてみたらいい感じだったんで、ちゃんと本格的にPython版Rakeとして開発を続けてみようかなあ。</p>
 <hr class="docutils" />
 <p>ところで言語内DSLといえばScalaでしょう。Rubyなんてちょろいもんですよ。なんてったってScalaは(ry</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/11/08/instant-pluggable-python-class" itemprop="url">Python:お手軽にPluggableにする</a></h3>
-<div class="meta">
-<time datetime="2007-11-08T01:33:50&#43;09:00">Nov  8, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Pythonで自分用の小物アプリを結構書き溜めてるんですけど、実はそのほとんどにプラグインシステムみたいなのをつくってたりします。</p>
-<p>たとえばファイルの整理自動化みたいなの。ファイルの移動前に処理を追加する、てな部分をプラグインにしてあるわけです。</p>
-<p>まぁ機能的にはCPANのClass::Componentっぽいもんですね。ですがそこまで高機能なのはいらないので、シンプルに自分が必要な部分だけまとめてみました。</p>
-<pre class="prettyprint ">from inspect import getmembers, ismethod
-import types
-
-class Pluggable(object):
-  def __init__(self):
-    self.hooks = {}
-
-  def load(self, *config):
-    self.load_config(*config)
-    self.load_plugins()
-
-  def load_config(self, *config):
-    self.config = []
-    for i in config:
-      if isinstance(i, ("".__class__, u"".__class__)):
-        self.config.append((i, {}))
-      else:
-        self.config.append((i[0], len(i) &gt; 1 and i[1] or {}))
-
-  def load_plugins(self):
-    for klass,config in self.config:
-      plugin = None
-      try:
-        plugin = eval(klass)
-      except (NameError, AttributeError),e:
-        names = klass.split(".")
-        mod = __import__(".".join(names[0:-1]))
-        globals()[names[0]] = mod
-        for name in names[1:-1]: mod = getattr(mod, name)
-        plugin = getattr(mod, names[-1])
-
-      p = plugin(config)
-      make_closure = lambda obj,name: lambda *a, **k: getattr(obj,name)(*a, **k)
-
-      for name, method in ((n,m) for n,m in getmembers(p) if ismethod(m)):
-        if hasattr(method, "__plugin_method__"):
-          setattr(self, name, make_closure(p, name))
-        for hook_type in getattr(method, "__hook_types__", []):
-          if hook_type not in self.hooks: self.hooks[hook_type] = []
-          self.hooks[hook_type].append(getattr(p, name))
-
-  def _run_hooks(self, dct, f=lambda x:x):
-    result = {}
-    for (name,value) in dct.iteritems():
-      if name not in self.hooks: continue
-      k,a = {}, value
-      if isinstance(value[-1], types.DictType):
-        k,a = value[-1],value[0:-1]
-      result[name] = [m(*a, **k) for m in f(self.hooks[name])]
-    return result
-
-  def run_hooks(self, dct):
-    return self._run_hooks(dct)
-
-  def reverse_run_hooks(self, dct):
-    return self._run_hooks(dct, reversed)
-
-class Plugin(object):
-  def __init__(self, config):
-    self.config = config
-
-method = lambda f: setattr(f, "__plugin_method__", True) or f
-hook = lambda *args: lambda f: setattr(f, "__hook_types__", args) or f</pre><p>機能的には</p>
-<ul class="simple">
-<li>クラスに対して設定とともにメソッドを追加する(setattrします)</li>
-<li>任意のhookの登録と実行</li>
-</ul>
-<p>ぐらいです。</p>
-<p>使い方は</p>
-<pre class="prettyprint ">import pluggable
-class People(pluggable.Pluggable):
-  pass
-
-class Hacker(pluggable.Plugin):
-  @pluggable.method
-  def hack(self):
-    print self.config["msg"]
-
-  @pluggable.hook("hello")
-  def hello(self, msg1, msg2, msg3):
-    print "Hello World!!", msg1, msg2, msg3
-
-class Otaku(pluggable.Plugin):
-  @pluggable.method
-  def niconico(self, msg):
-    print self.config["msg"], msg
-
-  @pluggable.hook("hello")
-  def hello(self, msg1, msg2, msg3):
-    print u"にぱー", msg1, msg2, msg3</pre><p>みたいにプラグインクラスを作っておいて</p>
-<pre class="prettyprint ">p = People()
-p.load(
-  ("plugins.Hacker", {"msg": "Happy Hacking!"}),
-  ("plugins.Otaku",  {"msg": u"ニコ厨ですが"})
-)
-p.hack() #=&gt; Happy Hacking!
-p.niconico(u"なにか？") #=&gt; ニコ厨ですが なにか？
-p.run_hooks({"hello":([1,2],{"msg3":3})})
-#=&gt; Hello World!! 1 2 3
-#=&gt; にぱー 1 2 3
-p.reverse_run_hooks({"hello":[1,2,3]})
-#=&gt; にぱー 1 2 3
-#=&gt; Hello World!! 1 2 3</pre><p>という感じで使います。あとは設定の部分をyamlなんかに押し出せばオッケーというわけ。</p>
-<p>モジュールのインポートは自動でやってくれます。Pythonは地味に動的なimportが面倒だったので、ライブラリにまとめたことでだいぶ手元の小物アプリがすっきりしました。</p>
-<hr class="docutils" />
-<ul class="simple">
-<li>2008/01/27 若干修正を加えました。</li>
-</ul>
 
   </div>
 </article>

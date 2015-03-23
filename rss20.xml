@@ -7,10 +7,62 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>24 Feb 15 11:00 UTC</lastBuildDate>
+    <lastBuildDate>23 Mar 15 12:12 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
+    
+    <item>
+      <title>GopherLuaを設定ファイルで使うライブラリを書きました </title>
+      <link>http://inforno.net/articles/2015/03/23/gluamapper-released</link>
+      <description>&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; で設定ファイルを書くためのライブラリを書きました。設定ファイル以外にも使えますけど。&lt;/p&gt;
+&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/gluamapper&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;p&gt;モノとしてはGopherLuaのテーブルをGoの構造体にマップしてくれます。といっても、内部動作的にはHashicorpの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/mitchellh/mapstructure&#34;&gt;mapstructure&lt;/a&gt; を使っているだけだったりします。一度GopherLuaのテーブルを &lt;code&gt;map[string]interface{}&lt;/code&gt; に変換してあげて、あとはmapstructureにおまかせ。&lt;/p&gt;
+&lt;p&gt;ただ、一般的なLuaの命名規則とGoの命名規則が違うので名前を変換する関数が指定できます。デフォルトでは &lt;code&gt;snake_case&lt;/code&gt; を &lt;code&gt;CamelCase&lt;/code&gt; に変換します。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; type Role struct {
+     Name string
+ }
+
+ type Person struct {
+     Name      string
+     Age       int
+     WorkPlace string
+     Role      []*Role
+ }
+
+ L := lua.NewState()
+ if err := L.DoString(`
+ person = {
+   name = &#34;Michel&#34;,
+   age  = &#34;31&#34;, -- weakly input
+   work_place = &#34;San Jose&#34;,
+   role = {
+     {
+       name = &#34;Administrator&#34;
+     },
+     {
+       name = &#34;Operator&#34;
+     }
+   }
+ }
+ `); err != nil {
+     panic(err)
+ }
+ var person Person
+ if err := gluamapper.Map(L.GetGlobal(&#34;person&#34;).(*lua.LTable), &amp;amp;person); err != nil {
+     panic(err)
+ }
+ fmt.Printf(&#34;%s %d&#34;, person.Name, person.Age)&lt;/pre&gt;&lt;p&gt;のように非常に簡単にLuaを設定ファイルとして使うことができます。Luaは可読性が高く、JSONと異なりコメントが書けて、YAMLよりも簡単に値を変数化できるので設定ファイルにすると便利です(なんでも出来てしまう、というのがネックと言えばネックですが)。&lt;/p&gt;
+</description>
+      
+      <category>gopherlua</category>
+      
+      <category>golang</category>
+      
+      <category>lua</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2015/03/23/gluamapper-released</guid>
+      <pubDate>23 Mar 15 12:12 UTC</pubDate>
+    </item>
     
     <item>
       <title>GopherLuaでchannelを扱えるようにした </title>
@@ -360,41 +412,6 @@ config.Timeout = 0&lt;/pre&gt;&lt;p&gt;あと利便性のためこういう書�
       
       <guid isPermaLink="true">http://inforno.net/articles/2014/10/06/cidre-my-new-webframework-in-golang</guid>
       <pubDate>06 Oct 14 11:52 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>AlfredのWorkflow的なやつをWindowsで </title>
-      <link>http://inforno.net/articles/2013/11/07/iceberg-commands</link>
-      <description>&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://blog.ruedap.com/2013/10/30/alfred-workflow-for-front-end-developers&#34;&gt;フロントエンド開発者向けのAlfred Workflow&lt;/a&gt; という記事を見かけたので、それ &lt;a class=&#34;reference external&#34; href=&#34;http://yuin.github.io/iceberg/index.html&#34;&gt;iceberg&lt;/a&gt; でもできる &lt;strong&gt;かも&lt;/strong&gt; よ！ということでいくつか作ってみました(仕様上実装できないものもあったのでiceberg自体も改修して &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/releases/tag/v0.9.4&#34;&gt;v0.9.4としてリリース&lt;/a&gt; しています)。&lt;/p&gt;
-&lt;p&gt;簡単にできそうなものをピックアップしたつもりが以外と苦労したかもしれない…&lt;/p&gt;
-&lt;section&gt;
-&lt;h2&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg-ip&#34;&gt;iceberg-ip&lt;/a&gt;&lt;/h2&gt;
-&lt;img alt=&#34;http://inforno.net/statics/files/iceberg-ip.jpg&#34; src=&#34;http://inforno.net/statics/files/iceberg-ip.jpg&#34; /&gt;
-&lt;p&gt;IPアドレス一覧を表示するコマンド。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg-worldtime&#34;&gt;iceberg-worldtime&lt;/a&gt;&lt;/h2&gt;
-&lt;img alt=&#34;http://inforno.net/statics/files/iceberg-worldtime.jpg&#34; src=&#34;http://inforno.net/statics/files/iceberg-worldtime.jpg&#34; /&gt;
-&lt;p&gt;世界主要都市の現在時刻を表示する。頑張ってサマータイム対応したのだけど、これがめんどくさかった…&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg-encodedecode&#34;&gt;iceberg-encodedecode&lt;/a&gt;&lt;/h2&gt;
-&lt;img alt=&#34;http://inforno.net/statics/files/iceberg-encodedecode.jpg&#34; src=&#34;http://inforno.net/statics/files/iceberg-encodedecode.jpg&#34; /&gt;
-&lt;p&gt;Base64, URL, HTML entityでのエンコード結果を表示。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;というわけで&lt;/h2&gt;
-&lt;p&gt;これらのコマンドはLuaのみで書かれています。&lt;/p&gt;
-&lt;p&gt;以下の &lt;code&gt;weather&lt;/code&gt; コマンドのようにHTTPで結果を取得してそれをリストに表示することもできます。加えてmigemoに対応しているので絞り込みも簡単です。&lt;/p&gt;
-&lt;img alt=&#34;http://inforno.net/statics/files/iceberg-weather.gif&#34; src=&#34;http://inforno.net/statics/files/iceberg-weather.gif&#34; /&gt;
-&lt;p&gt;Windows7以降はOS自体にWin&#43;Rより高度なコマンドラインランチャー的な機能が内蔵されたこともあって、こういうのがあるとコマンドラインランチャを使う意義みたいなのも高まるかな、と。&lt;/p&gt;
-&lt;/section&gt;
-</description>
-      
-      <category>iceberg</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2013/11/07/iceberg-commands</guid>
-      <pubDate>06 Nov 13 17:59 UTC</pubDate>
     </item>
     
   </channel>

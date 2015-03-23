@@ -61,30 +61,30 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/06/05/object-with_options" itemprop="url">ActiveSupportのObject#with_optionsの使いどころ</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/09/13/getframe-function-in-python" itemprop="url">Pythonで関数呼び出しもとの情報を取得</a></h3>
 <div class="meta">
-<time datetime="2006-06-05T17:45:51&#43;09:00">Jun  5, 2006</time>
+<time datetime="2006-09-13T20:24:43&#43;09:00">Sep 13, 2006</time>
 
   
-  <span class="tag"><a href="/articles/tag/rubyonrails/" rel="tag" itemprop="keywords">rubyonrails</a></span>
-  
-  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
-  
-  <span class="tag"><a href="/articles/tag/activesupport/" rel="tag" itemprop="keywords">activesupport</a></span>
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>個人的にActiveSupportが大好きなわけですが。</p>
-<p>1.1で追加されたwith_optionsがRouting以外でどーもカッコいい使いどころがなーとおもっていたんですが</p>
-<pre class="prettyprint ">with_options(:if =&gt; :validate_password?) do |me|
-me.validates_format_of :password #...
-me.validates_length_of :password # ...
-me.validates_confirmation_of :password #...
-me.validates_presence_of :password#...
-end</pre><p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
-<p>まぁ、やっぱり一番カッコいいのはto_procなんですけど。</p>
+    <p>なぜか最近はpythonをいじってます。Rubyは・・・ちょっとお休み。
+個人的なメモ。Pythonで関数呼び出しもとの情報を取得(web.pyのソースから)。</p>
+<pre class="prettyprint ">import sys
+sys._getframe(1).f_locals</pre><p>ほうほう。</p>
+<pre class="prettyprint ">def test_func() :
+  print sys._getframe(1).f_locals
+
+a = "variable a"
+b = "variable b"
+c = 1
+test_func()
+
+#&gt;&gt; {'test_func': &lt;function test_func at 0x40657684&gt;, 'a': 'variable a', 'c': 1, 'b': 'variable b', .....}</pre><p>こんな感じで。</p>
 
   </div>
 </article>

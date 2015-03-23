@@ -61,6 +61,155 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2009/02/12/the-embedded-python-implementation" itemprop="url">埋め込みPythonを実装してみました</a></h3>
+<div class="meta">
+<time datetime="2009-02-12T00:00:00&#43;09:00">Feb 12, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <section>
+<h2>更新履歴</h2>
+<ul>
+<li><dl class="first docutils">
+<dt>2009/02/20 version 1.0.0</dt>
+<dd><ul class="first last simple">
+<li><code>Renderer</code> と <code>Helper</code> を追加。詳しくはソースファイルヘッダ部分のドキュメントを参照してください。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>2009/02/17 version 0.5.0</dt>
+<dd><ul class="first last simple">
+<li><code>&lt;%= %&gt;</code> で自動的にフィルタを適応できるようになりました。また、 <code>render</code> メソッドが <code>unicode</code> オブジェクトではなく <code>unicode</code> のサブクラス <code>EmbpyString</code> オブジェクトを返すようになりました。filterは <code>EmbpyString</code> オブジェクトをスルーします。これにより2重でfilterが適応されることがなくなります。&lt;%=r %&gt;でフィルターをオフにできます。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<pre class="prettyprint ">Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
+# =&gt; "&amp;lt;b&amp;gt;"
+Embpy("&lt;%=r b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
+# =&gt; "&lt;b&gt;"
+
+result = Embpy("&lt;%=r b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
+# result.__class__ =&gt; EmbpyString
+Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
+# =&gt; "&lt;b&gt;"</pre><ul>
+<li><p class="first"><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</p>
+</li>
+<li><dl class="first docutils">
+<dt>2009/02/16 version 0.4.0</dt>
+<dd><ul class="first last simple">
+<li>パフォーマンス改善</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>2009/02/15 version 0.3.0</dt>
+<dd><ul class="first last simple">
+<li><a class="reference external" href="http://wids.net/lab/epy.html">epy</a> の中の人から「end.. orz」という反応をいただいたので、endの代わりに <code>&lt;% %&gt;</code> も使えるようにしました。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<pre class="prettyprint ">&lt;%- if True: -%&gt;
+   ok
+   &lt;% %&gt;</pre><p>と書けるようになりました。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>2009/02/14 version 0.2.0</dt>
+<dd><ul class="first last simple">
+<li>&quot;{&quot; と &quot;}&quot;が辞書リテラルとかぶっていたので、&quot;{:&quot;と&quot;:}&quot;に変更しました。</li>
+<li>変換後コードでなく、コンパイル済みcodeオブジェクトをキャッシュするようにしました。</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section>
+<h2>はじめに</h2>
+<p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
+<p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a class="reference external" href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
+<p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= <span class="pre">&quot;hoge%&gt;&quot;</span></code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
+<ul class="simple">
+<li>キャッシュ</li>
+<li>インラインでPythonを書くことも出来る:  <code>def format(v) {: return <span class="pre">&quot;%4d&quot;%v;</span> :}</code> みたいに。</li>
+<li>eRubyのtrim modeの&quot;&lt;%-&quot;と&quot;-%&gt;&quot; : これがあると無いではテンプレートの見易さが段違い。</li>
+<li>自動的にフィルタを適応。しかも2重でフィルタが適応されない。</li>
+<li>もちろんマルチバイトでも大丈夫。</li>
+</ul>
+<p>といったところが特徴ですかね。</p>
+</section>
+<section>
+<h2>例</h2>
+<p>テンプレートはこんな感じにかけます。</p>
+<pre class="prettyprint ">&lt;%-
+class Hoge(object):
+  def __init__(self):
+    pass
+  end
+end
+hoge = Hoge()
+a = "&lt; title &gt;"
+-%&gt;
+&lt;%=r a %&gt;
+&lt;%- def format(v) {: return "%4d"%v; :} -%&gt;
+&lt;%- def format2(v) {: return "%2d"%v; :} -%&gt;
+  &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
+&lt;%- for x in xrange(1,xx): -%&gt;
+&lt;%= format2(x) -%&gt;
+  &lt;%- for y in xrange(1,xx): -%&gt;
+&lt;%= format(x*y) -%&gt;
+  &lt;%- end %&gt;
+&lt;%- end -%&gt;</pre><p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
+<pre class="prettyprint ">e = embpy.Embpy(codecs.open("path_to_template", encoding="utf8"),
+          cache_path = "path_to_cache_file",
+          template_globals = {}, filter=cgi.escape)
+print e.render({"xx": "10"})</pre><p>出力はこう。</p>
+<pre class="prettyprint ">    1   2   3   4   5   6   7   8   9
+1   1   2   3   4   5   6   7   8   9
+2   2   4   6   8  10  12  14  16  18
+3   3   6   9  12  15  18  21  24  27
+4   4   8  12  16  20  24  28  32  36
+5   5  10  15  20  25  30  35  40  45
+6   6  12  18  24  30  36  42  48  54
+7   7  14  21  28  35  42  49  56  63
+8   8  16  24  32  40  48  56  64  72
+9   9  18  27  36  45  54  63  72  81</pre></section>
+<section>
+<h2>ダウンロード</h2>
+<p><a class="reference external" href="/statics/files/embpy.zip">embpy</a></p>
+</section>
+<section>
+<h2>コード</h2>
+<p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
+<p>あと <code><span class="pre">&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</span></code> という正規表現は自分的には常套句。&quot;で囲まれていて\&quot;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/12/11/functional-pattern-matching-for-python" itemprop="url">Python: パターンマッチしてみる</a></h3>
 <div class="meta">
 <time datetime="2008-12-11T01:25:07&#43;09:00">Dec 11, 2008</time>
@@ -665,282 +814,6 @@ variable(id=1, name='amplitude', type='int', size=4)</pre><ul>
 <li>3.0警告モード:  <code>Exception</code> クラスにスライシングおよびインデックスアクセスすると警告。</li>
 <li>3.0警告モード: 2つの辞書や、比較メソッドを実装していないオブジェクト間で比較演算子を適応すると警告。ただし、 <code>dict1 == dict2</code> は動く。</li>
 </ul>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/09/19/sexp-library-for-python" itemprop="url">Python: S式パーサライブラリを作りました</a></h3>
-<div class="meta">
-<time datetime="2008-09-19T17:51:25&#43;09:00">Sep 19, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/sexp/" rel="tag" itemprop="keywords">sexp</a></span>
-  
-  <span class="tag"><a href="/articles/tag/scheme/" rel="tag" itemprop="keywords">scheme</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p><a class="reference external" href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
-<p>実装には引き続き <code>re.Scanner</code> を活用しています。おかげで短い行数でキレイにかけているのではないかと。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/simplesexp.zip">simplesexp.py</a></p>
-<p>ソースはこんな感じ（テストのぞく）。</p>
-<pre class="prettyprint ">import re, sys
-from unicodedata import east_asian_width
-
-try:
-  from re import Scanner
-except ImportError:
-  from sre import Scanner
-
-class ParseError(StandardError): pass
-
-class Ident(unicode):
-  def __repr__(self):
-    return "Ident(%s)"%unicode.__repr__(self)
-
-class Symbol(unicode):
-  def __repr__(self):
-    return "Symbol(%s)"%unicode.__repr__(self)
-
-class Pair(list):
-  def __repr__(self):
-    return "Pair(%s)"%list.__repr__(self)
-
-class Token(object):
-  def __init__(self, value, pos):
-    self.value = value
-    self.pos   = pos
-  def __repr__(self):
-    return repr(self.value)
-
-class Binding(object):
-  def __init__(self, dct):
-    self.dct = dict(((k, k.__class__), v) for k,v in dct.iteritems())
-  __contains__ = lambda self, key: (key, key.__class__) in self.dct
-  __getitem__  = lambda self,key:  self.dct[(key, key.__class__)]
-
-default_binding = {"#t":True, "true":True, "#f":False, "false":False, "nil":None, "dict":Ident(u'alist-&gt;hash-table')}
-
-class Reader(object):
-  PAREN = {"]":"[", ")":"("}
-  def __init__(self, binding=None, symbol_marker="'", use_dict=True):
-    self.binding = binding or default_binding
-    self.symbol_marker = symbol_marker
-    self.use_dict = use_dict
-
-  def read(self, value):
-    self.result = []
-    self.paren_stack = []
-    self.source = value
-    self.pos = 0
-    self.scanner = Scanner([
-      (r"\s+", self("skip")),
-      (r";[^\n]*\n", self("skip")),
-      (r""""(((?&lt;=\\)")|[^"])*((?&lt;!\\)")""", self("str")),
-      (r"(\(|\[)", self("open")),
-      (r"(\)|\])", self("close")),
-      (r"(([\d]+|(((\d+)?\.[\d]+)|([\d]+\.)))e[\+\-]?[\d]+)|(((\d+)?\.[\d]+)|([\d]+\.))", self("number")),
-      (r"\-?((0x[\da-f]+)|(0[0-7]+)|([1-9][\d]*)|0)[l]?", self("number")),
-      (r"""%s([^\(\[\)\]\s"]+)"""%self.symbol_marker, self("symbol")),
-      (r"""([^\(\[\)\]\s"]+)""", self("ident")),
-      (r"""".*""", self("unterm_str")),
-      (r".*", self("unknown_token"))
-    ], re.M|re.S|re.I)
-    self.scanner.scan(self.source)
-    if self.paren_stack:
-      self.raise_error("missing closing parenthesis.")
-    return self.parse(self.result)
-
-  def append(self, v):
-    self.last().append(Token(v, self.pos))
-
-  def __call__(self, name):
-    def _(scanner, s):
-      self.pos += len(s)
-      return getattr(self, name)(s)
-    return _
-
-  def unknown_token(self,s): self.raise_error("unknown token: %s"%s)
-  def skip(self, _): pass
-  def open(self, s):
-      new_lst = []
-      self.last().append(new_lst)
-      self.paren_stack.append([s, new_lst])
-  def close(self, s):
-      if not self.paren_stack:
-        self.raise_error("missing opening parenthesis.")
-      if self.PAREN[s] != self.paren_stack.pop()[0]:
-        self.raise_error("missing closing parenthesis.")
-  def str(self, s): self.append(eval('u""'+s+'""'))
-  def unterm_str(self, s): self.raise_error("unterminated string literal.")
-  def number(self, s): self.append(eval(s))
-  def symbol(self, s): self.append(Symbol(s[1:]))
-  def ident(self, s):
-    if s in self.binding:
-      self.append(self.binding[s])
-    else:
-      self.append(Ident(s))
-
-  def last(self):
-    if self.paren_stack:
-      return self.paren_stack[-1][1]
-    else:
-      return self.result
-
-  def parse(self, rs):
-    def is_ident(value, expected):
-      return getattr(value,"value", None) == Ident(expected)
-    def is_pair(rs):
-      return getattr(rs, "__len__", lambda :0)()==3 and is_ident(rs[1], u".")
-
-    if isinstance(rs, list):
-      if not len(rs):
-        return []
-      elif self.use_dict and is_ident(rs[0], u"alist-&gt;hash-table"):
-        if len(rs) != 2:
-          self.raise_error("alist-&gt;hash-table: expected 1 arguments, got %d."%(len(rs)-1), rs[0].pos)
-        if not all(is_pair(a) for a in rs[1]):
-          self.raise_error("alist-&gt;hash-table: aruguments must be alist", rs[0].pos)
-        return dict((self.parse(i[0]), self.parse(i[2])) for i in rs[1])
-      elif len(rs)!=3 and any(is_ident(t, u".") for t in rs):
-        self.raise_error('illegal use of "."', rs[0].pos)
-      elif is_pair(rs):
-        parsed = self.parse(rs[2])
-        if not isinstance(rs[2], list):
-          return Pair([rs[0].value, parsed])
-        if isinstance(parsed, Pair):
-          return Pair([rs[0].value, parsed])
-        elif isinstance(parsed, list):
-          return [rs[0].value]+parsed
-        else:
-          return [rs[0].value, parsed]
-      else:
-        return map(self.parse, rs)
-    else:
-      return rs.value
-
-  def raise_error(self, msg="parse error", pos=None, range=3):
-    pos = pos or self.pos
-    lines = self.source.split("\n")
-    curline = self.source[:pos].count("\n")
-    linepos = pos - len("\n".join(lines[:curline]))
-    buf = ["\n"]
-    for i in xrange(max(0, curline-range), curline+1):
-      buf.append("% 5d: %s"%(i+1, lines[i]))
-    width = 7 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in unicode(lines[i]))
-    buf.append("%s~"%(" "*width))
-    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
-    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
-
-class Dumper(object):
-  def __init__(self, binding=None ,symbol_marker="'"):
-    binding = binding or default_binding
-    self.binding = Binding(dict(zip(binding.values(), binding)))
-    self.symbol_marker = symbol_marker
-
-  def dump(self, obj):
-    result = self.to_sexp(obj, [])
-    if isinstance(result, list) and len(result) and result[0]=="(":
-      result = result[1:-1]
-    return u" ".join(result)
-
-  def to_sexp(self, obj, result):
-    ap = result.append
-    tos = lambda v: self.to_sexp(v, result)
-    if isinstance(obj, Pair):
-      ap("(")
-      tos(obj[0])
-      ap(" . ")
-      tos(obj[1])
-      ap(")")
-    elif isinstance(obj, (tuple, list)):
-      ap("(")
-      map(tos, obj)
-      ap(")")
-    else:
-      if isinstance(obj, dict):
-        ap("( alist-&gt;hash-table ")
-        tos([(k, Ident(u"."), v) for k,v in obj.items()])
-        ap(" ) ")
-      elif obj in self.binding:
-        ap(unicode(Ident(self.binding[obj])))
-      elif isinstance(obj, Symbol):
-        ap(u"'%s"%unicode(obj))
-      elif isinstance(obj, (Ident,int, float, long)):
-        ap(unicode(obj))
-      else:
-        s = unicode(repr(obj)).decode("unicode_escape")
-        m = re.match(r"""^[u|r]?["|'](.*)["|']$""", s, re.M|re.S)
-        if m:
-          s = m.group(1)
-        ap("\"%s\""%s.replace('"','\\"').replace("\\'","'"))
-    return result
-
-dumper = Dumper()
-read = Reader().read
-dump = dumper.dump</pre></section>
-<section>
-<h2>概要</h2>
-<p>特徴は</p>
-<ul class="simple">
-<li>辞書を定義できる</li>
-<li>ドット対に対応</li>
-<li>識別子に対して、任意のバインディングを指定できる</li>
-<li>わりとちゃんとエラー表示される</li>
-<li>シンボル表記、数値表記(python表記)に対応</li>
-</ul>
-<p>といった当たりでしょうか。具体的にはテストコードを見てもらうと分かるかと。</p>
-<pre class="prettyprint ">(あああ hoge-&gt;fuga123 (1 . (2 . 3)) "hoge\\"hoge" ;comment2
-foo "aaa" #t &lt;= 'foo
-"hogehoge
-foo
-" (5 . (6 .()))
-)
-(dict (
-  ("いいい" .
-    (alist-&gt;hash-table (
-      ("a-1" . "vvv")
-      ("a-2" . (
-        hoge foo bar
-      ))
-    )))
-))
-(10 1L -45 010 0x10 -10 -0x10 3.14 10. .001 1e100 3.14e-10 0e0)
-; comment3 ()(
-
-""")</pre><p>という感じのS式が</p>
-<pre class="prettyprint ">[
-  [Ident(u'あああ'), Ident(u'hoge-&gt;fuga123'), Pair([1, Pair([2, 3])]), u'hoge"hoge',
-  Ident(u'foo'), u'aaa', True, Ident(u'&lt;='), Symbol(u'foo'),
-  u'hogehoge\nfoo\n', [5,6]],
-  {u'いいい':
-    {u'a-1': u'vvv',
-    u'a-2': [Ident(u'hoge'), Ident(u'foo'), Ident(u'bar')]}},
-  [10, 1L, -45, 010, 0x10, -10, -0x10, 3.14, 10., .001, 1e100, 3.14e-10, 0e0]
-]</pre><p>となります。 <code>Ident</code> や <code>Symbol</code> はunicodeのサブクラス、 <code>Pair</code> はリストのサブクラスになっているので、違和感なく使えると思います。</p>
-<p>また、 <code><span class="pre">alist-&gt;hash-table</span></code> で辞書が作れます。デフォルトで <code>dict</code> に <code><span class="pre">alist-&gt;hash-table</span></code> をバインドしてますので、 <code>dict</code> でも辞書が作れます。この機能はオンオフ切り替えも可能です。</p>
-<p>その他、 <code>#t</code> を <code>True</code> などSchemeっぽくデフォルトバインディングが用意してあります。もちろん、バインディングは変更可能ですのでCLっぽくもできます。</p>
-<hr class="docutils" />
-<p>と、こんな感じです。一番便利なのはやっぱり辞書ですかねえ。なので、YAML,JSONで書いてる設定ファイルをS式で置き換え･･･なんてことができるかもしれません。</p>
 </section>
 
   </div>

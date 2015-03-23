@@ -203,16 +203,10 @@ let decode t n = Enc.encode (Encoding.of_name n) t;;</pre><p>などとPythonみ�
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/02/04/nes-emulator-development-with-python-4" itemprop="url">PythonによるNESエミュレータ開発4</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/05/13/python-reversed-list" itemprop="url">Python:リストの逆順</a></h3>
 <div class="meta">
-<time datetime="2007-02-04T00:25:04&#43;09:00">Feb  4, 2007</time>
+<time datetime="2007-05-13T23:22:19&#43;09:00">May 13, 2007</time>
 
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
-  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
-  
-  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
   
   <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
   
@@ -220,45 +214,19 @@ let decode t n = Enc.encode (Encoding.of_name n) t;;</pre><p>などとPythonみ�
 </div>
 </header>
   <div itemprop="articleBody">
-    <img alt="/statics/files/pynes1.jpg" src="/statics/files/pynes1.jpg" />
-<p>パッド入力部分を書いたので、動くゲームも出てきました。といってもまだほとんどのゲームが動かないんですけど。画面は <a class="reference external" href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">ブルジョアソフトウェア研究所</a> さんのTkShoot 1.00が動作している様子です。</p>
-<p>さて、ここまできたので基本的にはこの企画も終了かなー、という感じがします。目的はPythonのパフォーマンスについて知ることだったので。</p>
-<p>作成の過程でかなりPythonのパフォーマンス関連について勉強ができてよかったと思います。</p>
-<section>
-<h2>速度</h2>
-<p>サウンドは作っていないので、それを除くと1frameだいたい0.4秒弱くらいで動きます(もちろんpsycoを導入して)。変にベタ書きしたりはしていません。わりとメソッドはちゃんと分割しています。ただ、LDA $ssss(absolute addressingのLDA)だけ、実行回数が多いので完全にベタ書きしました。</p>
-<p>んで感じたのは</p>
-<ul class="simple">
-<li>プリプロセッサでマクロを使えばそこそこ実用的な速度になりえるのではないか</li>
-<li><a class="reference external" href="http://bytecodehacks.sourceforge.net/bch-docs/bch/index.html">bytecodehacks</a> でインライン化すれば結構いけるんじゃないか。ただし、bytecodehacksがオブジェクトのメソッドには対応していないので、classを使わずに書くことになる。</li>
-<li>部分的にCで拡張モジュールを書けば、わりといけそう</li>
-</ul>
-<p>ってことでしょうか。</p>
-<p>まぁただ、JAVAとかC系全く分かりません＞＜っていう人以外は、素直にC系かJAVAで書いたほうがいいと思います。</p>
-<p>高速化のためにオブジェクトのプロパティをローカルにだしたり</p>
-<pre class="prettyprint ">read = self.memory.read
-write = self.memory.write
-# .
-# .
-  for i in xrange(foo):
-    code = read(addr)
-    # .
-    # .
-    # .</pre><p>するので、無駄に行数も増えますし、ぶっちゃけ読みにくいです。それでも普段使い慣れてるLLで書けるってのは大きな利点だとは思います。</p>
-<p>10年くらいして、マシンがもっと速くなることに期待しましょう、ということで（笑</p>
-</section>
-<section>
-<h2>その他雑感</h2>
-<p>現時点でも単純なゲームくらいなら、そこそこ動くのでコンピューターの仕組みの基礎を学ぶには、もしかしたらLLでエミュレータってのはいいかも。当然ですけど、デバッグの段階ではアセンブリ言語を書くことになりますし、そのアセンブリ言語の内容も完全に自分で処理するわけですから、単に本で読むよりは格段CPUやメモリについて詳しくなれると思います。ただ、CPUの仕組みを勉強しながら書くのはきついものがあるかもしれませんが・・・</p>
-<p>他の利点としては「俺エミュレータ書いたんだぜ」と自慢できる（笑）、自分の書いたエミュレータでゲームが動くと結構感動できる、というくらいでしょうか。</p>
-<hr class="docutils" />
-<p>というわけで、とりあえず動くようになりました。今のところソースをアップする気はないです。（してもほとんどのゲームは動かないし意味無い）</p>
-<p>確実にいないと思いますが、もし、「俺もLLでエミュレータ書いてみるんだぜ！だからお前のしょーもないソースも参考にしてやるから見せるんだぜ！ついでにエミュってどうやって作るのか教えるんだぜ！」というような方や「おめーソースがないのに信用できるか！」という方がおられましたら、この記事のコメント欄やはてブなんかのコメントに、「うｐ」とか書いてください。適当にソースまとめてうｐして、それをネタに簡単なエミュの書き方でも記事にします（笑</p>
-<p>まぁとにかく書いてて楽しかったです。チャレンジ精神旺盛な方、そして時間があまっている方は是非LLでエミュにチャレンジしてみてください。</p>
-<p>#追記
-アップしました。コチラの記事へドウゾ。</p>
-<p><a class="reference external" href="/articles/2007/03/02/nes-emulator-development-with-python-5">PythonによるNESエミュレータ開発5</a></p>
-</section>
+    <p>ネットをただよってたらこんなの見つけた。古いのに突っ込んで申し訳ない。</p>
+<p><a class="reference external" href="http://sh1.2-d.jp/b/2006/Jun/2">sorted関数とreversed関数</a></p>
+<blockquote>
+元のリストに副作用を起こさずに得ようと思ったら、
+[x for x in reversed(l)]
+か、・・・</blockquote>
+<p>これPython結構やってても知らない人が多い気がする。というかなかなか必要にならない気がする。</p>
+<pre class="prettyprint ">lst = [1,2,3,4,5]
+reversed(lst)
+# =&gt; &lt;listreverseiterator object at 0x00B90630&gt;
+lst[::-1]
+#=&gt; [5, 4, 3, 2, 1]</pre><p>リストを非破壊的に逆順にするときってreversed使うんだけど、返ってくるのはイテレータ。</p>
+<p>んじゃリストを得るときは、ってなるんだけど <code><span class="pre">lst[::-1]</span></code> ってする方法があったりする。リストスライスの3つめの値って忘れ去られがちな気がする・・・。</p>
 
   </div>
 </article>
