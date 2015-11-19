@@ -7,10 +7,28 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>23 Mar 15 12:12 UTC</lastBuildDate>
+    <lastBuildDate>19 Nov 15 11:58 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
+    
+    <item>
+      <title>icebergのLinux対応版 v0.9.7リリース </title>
+      <link>http://inforno.net/articles/2015/11/19/iceberg-0-9-7-released</link>
+      <description>&lt;p&gt;コマンドラインランチャー &lt;a class=&#34;reference external&#34; href=&#34;http://yuin.github.io/iceberg/&#34;&gt;iceberg&lt;/a&gt; のv0.9.7 をリリースしました。 GitHubの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/releases&#34;&gt;リリース一覧&lt;/a&gt; よりダウンロードできます。&lt;/p&gt;
+&lt;p&gt;今回からLinuxに対応しました。私は普段、ほぼWindowsがホストでVirtualbox上のUbuntuで開発を行っておりそこではLaunchyを使ってお茶をにごして？いたのです。がやはり慣れているicebergを使いたいと思っていたのでがんばって対応してみました。&lt;/p&gt;
+&lt;p&gt;Macを使っている人はそもそもAlfredなどを使っているでしょうけど、Windowsだと私と同じかたちの人も多いのではないかと思います。ぜひ使ってみてください。Linuxのコマンドラインランチャーでmigemo対応しているものはなかなか無いのではないでしょうか。&lt;/p&gt;
+&lt;p&gt;icebergはQtやGTKではなくfltkというミニマリストなGUIフレームワークなのでGUI以外の機能はほとんどフレームワークにありません。かといって、ここでQtやGTKに依存するのも癪だったのでLinuxではアイコンのルックアップなどを自分で実装したんですが結構しんどかったですね･･･。ただ、あらかじめマルチプラットフォームを視野にいれたつくりにしてあったので、ゴリゴリ書いていくだけで動くのは動いたのでよかったです。&lt;/p&gt;
+&lt;p&gt;内部的にはfltkのバージョンもあげました。これでWindows8以降でも互換モードなしで動いたりしないかなあ、と思っているのですが、いかんせん実機をもっていないのでどうにも。次はWindows10にすると思うので結局Windows8系は確認できないまま終わりそうです。&lt;/p&gt;
+&lt;p&gt;あと、ここまできたらなんでMacに対応しないんだ、となりそうですが単純に私がMacを持っていないからです。それに、icebergはMacの文化に合わない気がします。ただ、icebergは作者の私が一番の愛用者であるソフトなのでもし私がMacを手に入れることがあったら、対応すると思います。まぁイケてる会社のプログラマーに転職でもしないとMacを使うようなことはないと思いますが。&lt;/p&gt;
+&lt;p&gt;なにか問題ありましたらGithubの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/issues&#34;&gt;Issues&lt;/a&gt; までどうぞ。&lt;/p&gt;
+</description>
+      
+      <category>iceberg</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2015/11/19/iceberg-0-9-7-released</guid>
+      <pubDate>19 Nov 15 11:58 UTC</pubDate>
+    </item>
     
     <item>
       <title>GopherLuaを設定ファイルで使うライブラリを書きました </title>
@@ -279,139 +297,6 @@ func main() {
       
       <guid isPermaLink="true">http://inforno.net/articles/2014/10/20/iceberg-0-9-6-released</guid>
       <pubDate>20 Oct 14 11:15 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>cidre: 軽量Go言語用WEBフレームワーク </title>
-      <link>http://inforno.net/articles/2014/10/06/cidre-my-new-webframework-in-golang</link>
-      <description>&lt;p&gt;Go言語は標準の &lt;code&gt;net/http&lt;/code&gt; が結構よくできてるので、WEBフレームワークはなくてもいいだとかそういう話がありますし、 &lt;code&gt;net/http&lt;/code&gt; をラップした俺俺フレームワークが大量に作られています。&lt;/p&gt;
-&lt;p&gt;というわけで、俺も遅ればせながら俺俺フレームワークを作りました。&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://yuin.github.io/cidre/&#34;&gt;cidre&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;読み方は「シードル」。お酒の名前つけるのが慣習ですからね。よくあるこんな感じ。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint &#34;&gt;package main
-
-import (
-  &#34;github.com/yuin/cidre&#34;
-  &#34;net/http&#34;
-)
-
-func main() {
-    app := cidre.NewApp(cidre.DefaultAppConfig())
-    root := app.MountPoint(&#34;/&#34;)
-
-    root.Get(&#34;show_welcome&#34;, &#34;welcome&#34;, func(w http.ResponseWriter, r *http.Request) {
-        app.Renderer.Text(w, &#34;Welcome!&#34;)
-    })
-
-    app.Run()
-}&lt;/pre&gt;&lt;section&gt;
-&lt;h2&gt;特徴&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;p class=&#34;first&#34;&gt;よくあるSinatraチックなAPI&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p class=&#34;first&#34;&gt;できるだけ標準インタフェースを使用。いろんな既存ライブラリとの相性が良い。&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;dl class=&#34;first docutils&#34;&gt;
-&lt;dt&gt;他の薄いフレームワークではオプションな機能も一部内包。&lt;/dt&gt;
-&lt;dd&gt;&lt;ul class=&#34;first last simple&#34;&gt;
-&lt;li&gt;セッション、フラッシュメッセージ&lt;/li&gt;
-&lt;li&gt;レイアウト機能をサポートした &lt;code&gt;html/template&lt;/code&gt; のラッパー&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/dd&gt;
-&lt;/dl&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p class=&#34;first&#34;&gt;フック機能を提供していて、より柔軟に外部から拡張可能。&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;開発経緯&lt;/h2&gt;
-&lt;p&gt;そもそもPythonistaの御多聞にもれず、2と3のはざまでもだえる中でGo言語書くことが多くなってたんですね。んでWEBもGo言語でさらっと書きたい、と。&lt;/p&gt;
-&lt;p&gt;Go言語のWEBフレームワークはいっぱいあって、軽量だとMartiniだとかGinだとかnegroniだとか、重量級だとbeegoだとかrevelだとか。俺の好みとしてやっぱりシンプルなものが好きなので軽量フレームワークを使いたいところだけど、Martiniはtoo magicだし、Ginは40 times fasterってのが詐欺っぽいし、negroniはツールであってフレームワークじゃないと言っているしで、あんまりしっくりくるのがありませんでした。&lt;/p&gt;
-&lt;p&gt;なので自分が最低限必要と思う機能を組み込んだフレームワークを作ったわけです。ミドルウェアで対応できるけど組み込まれてたほうが楽だし。SPAが流行ってるって言ってもさらっと作るときはフラッシュメッセージが楽だし、設定は外出ししときたいし、とか。&lt;/p&gt;
-&lt;p&gt;基本的に &lt;code&gt;http.Handler&lt;/code&gt; (もしくは &lt;code&gt;http.HandlerFunc&lt;/code&gt; )で構成されるので他のいわゆる「ミドルウェア」と呼ばれているものもすんなり組み込めます。せっかく組み込みライブラリがよくできてるんだから、なるべくフレームワーク特有のことは覚えたくないのもある。&lt;/p&gt;
-&lt;p&gt;テンプレートエンジンやSessionストアやロガーはInterfaceなので差し替え可能です。&lt;/p&gt;
-&lt;p&gt;あと、適当に今風のプロジェクトページ作りました。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;開発中に思ったこと&lt;/h2&gt;
-&lt;p&gt;俺俺フレームワークを書きたい方のために、cidreを書いてる時に思ったこと、検討したことを書いておきます。&lt;/p&gt;
-&lt;section&gt;
-&lt;h3&gt;Contextの持ち方&lt;/h3&gt;
-&lt;p&gt;どのフレームワークも &lt;code&gt;Context&lt;/code&gt; という構造体がだいたいある。これは入れ子になってる &lt;code&gt;http.Handler&lt;/code&gt; 間でデータを受け渡すのが主目的だ。&lt;/p&gt;
-&lt;p&gt;でContextの考え方は3種類ある。&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;&lt;ol class=&#34;first arabic&#34;&gt;
-&lt;li&gt;&lt;code&gt;http.Handler&lt;/code&gt; インタフェースを使わず独自インタフェースをつくって引数として渡す。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;ol class=&#34;first arabic&#34; start=&#34;2&#34;&gt;
-&lt;li&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/gorilla/context&#34;&gt;Gorilla context&lt;/a&gt; のようなスレッドローカル変数を使う。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;ol class=&#34;first arabic&#34; start=&#34;3&#34;&gt;
-&lt;li&gt;&lt;code&gt;http.Handler#ServeHTTP&lt;/code&gt; の引数である &lt;code&gt;http.ResponseWriter&lt;/code&gt; か &lt;code&gt;http.Request&lt;/code&gt; のどこかに埋め込む。&lt;/li&gt;
-&lt;/ol&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;1はGinやnegroniなど大半のフレームワークが採用している方法。これはこれでシンプルでよい。ただし独自インタフェースになる。&lt;/p&gt;
-&lt;p&gt;2はスレッドローカルにするためにgoなのにLock, Unlockが走りまくるのが難点だが見た目すごくクリーン。&lt;/p&gt;
-&lt;p&gt;3は生成時にトリックが必要だけど標準インタフェースを使えて、ロックも発生しない。というわけでcidreは3の方式をとっている。Goで外部からオブジェクトを埋め込むためには&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;それがインタフェースで&lt;/li&gt;
-&lt;li&gt;Public&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;じゃないといけない。というわけで &lt;code&gt;http.Request#Body&lt;/code&gt; に埋め込んでいる。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h3&gt;拡張性&lt;/h3&gt;
-&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://justinas.org/writing-http-middleware-in-go/&#34;&gt;Writing HTTP Middleware in Go&lt;/a&gt; という記事があるように、 &lt;code&gt;http.Handler&lt;/code&gt; をPythonのWSGIミドルウェアのように扱う、というのは標準的な考え方だろう。&lt;/p&gt;
-&lt;p&gt;ただ、結局この方式はただのフィルタであって柔軟性がない。HTTPボディを書く前に処理を差し込みたい、とかできない。正確にはできないことないけどめんどくさい(独自ResponseWriterを作って次のミドルウェアに渡すことになる)。Martiniでは独自ResponseWriterにコールバックが設定できるようになっていてHTTPボディ書く前にヘッダ書くというのができる。&lt;/p&gt;
-&lt;p&gt;でも結局そういうポイントって随所にあって、統一的に扱える仕組みがあったほうがよいと思う。のでHookの仕組みをつくってサーバ起動時、とかいろんなところをフックできるようにしてある。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h3&gt;設定オブジェクト&lt;/h3&gt;
-&lt;p&gt;これは何を今さら、な話で設定を表すオブジェクトをどう扱うか、ということ。例えば以下のようなstructがあるとして&lt;/p&gt;
-&lt;pre class=&#34;prettyprint &#34;&gt;type Config struct {
-    Host string
-    Port int
-    Timeout time.Duration
-}&lt;/pre&gt;&lt;p&gt;これにどうデフォルト値を適応するかっていうこと。&lt;/p&gt;
-&lt;p&gt;スクリプト言語ならundefinedなりnullなりnilなり未初期化を表す共通の値があるので、よいのだがCやGoではintは初期値0だし、0と設定したのか未設定なのかわからない。&lt;/p&gt;
-&lt;p&gt;なので以下のようなデフォルト設定を返す関数をつくってそれに設定を追加していく形がよいと思う。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint &#34;&gt;func DefaultConfig(init ...func(*Config)) *Config {
-    self := &amp;amp;Config {
-        Host: &#34;localhost&#34;,
-        Port: &#34;8080&#34;,
-        Timeout: 180 * time.Second,
-    }
-    if len(init) &amp;gt; 0 {
-        init[0](self)
-    }
-    return self
-}
-
-config := DefaultConfig()
-config.Timeout = 0&lt;/pre&gt;&lt;p&gt;あと利便性のためこういう書き方もできるようにしてある。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint &#34;&gt;app := NewApp(DefaultConfig(func (config *Config){
-    config.Timeout = 0
-})&lt;/pre&gt;&lt;p&gt;といろいろあるけどこんなところで。&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;今後について&lt;/h2&gt;
-&lt;p&gt;今後も細々メンテしていくつもりですし、ミドルウェアなんかも追加していきたいなあと思っています。やっぱGo言語はさらっと書けるそれなりに速いし、いいっす。&lt;/p&gt;
-&lt;/section&gt;
-</description>
-      
-      <category>golang</category>
-      
-      <category>cidre</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2014/10/06/cidre-my-new-webframework-in-golang</guid>
-      <pubDate>06 Oct 14 11:52 UTC</pubDate>
     </item>
     
   </channel>

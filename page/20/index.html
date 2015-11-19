@@ -61,208 +61,6 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/01/12/nes-emulator-development-with-python-2" itemprop="url">PythonによるNESエミュレータ開発2</a></h3>
-<div class="meta">
-<time datetime="2007-01-12T02:50:02&#43;09:00">Jan 12, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
-  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
-  
-  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>実は既に結構挫折気味。</p>
-<p>やっぱりPythonではちょっと厳しいかもしれない。</p>
-<p>とりあえず一番ややこしいPPU周りの情報を調べて、ちょろちょろ書き始めたあたりでいったんCPU部分のパフォーマンスを調べてみました。</p>
-<p>かなり厳しいものがあります。CPU部分のコードはPython的な書き方で書いてたんですが、これじゃ話にならない。まず、アクセサなんてものはつかっちゃいけないのだ。</p>
-<p>以下環境はOS:WinXP,CPU:Athlon64 3000+,Memory:1G,Python2.4です。</p>
-<section>
-<h2>CPUのレジスタ関連の実装</h2>
-<p>NESのCPUである6502のレジスタはPCは16bit、それ以外は8bit。8bitの値なんてものはCならunsigned charで一発なんだけど、Pythonにはそんなものない。足し算したらどんどん大きくなるし、引き算したらどんどん小さくなる。ので</p>
-<pre class="prettyprint ">class Py6502(object):
-  def __init__(self):
-    self.A = 0
-    self.X = 0
-    self.Y = 0
-    self.PC = 0
-    #  .
-    #  .
-    #  .</pre><p>見たいなクラスにするとして、足し算するときなどは必ず <code>self.A = (self.A + x) &amp; 0xff</code> みたいにして8bitに収めないといけない。ここで</p>
-<pre class="prettyprint ">def _create_n_bit_property(name, mask):
-  rname = "_"+name
-  result = {
-    name:property(lambda self: getattr(self, rname),
-                  lambda self,v : setattr(self, rname, v &amp; mask),
-                  )
-  }
-  return result
-
-class ForceNbitType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    names = classdict.get("__16bit__")
-    for name in names:
-      classdict.update(_create_n_bit_property(name, 0xffff))
-    names = classdict.get("__8bit__")
-    for name in names:
-      classdict.update(_create_n_bit_property(name, 0xff))
-    cls = type.__new__(cls, class_name, class_bases, classdict)
-    return cls</pre><p>のようなmetaclassをつくって</p>
-<pre class="prettyprint ">class Py6502(object):
-  __metaclass__ = ForceNbitType
-  __8bit__ : "A", "X", "Y"
-  __16bit__ : "PC",
-  def __init__(self):
-    self._A = 0
-    self._X = 0
-    self._Y = 0
-    self._PC = 0
-    #  .
-    #  .
-    #  .</pre><p>とすれば <code>self.A += 10</code> とかしてもちゃんと8bitに収まる。</p>
-<p>非常に上手くかけるんですが、こんなのやってらんない。遅すぎる。1Frame分(28000サイクル程度)の実行に0.5秒（笑</p>
-</section>
-<section>
-<h2>getattr</h2>
-<p><code>getattr` は遅い。 ``getattr</code> の真価は第3引数でdefault値が指定できること（だと思う）。今回のように確実に属性が存在することが分かっているなら <code>self.__getattribute__(name)</code> を使うと結構違ってくる。ちなみにPythonのソースではこんな感じ。</p>
-<pre class="prettyprint ">static PyObject *
-slot_tp_getattro(PyObject *self, PyObject *name)
-{
-    static PyObject *getattribute_str = NULL;
-    return call_method(self, "__getattribute__", &amp;getattribute_str,
-                       "(O)", name);
-}
-
-static PyObject *
-slot_tp_getattr_hook(PyObject *self, PyObject *name)
-{
-    PyTypeObject *tp = self-&gt;ob_type;
-    PyObject *getattr, *getattribute, *res;
-    static PyObject *getattribute_str = NULL;
-    static PyObject *getattr_str = NULL;
-
-    if (getattr_str == NULL) {
-            getattr_str = PyString_InternFromString("__getattr__");
-            if (getattr_str == NULL)
-                    return NULL;
-    }
-    if (getattribute_str == NULL) {
-            getattribute_str =
-                    PyString_InternFromString("__getattribute__");
-            if (getattribute_str == NULL)
-                    return NULL;
-    }
-    getattr = _PyType_Lookup(tp, getattr_str);
-    if (getattr == NULL) {
-            /* No __getattr__ hook: use a simpler dispatcher */
-            tp-&gt;tp_getattro = slot_tp_getattro;
-            return slot_tp_getattro(self, name);
-    }
-    getattribute = _PyType_Lookup(tp, getattribute_str);
-    if (getattribute == NULL ||
-        (getattribute-&gt;ob_type == &amp;PyWrapperDescr_Type &amp;&amp;
-         ((PyWrapperDescrObject *)getattribute)-&gt;d_wrapped ==
-         (void *)PyObject_GenericGetAttr))
-            res = PyObject_GenericGetAttr(self, name);
-    else
-            res = PyObject_CallFunction(getattribute, "OO", self, name);
-    if (res == NULL &amp;&amp; PyErr_ExceptionMatches(PyExc_AttributeError)) {
-            PyErr_Clear();
-            res = PyObject_CallFunction(getattr, "OO", self, name);
-    }
-    return res;
-}</pre><p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
-</section>
-<section>
-<h2>実行ループ</h2>
-<p>CPUのエミュレータなんてのはだいたい同じようなパターンで割り込みを除いて簡単に書くと</p>
-<pre class="prettyprint ">def step_execute(self, clocks):
-  while (self.passed_clocks &lt; clocks):
-    opecode = read()# opecodeを取得
-    # 実行
-    count = CLOCK[opecode] # 実行に必要なクロック数を取得
-    self.passed_clocks += count
-  self.passed_clocks -= clocks</pre><p>なんてのになるわけで、ここが激しくループするわけで。ここはガリガリにちょっとでも節約できるものは節約。</p>
-<pre class="prettyprint ">def step_execute(self, clocks):
-  read = self.memory.read
-  get_method_by_opecode = self.get_method_by_opecode
-  while (self.passed_clocks &lt; clocks):
-    old = self._PC; self._PC += 1; self._PC &amp;= 0xffff
-    opecode = read(old)
-    method = get_method_by_opecode(opecode)
-    count = method()
-    count = count != None and count or CYCLES[opecode]
-    self.passed_clocks += count
-  self.passed_clocks -= clocks</pre><p>javascriptで.(ドット)演算が遅いとかいうのは最近（？）よく言われていることで、それはPythonにも当然当てはまる。なのでループ前にだせるものはローカルに出しておく。（これが簡単にできるのがRubyよりもPythonがいい部分だよなあ）</p>
-<p>あと、実行の部分。ここはCなら関数テーブルかswitch(コンパイラによるけど大差ないと思う）になるんだけど、あいにくPythonにはswitchがないので関数テーブル的なものか <code>if opecode == 0x01: ... elif opecode == <span class="pre">0x02:...</span> <span class="pre">elif...</span></code> かになる。</p>
-<p>関数テーブル的なものは</p>
-<pre class="prettyprint ">def ope_0x01(self):
-  #code
-def ope_0x02(self):
-  #code
-
-self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
-</section>
-<section>
-<h2>結局</h2>
-<p>そんな感じでいじってみてかつpsycoを入れて1Frame:0.15程度（PPUやAPUは中身がないので、最後までつくったらもっと遅くなる）。ほかにもいじれそうなところはあって、そこをいじれば0.1は切れそうな感じがしてます。</p>
-<p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに <code>A &amp; 0xff</code> みたいなことをやっていて、どーもめんどくさい。</p>
-<p>じゃぁLLでエミュレーターを書く意味ってなんだ、というと・・・うーん（笑　自己満足以外なにもないでしょうねえ。というわけで自己満足のために、今後もヒマができれば、ちょっとづつ書き進めてみようかなあ。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/01/04/nes-emulator-development-with-python-1" itemprop="url">PythonによるNESエミュレータ開発1</a></h3>
-<div class="meta">
-<time datetime="2007-01-04T03:02:21&#43;09:00">Jan  4, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
-  
-  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>正月だというのにひたすらCPUの命令を実装・・・。ここはひたすら地道な作業が続く。やっぱりこういう単純作業は苦手だ・・・</p>
-<p>実装の際には <a class="reference external" href="http://www.geocities.co.jp/SiliconValley/5604/infones.html">InfoNES</a> や <a class="reference external" href="http://fms.komkon.org/EMUL8/">6502 Emulation Package</a> のソースコード、そして <a class="reference external" href="http://crystal.freespace.jp/pgate1/nes/nes_cpu.htm">NES on FPGAのCPUのページ</a> に大変お世話になりました。特にNES on FPGAのページは非常に分かりやすくまとめられていて助かりました。</p>
-<p>実装方針は前にも書いたとおり「できるだけPythonっぽく」。着々とエミュレーターっぽくないソースが出来上がってきています（笑　エミュレータのソースコードというとそれはもう、C言語でマクロ全開、register指定、inline(もしくはstatic)で出力されるコードを極限まで速く、なんて感じですが全く逆です。分かりやすさ優先。とりあえず書いてみて、ダメそうなら諦めるか頑張ってチューニングするか考えよう。</p>
-<p>今日までで、CPUの全命令は実装しました（したつもり）。ただ、Indexed Absolute AddressingのX,Y、そしてIndirect Indexed Addressingでページクロスしたとき1クロック余計に発生する、という件は今のところスルー。</p>
-<p>メモリ周りもIO以外はだいたい作ったので、今日の時点で単純なコードなら実行可能に。早速アセンブラを書いてNESASMで.NESファイルを作成。それを読み込んで動かしてみました。とりあえず動くことは動く・・・が全命令が正しく実装されているかはまだ分からないです（笑</p>
-<p>というわけで次はデバッグ環境を整えて、命令のテストをしないとなあ。</p>
-<p>余談。いやー卒論という重圧がないのは非常にプログラミングがはかどる。別にギリギリなわけでもないのに「卒論完全に出来上がってないのにこんなことしてていいのかなーって感じちゃう」的なものがないし。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
 <h3 itemprop="name"><a href="/articles/2007/01/01/happy-late-new-year-and-how-i-am-doing" itemprop="url">謹賀新年＆近況</a></h3>
 <div class="meta">
 <time datetime="2007-01-01T23:39:16&#43;09:00">Jan  1, 2007</time>
@@ -321,6 +119,227 @@ class byte_ref(object):
 <p>ここをctypesでポインタを使えば考えなくてもよかったんですが、あえてPythonなんだ、ということで（笑</p>
 <p>近況はこんな感じです。</p>
 <p>ついに就職が近づいてきました。仕事はプログラマではないので、プログラムを書く時間はあんまり取れないかもしれません。でもまぁ、日曜プログラマとして細々やっていけたらなあ、と思っています。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware" itemprop="url">vimでvmwareとWindowsのクリップボードを同期する</a></h3>
+<div class="meta">
+<time datetime="2006-11-28T00:19:12&#43;09:00">Nov 28, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/linux/" rel="tag" itemprop="keywords">linux</a></span>
+  
+  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
+  
+  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a>  とか  <a class="reference external" href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a>
+から。</p>
+<p>上記のサイトのをもってきて.vimrcをちょろっと書けばいいんだけど、テキストを受信するサーバーは常時立ち上げていそうで、スクリプトだとなんとなくアレなので、exeがいいなあ。簡単にできそうなので、とりあえず探すよりは作ってみるメソッド。</p>
+<section>
+<h2>ファイル一式</h2>
+<p><a class="reference external" href="/statics/files/clsync.zip">clsync.zip</a></p>
+<p>内容は</p>
+<ul class="simple">
+<li>clipboard_server.exe：Windows側で実行するサーバー</li>
+<li>clipboard_server.ini：サーバーのポートの設定</li>
+<li>clsync.py：vmware側におくクライアントスクリプト</li>
+</ul>
+</section>
+<section>
+<h2>使い方など</h2>
+<p>Windows側ではclipboard_server.iniで適当にポートを設定して（当然外部から見えないやつを）、clipboard_server.exeを起動しておいてください。タスクトレイにアイコンが表示されてますので、そこから終了できます。</p>
+<p>vmware上のLinuxですが、まずnkfがインストールされている必要があります。すみません、クライアント側手抜きするために使っています。そしてclsync.pyをパスの通ったところにおきます。clsync.pyにはホストのWindows側で動いてるサーバーのポートとIPを設定する箇所があるので、適宜書き換えます。またポートとIPはオプションでも渡せます（詳しくはclsync.py -hで）。</p>
+<p>あとは</p>
+<pre class="prettyprint ">function! SyncClipboard()
+  let cliptext = substitute(getreg(), "'", "'\"'\"'", 'g')
+  let cmd = "echo '" . cliptext . "' | clsync.py"
+  call system(cmd)
+endfunction
+nmap ,c :call SyncClipboard()&lt;CR&gt;</pre><p>こんな感じなのを.vimrcに追加すればOK。最後にyankしたものが,cでホストのWindowsのクリップボードに送られます。</p>
+<p>追記：
+っとよく考えたらvmw copyとまったく一緒。.vimrcのclsync.pyの部分をvmw copyに置き換えれば同じように動作する。ただ、vmwの説明には</p>
+<blockquote>
+コピーするテキストに改行コード以外の非 ASCII 文字を含めることはできません。
+ゲストおよびホスト OS によっては、キャリッジリターンの付与・除去が行われ
+ます。
+コピー可能なテキストの最大長は約 65,000 バイトです。</blockquote>
+<p>ってある。
+今回作ったモノの場合はnkfをかませているのでもちろんいつでも日本語オーケー。
+それ以上は深くみてないけど、UTF-8だと日本語でもvmw copyしても問題なさそうだ。EUC-JPの「ほげほげ」とかいう内容のtest.txtをvmw copy test.txtとかするとダメだった。</p>
+<p>ま、というわけで、 cat test.txt | nkf -w | vmw copyで万事解決なんだけど。</p>
+<p>というわけでこのツールは使われないまま終わる（笑
+coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2006/10/24/python-generating-accessors-using-property" itemprop="url">Python:続・アクセサの生成</a></h3>
+<div class="meta">
+<time datetime="2006-10-24T18:32:02&#43;09:00">Oct 24, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="/articles/2006/09/30/python-generating-accessors">以前書いてみたアクセサ</a> をpropertyを使って改良してみる。</p>
+<p>propertyというのはnew-styleクラスに対してのみ使える、メソッドで</p>
+<pre class="prettyprint ">class C(object):
+    def __init__(self): self.__x = None
+    def getx(self): return self.__x
+    def setx(self, value): self.__x = value
+    def delx(self): del self.__x
+    x = property(getx, setx, delx, "I'm the 'x' property.")</pre><p>こんな感じで使う。</p>
+<p>Rubyを使った人なら分かると思うけど、プロパティ名でのアクセス＝アクセサ呼び出しになるのは結構便利。
+ActiveRecordなんかでは、特に便利だと感じる。あ、このプロパティ、もういっそエンコードされた値を返したい、と思ったときにそのクラスにプロパティ名と同じメソッドを定義するだけでいいし。</p>
+<p>前につくったアクセサは「get_hoge()」や「set_hoge()」といった感じで呼び出されたけど、これにpropertyを使うことによってRubyと同じような属性アクセスが可能になる。</p>
+<p>とりあえずこんな感じ。</p>
+<pre class="prettyprint ">#!/usr/bin/python
+# vim: fileencoding=utf-8
+from itertools import *
+
+def property_accessor(cls, *names):
+  _property(cls, names)
+
+def property_reader(cls, *names):
+  _property(cls, names, True)
+
+def property_writer(cls, *names):
+  _property(cls, names, False, True)
+
+def _property(cls, names, error_setter = False, error_getter = False):
+  for attr_name, doc in _name_and_docs(names):
+    real_name = _real_name(cls, attr_name)
+    setter  = _add_setter(cls, attr_name, real_name, error_setter)
+    getter  = _add_getter(cls, attr_name, real_name, error_getter)
+    deleter = _add_deleter(cls, attr_name, real_name)
+    setattr(cls, attr_name, property(getter, setter, deleter, doc))
+
+def _name_and_docs(name_or_tuples):
+  return imap(_name_and_doc ,name_or_tuples)
+
+def _name_and_doc(name_or_tupple):
+  if isinstance(name_or_tupple, ("".__class__, u"".__class__)) :
+    return (name_or_tupple, "")
+  else:
+    return name_or_tupple
+
+def _real_name(cls, name) :
+  return "_%s__%s"%(cls.__name__, name)
+
+def _add_method(cls, verb, name, method_to_add):
+  method_name = "%s_%s" % (verb, name)
+  method = cls.__dict__.get(method_name)
+  if not method :
+    method = method_to_add
+    setattr(cls, method_name, method)
+  return method
+
+def _add_setter(cls, name, real_name, error = False) :
+  if error:
+    def setter(self, v):
+      raise AttributeError, "class %s: %s is a read-only attribute." % (cls.__name__, name)
+  else:
+    setter = lambda self, v : setattr(self, real_name, v)
+  return _add_method(cls, "set", name, setter)
+
+def _add_getter(cls, name, real_name, error = False) :
+  if error:
+    def getter(self):
+      raise AttributeError, "class %s: %s is a write-only attribute." % (cls.__name__, name)
+  else:
+    getter = lambda self : getattr(self, real_name)
+  return _add_method(cls, "get", name, getter)
+
+def _add_deleter(cls, name, real_name) :
+  deleter = lambda self : delattr(self, real_name)
+  return _add_method(cls, "delete", name, deleter)
+
+class AccessorType(type):
+  def __new__(cls, class_name, class_bases, classdict):
+    cls = type.__new__(cls, class_name, class_bases, classdict)
+    list = ["__accessor__", "__reader__", "__writer__"]
+    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
+    for accessor_type, method in izip(list, methods):
+        if classdict.has_key(accessor_type):
+          method(cls, *classdict[accessor_type])
+    return cls
+
+class Accessor(object):
+  __metaclass__ = AccessorType
+  def __init__(self, *args) :
+    list = ["__accessor__", "__reader__", "__writer__"]
+    for accessor_type in list:
+      if not self.__class__.__dict__.has_key(accessor_type) : continue
+      for name in self.__class__.__dict__.get(accessor_type):
+        attr_name, doc = _name_and_doc(name)
+        if not self.__dict__.get(attr_name):
+          exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>使い方は</p>
+<pre class="prettyprint ">#!/usr/bin/python
+# vim: fenc=utf-8
+import accessor
+
+class Test(accessor.Accessor) :
+  __accessor__ = [("x", "This is x value"), "y", "z"]
+  __reader__    = ["r"]
+
+  def __init__(self):
+    accessor.Accessor.__init__(self)
+
+  def get_y(self) :
+    return "new y value"
+
+obj = Test()
+obj.x = "hoge"
+
+print obj.x
+# =&gt; hoge
+
+print Test.x.__doc__
+# =&gt; This is x value
+
+print obj.y
+# =&gt; new y value
+
+obj.r = "value"
+# =&gt; AttributeError: class Test: r is a read-only attribute.</pre><p>こんな感じ。</p>
+<p><code>get_*` とか ``set_*</code> を定義すれば、独自のアクセサを定義できる。
+属性は全て <code>private(__*)</code> として保存されているので、 <code>self.__x</code> みたいな感じでクラス内ではアクセスできる。</p>
+<p>これやっててはまったのはココ。</p>
+<pre class="prettyprint ">exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
+<!-- sou
+
+exec("self.__%s = None" % (attr_name)) -->
+<p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code><span class="pre">self.__dict__[&quot;_classname__x&quot;]</span> = &quot;hoge&quot;</code> に変換される。</p>
+<p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
+<p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
 
   </div>
 </article>

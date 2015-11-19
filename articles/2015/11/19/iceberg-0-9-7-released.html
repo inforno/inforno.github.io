@@ -2,7 +2,7 @@
 <html lang="ja-JP">
   <head>
     <meta charset="utf-8">
-    <title>inforno :: iceberg v0.9.6リリースしました</title>
+    <title>inforno :: icebergのLinux対応版 v0.9.7リリース</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
@@ -59,9 +59,9 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name">iceberg v0.9.6リリースしました</h3>
+<h3 itemprop="name">icebergのLinux対応版 v0.9.7リリース</h3>
 <div class="meta">
-<time datetime="2014-10-20T20:15:03&#43;09:00">Oct 20, 2014</time>
+<time datetime="2015-11-19T20:58:00&#43;09:00">Nov 19, 2015</time>
 
   
   <span class="tag"><a href="/articles/tag/iceberg/" rel="tag" itemprop="keywords">iceberg</a></span>
@@ -70,26 +70,18 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>コマンドラインランチャー <a class="reference external" href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.6 をリリースしました。 GitHubの <a class="reference external" href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
-<p>v0.9.5からのバージョンアップ方法は同梱ドキュメントの更新履歴を参照してください。</p>
-<p>更新点は以下です。</p>
-<ul class="simple">
-<li><strong>FIXED</strong> : 一部のパスでアイコンが正しく読み込まれない問題を修正</li>
-<li><strong>FIXED</strong> : 一部のパスを読み込んだ際にクラッシュする問題を修正</li>
-<li><strong>CHANGED</strong> : 使用するコンパイラをMinGW-W64 4.9.1にアップグレード</li>
-<li><strong>IMPROVED</strong> : 単一キーをホットキーに割り当てられるようになった</li>
-<li><strong>NEW</strong> : パス補完とオプション補完でオートコンプリートを有効にする path_autocomplete と option_autocomplete を追加</li>
-</ul>
-<p>ようやく重い腰をあげてgccのバージョンアップをしました…。icebergは今までmingw gcc4.5系を使っていて、これWindowsのくせにLP64なんですね。まぁそのおかげで＊nix生まれのライブラリでも割と普通に使えていました。</p>
-<p>で4.9にあげたのでWindowsらしくLLP64になったわけで、fltkなんかは平気で <code>long</code> を <code>void*</code> にキャストしてるのでワーニング出まくりでした…。そんなクリティカルな場所はなかったので簡単なパッチ当てて終了。</p>
-<p>鬼車も今まで使ってたバージョンは <code>long</code> のポインタキャストがあって落ちるので最新に。</p>
-<p>なんやかんやあったけど今のところきちんと動いている気がします。なにか問題ありましたらGithubの <a class="reference external" href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
-<p>あと、どうやらicebergはWindows8で動かないっぽいです(Windows7互換モードにすると動く)。 8の環境持ってないのでなんで動かないのかわかりません。コンパイラ変えただけで動くようになってたり…しないかなあ。というわけでWindows8使ってる方、もし互換モードなしで動いたらコメントください。</p>
+    <p>コマンドラインランチャー <a class="reference external" href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.7 をリリースしました。 GitHubの <a class="reference external" href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
+<p>今回からLinuxに対応しました。私は普段、ほぼWindowsがホストでVirtualbox上のUbuntuで開発を行っておりそこではLaunchyを使ってお茶をにごして？いたのです。がやはり慣れているicebergを使いたいと思っていたのでがんばって対応してみました。</p>
+<p>Macを使っている人はそもそもAlfredなどを使っているでしょうけど、Windowsだと私と同じかたちの人も多いのではないかと思います。ぜひ使ってみてください。Linuxのコマンドラインランチャーでmigemo対応しているものはなかなか無いのではないでしょうか。</p>
+<p>icebergはQtやGTKではなくfltkというミニマリストなGUIフレームワークなのでGUI以外の機能はほとんどフレームワークにありません。かといって、ここでQtやGTKに依存するのも癪だったのでLinuxではアイコンのルックアップなどを自分で実装したんですが結構しんどかったですね･･･。ただ、あらかじめマルチプラットフォームを視野にいれたつくりにしてあったので、ゴリゴリ書いていくだけで動くのは動いたのでよかったです。</p>
+<p>内部的にはfltkのバージョンもあげました。これでWindows8以降でも互換モードなしで動いたりしないかなあ、と思っているのですが、いかんせん実機をもっていないのでどうにも。次はWindows10にすると思うので結局Windows8系は確認できないまま終わりそうです。</p>
+<p>あと、ここまできたらなんでMacに対応しないんだ、となりそうですが単純に私がMacを持っていないからです。それに、icebergはMacの文化に合わない気がします。ただ、icebergは作者の私が一番の愛用者であるソフトなのでもし私がMacを手に入れることがあったら、対応すると思います。まぁイケてる会社のプログラマーに転職でもしないとMacを使うようなことはないと思いますが。</p>
+<p>なにか問題ありましたらGithubの <a class="reference external" href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
 
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2015/11/19/iceberg-0-9-7-released">icebergのLinux対応版 v0.9.7リリース</a></li>
+<li><a href="/articles/2014/10/20/iceberg-0-9-6-released">iceberg v0.9.6リリースしました</a></li>
 <li><a href="/articles/2013/11/07/iceberg-commands">AlfredのWorkflow的なやつをWindowsで</a></li>
 <li><a href="/articles/2013/08/15/iceberg-released">コマンドラインランチャー作りました</a></li>
 </ul>
@@ -98,11 +90,11 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2014/10/20/iceberg-0-9-6-released" class="hatena-bookmark-button" data-hatena-bookmark-title="iceberg v0.9.6リリースしました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2015/11/19/iceberg-0-9-7-released" class="hatena-bookmark-button" data-hatena-bookmark-title="icebergのLinux対応版 v0.9.7リリース" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>
-      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2014/10/20/iceberg-0-9-6-released" itemprop="url">Permalink</a></dt>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2015/11/19/iceberg-0-9-7-released" itemprop="url">Permalink</a></dt>
       <dd> </dd>
     </dl>
   </footer>
@@ -111,7 +103,7 @@
 <div id="disqus_thread"></div>
 <script type="text/javascript">
   var disqus_shortname = 'inforno';
-  var disqus_identifier = 'articles\/2014\/10\/20\/iceberg-0-9-6-released';
+  var disqus_identifier = 'articles\/2015\/11\/19\/iceberg-0-9-7-released';
   var disqus_developer = 0;
   if(islocal) {
     disqus_developer = 1;

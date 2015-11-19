@@ -61,6 +61,87 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2" itemprop="url">XREAで好きなバージョンのPythonを使う方法2</a></h3>
+<div class="meta">
+<time datetime="2009-01-25T01:00:00&#43;09:00">Jan 25, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/xrea/" rel="tag" itemprop="keywords">xrea</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
+<p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
+<p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
+<section>
+<h2>Pythonをインストール</h2>
+<p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
+<pre class="prettyprint ">mkdir -p ~/root/usr/local/src
+cd ~/root/usr/local/src
+wget http://www.python.org/ftp/python/2.5.4/Python-2.5.4.tgz
+tar zxvf Python-2.5.4.tgz
+cd Python-2.5.4
+./configure --prefix=~/root/usr/local
+make
+make install</pre><p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
+</section>
+<section>
+<h2>hashlibをインストール</h2>
+<p>なんで、自前でhashlibを単体でいれます。</p>
+<pre class="prettyprint ">cd ~/root/usr/local/src
+wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
+tar zxvf hashlib-20081119.tar.gz
+cd hashlib-20081119
+vi setup.py</pre><p>はい、 <code>setup.py</code> を編集しましょう。普通にbuildするとこれでも <code>md5</code> が入りません。</p>
+<pre class="prettyprint ">105　　 if (ssl_inc_dir and
+106　　　　 ssl_lib is not None and
+107　　　　 openssl_ver &gt;= 0x00907000):
+108
+109　　　　 print 'Using OpenSSL version 0x%08x from' % openssl_ver
+110　　　　 print ' Headers:\t', ssl_inc_dir
+111　　　　 print ' Library:\t', ssl_lib
+112
+113　　　　 # The _hashlib module wraps optimized implementations
+114　　　　 # of hash functions from the OpenSSL library.
+115　　　　 exts.append( Extension('_hashlib', ['_hashopenssl.c'],
+116　　　　　　　　　　　　　　　　include_dirs = [ ssl_inc_dir ],
+117　　　　　　　　　　　　　　　　library_dirs = [ os.path.dirname(ssl_lib) ],
+118　　　　　　　　　　　　　　　　libraries = osNameLibsMap[os.name]) )
+119　　 exts.append( Extension('_sha', ['shamodule.c']) )
+120　　 exts.append( Extension('_md5',
+121　　　　　　　　　　 sources = ['md5module.c', 'md5.c'],
+122　　　　　　　　　　 depends = ['md5.h']) )</pre><p>119-120あたり、強制的に <code>_md5</code> を入れるようにします。あとは</p>
+<pre class="prettyprint ">~/root/usr/local/bin/python setup.py build
+~/root/usr/local/bin/python setup.py install</pre><p>で <code>hashlib</code> が入ります。</p>
+</section>
+<section>
+<h2>easy_installをインストール</h2>
+<p>これで <code>md5</code> が使えるようになったので</p>
+<pre class="prettyprint ">cd ~/root/usr/local/src
+wget http://peak.telecommunity.com/dist/ez_setup.py
+~/root/usr/local/bin/python ez_setup.py</pre><p>これで無事 <code>easy_install</code> が入ります。あとは</p>
+<pre class="prettyprint ">~/root/usr/local/bin/easy_install -U -Z MySQL_Python</pre><p>てな感じで必要なモジュールを入れていきましょう。</p>
+</section>
+<section>
+<h2>というわけで</h2>
+<p>わりと普通にxreaでPythonが使えています。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2009/11/11/go-language" itemprop="url">個人的Go雑感&amp;メモ</a></h3>
 <div class="meta">
 <time datetime="2009-11-11T20:00:00&#43;09:00">Nov 11, 2009</time>
@@ -437,103 +518,6 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
 <section>
 <h2>応用？</h2>
 <p>えー、見てのとおり引数の文字列に <code>printf</code> しているだけなので、cmd.exe以外にも使えます。 <code>%s</code> にあたるカレントフォルダのパスは空白が含まれている場合は自動的に「&quot;」で囲まれます。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python" itemprop="url">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></h3>
-<div class="meta">
-<time datetime="2009-04-23T00:00:00&#43;09:00">Apr 23, 2009</time>
-
-  
-  <span class="tag"><a href="/articles/tag/DHT/" rel="tag" itemprop="keywords">DHT</a></span>
-  
-  <span class="tag"><a href="/articles/tag/kademlia/" rel="tag" itemprop="keywords">kademlia</a></span>
-  
-  <span class="tag"><a href="/articles/tag/p2p/" rel="tag" itemprop="keywords">p2p</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
-<p>Kademliaはいろいろ実装があるので、ソースを読んじゃうと答えみちゃった感じになるかなーと思って、元論文と <a class="reference external" href="http://www.shudo.net/article/Kademlia-20040727/shudo-Kademlia.pdf">首藤様の資料</a> くらいしか見ずに実装してみました。ので、いろいろ間違ってるかも知れませんが･･･。</p>
-<p>本家Kademliaとの主な違いは</p>
-<ul>
-<li><dl class="first docutils">
-<dt>UDPではなくTCPを使っている</dt>
-<dd><ul class="first last simple">
-<li>ローカル環境しかもっていないので、UDPパケットがロスしやすい場合(WAN)を想定して実装するのがめんどくさい。</li>
-<li>よってRPC-IDをつけていない。</li>
-<li>パケットの分割や再送もTCPにおまかせ。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>original publisherから一定時間publishを受けなくてもインデックス情報をexpireしていない</dt>
-<dd><ul class="first last simple">
-<li>実装するのは簡単です。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>ノードがネットワークに参加したとき、Index情報を移動させていません</dt>
-<dd><ul class="first last simple">
-<li>これも実装は簡単です。</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-<section>
-<h2>ダウンロード</h2>
-<p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
-<ul class="simple">
-<li><a class="reference external" href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
-</ul>
-</section>
-<section>
-<h2>実装について</h2>
-<p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
-<p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
-<p>通信にはjsonを使いました。</p>
-</section>
-<section>
-<h2>基本的な動かし方</h2>
-<pre class="prettyprint ">import kademlia_tcp
-kademlia_tcp.DEBUG = True
-n = kademlia_tcp.KademliaNode("ip address", port)
-n.join(n)
-remote = kademlia_tcp.ContactNode("ip address", port)
-n.join(remote)</pre><p>という感じでネットワークを作れます。DEBUGをセットすると、通信情報など、様々な情報が出力されます。あとは</p>
-<pre class="prettyprint ">key = n.hash("key")
-n.publish(key, "value")
-n.find_value(key)
-n.ping(other_node)
-n.store(other_node, key, value)
-n.find_node(other_node)</pre><p>というようなメソッドが使えます。</p>
-</section>
-<section>
-<h2>動かしてみて</h2>
-<p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
-<p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
-</section>
-<section>
-<h2>というわけで</h2>
-<p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
 </section>
 
   </div>

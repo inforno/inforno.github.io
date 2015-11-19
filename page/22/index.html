@@ -61,113 +61,6 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/10/01/python-console-on-tk" itemprop="url">Python:Tkを使って気軽にコンソールアプリ?</a></h3>
-<div class="meta">
-<time datetime="2006-10-01T19:24:15&#43;09:00">Oct  1, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/tk/" rel="tag" itemprop="keywords">tk</a></span>
-  
-  <span class="tag"><a href="/articles/tag/cui/" rel="tag" itemprop="keywords">cui</a></span>
-  
-  <span class="tag"><a href="/articles/tag/gui/" rel="tag" itemprop="keywords">gui</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Windowsの小物はほぼPythonで作っているわけですが。</p>
-<p>WindowsにPythonをインストーラーを使ってインストールすると*.pyにデフォルトだとpython.exeを関連付けしてくれます。
-これは非ﾌﾟﾛｸﾞﾗﾏな人にプログラムを渡すとき非常に便利で、とりあえずPythonをインストールして、このファイルをダブルクリックしろ、というだけでオッケー。exe化して無駄な容量を食わなくても大丈夫なのです。</p>
-<p>んで、作るのはだいたいコンソールで実行するもの。
-これがダブルクリックで実行できるのはいいんですが、当然、プログラムが終了するとウインドウ（DOSプロンプト）が閉じちゃうから結果が見れない。
-いちいちDOSプロンプトから実行するのもめんどくさい。しかも見た目的に非ﾌﾟﾛｸﾞﾗﾏにはいかつい。</p>
-<p>なんとかならないかなー、と思ってTkを使ってコンソールアプリを作るためのライブラリを作ってみた。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
-from Tkinter import *
-from ScrolledText import ScrolledText
-import sys
-import thread
-import time
-
-class GUIConsole(Frame):
-  def init(self):
-    self.init_input()
-    self.init_output()
-
-  def init_input(self):
-    self.input_var = StringVar()
-    self.input = Entry(self, width=100, textvariable=self.input_var)
-    self.input.pack(side=TOP)
-    self.input.bind('&lt;Return&gt;', self.input_enter)
-
-    self.input_var.readline = self.readline
-    sys.stdin = self.input_var
-
-  def init_output(self):
-    self.out = ScrolledText(self, width=100, height=30)
-    self.out.pack(side=TOP)
-    self.out.write = self.write
-    sys.stdout = self.out
-
-  def write(self, str):
-    self.out.insert(END, str)
-    time.sleep(0.0001)
-    self.out.yview_scroll(str.count("\n") + 1, "units")
-
-  def readline(self, size=None):
-    self.input.focus()
-    self.input_entered = False
-    while True:
-      time.sleep(0.5)
-      if self.input_entered == True:
-        break
-    result = self.input_var.get()
-    self.input_var.set("")
-    return result
-
-  def input_enter(self, event):
-    self.input_entered = True
-
-  def __init__(self, title, master=None):
-    self.input_entered = False
-    Frame.__init__(self, master)
-    self.pack()
-    self.master.title(title)
-    self.init()
-
-def start(main_func, title="Python") :
-  app = GUIConsole(title)
-  thread.start_new_thread(main_func, ())
-  app.mainloop()</pre><p>使い方はこんなかんじ。</p>
-<pre class="prettyprint ">import guiconsole
-
-def main():
-  while True:
-    var = raw_input()
-    print var
-
-guiconsole.start(main, "GUIコンソールのテスト")</pre><p>でこんな風にみえる。</p>
-<a class="reference external image-reference" href="/statics/files/python_tk_cui.jpg"><img alt="/statics/files/python_tk_cui.thumbnail.jpg" src="/statics/files/python_tk_cui.thumbnail.jpg" /></a>
-<p>一番上に入力欄があって、その下に結果表示エリア。</p>
-<p>Pythonの場合、stdoutはwriteというメソッド、stdinはreadlineというメソッドさえもっていればどんなオブジェクトでもオッケー。
-なので単純にstdoutとstdinをTkのウィジットに置き換えてメインループに入り、別スレッドでメインの処理を実行してやっているだけ。</p>
-<p>見栄えも生のDOSプロンプトよりはいいし、処理が終わってもウィンドウを閉じない限り結果を見ることができる。
-プチ便利なので、はやくも自分で使いまくりです（笑</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
 <h3 itemprop="name"><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields" itemprop="url">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></h3>
 <div class="meta">
 <time datetime="2006-09-23T22:41:49&#43;09:00">Sep 23, 2006</time>
@@ -261,41 +154,66 @@ if len(errors) != 0:
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/02/06/garbled-multibyte-character-problem-in-live-search-on-typo" itemprop="url">Typoでlive search文字化け</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/09/13/getframe-function-in-python" itemprop="url">Pythonで関数呼び出しもとの情報を取得</a></h3>
 <div class="meta">
-<time datetime="2006-02-06T01:12:28&#43;09:00">Feb  6, 2006</time>
+<time datetime="2006-09-13T20:24:43&#43;09:00">Sep 13, 2006</time>
 
   
-  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
-  
-  <span class="tag"><a href="/articles/tag/typo/" rel="tag" itemprop="keywords">typo</a></span>
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>Typoでのlive search文字化けについては多くのブログで解決策が示されています。</p>
-<ul class="simple">
-<li><a class="reference external" href="http://www.flatz.jp/articles/2005/12/14/live-search%E3%82%92%E7%9B%B4%E3%81%97%E3%81%9F%E3%82%88%E3%80%82">live searchの文字化けを修正</a></li>
-<li><a class="reference external" href="http://typo.ctrl.jp/articles/2005/11/14/typo2.6.0-release-to-live-search-no-nihongo-bug">Typo2.6.0リリースとLive Searhの日本語バグ</a></li>
-</ul>
-<p>最新でもやっぱり文字化けしているわけで。
-僕も直してみました。</p>
-<pre class="prettyprint ">Index: app/views/shared/_search.rhtml
-===================================================================
---- app/views/shared/_search.rhtml      (revision 850)
-+++ app/views/shared/_search.rhtml      (working copy)
-@@ -7,4 +7,4 @@
-     :loading =&gt; "Element.show('search_spinner')",
-     :complete =&gt; "Element.hide('search_spinner')",
-     :update =&gt; "search-results",
--    :with =&gt; "'q=' + escape($F('q'))" -%&gt;
-+    :with =&gt; "'q=' + encodeURIComponent($F('q'))" -%&gt;</pre><p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・）
-あ、このファイルはテーマにも含まれてますので注意です。
-てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・
-ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
+    <p>なぜか最近はpythonをいじってます。Rubyは・・・ちょっとお休み。
+個人的なメモ。Pythonで関数呼び出しもとの情報を取得(web.pyのソースから)。</p>
+<pre class="prettyprint ">import sys
+sys._getframe(1).f_locals</pre><p>ほうほう。</p>
+<pre class="prettyprint ">def test_func() :
+  print sys._getframe(1).f_locals
+
+a = "variable a"
+b = "variable b"
+c = 1
+test_func()
+
+#&gt;&gt; {'test_func': &lt;function test_func at 0x40657684&gt;, 'a': 'variable a', 'c': 1, 'b': 'variable b', .....}</pre><p>こんな感じで。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2006/06/05/object-with_options" itemprop="url">ActiveSupportのObject#with_optionsの使いどころ</a></h3>
+<div class="meta">
+<time datetime="2006-06-05T17:45:51&#43;09:00">Jun  5, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/rubyonrails/" rel="tag" itemprop="keywords">rubyonrails</a></span>
+  
+  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
+  
+  <span class="tag"><a href="/articles/tag/activesupport/" rel="tag" itemprop="keywords">activesupport</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>個人的にActiveSupportが大好きなわけですが。</p>
+<p>1.1で追加されたwith_optionsがRouting以外でどーもカッコいい使いどころがなーとおもっていたんですが</p>
+<pre class="prettyprint ">with_options(:if =&gt; :validate_password?) do |me|
+me.validates_format_of :password #...
+me.validates_length_of :password # ...
+me.validates_confirmation_of :password #...
+me.validates_presence_of :password#...
+end</pre><p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
+<p>まぁ、やっぱり一番カッコいいのはto_procなんですけど。</p>
 
   </div>
 </article>

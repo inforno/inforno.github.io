@@ -61,6 +61,112 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/09/08/parser-combinators-in-python" itemprop="url">Javascriptでパーサジェネレータを書いてみた</a></h3>
+<div class="meta">
+<time datetime="2007-09-08T00:04:03&#43;09:00">Sep  8, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>ちょっと前にjavascriptで構文解析とかがはやった気がするので、javascriptのリハビリがてらかいてみた。</p>
+<p>ググってみると</p>
+<ul class="simple">
+<li><a class="reference external" href="http://t-code.org/blog/2007/06/jsparsec_javascript.htm">Jsparsec - JavaScriptパーザコンビネータライブラリ</a></li>
+<li><a class="reference external" href="http://d.hatena.ne.jp/bellbind/20060529/114884313">HaskellのMonadをJavaScriptで実装するとしたら</a></li>
+</ul>
+<p>あたりがあるのだが、まぁ勉強ということで。javascriptらしく書いてみようかと。</p>
+<p>ということで、モナドがどーたらとか難しい話はまぁおいておいて、簡単に値がとりだせますよ、という見栄え重視で作ってみた。基本的な機能しかない。けど拡張するのは簡単。せめて相互再帰くらいは実装したほうがよかったかな。まぁ、こんなの真剣に使う人もいないと思うので、要望があればってことで。ちなみに依存するライブラリはありません。</p>
+<p><strong>ダウンロード</strong> ： <a class="reference external" href="/statics/files/parsec.js">Inforno.Parsec</a></p>
+<p>たとえばこんな感じにCSVのパーサが定義できる。withを使ってDSLっぽくしてみた。</p>
+<pre class="prettyprint ">var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
+  this.chars = chrLike(function(c){ return c != '' &amp;&amp; c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='"';});
+  this.quote = chr('"')
+  this.quoteInQuote = str('""') .ret(function(){return '"';});
+  this.charInQuote  = chrLike(function(c){ return c!='"';});
+  this.quotedField  = quote .and (rep((quoteInQuote) .or (charInQuote))) .and (quote)
+                      .ret(function(q1, cs, q2){
+                        return cs.join("");
+                      });
+  this.field        = rep1(chars) .ret(Return.str)
+  this.record       = sep( (field) .or (quotedField), chr(","), true) .ret(function(fields) {
+    return {fields: fields};
+  })
+  this.csv          = sep(record, chr("\n"), true) .and(eof) .ret(function(records) {
+    return {records : records};
+  })
+}});
+
+var testCsv = [
+'"aaa","b',
+'bb","ccc",zzz,"y""Y""y",xxx'
+].join("\n");
+
+var parser = new CSVParser(testCsv);
+var parseResult = parser.csv.parse()
+if(parseResult.success()) {
+  var records = parseResult.result[0].records;
+  for(var i=0,l=records.length;i&lt;l;i++){
+    alert("row("+i+")    "+records[i].fields);
+  }
+}</pre><p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり
+、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2007/06/24/creating-what-im-interested-in-anyway-or-else-about-that-a-jack-of-all-trades-is-master-of-none" itemprop="url">とにかく好きなものを作るということ、あるいは器用貧乏について</a></h3>
+<div class="meta">
+<time datetime="2007-06-24T00:36:19&#43;09:00">Jun 24, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>via  <a class="reference external" href="http://la.ma.la/blog/diary_200706231433.ht">つまらなくて役に立つ物を作るということ</a></p>
+<p>実は俺のプログラミングというかクリエイティブなことについての考えはシンプルで、「とにかく作りたいものを作る」それだけだったりする。まぁ結局その作りたいものがゲームだったり、XMLをパースしたりすることだったりするわけなんだろうけど。</p>
+<hr class="docutils" />
+<p>もっと突っ込んで言うと、作りたいものを作る、それだけなので別に何も残せなくても俺はぜんぜん気にしない。死ぬまでのなかで、あの人は○○を作った人だ、とかそんな人になりたいとは思わない。</p>
+<p>事実、俺が個人で作っているものは好き勝手だ。</p>
+<p>このブログに出してる成果物で言えば、あるときはRailsを触っていろいろやっていたり（まぁこれは仕事もあったが）、Javascriptをいじってテンプレートエンジンつくったりいろいろしたり、PythonでNESエミュレータを書いたり。</p>
+<p>ma.laさんとは違ってゲームも作る。SDLを使って2Dのも作るし(Ruby/SDLやpygameではない。CあるいはC++、昔だとDXLibかなあ)、最近はIrrlichtも勉強していて3Dゲームも作りたい。</p>
+<p>言語とかその他の面でも手を出しまくりだ。普段からC,C++,Java,Ruby,Python,Javascript,Schemeなどを書くし（作りたいものに一番便利な言語を使うだけ）、単に勉強として変な言語にも手を出す。</p>
+<p>他にはReasonやハード音源を使って自作の曲をだしてたりもした（別名義）。一応小さいころから音楽はやっていて、しかもきちんと音楽理論も教えてくれるとこだったので、そこそこのクオリティだと思う。DTM特有の技術も、一通りの生楽器の奏法の再現法を勉強したり、エフェクトをいじり倒したりした。</p>
+<p>画像もやる。そこまで絵心があるわけじゃないけど、いろいろなソフトを経てGimpに落ち着き、ある程度の画像処理ならできるし、ゲームのマップ作成とか位なら普通にやる(A5のインテュオスほしいなあ・・・)。前にも書いたけど、3Dにも手を出している。</p>
+<hr class="docutils" />
+<p>んで、そんなに手を出しまくってお前は何を残せたんだ、と言われたら「何も残してないよ」だ。何も誇れるものなんてない。結局どれも中途半端で役立たずだ。だから、俺はWEBプログラマでもなければ、ゲームプログラマでもなく、プログラマですらなく、ミュージシャンでもなく、絵描きでもない。</p>
+<p>実はこれは結構悩んだ。というか悩んでる人は結構いるんじゃないかと思っている。世の中、スペシャリストスペシャリストで、仕事をしようにも俺みたいな器用貧乏タイプの人は困る。だから、無理に自分がほんとに好きなものはどれなんだ、とか何か残せているのか、とか自問したりする。</p>
+<p>それに対しての俺の結論は、「器用貧乏で何が悪い」だ。楽しければそれでいいのだ。俺は作ることすべてが好きなんだ。たとえ何の才能もなくて何も残せなくても作る過程が大好きなんだよ。少なくとも、世の中がスペシャリスト優遇だからといって自分を抑えて、スペシャリストになって生きるよりは、不器用に器用貧乏で生きるほうが絶対楽しい。めざせ最強の器用貧乏。なにかひとつ、スペシャリストになるほど好きなものが持てる人は運が良かっただけなのだ。</p>
+<hr class="docutils" />
+<p>ただ、器用貧乏じゃないとできないこともあるんだぜ、とは常々思っている。器用貧乏タイプの人はどうか、負けないでほしい。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/08/23/prototype160-rc" itemprop="url">Prototype 1.6.0 RC</a></h3>
 <div class="meta">
 <time datetime="2007-08-23T02:54:48&#43;09:00">Aug 23, 2007</time>
@@ -120,206 +226,6 @@ alert(a.eat(new Mouse("Nezumy mouse")));</pre><p>単にプロトタイプチェ�
 $("title").fire("titleChanged");</pre><p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
 <hr class="docutils" />
 <p>資格の勉強とかもそろそろしなきゃなー、と思いつつ、Scalaでパーサコンビネータライブラリがついたので、Schemeの処理系でも実装したいなあ、と思い始めてる今日この頃。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/07/30/parser-combinators-in-scala" itemprop="url">Scalaでパーサコンビネータ</a></h3>
-<div class="meta">
-<time datetime="2007-07-30T19:50:16&#43;09:00">Jul 30, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
-  
-  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Scala 2.6.0-RC1 でscala.util.parsing.combinatorが標準パッケージになりました。というわけでリファレンスとちょっとしたサンプルくらしかなかったのだけど、とりあえず書いてみた。</p>
-<p><a class="reference external" href="http://ja.doukaku.org/33/">どう書く?org</a> に投稿した、ExcelライクCSVのパーサ。</p>
-<pre class="prettyprint ">import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
-import scala.util.parsing.input.CharArrayReader
-import Character.isISOControl
-
-object CSVParser {
- trait Base
- case class Field(s:String) extends Base {
-   override def toString = s
- }
- case class Record(fields: List[Field]) extends Base
- case class File(records :List[Record]) extends Base
-
- def mkString(cs :List[Any]) = cs.mkString("")
- class CSVParser extends Parsers {
-   type Elem = Char
-   def notMeta(c:Elem) = c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='"' &amp;&amp; !isISOControl(c)
-
-   lazy val file   = record.*('\n') ^^ File
-   lazy val record = (field|quotedField|nullableField).*(',') ^^ Record
-   lazy val field = chars.+ ^^ {cs =&gt; Field(mkString(cs))}
-   lazy val nullableField = chars.* ^^ {cs =&gt; Field("")}
-   lazy val quotedField = '"' ~ (charsInQuote|quoteInQuote).* ~ '"' ^^ {cs =&gt; Field(mkString(cs))}
-   lazy val charsInQuote = elem("chars in field", _!='"')
-   lazy val quoteInQuote = repN(2, quote) ^^ {cs =&gt; '"'}
-   lazy val quote  = '"' ^^ success
-   lazy val chars  = elem("chars", notMeta)
- }
-}
-
-val data = """
-"aaa","b
-bb","ccc",zzz,"y""Y""y",xxx
-""".trim
-
-(new CSVParser.CSVParser).file(new
-CharArrayReader(data.toCharArray)).map(file =&gt; {
- file.records.map({record =&gt;
-   val fields = record.fields
-   (1 to fields.length).foreach(i =&gt; println(i +" =&gt; " + fields(i-1)))
- })
-})</pre><p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
-<p>時間が出来たらもうちょっといじってみよう。よさげな解説してるサイトがあったら是非教えてください。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers" itemprop="url">コマンドライン型ランチャーとexplorerの連携</a></h3>
-<div class="meta">
-<time datetime="2007-02-24T03:11:39&#43;09:00">Feb 24, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-  <span class="tag"><a href="/articles/tag/craftlaunch/" rel="tag" itemprop="keywords">craftlaunch</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p><a class="reference external" href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">こちら</a> にも書いたとおり、Windowsではコマンドライン型ランチャーのcraftlaunchとexplorer.exeを連携させて使ってます。</p>
-<p>最前面のディレクトリ（アクティブなディレクトリ）に対して、キーボードで、Linuxと同じ感覚でmkdirとかrmとかしたいなー、ってのを実現してみました。</p>
-<p>今まではC言語で作った自前のライブラリで処理していたんですが、COMを使ったものに書き直しました。同様の目的にはAHKが使えるんですが、やっぱり使い慣れた言語でいろいろコマンドを作りたかったのでCOM＋Javascriptにしてみました。もちろん、COMなのでRubyでもPerlでもPythonでも同様の実装が作れます。</p>
-<p>craftlaunchを前提にしてますが、コマンドライン型のランチャーならなんでも適応できる方法だと思います。explorerを使っていてもキーボードだけでmkdir,rm,mvなんかが実行できちゃって、非常に便利です。</p>
-<ul class="simple">
-<li><a class="reference external" href="/statics/files/explorehelper.zip">ダウンロード</a></li>
-</ul>
-<p>簡単なコマンドラインランチャーもどきも同梱してますので、現在コマンドライン型ランチャーをいれていない人でも試せます。</p>
-<p>以下readmeからの転載です。</p>
-<section>
-<h2>利用方法</h2>
-<p>explorehelper.wsf,explorehelper.js,getadir.exeは同じフォルダになければ
-なりません。</p>
-<pre class="prettyprint ">explorehelper.wsf [command] [args]</pre><p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、
-ctrl-eなどにショートカット登録しておくと良いでしょう。すると、
-mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
-</section>
-<section>
-<h2>それぞれのファイルについて</h2>
-<section>
-<h3>simple_launcher.exe</h3>
-<p>コマンドライン型ランチャーを導入していない方でも試せるように、AHKで作った
-簡単なランチャーを同梱してあります。ただしこのランチャーは</p>
-<ul class="simple">
-<li>ホットキー（有効化）はalt+space</li>
-<li>コマンド実行はctrl+e</li>
-</ul>
-<p>に固定されています。つまり</p>
-<p>「起動」→(「alt+space」でアクティブに)→「command入力」→「ctrl+e」で実行</p>
-<p>という操作になります。気にいった人はちゃんとしたコマンドライン型ランチャー
-の導入をオススメします。</p>
-</section>
-<section>
-<h3>getahwnd.exe</h3>
-<p>最前面のExplorer.exeのウインドウハンドルを出力するだけのプログラムです。</p>
-</section>
-<section>
-<h3>explorehelper.js</h3>
-<p>JscriptによるCOMに対するヘルパーです。</p>
-</section>
-<section>
-<h3>explorehelper.wsf</h3>
-<p>Jscriptによるカスタムコマンドが定義されたファイルです。このファイルを編集
-することによってcommandが自由に追加できます。</p>
-</section>
-</section>
-<section>
-<h2>ビルトインコマンド</h2>
-<ul class="simple">
-<li>mv</li>
-<li>mkdir</li>
-<li>cmd</li>
-<li>touch</li>
-<li>rm</li>
-<li>chvm : 表示モードを変更します。</li>
-<li>ls : -x, -s, -tオプションのみ受け付けます。つまりフォルダ内をソートします。</li>
-<li>verbs : 右クリックメニューを出します。shift+F10と同じ効果です。</li>
-</ul>
-<p>説明の無いものはUnixのそれから類推してください。</p>
-</section>
-<section>
-<h2>カスタムコマンドの追加について</h2>
-<p>explorehelper.wsfを編集することによってcommandが自由に追加できます。</p>
-<pre class="prettyprint ">var procs = {
-  mv : function() {
-    var path = get_dir_and_focused_item_path();
-    var name = InputBox("新しい名前を入力してください。", path.item._base_name());
-    if(name) get_dir_and_focused_item().item.Name = name;
-  }._item_proc()._auto_win_activate(),
-
-  mkdir : function() {
-    var path = get_dir_and_focused_item_path();
-    var name = InputBox("フォルダ名を入力してください。");
-    if(name) fs().GetFolder(path.win).SubFolders.Add(name);
-  }._auto_win_activate(),
-  .
-  .
-  .
-  .</pre><p>commandは上記のように、procオブジェクトのプロパティとして定義されます。その際、
-command名がキー、値は引数なしの関数になります。キーに大文字は使用できません。</p>
-<p>commandを定義する際にはexplorehelper.jsで定義されたヘルパを使用することができます。
-カスタムcommandを定義しようとする人は当然、JScript(Javascript)が理解できる人
-だと思いますので、ヘルパの詳細はexplorehelper.jsを見てください。ここではリスト
-のみ紹介します。</p>
-<ul class="simple">
-<li>InputBox : 入力フォームを表示します。</li>
-<li>MessageBox : メッセージを表示します。</li>
-<li>Confirm : 確認フォームを表示します。</li>
-<li>shell : Shell.Applicationオブジェクト返します。</li>
-<li>wscript_shell : WScript.Shellオブジェクトを返します。</li>
-<li>fs : Scripting.FileSystemObjectを返します。</li>
-<li>win_activate : ディレクトリをアクティブにします。SendKeysする前に実行します。</li>
-<li>get_dir_and_focused_item : アクティブなディレクトリと選択されているアイテムを返します。</li>
-<li>get_dir_and_focused_item_lst : アクティブなディレクトリと選択されているアイテムのリストを返します。</li>
-<li>get_dir_and_focused_item_path : アクティブなディレクトリと選択されているアイテムのパスを返します。</li>
-<li>get_dir_and_focused_item_path_lst : アクティブなディレクトリと選択されているアイテムのパスのリストを返します。</li>
-<li>$wsh_args : argsを格納した配列です。</li>
-<li>Function.prototype._item_proc : アイテムに対する手続きであることを宣言します。アイテムを選択していない場合、処理が実行されなくなります。</li>
-<li>Function.prototype._auto_win_activate : 手続きを終了後、ウインドウをアクティブにします。</li>
-</ul>
-<hr class="docutils" />
-<p>こんな感じです。COMなら大概なんでもできるので、便利です。しかもJScriptとexeなのでUSBメモリなどにいれて持ち運べますので、俺ポータビリティもそこそこあります。</p>
-<p>また、いかにAHKスクリプトが簡単でも、普段使い慣れた言語でかけるほうが落ち着きます。AHKなんかをみてると、完全なDSLというのは俺的に扱うのがめんどくさくて（覚える熱意があればいいんだろうけど、趣味で使うものにそれほどの情熱がでるかというと・・・）なじみにくいようだ。Rakeみたいな言語内DSLがいいよね、やっぱ。ああ、2007年はRubyの年になるんでしょうかねえ。</p>
-</section>
 
   </div>
 </article>

@@ -61,96 +61,6 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/09/12/machine-language" itemprop="url">マシン語とか</a></h3>
-<div class="meta">
-<time datetime="2007-09-12T19:17:38&#43;09:00">Sep 12, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
-  
-  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
-  
-  <span class="tag"><a href="/articles/tag/programing/" rel="tag" itemprop="keywords">programing</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>最近の若いもんはマシン語をしらん、けしからん、みたいな話が盛り上がってますね。</p>
-<p>そんな若くもないのですが(22歳)、中学のころにはWindows95があって、携帯電話を持っていて、高校生のころには既にADSLなどの高速回線を普通に使っていた、そんな世代の俺の考え。まぁ俺はプログラマでもなんでもないんだけど。</p>
-<section>
-<h2>全体的な結論</h2>
-<p>全体的な結論を先に言うと、個人的にこういう原点回帰的な話というのはそんなに好きじゃない。もっと高次で活躍する人が増えてもいい、と思っているから。一人の人間の時間は有限で、それを高次レイヤにつぎ込んでもっとおもしろいことができるなら、そっちにつぎこめばいいんじゃないかな。俺はそれは全然アリ派。たとえば、音楽でいうと、DTMしかできないやつは音楽できる顔すんな、みたいなのが嫌い。DTMしかできなくてもいい曲かく人なんていっぱいいるし、それでいいと思う。なんていうか、努力とかよりも、感性にあこがれるタイプだからかな。上のレイヤからはいっても、きっと基礎を固めてちゃんとやりたい、それが必要だ、と思えば人は勉強する。だからあえて言うこと（必要だと言い切ること）でもないんじゃないかなあ。現に、だいたいコンピュータ技術者というものは最終的に下のレイヤへ下がっていく人が多いですよね。</p>
-</section>
-<section>
-<h2>マシン語とかについて</h2>
-<p>きっと議論を呼んでいるのは「絶対必要」みたいに断定してしまったからで、知っていればこんないいことがあるんだよ、という感じならみんな納得するんじゃないかなあ。</p>
-<p>上に書いたように俺の世代ってのは中学ですでにWindows95があってVBやらVCやらDelphiがあった世代で。そんなに苦労しなくても見栄えのいいGUIアプリがかける環境があったわけで。当然意識しないとマシン語とかアセンブラには触れない。俺はたしかJAVAからプログラミングに入ったけど、別にマシン語知らなくても全然大丈夫だった。</p>
-<p>んでさらにはWebアプリの台頭。Webアプリを書いているときにマシン語をしらないから、という理由で困ったこともないし、新しい言語を覚えるときに困った覚えもない。つまりプログラマでも書くプログラムによってはそんなに必要ない、ということ。そういう時代まで、先人達の努力でやってきた、ということ。暇があるなら低レイヤを覚えておくにこしたことはないけど、他に覚えるべきことがあるなら、そっちを勉強したらいいと思う。</p>
-<p>ただ、知っといたほうがいろいろいいことがあるのも事実。なので覚えたい人はがんばりましょう、ということで。</p>
-<p>同じことを書いてる人もいるけど、むしろアセンブラとかにこだわりを持っている人のほうが、「ひどい」コードを書くこともあるよね。処理効率を優先しまくって可読性を落としたりとか、何をやってるのかわからないのがイヤ、と自分で必要ないものまで書いたりとか。</p>
-</section>
-<section>
-<h2>俺と低レイヤ技術</h2>
-<p>とそんなことを書きつつ、実は低レイヤも好きな俺。すみませんすみません。個人的に低レイヤの（特にCPUとか。ネットワークとかじゃなく。）ことを勉強したいなら、エミュレータは一度書いてみるべきだと思う。一個8bitCPUのエミュレータを書いて、そのCPUの逆アセンブラを書いて、デバッガ作って、できれば自分でアセンブラを書いて、アセンブリ言語をマシン語に落として、そのコードを実行させてみれば、CPUの基礎はかなりわかると思う。データがそろってる8bitCPUならそんなに苦労することなくかけるので、一度書いてみてはいかが。アセンブリ言語の書き方も、割り込みがどーたらも、なんMhzとかってなんなの、とかサイクルってなにとかメモリってどうなってんの、DMAってなにがうれしいんだよとかそういやビット演算ってなんの役にたつの、とか色々一気に疑問が解決する。それがわかっていればあとは順をおってCPU関連技術を勉強していけば理解もはやい気がする。自分で命令セットまで考えてそのCPUをソフトで実装すればもっと完璧。</p>
-<p>実装言語はなんでもいいんじゃないかなあ。手前味噌だけど、 <a class="reference external" href="/articles/2007/03/02/nes-emulator-development-with-python-5">Pythonでもエミュレータを書こうと思えばかける</a> わけで、PerlでもRubyでもJavascriptでもいいと思う。動作速度よりも理解する過程が楽しいかと。ちなみに自分の書いたPythonでのNESエミュレータだとCPU（6502)とメモリ関連で、簡易逆アセンブラ込みで1000行ほど。速度を犠牲にすればもっと短くかける。</p>
-<p>あと、これも書かれてるけどむしろネットワークとか、DBとかのほうがよっぽど低レイヤの知識が必要だよなあ。10BASE-Tと100BASE-Tでなんでつなげるリピータハブの数が違うのかとか、これならどれだけスループットが確保できるか、それをわかるためにもCSMA/CDはなんたるかとか、実際どうやってケーブル上で衝突を検出してんのかとか色々わかってないと困るしねえ。他のネットワーク技術でも一緒。生のパケット(orフレーム）を見なけりゃいけないことも多々あるし。ソフト使ってちゃんと設定がかけます、だけだと意味ない。OSIの層を上から下までカバーしないと。そういった意味でもネットワークっておもろい。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/05/29/programmers-and-musicians" itemprop="url">プログラマの給与未来自給はそんなもんかも：プログラマとミュージシャン</a></h3>
-<div class="meta">
-<time datetime="2007-05-29T01:22:58&#43;09:00">May 29, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
-  
-  <span class="tag"><a href="/articles/tag/job/" rel="tag" itemprop="keywords">job</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>via  <a class="reference external" href="http://hamasta.g.hatena.ne.jp/hamasta/20070526/p">雑誌記事　「日本のプログラマーの未来時給」を見て人生ｵﾜﾀ＼(＾o＾)／</a></p>
-<p>プログラマの未来自給は651円らしい。</p>
-<p>個人的には「そういう職業なんだろうなあ」という感じ。</p>
-<section>
-<h2>プログラマとミュージシャン</h2>
-<p>音楽をやっていたせいか、どうもプログラマとミュージシャンを重ねてしまう。</p>
-<p>一般的にプログラマというと、プログラミング言語でなにか書く人。音楽でいうと楽器のプレーヤー。</p>
-<p>ギターやってるなら、ベースもOKっていう人も多いはず。ついでにピアノなんかもできたり。もっといっぱい、ドラムもたたけるし、バイオリンもひけまっせ、みたいな人もいるかもしれない。そういう人はあんまりいないから目立つけど、実際はギターとベースくらいがいいところかなあ、と。プログラミング言語でもそうだと思う。</p>
-<p>こういう幅広さで有名な人もいれば、その手の演奏者として名をはせる人もいるだろう。ギターがすげー人とか。Perlのすげーハッカーとか。</p>
-<p>また、演奏者の中でも楽譜を見て演奏するだけの人もいれば、自分で曲を書く人もいる。プログラマでも確実にある程度の規模の設計をできる人はどれだけいる？10秒程度の音楽なんて誰でもつくれる。5分くらいのいい曲、かけるだろうか？</p>
-<p>常に動向をおっているだろうか？小室哲也は嫌いな人もいるだろうが、あの流行への敏感さ、流行を生み出す力はすごいと思う。それでいてある程度の中心がある。「俺はこういう音楽が好きだから、これだけでいいんだ」ってなるのは当然否定しない。、でも最低限、聞いてみるくらいはしたほうがいいと思う。自分の好きな音楽に対しても新しいアプローチとかができると思う。俺はCやってるし、別にHaskellはやっててもどうでもいいよ、もしくはHaskellの存在なんて知りもしないプログラマがほとんどだろう。</p>
-<p>基礎は固めているだろうか？「カッコいいから」って自己流でギター始めた人はどれくらいいるだろ。もちろんそれで上手くなる人もいる。そういう人は天才だからほっておいて問題ない。でも大体の人は変な癖がついて、よくない方向へいってしまう。ギターはバイオリンより入りやすい。適当にコードをならせばそれっぽくなる。でも、バイオリンと同じくらい奥が深いものだ。LLはCとかアセンブラより入りやすく、ちょっとやればそれっぽい物が作れる。でも奥深さは相当なもんだと思う。</p>
-<hr class="docutils" />
-<p>結局、活躍しているミュージシャンはほんの一握りだ。たくさんの若者が音楽に魅せられて、バンド組んだりしてプロ目指してみちゃったりする。結局、スタジオ付のプレーヤーになるのが関の山で、平凡なプレーヤーとして終わる。しかも、いまやプレーヤーの代わりにはコンピュータがいて、それを上手く操れるやつのほうがえらかったりする。スタジオの録音のエンジニアとかになったほうがまだいいわけだ。プログラマよりSE。</p>
-<p>さらにたちの悪いことに、一般ユーザーはそんな名演奏者を求めていなかったりするのだ。実際、喜んで打ち込みのJ-POPを聞いてるでしょ？（ちなみに俺はそれが悪いなんてぜんぜん言わない）。ドラムなんて名演奏者が一発で叩いたほうが速いに決まってる。でも誰かに打ち込ませたほうが安いし、ユーザーも満足なんだよ。PGでもそれは同じで、一般ユーザーは動けばそれで満足なのだ。だいたい、そのサイトがXHTML validかなんて誰が気にする？</p>
-<hr class="docutils" />
-<p>有名なプログラマーや技術者はその数少ない売れてるミュージシャンだと思う。これは名曲だ！といわしめる曲とか、もしくは新しい音楽のジャンルを作るような革新さえ起こしそうな、そんな人たちだと思う。そういう人はやっぱりお金も貰えるだろうし、ある程度自由もきくと思う。でもやっぱり、音楽学校を出た人が全員一線級のプロになれないように、多くの人、情報系を出た人でさえそのような才能を持った人はすくない。ホントは熱いロックをやりたくてもそれをやる自由もなくJ-POPのバックでやったりするんだろう。プログラマって、つくづくそんなジャンルの職業なんじゃないかなあ、と思う。きっとこういう音楽に似た部分が俺をプログラミングに引き込んだんだろうな。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
 <h3 itemprop="name"><a href="/articles/2007/05/22/erlang-process" itemprop="url">Erlangのプロセス</a></h3>
 <div class="meta">
 <time datetime="2007-05-22T23:57:09&#43;09:00">May 22, 2007</time>
@@ -168,6 +78,147 @@
 <p>Erlangのプロセスについてはmethaneさんがおっしゃてる通りだと思う。要はこれを使いやすい形で言語仕様にとりこんでるあたりがErlangの良さなんだよなあ。</p>
 <p>たとえばPythonでもyieldがあるのでmicrothreadは可能で（Stackless Pythonまである)、Erlangのプロセスっぽいこともやろうと思えば可能じゃないか、って感じなんだけどあくまでやればできる、って感じだと思う。</p>
 <p>というわけでmicrothreadを用いたプログラミングに対するある意味DSL的な言語ではないのかなあ、というのが今のところの印象。パッと見た感じその他は魅力的な部分があまり見当たらなかった。かといって機能が足りてないわけでもぜんぜんないので、microthreadや分散のメリットが前面にでるならガンガンつかってもいいと思ってたりするのです。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2007/07/30/parser-combinators-in-scala" itemprop="url">Scalaでパーサコンビネータ</a></h3>
+<div class="meta">
+<time datetime="2007-07-30T19:50:16&#43;09:00">Jul 30, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>Scala 2.6.0-RC1 でscala.util.parsing.combinatorが標準パッケージになりました。というわけでリファレンスとちょっとしたサンプルくらしかなかったのだけど、とりあえず書いてみた。</p>
+<p><a class="reference external" href="http://ja.doukaku.org/33/">どう書く?org</a> に投稿した、ExcelライクCSVのパーサ。</p>
+<pre class="prettyprint ">import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
+import scala.util.parsing.input.CharArrayReader
+import Character.isISOControl
+
+object CSVParser {
+ trait Base
+ case class Field(s:String) extends Base {
+   override def toString = s
+ }
+ case class Record(fields: List[Field]) extends Base
+ case class File(records :List[Record]) extends Base
+
+ def mkString(cs :List[Any]) = cs.mkString("")
+ class CSVParser extends Parsers {
+   type Elem = Char
+   def notMeta(c:Elem) = c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='"' &amp;&amp; !isISOControl(c)
+
+   lazy val file   = record.*('\n') ^^ File
+   lazy val record = (field|quotedField|nullableField).*(',') ^^ Record
+   lazy val field = chars.+ ^^ {cs =&gt; Field(mkString(cs))}
+   lazy val nullableField = chars.* ^^ {cs =&gt; Field("")}
+   lazy val quotedField = '"' ~ (charsInQuote|quoteInQuote).* ~ '"' ^^ {cs =&gt; Field(mkString(cs))}
+   lazy val charsInQuote = elem("chars in field", _!='"')
+   lazy val quoteInQuote = repN(2, quote) ^^ {cs =&gt; '"'}
+   lazy val quote  = '"' ^^ success
+   lazy val chars  = elem("chars", notMeta)
+ }
+}
+
+val data = """
+"aaa","b
+bb","ccc",zzz,"y""Y""y",xxx
+""".trim
+
+(new CSVParser.CSVParser).file(new
+CharArrayReader(data.toCharArray)).map(file =&gt; {
+ file.records.map({record =&gt;
+   val fields = record.fields
+   (1 to fields.length).foreach(i =&gt; println(i +" =&gt; " + fields(i-1)))
+ })
+})</pre><p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
+<p>時間が出来たらもうちょっといじってみよう。よさげな解説してるサイトがあったら是非教えてください。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2007/03/02/nes-emulator-development-with-python-5" itemprop="url">PythonによるNESエミュレータ開発5</a></h3>
+<div class="meta">
+<time datetime="2007-03-02T00:32:14&#43;09:00">Mar  2, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>もうすぐ引越しです。頑張って部屋を片付けないと・・・</p>
+<p>しばらくドタバタすると思し、これ以上作りこむモチベーションもないので、ここまで作ったものをあげておこうと思いました。</p>
+<p><strong>ダウンロード</strong></p>
+<p><a class="reference external" href="/statics/files/pynes-0-0-1.zip">pynes-0-0-1.zip</a></p>
+<section>
+<h2>試し方</h2>
+<p>インストールはダウンロードしたzipファイルを展開するだけです。</p>
+<p>必要なライブラリは</p>
+<ul class="simple">
+<li><a class="reference external" href="http://psyco.sourceforge.net">psyco</a></li>
+<li><a class="reference external" href="http://www.pygame.org">pygame</a></li>
+</ul>
+<p>です。
+両方とも <code>easy_install psyco</code> 、<cite>easy_install pygame</cite> でインストールできたはずです。</p>
+<p><code>roms/</code> 以下に最低1つ以上ロムファイルを置いてください。現状、マッパーに対応してませんので、マッパー0のしか動く可能性はありません。現在動作を確認してるのは、前回あげさせていただいた <a class="reference external" href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">TkShoot</a> くらいです。市販のはほとんど動かないんじゃないでしょうか。</p>
+<p>一応参考までにあげておくと、動く可能性があるのはGolf,DonkeyKongなどです。</p>
+<p><code>bin/pynesi.py</code> が起動用スクリプトです。コマンドラインから起動してください。起動したら、romファイルを番号で選択してください。</p>
+<p>キーバーインドは</p>
+<ul class="simple">
+<li>十字キー : カーソル</li>
+<li>スタート : テンキーの0</li>
+<li>セレクト : テンキーのEnter</li>
+<li>A : テンキーの3</li>
+<li>B : テンキーの2</li>
+</ul>
+<p>になってます。キーバーインドを代えたい方は <code>src/pynes/pad.py</code> を適当に書き換えてください。</p>
+<pre class="prettyprint ">self.keymap1 = {
+  K_UP : NES_PAD_UP,
+  K_DOWN : NES_PAD_DOWN,
+  K_LEFT : NES_PAD_LEFT,
+  K_RIGHT : NES_PAD_RIGHT,
+  K_KP0 : NES_PAD_START,
+  K_KP_ENTER : NES_PAD_SELECT,
+  K_KP2 : NES_PAD_B,
+  K_KP3 : NES_PAD_A
+}</pre><p>ここです。</p>
+<p>とにかく、めちゃくちゃ遅いので、固まったと思ってもしばらくすると画面がちゃんと切り替わったりします。</p>
+</section>
+<section>
+<h2>よもや話</h2>
+<p>かなり適当です。前回（PythonによるNESエミュレータ開発4)から変わってません。マッパーっぽいのが用意してありますが、これはダミーです。他のエミュのソースを参考に必要そうな部分に適当にいれただけです。</p>
+<p>一応、速度を重視しているものの、わかりやすく書いてるつもりなんで、Pythonが分かっていてかつ、エミュレータの基本的な構造が知りたい人には参考になるかもしれません。</p>
+</section>
 
   </div>
 </article>

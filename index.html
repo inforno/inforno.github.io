@@ -61,6 +61,36 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2015/11/19/iceberg-0-9-7-released" itemprop="url">icebergのLinux対応版 v0.9.7リリース</a></h3>
+<div class="meta">
+<time datetime="2015-11-19T20:58:00&#43;09:00">Nov 19, 2015</time>
+
+  
+  <span class="tag"><a href="/articles/tag/iceberg/" rel="tag" itemprop="keywords">iceberg</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>コマンドラインランチャー <a class="reference external" href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.7 をリリースしました。 GitHubの <a class="reference external" href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
+<p>今回からLinuxに対応しました。私は普段、ほぼWindowsがホストでVirtualbox上のUbuntuで開発を行っておりそこではLaunchyを使ってお茶をにごして？いたのです。がやはり慣れているicebergを使いたいと思っていたのでがんばって対応してみました。</p>
+<p>Macを使っている人はそもそもAlfredなどを使っているでしょうけど、Windowsだと私と同じかたちの人も多いのではないかと思います。ぜひ使ってみてください。Linuxのコマンドラインランチャーでmigemo対応しているものはなかなか無いのではないでしょうか。</p>
+<p>icebergはQtやGTKではなくfltkというミニマリストなGUIフレームワークなのでGUI以外の機能はほとんどフレームワークにありません。かといって、ここでQtやGTKに依存するのも癪だったのでLinuxではアイコンのルックアップなどを自分で実装したんですが結構しんどかったですね･･･。ただ、あらかじめマルチプラットフォームを視野にいれたつくりにしてあったので、ゴリゴリ書いていくだけで動くのは動いたのでよかったです。</p>
+<p>内部的にはfltkのバージョンもあげました。これでWindows8以降でも互換モードなしで動いたりしないかなあ、と思っているのですが、いかんせん実機をもっていないのでどうにも。次はWindows10にすると思うので結局Windows8系は確認できないまま終わりそうです。</p>
+<p>あと、ここまできたらなんでMacに対応しないんだ、となりそうですが単純に私がMacを持っていないからです。それに、icebergはMacの文化に合わない気がします。ただ、icebergは作者の私が一番の愛用者であるソフトなのでもし私がMacを手に入れることがあったら、対応すると思います。まぁイケてる会社のプログラマーに転職でもしないとMacを使うようなことはないと思いますが。</p>
+<p>なにか問題ありましたらGithubの <a class="reference external" href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2015/03/23/gluamapper-released" itemprop="url">GopherLuaを設定ファイルで使うライブラリを書きました</a></h3>
 <div class="meta">
 <time datetime="2015-03-23T21:12:32&#43;09:00">Mar 23, 2015</time>
@@ -202,131 +232,6 @@ selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ�
 <section>
 <h2>よければ使ってみてください</h2>
 <p>実装してみたものの、正直私は職業プログラマでなく趣味プログラマなのであんまり使うシーンがないです。なんかいい使いどころがあれば使ってみてください。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2015/02/15/gopher-lua-released" itemprop="url">LuaのGo言語実装を公開しました</a></h3>
-<div class="meta">
-<time datetime="2015-02-15T22:43:19&#43;09:00">Feb 15, 2015</time>
-
-  
-  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
-  
-  <span class="tag"><a href="/articles/tag/lua/" rel="tag" itemprop="keywords">lua</a></span>
-  
-  <span class="tag"><a href="/articles/tag/gopherlua/" rel="tag" itemprop="keywords">gopherlua</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>LuaをGo言語のみで実装した <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> を公開しました。</p>
-<p>詳しくはGithubのREADMEを見ていただくとして、特徴としては以下になります。</p>
-<ul>
-<li><dl class="first docutils">
-<dt>Lua5.1ベース</dt>
-<dd><ul class="first last simple">
-<li>5.1の機能はほぼ実装済み</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">Compiler, VMともに完全にGo言語のみで実装</p>
-</li>
-<li><p class="first">引数の受け渡し以外でのスタック操作が不要で使いやすいAPI</p>
-</li>
-</ul>
-<section>
-<h2>なぜ作ろうと思ったか</h2>
-<p>もともとC言語でものを作るときにはLuaを設定ファイルの代わりとして取り入れていました。Goではあまり拡張言語実装がないので、jsonだったりiniだったりを設定ファイルとして使っていましたが、やっぱり微妙にめんどくさい。変数くらい欲しいなあ･･･とか。</p>
-<p>結局、固い言語だけでモノを作るのは難しく、やわらかさが必要になるポイントがあります。そういうところはまず、「設定ファイル」として外だしされます。そしてその設定ファイルがどんどん肥大化したり複雑化したりして･･･(XML地獄とか)。Cに対するLua、PythonやRuby、Javaに対するGroovyなど「固い言語」＋「拡張言語」は自分的に一番しっくりくる構成です。それをGoで実現するために実装してみました。</p>
-<p>もうひとつは単純にLuaに興味があったこと。正確にはLuaというよりレジスタ型VMに。スタック型VMは実装したことがあるのですが、レジスタ型で実装してみたかったのです。</p>
-<p>最後に、Go言語で処理系を実装してみたかったこと。実行ファイルが吐けるし、速度はそれなりに速いし、Go自体がGCを持っているのでかなり処理系作るのが楽だと思われるのでどんなものかな、と。</p>
-</section>
-<section>
-<h2>簡単な使い方</h2>
-<p>こうして</p>
-<pre class="prettyprint lang-go">import (
-    "github.com/yuin/gopher-lua"
-)</pre><p>こんな感じですね。</p>
-<pre class="prettyprint lang-go">L := lua.NewState()
-defer L.Close()
-if err := L.DoString(`print("hello")`); err != nil {
-    panic(err)
-}</pre><p>Go関数をLuaで呼ぶ場合は以下のような感じ。LuaとGoの間の引数と戻り値の受け渡しのみにスタックを使います。</p>
-<pre class="prettyprint lang-go">func Double(L lua.LState) int {
-    lv := L.ToInt(1)             // get argument
-    L.Push(lua.LNumber(lv * 2))  // push result
-    return 1                     // number of results
-}
-
-func main() {
-    L := lua.NewState()
-    defer L.Close()
-    L.SetGlobal("double", L.NewFunction(Double)) // Original lua_setglobal uses stack...
-}</pre><p>あとは <a class="reference external" href="https://github.com/yuin/gopher-lua">README</a> をみていただければ大体分かるかと思います。</p>
-</section>
-<section>
-<h2>実装について</h2>
-<section>
-<h3>全般の話</h3>
-<p>まず、そんなにLua自体のコードは読んでません(おい)。Luaは1パスでコード生成までできる文法で本家はそういう実装ですが、GopherLuaでは</p>
-<ol class="arabic simple">
-<li>トークナイズ(Lexer, 手書き)</li>
-<li>パース(go-yacc)</li>
-<li>コード生成</li>
-<li>最適化</li>
-</ol>
-<p>まったく違うパス構成なので実装は完全に独自実装です。またyaccなのでユーザが文法を簡単に変えられます。</p>
-<p>現状最適化はほとんどやっていません。複数JMPをまとめるくらい。</p>
-<p>あと、やっぱ三項演算子欲しい･･･。</p>
-</section>
-<section>
-<h3>データモデルの話</h3>
-<p>こういう言語を実装する場合はいわゆる共用体のような、1つの型で複数の型を判別できるものが必要となります。Cでは共用体やポインタの下位ビットを使いますが、Goでは以下の選択肢があります。</p>
-<ul class="simple">
-<li><code>reflect.Value</code></li>
-<li><code>interface</code></li>
-<li><code>unsafe.Pointer</code></li>
-</ul>
-<p>GopherLuaでは <code>interface</code> を使っています。 <code>interface</code> は</p>
-<ul class="simple">
-<li>Go側のAPIを考えたとき一番分かりやすい</li>
-</ul>
-<p>という利点がある一方</p>
-<ul class="simple">
-<li>ネイティブ型をラップした <code>interface</code> の場合、 <code>interface</code> への変換が発生して速度低下を招く</li>
-</ul>
-<p>という欠点があります。そこで簡単なベンチマークをしたのですが</p>
-<ul class="simple">
-<li>単純な例(フィボナッチ計算)では確かに <code>reflect.Value</code> などが速い。</li>
-<li>一方、複雑な例になればそれほど差が無いように見えた</li>
-</ul>
-<p>ため <code>interface</code> を採用しました。ただ、プロファイルをとるとかなりの部分が <code>interface</code> への変換に取られているので、ここが(Goが進化して)速くなればGopherLuaも速くなると思います。</p>
-</section>
-<section>
-<h3>速度の話</h3>
-<p>それほどパフォーマンスチューニングはしていませんが、フィボナッチではperlと同じくらいの性能は出ているようです。メモリ確保はそもそも気をつけて減らしているので後は</p>
-<ul class="simple">
-<li>関数をベタ書きする</li>
-</ul>
-<p>くらいかなあ。Goは短い関数をinline化してくれますが、そのinline化はそんなに賢くないのでやっぱりダメですね。ためしにVMの関数コール部分などをベタ書きすると1.2倍くらいの速度になりました。今のところそこまで速度を求めていないので元に戻しましたけど。</p>
-<p>やっぱマクロ欲しいなあ･･･</p>
-</section>
-</section>
-<section>
-<h2>とりあえず、使えるはずです</h2>
-<p>Lua5.1のテストは主要なものは通っているので使えるものになっているはずです。設定ファイルのかわりに使うもよし、プラグインの仕組みに使うのもよし。今後はGopherLuaのTableをGoのstructにマッピングするような( <code>json</code> や <code>xml</code> パッケージみたいな)ライブラリとか作りたいなと思っていたりします。</p>
 </section>
 
   </div>
