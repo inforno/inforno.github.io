@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Goのインタフェースがパフォーマンスに及ぼす影響</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="https://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name">Goのインタフェースがパフォーマンスに及ぼす影響</h3>
+<div class="meta">
+<time datetime="2015-12-11T00:00:00&#43;09:00">Dec 11, 2015</time>
+
+  
+  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://qiita.com/advent-calendar/2015/go3">Go Advent Calendar 2015 その3</a> 11日目です。その3まであるなんてGo大人気ですね。</p>
+<p>Gopherというのはいろいろな人がいてLLからGoへ、という方も多いかと思います。</p>
+LLではそもそも全てがオブジェクトだったりで話題になりませんが、よりマシンに近く<s>変態的に</s>速度を重視される方が多いC++では例えば仮想関数や実行時キャストのコストが議論になります。<p>Goにおいてこういう多態性はインタフェースで表現されます。結論からいうと、 <strong>Goのインタフェースにもそれなりのコストがあります。</strong> なので極限までパフォーマンスを要求される場合には <strong>例えばインターフェースを使わない</strong> というも選択肢に入ってくるのではないかと思います。</p>
+<section>
+<h2>Go言語におけるインタフェースの内部表現</h2>
+<p>さて、Goはブートストラップ化(言語処理系をその言語自身で実装する)を進めており、1.5ではGoのコンパイラ、ランタイムはほぼほぼGoで実装されています。ということはインターフェースもGoで実装されているはずですね。</p>
+<p>Goのインタフェースは２個のポインタを持った <code>struct</code> です。例えば、 <code>reflect/value.go</code> では以下のようなコードがあります。</p>
+<p><a class="reference external" href="https://raw.githubusercontent.com/golang/go/master/src/reflect/value.go">reflect/value.go</a> :</p>
+<pre class="prettyprint lang-go"> // emptyInterface is the header for an interface{} value.
+ type emptyInterface struct {
+     typ  *rtype
+     word unsafe.Pointer
+ }
+
+ // nonEmptyInterface is the header for a interface value with methods.
+ type nonEmptyInterface struct {
+     // see ../runtime/iface.go:/Itab
+     itab *struct {
+         ityp   *rtype // static interface type
+         typ    *rtype // dynamic concrete type
+         link   unsafe.Pointer
+         bad    int32
+         unused int32
+         fun    [100000]unsafe.Pointer // method table
+     }
+     word unsafe.Pointer
+ }</pre><p>コメントに書かれているように実態は <code>runtime/iface.go</code> ですがこちらのほうが簡略化されていてわかりやすいでしょう。1個目のポインタは 「空のインタフェース( <code>iterface{}</code> )」(これを <code>eface</code> という)の場合、型情報、そうでない場合(これを <code>iface</code> という)の場合 <code>itab</code> と呼ばれるC++における仮想テーブルのようなものです。2個目に値が格納されます。2個目はどちらもポインタであることに注意してください。</p>
+</section>
+<section>
+<h2>インターフェース経由のメソッド呼び出し</h2>
+<p>ここで、インターフェースを使用するとどの程度パフォーマンスペナルティがあるのか、様々なケースで見てみます。</p>
+<p>まずは、直接メソッドを呼び出すのと、インタフェース経由で呼び出す場合の違いを見てみましょう。</p>
+<pre class="prettyprint lang-go"> type MyError struct{}
+ func (e *MyError) Error() string { return "error" }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         err := &amp;MyError{}
+         err.Error()
+     }
+ }
+
+ func BenchmarkInterface(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         var err error = &amp;MyError{}
+         err.Error()
+     }
+ }</pre><p>結果は以下のようになります。10倍程度遅くなります。単位が単位なので微々たる違いですが極限までパフォーマンスを追求したい場合は考慮しておいたほうがいいかもしれませんね。</p>
+<pre class="prettyprint lang-bash"> BenchmarkNoInterface    2000000000               0.73 ns/op
+ BenchmarkInterface      200000000                9.56 ns/op</pre><p>しかし実はこの中には <code>*MyError</code> を <code>error</code> インタフェースに変換するコストも含まれていて、そのコストを除くと5倍くらいの遅さです。次はそのインタフェースへの変換コストを詳しく見ていこうと思います。</p>
+</section>
+<section>
+<h2>インターフェースへの変換コスト(非ポインタ型)</h2>
+<p>Goにおけるインタフェースの変換時はC++におけるキャストよりも複雑なことが発生します。</p>
+<p>Goでは「なんでも」を表すために <code>interface{}</code> を使いますね。 <code>int</code> などの組み込み型かつ非ポインタ型を <code>interface{}</code> として処理するとなにが起こるでしょうか？以下のようにフィボナッチを計算させてみます。</p>
+<pre class="prettyprint lang-go"> func IntFibNoInterface(n int) int {
+     if n &lt; 2 {
+         return n
+     }
+     return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
+ }
+
+ func IntFibInterface(o interface{}) interface{} {
+     n := o.(int)
+     if n &lt; 2 {
+         return o
+     }
+     return IntFibInterface(n-1).(int) + IntFibInterface(n-2).(int)
+ }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         IntFibNoInterface(20)
+     }
+ }
+
+ func BenchmarkInterface(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         IntFibInterface(20)
+     }
+ }</pre><p>結果は以下。40 - 50倍くらいおそくなりますね。これを見ると気軽にインタフェースを使いたくなくなるかもしれません。</p>
+<pre class="prettyprint lang-bash"> BenchmarkNoInterface       30000             57938 ns/op               0 B/op          0 allocs/op
+ BenchmarkInterface           500           2448250 ns/op          525376 B/op      32836 allocs/op</pre><p>はじめに書いたように、インタフェースは <strong>ポインタとして値を保持します</strong> 。 そのためコード上アロケートしていなくても、内部的に <code>int</code> をアロケートしそこに値をコピーせねばなりません。</p>
+<p>どのような処理が実行されたか、プロファイルを見てみましょう。</p>
+<pre class="prettyprint lang-bash"> 1.46s of 1.46s total (  100%)
+ Showing top 20 nodes out of 35 (cum &gt;= 0.01s)
+       flat  flat%   sum%        cum   cum%
+      0.37s 25.34% 25.34%      0.68s 46.58%  runtime.mallocgc
+      0.26s 17.81% 43.15%      1.44s 98.63%  12.IntFibInterface
+      0.20s 13.70% 56.85%      0.20s 13.70%  runtime.memmove
+      0.16s 10.96% 67.81%      0.16s 10.96%  runtime.mSpan_Sweep.func1
+      0.12s  8.22% 76.03%      0.96s 65.75%  runtime.convT2E
+      0.11s  7.53% 83.56%      0.31s 21.23%  runtime.typedmemmove
+      0.10s  6.85% 90.41%      0.26s 17.81%  runtime.heapBitsSweepSpan
+      0.05s  3.42% 93.84%      0.22s 15.07%  runtime.assertE2T
+      0.02s  1.37% 95.21%      0.70s 47.95%  runtime.newobject
+      0.02s  1.37% 96.58%      0.02s  1.37%  runtime.prefetchnta
+      0.01s  0.68% 97.26%      0.01s  0.68%  runtime.(*gcControllerState).findRunnableGCWorker
+      0.01s  0.68% 97.95%      0.01s  0.68%  runtime.lock
+      0.01s  0.68% 98.63%      0.01s  0.68%  runtime.mSpanList_InsertBack
+      0.01s  0.68% 99.32%      0.01s  0.68%  runtime.xadd64
+      0.01s  0.68%   100%      0.01s  0.68%  runtime.xchg
+          0     0%   100%      1.44s 98.63%  12.BenchmarkInterface
+          0     0%   100%      0.01s  0.68%  runtime.GC
+          0     0%   100%      0.01s  0.68%  runtime.deductSweepCredit
+          0     0%   100%      0.01s  0.68%  runtime.gc
+          0     0%   100%      0.01s  0.68%  runtime.gc.func4</pre></section>
+<section>
+<h2>非ポインタ型のインターフェースへの変換コスト</h2>
+<p>では、ということで自分でアロケーションしてみましょう。 <code>int</code> ではなく <code>*int</code> を使ってみます。</p>
+<pre class="prettyprint lang-go"> func IntFibNoInterface(n int) int {
+     if n &lt; 2 {
+         return n
+     }
+     return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
+ }
+
+ func IntFibPointer(i *int) *int {
+     n := *i
+     if n &lt; 2 {
+         return i
+     }
+     a1 := new(int)
+     *a1 = n - 1
+     a2 := new(int)
+     *a2 = n - 2
+     v1 := IntFibPointer(a1)
+     v2 := IntFibPointer(a2)
+     ret := new(int)
+     *ret = *v1 + *v2
+     return ret
+ }
+
+ func IntFibInterface(o interface{}) interface{} {
+     n := *(o.(*int))
+     if n &lt; 2 {
+         return o
+     }
+     a1 := new(int)
+     *a1 = n - 1
+     a2 := new(int)
+     *a2 = n - 2
+     v1 := IntFibInterface(a1).(*int)
+     v2 := IntFibInterface(a2).(*int)
+     ret := new(int)
+     *ret = *v1 + *v2
+     return ret
+ }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         IntFibNoInterface(20)
+     }
+ }
+
+ func BenchmarkPointer(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         a := new(int)
+         *a = 20
+         IntFibPointer(a)
+     }
+ }
+
+ func BenchmarkInterface(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         a := new(int)
+         *a = 20
+         IntFibInterface(a)
+     }
+ }</pre><p>結果は以下のようになります。20-30倍というところでしょうか。こちらのほうがコードだけ見ると遅そうですが、なんと <code>int</code> を使った場合より速いのです。そして、インタフェースへの変換コストは少ない、ということがわかります。</p>
+<pre class="prettyprint lang-bash"> BenchmarkNoInterface       30000             55558 ns/op               0 B/op          0 allocs/op
+ BenchmarkPointer            1000           1297598 ns/op          525376 B/op      32836 allocs/op
+ BenchmarkInterface          1000           1357172 ns/op          525376 B/op      32836 allocs/op</pre><pre class="prettyprint lang-bash"> 1.54s of 1.54s total (  100%)
+ Showing top 20 nodes out of 37 (cum &gt;= 0.01s)
+       flat  flat%   sum%        cum   cum%
+      0.75s 48.70% 48.70%      1.24s 80.52%  runtime.mallocgc
+      0.22s 14.29% 62.99%      0.22s 14.29%  runtime.mSpan_Sweep.func1
+      0.16s 10.39% 73.38%      0.38s 24.68%  runtime.heapBitsSweepSpan
+      0.14s  9.09% 82.47%      1.38s 89.61%  runtime.newobject
+      0.11s  7.14% 89.61%      1.49s 96.75%  12.IntFibInterface
+      0.08s  5.19% 94.81%      0.08s  5.19%  runtime.prefetchnta
+      0.02s  1.30% 96.10%      0.02s  1.30%  runtime.heapBitsForObject
+      0.01s  0.65% 96.75%      0.01s  0.65%  runtime.(*bucket).mp
+      0.01s  0.65% 97.40%      0.01s  0.65%  runtime.atomicload64
+      0.01s  0.65% 98.05%      0.41s 26.62%  runtime.mCentral_CacheSpan
+      0.01s  0.65% 98.70%      0.03s  1.95%  runtime.scanblock
+      0.01s  0.65% 99.35%      0.01s  0.65%  runtime.schedule
+      0.01s  0.65%   100%      0.01s  0.65%  runtime.xchg
+          0     0%   100%      1.49s 96.75%  12.BenchmarkInterface
+          0     0%   100%      0.04s  2.60%  runtime.backgroundgc
+          0     0%   100%      0.01s  0.65%  runtime.deductSweepCredit
+          0     0%   100%      0.04s  2.60%  runtime.gc
+          0     0%   100%      0.02s  1.30%  runtime.gc.func1
+          0     0%   100%      0.01s  0.65%  runtime.gc.func3
+          0     0%   100%      0.01s  0.65%  runtime.gc.func4</pre></section>
+<section>
+<h2>非ポインタ型とポインタ型の違いは？</h2>
+<p>プロファイルをみるとわかりますが、 <code>runtime.convT2E</code> , <code>runtime.assertE2T</code> が非ポインタ型の場合重荷になっています。ここまで「ポインタ型」「非ポインタ型」という曖昧な表現をしていましたが、正確には
+これは <code>isdirectiface</code> という関数の結果が <code>true</code> かどうかです。これによりインターフェス変換の処理が変わります。</p>
+<pre class="prettyprint lang-go"> // Can this type be stored directly in an interface word?
+ // Yes, if the representation is a single pointer.
+ func isdirectiface(t *Type) bool {
+     switch t.Etype {
+     case TPTR32,
+         TPTR64,
+         TCHAN,
+         TMAP,
+         TFUNC,
+         TUNSAFEPTR:
+         return true
+
+         // Array of 1 direct iface type can be direct.
+     case TARRAY:
+         return t.Bound == 1 &amp;&amp; isdirectiface(t.Type)
+
+         // Struct with 1 field of direct iface type can be direct.
+     case TSTRUCT:
+         return t.Type != nil &amp;&amp; t.Type.Down == nil &amp;&amp; isdirectiface(t.Type.Type)
+     }
+
+     return false
+ }</pre><p>これが <code>false</code> になるオブジェクトをインタフェースとして利用する際は注意です。</p>
+</section>
+<section>
+<h2>時にはインタフェースを使わない、という選択も</h2>
+<p>以上のことから、特に性能が必要な場合、インタフェースを使わず擬似共用体(Goに共用体はないので)のような実装をしたほうがよい場合が出てきます。フィボナッチの例を <code>struct</code> で書いてみましょう。</p>
+<pre class="prettyprint lang-go"> const (
+     TypeInt int = iota
+     TypeBool
+ )
+
+ type Object struct {
+     Type      int
+     IntValue  int
+     BoolValue bool
+ }
+
+ func IntFibNoInterface(n int) int {
+     if n &lt; 2 {
+         return n
+     }
+     return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
+ }
+
+ func IntFibStruct(o Object) Object {
+     if o.IntValue &lt; 2 {
+         return o
+     }
+     return Object{TypeInt,
+         IntFibStruct(Object{TypeInt, o.IntValue - 1, false}).IntValue +
+             IntFibStruct(Object{TypeInt, o.IntValue - 2, false}).IntValue,
+         false}
+ }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         IntFibNoInterface(20)
+     }
+ }
+
+ func BenchmarkStruct(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         IntFibStruct(Object{TypeInt, 20, false})
+     }
+ }</pre><p>速度ですが、インタフェースを使うより断然早く、2-3倍程度しか遅くなりません。当たり前ですが、暗黙的なメモリアロケーションも発生しません。</p>
+<pre class="prettyprint lang-bash"> BenchmarkNoInterface       30000             58491 ns/op               0 B/op          0 allocs/op
+ BenchmarkStruct            10000            139924 ns/op               0 B/op          0 allocs/op</pre><p><code>reflect</code> を使えば・・・というのもありますが、結局 <code>reflect.ValueOf</code> の引数が <code>interface{}</code> なので素直に使うと <code>interface{}</code> の場合と同様の遅さです。</p>
+<pre class="prettyprint lang-go"> func IntFibNoInterface(n int) int {
+     if n &lt; 2 {
+         return n
+     }
+     return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
+ }
+
+ func IntFibReflect(r reflect.Value) reflect.Value {
+     n := r.Int()
+     if n &lt; 2 {
+         return r
+     }
+     return reflect.ValueOf(IntFibReflect(reflect.ValueOf(n-1)).Int() + IntFibReflect(reflect.ValueOf(n-2)).Int())
+ }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         IntFibNoInterface(20)
+     }
+ }
+
+ func BenchmarkReflect(b *testing.B) {
+     for i := 0; i &lt; b.N; i++ {
+         IntFibReflect(reflect.ValueOf(20))
+     }
+ }</pre><pre class="prettyprint lang-bash"> BenchmarkNoInterface       30000             56238 ns/op               0 B/op          0 allocs/op
+ BenchmarkReflect            1000           2271026 ns/op          525376 B/op      32836 allocs/op</pre></section>
+<section>
+<h2>ちなみにGopherLuaでは</h2>
+<p>拙作のGo言語によるLua実装 <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> では一番おそい、非ポインタ型をインタフェースとして使う実装になっています。なのでGopherLuaはおそらく現在でもGo上で動くスクリプト言語としては最速の部類ですがさらに速くしようと思えばできたのかもなあと思っています(まぁこの例ほど言語実装は単純ではないし、擬似共用体にするにしてもサイズが大きくなるので、速くなるかどうかはやってみないとなんともいえないのですが。あとサイズがおおきくなるのでスタック型のAPIにするよりないでしょうね)。</p>
+<p>これは使い易さや実装のし易さやメモリ効率、そして「Goらしさ」とのトレードオフだと思っています。私は、とにかく使い易いものがほしかったので一番使い易く、そして実装が楽なものを選びました。</p>
+<p>とはいえ、特に数値型をインタフェースに変換する負荷を軽減するために、独自のアロケータを実装しています。これは一定数の <code>float64</code> をまとめてアロケートすることでインタフェース変換コストを減らしています。かなり強引なのですが興味のある方は <a class="reference external" href="https://github.com/yuin/gopher-lua/blob/master/alloc.go">gopher-lua/alloc.go</a> をご参照ください。</p>
+</section>
+<section>
+<h2>最後に</h2>
+<p>インタフェースはGoで中心的な役割を果たしていますが、時に大幅なパフォーマンス劣化を起こす可能性があります。 特に、非ポインタ型を <code>interface{}</code> などとして引数に渡す場合が要注意です。</p>
+<p><a class="reference external" href="http://qiita.com/advent-calendar/2015/go3">Go Advent Calendar 2015 その3</a> 12日目は <a class="reference external" href="http://qiita.com/Ladicle">Ladicle</a> さんです。</p>
+</section>
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2015/03/23/gluamapper-released">GopherLuaを設定ファイルで使うライブラリを書きました</a></li>
+<li><a href="/articles/2015/02/24/channel-support-in-gopher-lua">GopherLuaでchannelを扱えるようにした</a></li>
+<li><a href="/articles/2015/02/15/gopher-lua-released">LuaのGo言語実装を公開しました</a></li>
+<li><a href="/articles/2014/10/06/cidre-my-new-webframework-in-golang">cidre: 軽量Go言語用WEBフレームワーク</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt>
+        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2015/12/11/go-interface-performance-penalty" class="hatena-bookmark-button" data-hatena-bookmark-title="Goのインタフェースがパフォーマンスに及ぼす影響" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+       <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+      </dt>
+      <dd> </dd>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2015/12/11/go-interface-performance-penalty" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2015\/12\/11\/go-interface-performance-penalty';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  </body>
+</html>

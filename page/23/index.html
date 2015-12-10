@@ -61,73 +61,31 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/02/15/the-embed-javascript-implementation" itemprop="url">埋め込みjavascriptを実装してみました。</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/04/02/attribute-selectors-in-prototype" itemprop="url">$$で属性セレクタ</a></h3>
 <div class="meta">
-<time datetime="2006-02-15T01:09:43&#43;09:00">Feb 15, 2006</time>
+<time datetime="2006-04-02T01:37:07&#43;09:00">Apr  2, 2006</time>
 
   
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
   <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
-<p>同様の実装として <a class="reference external" href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
-<p><a class="reference external" href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
-<p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。
-実際の動作はサンプルファイルを見ていただくとして</p>
-<p>lyase_view.jsの説明どおり</p>
-<pre class="prettyprint ">/*
- *   using innerHTML
- *   -------------
- *   //in HTML
- *   &lt;textarea id="template" style="display:none"&gt;
- *     The value of x is:&lt; %= context.x%&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:"template"}, {x : 10}));
- *
- *   using a template file
- *   -------------
- *   //in /template.jhtml
- *   The value of x is:&lt; %= context.x%&gt;
- *   //code
- *   document.write(Lyase.View.render({file:"/template.jhtml"}, {x : 10}));
- *
- *   Of course, you can embed more complex codes.
- *   //in HTML, with prototype.js
- *   &lt;textarea id="template" style="display:none"&gt;
- *     &lt; % context.list.each(function(pair){%&gt;
- *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
- *     &lt; % }) %&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:"template"},
- *     {list :[{name : "x", value : 10}, {name : "y", value : 20}]}));
- */</pre><p>こんな感じでjavascriptのコードが読み込めます。</p>
-<p>また</p>
-<pre class="prettyprint ">&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
- この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
-
-
-以下のようにクロージャも問題なく使用できます。
-
-&lt; % var c = "," %&gt;
-&lt; % context.list.each(function(num){ %&gt;
-  &lt; %= num+c %&gt;
-
-&lt; % })%&gt;
-
-&lt; %= render({file :"./sample2.jhtml"}, context)%&gt; &lt;!--ココに注目--!&gt;</pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
-<p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。
-prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
+    <p>これはかなり嬉しい機能だなあ。
+最近Prototype.jsの$$で属性セレクタが使用できるようになりました。</p>
+<p>どんな風にかけるのか、コードをテストから引っ張ってきてみました。</p>
+<pre class="prettyprint ">$$('a[href="http://inforno.net/#"]')
+$$('a[class~=internal]')
+$$('*[xml:lang|="es"]')
+$$('*[xml:lang|="ES"]')
+$$('a[href!=#]')
+$$('div[style] p[id] strong')
+$$('a[class~=external][href="http://inforno.net/#"]')</pre><p>こんな感じです。
+値はクオートしてもしなくても大丈夫っぽいですね。</p>
+<p>すばらすい。inputに対する操作なんかで特に便利。今までちょっとボタン操作するためだけに、そのボタンにIDふったりクラスふったりしてたんですけど$$('#hoge input[type=submit]')でいけるんだなあ。そんなにパフォーマンスに気をつかわなくて良いページでは使ってみよう。</p>
 
   </div>
 </article>
@@ -264,7 +222,7 @@ $("test").update("hoge");</pre><p>と書けるようになりました。</p>
 
 
 
-<nav class="paging"><ul><li class="previous"><a href="/page/22/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li class="active">23</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/24/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/22/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li class="active">23</li><li><a href="/page/24/" class="page">24</a></li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/24/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

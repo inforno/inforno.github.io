@@ -61,6 +61,43 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/11/03/maintenance-is-difficult-than-development" itemprop="url">やっぱり新規開発より保守が難しい</a></h3>
+<div class="meta">
+<time datetime="2007-11-03T00:16:42&#43;09:00">Nov  3, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>システム開発の話ではありません。</p>
+<p>最近、やっぱりというかなんというか初音ミクに刺激されて音楽をもう一回やりたくなったんです。</p>
+<p>中学高校と音楽ばっかりやっていたので、大学の４年間やってないくらいで忘れてないだろう、と思ってたんです。</p>
+<p>でも、いろいろ忘れているわけですよ、実際。</p>
+<hr class="docutils" />
+<p>クラシック的な理論を習っていたので、感性優先で作りたいと思っても理論がわかってないと不安になっちゃう。というわけで、現在、和声法とか自由対位法とか復習しています。その次はFMとアナログでの音作りの感触を取り戻すことかな・・・</p>
+<p>でもやっぱり基礎の基礎って絶対に忘れないもんだな、と思った。久しく使ってない知識だけど、トニイホロヘハ、ヘロホイニトハ、シミラレソドファ、ファドソレラミシ、これはしっかり覚えていた。</p>
+<hr class="docutils" />
+<p>知識を保っていくことはほんとに難しい。人間の脳の記憶容量は普通に生きている限りだと無限に近い。storeにはあまり失敗しない。結局retrieveできなくなっていくのが問題だったりする。</p>
+<p>それを大学の講義で習って、しばらくして自分用のメモを残すようになった。</p>
+<p>今、昔書いた曲の譜面（ソース）をみても何でこういう進行にしたか、わからない。今回、勉強しなおしながらメモを残している。なんか、ドキュメントがないとわかんないやつになっちゃったみたいですごくむなしい。けど、やっぱりメモを残すのが一番効率がいい。記憶はそう簡単に消えない。retrieveする手がかりがあればいい。基礎とか、メモする必要はない。自分が忘れそうなことをうまく見抜いて、残していく。</p>
+<p>これは幅広くやろうとしてしまう人の宿命だよなあ。言語にしても、実は自分用メモを見ないとまったく書けない、というレベルになってしまっているものもあるんだよねえ(HaskellとかSmalltalkとか･･･最近はどう書く？orgでコードを見るおかげでそこまでひどくないが)。</p>
+<hr class="docutils" />
+<p>どう書く？orgと言えば主に <a class="reference external" href="http://ja.doukaku.org/user/82/">Scalaで参戦</a> してるわけですが、ブログでほとんどScalaに言及してないな。まぁ、Scalaの記事とか読みたい人もあんまりいないだろうし、いいか。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/11/08/instant-pluggable-python-class" itemprop="url">Python:お手軽にPluggableにする</a></h3>
 <div class="meta">
 <time datetime="2007-11-08T01:33:50&#43;09:00">Nov  8, 2007</time>
@@ -226,196 +263,10 @@ p.reverse_run_hooks({"hello":[1,2,3]})
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules" itemprop="url">Python標準モジュールでRakeもどき</a></h3>
-<div class="meta">
-<time datetime="2008-01-23T04:30:23&#43;09:00">Jan 23, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>誰もが一度使うと便利さと気軽さに感動するRubyが誇るライブラリ、 <a class="reference external" href="http://raa.ruby-lang.org/project/rake/">Rake</a> 。</p>
-<p>プログラムのビルドもそうなんですが、雑多なタスクを簡単に書けて、整理できるのがなんといっても魅力的。RailsなんかではDBの作成から何から、ばんばんRakeタスクにされていますよね。</p>
-<p>さて、俺はPythonistasなので、PythonでRakeみたいなのがほしいわけです。ビルドに限っていえばPythonは <a class="reference external" href="http://www.scons.org/">Scons</a> という素晴らしいツールがあります。C言語はおろか、JAVA、PDF、PostScriptなどなど、さらにはSubversionもサポートしていますし、並列コンパイルもでき、実績も多数で申し分ありません。</p>
-<p>でも俺がしたいのは、雑多なタスクを放り込む、コレ。そういうのを簡単にやるライブラリってPythonではないんでしょうか。RubyではRakeが標準添付されるというのに。いえ、あります。前からあるんです。それが <a class="reference external" href="http://www.python.jp/doc/nightly/lib/module-distutils.html">distutils</a> 。</p>
-<p>distutils(およびその拡張のsetuptools)はPythonの標準的なパッケージ配布システムとして有名です。でも実は自分でコマンドを定義してRakeのように使うことができることはあまりしられていないのではないでしょうか。</p>
-<section>
-<h2>distutilsでコマンドを定義する</h2>
-<p>distutilsでコマンドを定義するにはdistutils.core.Commandクラスを継承し、色々オーバーライドします。説明もつけられますし、オプションもとれて、sub_commandsで依存関係(コマンド分割)を設定することもできます。</p>
-<pre class="prettyprint ">class MyCommand(Command):
-  description = "コマンドの説明"
-  user_options = [("host=", "h", "hostname")] # オプション
-  sub_commands = [("pre_task", None)] # サブコマンド
-  def run(self): pass # 実行する内容
-  def initialize_options(self): # オプションの初期化
-    self.host = None
-  def finalize_options(self):
-    if not self.host: raise "Error"
-
-setup(cmdclass={"my_command":MyCommand})</pre><p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
-</section>
-<section>
-<h2>もっと簡単にdistutilsでタスク</h2>
-<p>30行程度のテンプレを足して、簡単にタスクを定義できるようにしましょう。namespace機能はPython2.5以上限定です。</p>
-<pre class="prettyprint ">from __future__ import with_statement
-from distutils.core import Command, setup
-from contextlib import contextmanager
-
-_cmds = {}
-_namespace = []
-_get_ns = lambda:_namespace and "_".join(_namespace)+"_" or ""
-class CommandType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    d = dict(user_options=[], finalize_options=lambda s:None)
-    d.update(classdict)
-    def _(self):
-      [setattr(self,i[0].rstrip("="),None) for i in d["user_options"]]
-    d["initialize_options"] = _
-    d["boolean_options"] = [i for i,j,k in d["user_options"] if not i.endswith("=")]
-    def _(self):
-      map(self.run_command, self.get_sub_commands())
-      return classdict["run"](self)
-    d["run"] = _
-    name = _get_ns()+class_name.lower()
-    cls = type.__new__(cls, name, class_bases + (object,), d)
-    cls.description = cls.__doc__
-    if class_name != "BaseCommand" : _cmds[name] = cls
-    return cls
-class BaseCommand(Command): __metaclass__ = CommandType
-
-@contextmanager
-def namespace(name):
-  _namespace.append(name)
-  yield _get_ns()
-  _namespace.pop()</pre><p>これだけです。これでかなり簡単にタスクが作れるようになります。例を示しましょう。</p>
-<pre class="prettyprint ">with namespace("db") as ns:
-  with namespace("create") as ns:
-    class Test1(BaseCommand):
-      """test1 discription
-      """
-      user_options = [ ("host=", "h", "hostname"),
-                      ("port=", "p", "port"),
-                      ("force", "f", "force execute")]
-      def run(self):
-        print self.host
-        print self.force
-        print "hello, ", self.__class__.__name__
-
-      sub_commands = [(ns+"test2",None)]
-
-    class Test2(BaseCommand):
-      """test2 discription
-      """
-      def run(self):
-        print "hello, ", self.__class__.__name__
-
-
-  class Test3(BaseCommand):
-    """test3 discription
-    """
-    def run(self):
-      print "hello, ", self.__class__.__name__
-
-class Test4(BaseCommand):
-  """test4 discription
-  """
-  user_options = [ ("host=", "h", "hostname") ]
-  def run(self):
-    print "hello, ", self.__class__.__name__
-
-  def finalize_options(self):
-    if not self.host:
-      raise ValueError("host must not be None")
-
-
-setup(cmdclass=_cmds)</pre><p>かなり直感的になったのではないでしょうか。withを使えば名前空間も結構簡単に実現できます。コマンドのヘルプを見てみましょう。</p>
-<pre class="prettyprint "># python task.py --help-commands
-Standard commands:
-  build            build everything needed to install
-  build_py         "build" pure Python modules (copy to build directory)
-  build_ext        build C/C++ extensions (compile/link to build directory)
-  build_clib       build C/C++ libraries used by Python extensions
-  build_scripts    "build" scripts (copy and fixup #! line)
-  clean            clean up temporary files from 'build' command
-  install          install everything from build directory
-  install_lib      install all Python modules (extensions and pure Python)
-  install_headers  install C/C++ header files
-  install_scripts  install scripts (Python or otherwise)
-  install_data     install data files
-  sdist            create a source distribution (tarball, zip file, etc.)
-  register         register the distribution with the Python package index
-  bdist            create a built (binary) distribution
-  bdist_dumb       create a "dumb" built distribution
-  bdist_rpm        create an RPM distribution
-  bdist_wininst    create an executable installer for MS Windows
-
-Extra commands:
-  db_test3         test3 discription
-
-  db_create_test2  test2 discription
-
-  db_create_test1  test1 discription
-
-  test4            test4 discription
-
-
-usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: task.py --help [cmd1 cmd2 ...]
-  or: task.py --help-commands
-  or: task.py cmd --help</pre><p>こんな感じで、標準コマンドに加え「Extra commands」という形で定義したタスクが使えるようになります。もちろん、distutilsのビルド機能、パッケージ管理機能も使えますよ。</p>
-<p>db_create_test1のヘルプを見てみましょう。</p>
-<pre class="prettyprint "># python task.py db_create_test1 --help
-Common commands: (see '--help-commands' for more)
-
-  setup.py build      will build the package underneath 'build/'
-  setup.py install    will install the package
-
-Global options:
-  --verbose (-v)  run verbosely (default)
-  --quiet (-q)    run quietly (turns verbosity off)
-  --dry-run (-n)  don't actually do anything
-  --help (-h)     show detailed help message
-
-Options for 'db_create_test1' command:
-  --host (-h)   hostname
-  --port (-p)   port
-  --force (-f)  force execute
-
-usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: task.py --help [cmd1 cmd2 ...]
-  or: task.py --help-commands
-  or: task.py cmd --help</pre><p>ちゃんとオプションが表示されていますね。最後に、db_create_test1タスクを実行してみましょう。</p>
-<pre class="prettyprint "># python task.py db_create_test1 --host=localhost
-running db_create_test1
-running db_create_test2
-hello,  Test2
-localhost
-None
-hello,  Test1</pre><p>サブコマンドのdb_create_test2が実行されていること、きちんとオプションがselfの属性として設定されていることがわかりますね。</p>
-<hr class="docutils" />
-<p>標準的な機能だけでもRakeのようなタスクはつくれますが、30行程度の工夫で断然便利になります。Rakeと違いrakeコマンドのような外部コマンドも必要なく、pythonのスクリプト1つで実現できるのも手軽です。というわけで、雑多なタスクはdistutilsでまとめてみてはいかがでしょうか。</p>
-</section>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/9/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li class="active">10</li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/11/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/9/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li class="active">10</li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/11/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

@@ -61,6 +61,175 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/12/11/functional-pattern-matching-for-python" itemprop="url">Python: パターンマッチしてみる</a></h3>
+<div class="meta">
+<time datetime="2008-12-11T01:25:07&#43;09:00">Dec 11, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>なんか、趣味では最近はC言語ばっかりだったりするわけですが。</p>
+<p>さて、関数型言語系をカジった人なら誰しも取り付かれる、モノ、それがパターンマッチ。パターンマッチが使えると、とにかく直感的にコードをかけますよね。</p>
+<p>つーわけで、Pythonでパターンマッチを実装してみました。機能的には</p>
+<ul class="simple">
+<li>リスト,タプルに対するパターンマッチ</li>
+<li>パターン変数への束縛</li>
+<li>ガード条件</li>
+<li>任意のオブジェクトに対するパターンマッチ</li>
+<li>部分パターンの束縛(Ocamlのas)</li>
+</ul>
+<p>あたりを実装してみました。これだけあれば、かなり便利にコードをかけます。できるだけ、手軽に書けるように工夫してみました。こんな感じです。</p>
+<p>変数束縛とガード。 <code>getattr</code> でごにょごにょしてるので簡単にかけます。</p>
+<pre class="prettyprint ">m = Match([1,2,3])
+if m.when([1,2,m.var]) and m.var &gt; 2:
+  print m.var
+# &gt;&gt; 3</pre><p>こう使えば、Pythonに念願のswitchが！</p>
+<pre class="prettyprint ">m = Match(10)
+if m(9):
+  print 1
+elif m(10):
+  print 2
+else:
+  False
+# &gt;&gt; 2</pre><p>部分パターンを束縛してみます。 <code>[1,2,m.var]</code> 全体を <code>all</code> というパターン変数に束縛します。</p>
+<pre class="prettyprint ">m = Match([1,2,3])
+if m.when([1,2,m.var]) and m.var &gt; 5:
+  False
+elif m.when(m._as_all([1,2,m.var])):
+  print m.all
+  print m.var
+else:
+  raise StandardError("")
+# &gt;&gt; [1, 2, 3]
+# &gt;&gt; 3</pre><p>任意のオブジェクトにも使えます。いわゆるレコードに対するマッチも簡単にできるということです。</p>
+<pre class="prettyprint ">class Test(object):
+  def __init__(self, v1, v2):
+    self.v1 = v1
+    self.v2 = v2
+  def __repr__(self):
+    return "Test(%s, %s)"%(repr(self.v1), repr(self.v2))
+m = Match([1, Test(2, 3)])
+if m.when([1, m._class(Test, {"v1":2, "v2": m.v2})]):
+  print m.v2
+else:
+  False
+# &gt;&gt; 3</pre><p>オブジェクトに対するパターンマッチは <code>__match__</code> メソッドを定義するとカスタマイズできます。ここらのアイデアはScalaからいただきました。</p>
+<pre class="prettyprint ">class Test2(Test):
+  def __match__(self):
+    return {"value": self.v1 + self.v2}
+m = Match([1, 2, Test2(3,4)])
+if m.when([1,2, m._class(Test2, {"value": m.var})]):
+  m.var
+else:
+  False
+# &gt;&gt; 7</pre><p>結構いい感じな気がします。</p>
+<section>
+<h2>ダウンロード</h2>
+<p><a class="reference external" href="/statics/files/patternmatch.zip">patternmatch.py</a></p>
+</section>
+<section>
+<h2>実装のお話</h2>
+<p>ソースコードはこんな感じ。</p>
+<pre class="prettyprint ">class Match(object):
+  class _var(str): pass
+  class _class(object):
+    def __init__(self, klass, attrs):
+      self.klass= klass
+      self.attrs= sorted(attrs.iteritems())
+    def match(self, m, obj):
+      props = getattr(obj, "__match__", lambda: obj.__dict__)()
+      return issubclass(obj.__class__, self.klass) and \
+            m.when(self.attrs, sorted(props.iteritems()))
+  class _as(object):
+    def __init__(self, name, pattern = None):
+      self.name = name
+      self.pattern = pattern
+    def __call__(self, pattern):
+      self.pattern = pattern
+      return self
+
+  def __init__(self, obj):
+    self.obj = obj
+    self.bind = {}
+
+  def __getitem__(self, key):
+    if not self.bind.has_key(key):
+      if key.startswith("_as_"):
+        return self._as(self._var(key[4:]))
+      return self._var(key)
+    return self.bind[key]
+  __getattr__ = __getitem__
+  __call__ = lambda self, *a, **k : self.when(*a, **k)
+
+  def when(self, pattern, obj = None):
+    if not obj: obj = self.obj
+    if isinstance(pattern, (self._var, self._class, self._as)):
+      if isinstance(obj, (list, tuple)):
+        pattern = [pattern]
+        obj     = [obj]
+
+    if not isinstance(obj, (list, tuple)) and \
+      not isinstance(pattern, (list, tuple)) :
+      obj = [obj]
+      pattern = [pattern]
+
+    if not isinstance(obj, (list, tuple)) or  \
+      not isinstance(pattern, (list, tuple)) :
+      self.bind = {}
+      return False
+
+    if len(obj) != len(pattern):
+      if not ((pattern[-1].__class__ == self._var) and pattern[-1].startswith("__")):
+        self.bind = {}
+        return False
+
+    for i, (value, pat) in enumerate(zip(obj, pattern)):
+      if value == pat:
+        continue
+      elif pat.__class__ == self._var and pat.startswith("__"):
+        self.bind[str(pat)] = obj[i:]
+        return True
+      elif pat.__class__ == self._var:
+        self.bind[str(pat)] = value
+      elif pat.__class__ == self._class:
+        if not pat.match(self, value):
+          self.bind ={}
+          return False
+      elif pat.__class__ == self._as:
+        if not self.when(pat.pattern, value):
+          self.bind ={}
+          return False
+        self.bind[str(pat.name)] = value
+      elif isinstance(value, (list, tuple)) and isinstance(pat, (list,tuple)):
+        if not self.when(pat, value):
+          self.bind = {}
+          return False
+      else:
+        self.bind = {}
+        return False
+
+    return True</pre><p>まぁわりかしシンプルですね。</p>
+<hr class="docutils" />
+<p>今年も終わりが近づいてまいりました。年をとると時間がすぎるのが速いナァ･･･と痛感しております。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/10/03/python26-features" itemprop="url">Python2.6変更点まとめ</a></h3>
 <div class="meta">
 <time datetime="2008-10-03T03:41:38&#43;09:00">Oct  3, 2008</time>
@@ -778,177 +947,10 @@ foo
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/08/08/sexp-parser-in-python-re-scanner" itemprop="url">Python:re.ScannerでS式パーサ</a></h3>
-<div class="meta">
-<time datetime="2008-08-08T20:38:00&#43;09:00">Aug  8, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
-<p>一方、Pythonにはexperimentalながら <code>re.Scanner</code> というクラスがあります( <code>&gt;= 2.4</code> )。experimentalなのでマニュアルにはのっていませんが。この <code>re.Scanner</code> はかなりシンプルなんですが典型的な <code>StringScanner</code> の使い方の範疇では、こちらのほうがキレイに書けるような気がします。</p>
-<section>
-<h2><code>re.Scanner</code> の使い方</h2>
-<p>使い方は非常に簡単で</p>
-<ul>
-<li><dl class="first docutils">
-<dt><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</dt>
-<dd><ul class="first last simple">
-<li><code>action</code> は(scanner, string_matched) =&gt; stringな関数、Noneを返せば結果は無視される。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">scanメソッドでスキャン。結果が配列で返ってくる</p>
-</li>
-</ul>
-<p>といった感じ。関数を渡すので、 <code>StringScanner</code> のようなwhileループを作る必要がなく、キレイにまとまります。</p>
-</section>
-<section>
-<h2>例：S式パーサ</h2>
-<p><code>re.Scanner</code> は簡単、ということでS式パーサでも。トークナイズ+αな処理をするので、 <code>action</code> をインスタンスメソッドにして状態を保存することにします。</p>
-<p>目標は</p>
-<ul class="simple">
-<li>数値(っぽいもの)、文字列、シンボルが使える</li>
-<li>シンボルのみ、新たにクラスを定義して(unicodeのサブクラス)それにマップ。それ以外は組み込み型に。</li>
-<li>パースエラーも分かりやすく</li>
-<li>結果はPythonのリストorオブジェクトとして返る</li>
-</ul>
-<p>で</p>
-<pre class="prettyprint ">import re, sys
-from unicodedata import east_asian_width
-
-try:
-  from re import Scanner
-except ImportError:
-  from sre import Scanner
-
-class ParseError(StandardError): pass
-
-class Symbol(unicode):
-  def __repr__(self):
-    return "Symbol(%s)"%unicode.__repr__(self)
-
-class TokenProcessor(object):
-  PAREN = {"]":"[", ")":"("}
-  def __init__(self, value):
-    self.result = []
-    self.append = self.result.append
-    self.string = value
-    self.paren_stack = []
-    self.pos = 0
-
-  def __call__(self, name):
-    def _(*a):
-      self.before(*a)
-      return getattr(self, name)(*a)
-    return _
-
-  def before(self, scanner, s):
-    self.pos += len(s)
-    self.skip(scanner, s)
-
-  def error(self, scanner, s): self.raise_error("unknown token: %s"%s)
-
-  def skip_whitespaces(self, scanner, s): self.append(",")
-
-  def skip(self, scanner, s):
-    last = "".join(self.result[-2:])
-    if last in ["[,", ",,", ",]"]:
-      self.result[-2:] = sorted(last, key=ord)[1]
-
-  def atom(self, scanner, s):
-    if s in ["(", "["]:
-      self.append("[")
-      self.paren_stack.append(s)
-    elif s in [")", "]"]:
-      if not self.paren_stack:
-        self.raise_error("missing opening parenthesis.")
-      if self.PAREN[s] != self.paren_stack.pop():
-        self.raise_error("missing closing parenthesis.")
-      self.append("]")
-    elif re.match(r"""^(".*)$""", s or ""):
-      self.append("u"+s)
-    elif re.match(r"""^((\-?\d[\de\.]+)|(\s*)|(.*"))$""", s or ""):
-      self.append(s)
-    else:
-      self.append("Symbol(u\"%s\")"%s)
-
-  def raise_error(self, msg="parse error", range=3):
-    lines = self.string.split("\n")
-    curline = self.string[:self.pos].count("\n")
-    linepos = self.pos - len("\n".join(lines[:curline]))
-    buf = ["\n"]
-    for i in xrange(max(0, curline-range), curline+1):
-      buf.append("% 5d: %s"%(i+1, lines[i]))
-    width = 6 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in lines[i])
-    buf.append("%s~"%(" "*width))
-    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
-    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
-
-def read_sexp(sexp):
-  processor = TokenProcessor(sexp)
-  scanner = Scanner([
-    (r"\s+", processor("skip_whitespaces")),
-    (r";[^\n]*\n", processor("skip")),
-    (r""""(?:[^"])*"|(\]|\[|\)|\(|[^\(\)\s]+)""", processor("atom")),
-    (r".*", processor("error"))
-  ], re.M)
-  scanner.scan(processor.string)
-  if processor.paren_stack:
-    processor.raise_error("missing closing parenthesis.")
-  result = eval("".join(processor.result).lstrip(","))
-  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]</pre><p>こんな感じ。非常にシンプルな気がします。</p>
-<pre class="prettyprint ">print read_sexp(u"""("ほげほげ"
-;comment
-  ;comment
-  (hogehoge 123) ;aaaaaaa
-  "hoge\\"aaaa"
-;comment
-;comment
-
-aaaa          b)""")</pre><p>output:</p>
-<pre class="prettyprint ">[u'\u307b\u3052\u307b\u3052', [Symbol(u'hogehoge'), 123], u'hoge"aaaa', Symbol(u'aaaa'), Symbol(u'b')]</pre><p>エラーも一応。</p>
-<pre class="prettyprint ">print read_sexp(u"""(
-aaaa
-bbbb (ccc ddd) )
-(eee
-ああああああ""")</pre><p>output:</p>
-<pre class="prettyprint ">__main__.ParseError:
-
-    2: aaaa
-    3: bbbb (ccc ddd) )
-    4: (eee
-    5: ああああああ
-                  ~
-line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
-</section>
-<section>
-<h2>というわけで</h2>
-<p>Pythonでトークナイズするときにはかなり便利なんじゃないかと思いました。</p>
-</section>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/6/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/3/" class="page">3</a></li><li><a href="/page/4/" class="page">4</a></li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li class="active">7</li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/8/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/6/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/3/" class="page">3</a></li><li><a href="/page/4/" class="page">4</a></li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li class="active">7</li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/8/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

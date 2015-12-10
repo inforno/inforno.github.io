@@ -61,6 +61,184 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2012/04/11/my-python-oss-development-environments" itemprop="url">俺的モダンなPythonのOSS開発環境</a></h3>
+<div class="meta">
+<time datetime="2012-04-11T19:01:55&#43;09:00">Apr 11, 2012</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>趣味プログラマです、こんにちわ。一応生きてます。</p>
+<p>さて、Pythonista各位におかれましてはmoratoriumをエンジョイされていますでしょうか。そろそろライブラリも著名なものはPython3に対応してきましたし、そろそろ本格的にPython3、となっているころ合いですね。というか、Python3に対応してないとちょっと恥ずかしくなってきましたね。</p>
+<p>とはいえ、Python2は根強く残るでしょう。というわけでPython2とPython3両方で動くコードを書きましょう。テストも書くのは当たり前ですし、せっかくなのでCIもしましょう。</p>
+<p>と私も最近思ったので快適に開発を進めるための環境についてメモです。</p>
+<ul class="simple">
+<li>github : 言わずもがなですね。</li>
+<li>travis : githubと連携してCIできるサービス。P言語にも対応していて、最近アツいです。</li>
+<li>tox    : 複数のPython処理系でvirtualenvを作りテストを流せる。</li>
+<li>distribute : 改良版setuptools。</li>
+<li>pytest : toxと親和性の高いテストツール。noseでもよいですが私はpytestを押します。</li>
+</ul>
+<section>
+<h2>Python2とPython3のインストール</h2>
+<p>あたりまえですが、Python2系とPython3系両方入れておきましょう。</p>
+</section>
+<section>
+<h2>toxのインストール</h2>
+<p>さて、早速toxを入れていくわけですがこれにはPython2系を使います。</p>
+<pre class="prettyprint ">$ wget http://python-distribute.org/distribute_setup.py
+$ python27 distribute_setup.py
+$ easy_install virtualenv tox</pre><p>簡単ですね。</p>
+</section>
+<section>
+<h2>プロジェクトを始める - ファイル・ディレクトリ構成</h2>
+<p>次に、プロジェクトの基本形を作りましょう。私は以下のような構成にしています。</p>
+<pre class="prettyprint ">/
+  + - .tox                        : toxにより生成されるディレクトリ。
+  + - docs                        : ドキュメント系はココ。
+           + - source             : ドキュメントのソース。
+           + - build
+                     + - html(link to gh-pages)
+                                  : sphinxで生成されたHTMLドキュメント。
+                                    gh-pagesブランチへのリンク。
+  + - src                         : ソースファイル類。
+           + - プロジェクト名
+           + - tests
+  - tox.ini                       : tox設定ファイル。
+  - .travis.yml                   : travis設定ファイル。
+  - setup.py                      : セットアップスクリプト。
+  - MANIFEST.in                   : 配布パッケージ生成用定義ファイル。
+  - README.rst                    : 私を読んで。
+  - CHANGES.rst                   : 変更履歴。</pre><p>普通です。ポイントは <code>docs/build/html</code> をgh-pagesへのリンクにすること。これでドキュメントの管理が非常に楽になります。</p>
+</section>
+<section>
+<h2>tox.iniの作成</h2>
+<p>tox.iniに依存関係と、どの処理系でテストするか、テストはなにを使ってやるかを書きましょう。だいたいの場合、それだけで十分です。</p>
+<pre class="prettyprint ">[tox]
+envlist = py27,py32
+
+[testenv]
+changedir=src/tests
+deps=pytest
+     pytest-cov
+     その他依存パッケージ
+commands=
+  py.test \
+    -rxs \
+    --cov-report term-missing \
+    --cov テスト対象パッケージ名\
+    --basetemp={envtmpdir}  \
+    []</pre><p>見ての通りの内容です。Pytnon27とPython32でテストします、と。この時処理系のパス(python.exeやpython27などのパス)はOSごとに <strong>デフォルト</strong> の場所が使われます。 <code><span class="pre">--configure</span></code> でprefixを指定していたり、Windowsで別フォルダにインストールしている場合は以下のようにします。</p>
+<pre class="prettyprint ">[tox]
+envlist = py27,py32
+
+[testenv:py27]
+basepython=処理系へのパス
+
+[testenv:py32]
+basepython=処理系へのパス
+
+[testenv]
+changedir=src/tests
+deps=pytest
+     pytest-cov
+     その他依存パッケージ
+commands=
+  py.test \
+    -rxs \
+    --cov-report term-missing \
+    --cov テスト対象パッケージ名\
+    --basetemp={envtmpdir}  \
+    []</pre></section>
+<section>
+<h2>とりあえず開発</h2>
+<p>とりあえず何かコードを書いて、テストも書きましょう。</p>
+</section>
+<section>
+<h2>toxでテスト</h2>
+<p>ではtoxでテストしましょう。tox.iniがあるディレクトリに移動してから</p>
+<pre class="prettyprint ">$ tox</pre><p>これで</p>
+<ul class="simple">
+<li>それぞれの処理系のvirtualenvの作成</li>
+<li>依存ライブラリのインストール</li>
+<li>テストの実行</li>
+</ul>
+<p>が行われ、結果が表示されます。py27だけ流したい場合は <code>tox <span class="pre">-e</span> py27</code> とするか環境変数 <code>TOXENV=py27</code> を設定したうえで <code>tox</code> とすればOK.</p>
+<p>拙作のwebフレームワーク <a class="reference external" href="http://yuin.github.com/rays.html">rays</a> ですと以下のような感じです(長いのでpy32の結果のみ)。pytest-covを入れているのでC0カバレッジも表示されます。</p>
+<pre class="prettyprint ">_________________________________________________________________________________________ [tox sdist] __________________________________________________________________________________________
+[TOX] ***creating sdist package
+[TOX] /home/yuin/github/rays$ /opt/python2.7.2/bin/python2.7 setup.py sdist --formats=zip --dist-dir .tox/dist &gt;.tox/log/0.log
+[TOX] ***copying new sdistfile to '/home/yuin/.tox/distshare/rays-0.4.0.zip'
+______________________________________________________________________________________ [tox testenv:py32] ______________________________________________________________________________________
+[TOX] ***creating virtualenv py32
+[TOX] /home/yuin/github/rays/.tox$ /opt/python3.2.2/bin/python3.2 /opt/python2.7.2/lib/python2.7/site-packages/virtualenv-1.7.1.2-py2.7.egg/virtualenv.py --no-site-packages py32 &gt;py32/log/0.log
+[TOX] ***installing dependencies: pytest, pytest-cov, webtest, sphinx
+[TOX] /home/yuin/github/rays/.tox/py32/log$ ../bin/pip install --download-cache=/home/yuin/github/rays/.tox/_download pytest pytest-cov webtest sphinx &gt;1.log
+[TOX] ***installing sdist
+[TOX] /home/yuin/github/rays/.tox/py32/log$ ../bin/pip install --download-cache=/home/yuin/github/rays/.tox/_download /home/yuin/github/rays/.tox/dist/rays-0.4.0.zip &gt;2.log
+[TOX] /home/yuin/github/rays/src/tests$ ../../.tox/py32/bin/py.test -rxs --cov-report term-missing --cov rays --basetemp=/home/yuin/github/rays/.tox/py32/tmp
+===================================================================================== test session starts ======================================================================================
+platform linux2 -- Python 3.2.2 -- pytest-2.2.3
+collected 120 items
+
+test_application.py ........................
+test_async_extension.py sss
+test_database.py .......
+test_defaultattrdict.py .....
+test_extension.py .
+test_functions.py .........
+test_hookable.py .....
+test_request.py .....................
+test_response.py ...............
+test_session.py ............
+test_staticfile_extension.py .....
+test_templating.py .............
+----------------------------------------------------------------------- coverage: platform linux2, python 3.2.2-final-0 ------------------------------------------------------------------------
+Name                                           Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------
+/home/yuin/github/rays/src/rays/__init__    1648    190    88%   82, 259, 807-808, 824-839, 842-888, 892-901, 909-917, 925-933, 946-954, 1408, 1509, 1595-1597, 1934-1943, 1973, 2033-2063, 2088-2089, 2547-2560, 2563-2571, 2574-2575, 2579-2585, 2589, 2593-2596, 2600, 2604-2615
+/home/yuin/github/rays/src/rays/compat        98     42    57%   11-13, 17, 19-20, 67-118
+----------------------------------------------------------------------------
+TOTAL                                           1746    232    87%
+=================================================================================== short test summary info ====================================================================================
+SKIP [3] /home/yuin/github/rays/.tox/py32/lib/python3.2/site-packages/_pytest/skipping.py:118: condition: SkipIf._no_gevent
+
+============================================================================ 117 passed, 3 skipped in 14.81 seconds ============================================================================
+________________________________________________________________________________________ [tox summary] _________________________________________________________________________________________</pre></section>
+<section>
+<h2>.travis.ymlの作成</h2>
+<p>無事、複数のインタプリタでテストできました。次はCIです。 <a class="reference external" href="http://travis-ci.org">Travis CI</a> を使うと、githubにpushしたタイミングでビルド＆テストが自動でできます。</p>
+<p>まずは、Travis CIにgithubのアカウントでログインして、対象のレポジトリでCIを有効にします。</p>
+<p>次に、Travis CIでのビルド＆テスト設定を.travis.ymlに書きます。ここではtoxを使っていますから、以下のようになります。</p>
+<pre class="prettyprint ">language: python
+env:
+  - TOXENV=py27
+  - TOXENV=py32
+install:
+  - pip install --use-mirrors tox
+script: tox</pre><p><code>TOXENV</code> でテストする環境を指定します。今回の例ではpy27とpy32です。</p>
+<p>これでgithubにpushするとTravis CIが動くようになりました。</p>
+</section>
+<section>
+<h2>Travis CI + tox快適です</h2>
+<p>ガンガンPython3対応をしましょう！</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2" itemprop="url">XREAで好きなバージョンのPythonを使う方法2</a></h3>
 <div class="meta">
 <time datetime="2009-01-25T01:00:00&#43;09:00">Jan 25, 2009</time>
@@ -464,70 +642,10 @@ func (p IntArray) Len() int { return len(p); }</pre></section>
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2009/06/28/open-cmd-here" itemprop="url">一瞬で今いるフォルダでcmd.exeを開く</a></h3>
-<div class="meta">
-<time datetime="2009-06-28T00:00:00&#43;09:00">Jun 28, 2009</time>
-
-  
-  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Windows XPを使用していると、とにかく開いているフォルダでcmd.exeを起動したい、となることは多いです。</p>
-<p>よくあるのは右クリックから開く、というやつ。まぁ当然、キーボード派の私にはありえない選択です。</p>
-<p>んで、昔からCのプログラムとWSHをくみあわせてキーボードから開けるようにしていたのですが、やっぱWSHが絡むので遅い。</p>
-<p>というわけでCだけで作ってみました。せっかくなのでおいておきます。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/explorexe.zip">explorexe.zip</a></p>
-</section>
-<section>
-<h2>使い方</h2>
-<p>解凍してできたexplorexe.exeのショートカットをデスクトップにつくります。</p>
-<p>んで、ショートカットを右クリックして、</p>
-<ul>
-<li><dl class="first docutils">
-<dt>「リンク先」で <code>cmd.exe /k cd /d %s</code> を後ろに追加します。</dt>
-<dd><ul class="first last simple">
-<li>例: <code><span class="pre">C:\Documents</span> and Settings\yourname\デスクトップ\explorexe.exe cmd.exe /k cd /d %s</code></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>「ショートカットキー」を適当に設定します。</dt>
-<dd><ul class="first last simple">
-<li>例:Ctrl + Alt + C</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-<p>これでOK。あとはエクスプローラを表示して、 <code>Ctrl + Alt + C</code> を押せばそのエクスプローラに表示されているフォルダをカレントにしてcmd.exeが開きます。</p>
-<p>あとは、コマンドライン型ランチャーなんかに同様に登録するとめっさ快適です。</p>
-</section>
-<section>
-<h2>応用？</h2>
-<p>えー、見てのとおり引数の文字列に <code>printf</code> しているだけなので、cmd.exe以外にも使えます。 <code>%s</code> にあたるカレントフォルダのパスは空白が含まれている場合は自動的に「&quot;」で囲まれます。</p>
-</section>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/4/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li><a href="/page/2/" class="page">2</a></li><li><a href="/page/3/" class="page">3</a></li><li><a href="/page/4/" class="page">4</a></li><li class="active">5</li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/6/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/4/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li><a href="/page/2/" class="page">2</a></li><li><a href="/page/3/" class="page">3</a></li><li><a href="/page/4/" class="page">4</a></li><li class="active">5</li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/6/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

@@ -7,10 +7,326 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>19 Nov 15 11:58 UTC</lastBuildDate>
+    <lastBuildDate>10 Dec 15 15:00 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
+    
+    <item>
+      <title>Goのインタフェースがパフォーマンスに及ぼす影響 </title>
+      <link>http://inforno.net/articles/2015/12/11/go-interface-performance-penalty</link>
+      <description>&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 11日目です。その3まであるなんてGo大人気ですね。&lt;/p&gt;
+&lt;p&gt;Gopherというのはいろいろな人がいてLLからGoへ、という方も多いかと思います。&lt;/p&gt;
+LLではそもそも全てがオブジェクトだったりで話題になりませんが、よりマシンに近く&lt;s&gt;変態的に&lt;/s&gt;速度を重視される方が多いC&#43;&#43;では例えば仮想関数や実行時キャストのコストが議論になります。&lt;p&gt;Goにおいてこういう多態性はインタフェースで表現されます。結論からいうと、 &lt;strong&gt;Goのインタフェースにもそれなりのコストがあります。&lt;/strong&gt; なので極限までパフォーマンスを要求される場合には &lt;strong&gt;例えばインターフェースを使わない&lt;/strong&gt; というも選択肢に入ってくるのではないかと思います。&lt;/p&gt;
+&lt;section&gt;
+&lt;h2&gt;Go言語におけるインタフェースの内部表現&lt;/h2&gt;
+&lt;p&gt;さて、Goはブートストラップ化(言語処理系をその言語自身で実装する)を進めており、1.5ではGoのコンパイラ、ランタイムはほぼほぼGoで実装されています。ということはインターフェースもGoで実装されているはずですね。&lt;/p&gt;
+&lt;p&gt;Goのインタフェースは２個のポインタを持った &lt;code&gt;struct&lt;/code&gt; です。例えば、 &lt;code&gt;reflect/value.go&lt;/code&gt; では以下のようなコードがあります。&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://raw.githubusercontent.com/golang/go/master/src/reflect/value.go&#34;&gt;reflect/value.go&lt;/a&gt; :&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; // emptyInterface is the header for an interface{} value.
+ type emptyInterface struct {
+     typ  *rtype
+     word unsafe.Pointer
+ }
+
+ // nonEmptyInterface is the header for a interface value with methods.
+ type nonEmptyInterface struct {
+     // see ../runtime/iface.go:/Itab
+     itab *struct {
+         ityp   *rtype // static interface type
+         typ    *rtype // dynamic concrete type
+         link   unsafe.Pointer
+         bad    int32
+         unused int32
+         fun    [100000]unsafe.Pointer // method table
+     }
+     word unsafe.Pointer
+ }&lt;/pre&gt;&lt;p&gt;コメントに書かれているように実態は &lt;code&gt;runtime/iface.go&lt;/code&gt; ですがこちらのほうが簡略化されていてわかりやすいでしょう。1個目のポインタは 「空のインタフェース( &lt;code&gt;iterface{}&lt;/code&gt; )」(これを &lt;code&gt;eface&lt;/code&gt; という)の場合、型情報、そうでない場合(これを &lt;code&gt;iface&lt;/code&gt; という)の場合 &lt;code&gt;itab&lt;/code&gt; と呼ばれるC&#43;&#43;における仮想テーブルのようなものです。2個目に値が格納されます。2個目はどちらもポインタであることに注意してください。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;インターフェース経由のメソッド呼び出し&lt;/h2&gt;
+&lt;p&gt;ここで、インターフェースを使用するとどの程度パフォーマンスペナルティがあるのか、様々なケースで見てみます。&lt;/p&gt;
+&lt;p&gt;まずは、直接メソッドを呼び出すのと、インタフェース経由で呼び出す場合の違いを見てみましょう。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; type MyError struct{}
+ func (e *MyError) Error() string { return &#34;error&#34; }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         err := &amp;amp;MyError{}
+         err.Error()
+     }
+ }
+
+ func BenchmarkInterface(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         var err error = &amp;amp;MyError{}
+         err.Error()
+     }
+ }&lt;/pre&gt;&lt;p&gt;結果は以下のようになります。10倍程度遅くなります。単位が単位なので微々たる違いですが極限までパフォーマンスを追求したい場合は考慮しておいたほうがいいかもしれませんね。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface    2000000000               0.73 ns/op
+ BenchmarkInterface      200000000                9.56 ns/op&lt;/pre&gt;&lt;p&gt;しかし実はこの中には &lt;code&gt;*MyError&lt;/code&gt; を &lt;code&gt;error&lt;/code&gt; インタフェースに変換するコストも含まれていて、そのコストを除くと5倍くらいの遅さです。次はそのインタフェースへの変換コストを詳しく見ていこうと思います。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;インターフェースへの変換コスト(非ポインタ型)&lt;/h2&gt;
+&lt;p&gt;Goにおけるインタフェースの変換時はC&#43;&#43;におけるキャストよりも複雑なことが発生します。&lt;/p&gt;
+&lt;p&gt;Goでは「なんでも」を表すために &lt;code&gt;interface{}&lt;/code&gt; を使いますね。 &lt;code&gt;int&lt;/code&gt; などの組み込み型かつ非ポインタ型を &lt;code&gt;interface{}&lt;/code&gt; として処理するとなにが起こるでしょうか？以下のようにフィボナッチを計算させてみます。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; func IntFibNoInterface(n int) int {
+     if n &amp;lt; 2 {
+         return n
+     }
+     return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
+ }
+
+ func IntFibInterface(o interface{}) interface{} {
+     n := o.(int)
+     if n &amp;lt; 2 {
+         return o
+     }
+     return IntFibInterface(n-1).(int) &#43; IntFibInterface(n-2).(int)
+ }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         IntFibNoInterface(20)
+     }
+ }
+
+ func BenchmarkInterface(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         IntFibInterface(20)
+     }
+ }&lt;/pre&gt;&lt;p&gt;結果は以下。40 - 50倍くらいおそくなりますね。これを見ると気軽にインタフェースを使いたくなくなるかもしれません。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface       30000             57938 ns/op               0 B/op          0 allocs/op
+ BenchmarkInterface           500           2448250 ns/op          525376 B/op      32836 allocs/op&lt;/pre&gt;&lt;p&gt;はじめに書いたように、インタフェースは &lt;strong&gt;ポインタとして値を保持します&lt;/strong&gt; 。 そのためコード上アロケートしていなくても、内部的に &lt;code&gt;int&lt;/code&gt; をアロケートしそこに値をコピーせねばなりません。&lt;/p&gt;
+&lt;p&gt;どのような処理が実行されたか、プロファイルを見てみましょう。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; 1.46s of 1.46s total (  100%)
+ Showing top 20 nodes out of 35 (cum &amp;gt;= 0.01s)
+       flat  flat%   sum%        cum   cum%
+      0.37s 25.34% 25.34%      0.68s 46.58%  runtime.mallocgc
+      0.26s 17.81% 43.15%      1.44s 98.63%  12.IntFibInterface
+      0.20s 13.70% 56.85%      0.20s 13.70%  runtime.memmove
+      0.16s 10.96% 67.81%      0.16s 10.96%  runtime.mSpan_Sweep.func1
+      0.12s  8.22% 76.03%      0.96s 65.75%  runtime.convT2E
+      0.11s  7.53% 83.56%      0.31s 21.23%  runtime.typedmemmove
+      0.10s  6.85% 90.41%      0.26s 17.81%  runtime.heapBitsSweepSpan
+      0.05s  3.42% 93.84%      0.22s 15.07%  runtime.assertE2T
+      0.02s  1.37% 95.21%      0.70s 47.95%  runtime.newobject
+      0.02s  1.37% 96.58%      0.02s  1.37%  runtime.prefetchnta
+      0.01s  0.68% 97.26%      0.01s  0.68%  runtime.(*gcControllerState).findRunnableGCWorker
+      0.01s  0.68% 97.95%      0.01s  0.68%  runtime.lock
+      0.01s  0.68% 98.63%      0.01s  0.68%  runtime.mSpanList_InsertBack
+      0.01s  0.68% 99.32%      0.01s  0.68%  runtime.xadd64
+      0.01s  0.68%   100%      0.01s  0.68%  runtime.xchg
+          0     0%   100%      1.44s 98.63%  12.BenchmarkInterface
+          0     0%   100%      0.01s  0.68%  runtime.GC
+          0     0%   100%      0.01s  0.68%  runtime.deductSweepCredit
+          0     0%   100%      0.01s  0.68%  runtime.gc
+          0     0%   100%      0.01s  0.68%  runtime.gc.func4&lt;/pre&gt;&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;非ポインタ型のインターフェースへの変換コスト&lt;/h2&gt;
+&lt;p&gt;では、ということで自分でアロケーションしてみましょう。 &lt;code&gt;int&lt;/code&gt; ではなく &lt;code&gt;*int&lt;/code&gt; を使ってみます。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; func IntFibNoInterface(n int) int {
+     if n &amp;lt; 2 {
+         return n
+     }
+     return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
+ }
+
+ func IntFibPointer(i *int) *int {
+     n := *i
+     if n &amp;lt; 2 {
+         return i
+     }
+     a1 := new(int)
+     *a1 = n - 1
+     a2 := new(int)
+     *a2 = n - 2
+     v1 := IntFibPointer(a1)
+     v2 := IntFibPointer(a2)
+     ret := new(int)
+     *ret = *v1 &#43; *v2
+     return ret
+ }
+
+ func IntFibInterface(o interface{}) interface{} {
+     n := *(o.(*int))
+     if n &amp;lt; 2 {
+         return o
+     }
+     a1 := new(int)
+     *a1 = n - 1
+     a2 := new(int)
+     *a2 = n - 2
+     v1 := IntFibInterface(a1).(*int)
+     v2 := IntFibInterface(a2).(*int)
+     ret := new(int)
+     *ret = *v1 &#43; *v2
+     return ret
+ }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         IntFibNoInterface(20)
+     }
+ }
+
+ func BenchmarkPointer(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         a := new(int)
+         *a = 20
+         IntFibPointer(a)
+     }
+ }
+
+ func BenchmarkInterface(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         a := new(int)
+         *a = 20
+         IntFibInterface(a)
+     }
+ }&lt;/pre&gt;&lt;p&gt;結果は以下のようになります。20-30倍というところでしょうか。こちらのほうがコードだけ見ると遅そうですが、なんと &lt;code&gt;int&lt;/code&gt; を使った場合より速いのです。そして、インタフェースへの変換コストは少ない、ということがわかります。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface       30000             55558 ns/op               0 B/op          0 allocs/op
+ BenchmarkPointer            1000           1297598 ns/op          525376 B/op      32836 allocs/op
+ BenchmarkInterface          1000           1357172 ns/op          525376 B/op      32836 allocs/op&lt;/pre&gt;&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; 1.54s of 1.54s total (  100%)
+ Showing top 20 nodes out of 37 (cum &amp;gt;= 0.01s)
+       flat  flat%   sum%        cum   cum%
+      0.75s 48.70% 48.70%      1.24s 80.52%  runtime.mallocgc
+      0.22s 14.29% 62.99%      0.22s 14.29%  runtime.mSpan_Sweep.func1
+      0.16s 10.39% 73.38%      0.38s 24.68%  runtime.heapBitsSweepSpan
+      0.14s  9.09% 82.47%      1.38s 89.61%  runtime.newobject
+      0.11s  7.14% 89.61%      1.49s 96.75%  12.IntFibInterface
+      0.08s  5.19% 94.81%      0.08s  5.19%  runtime.prefetchnta
+      0.02s  1.30% 96.10%      0.02s  1.30%  runtime.heapBitsForObject
+      0.01s  0.65% 96.75%      0.01s  0.65%  runtime.(*bucket).mp
+      0.01s  0.65% 97.40%      0.01s  0.65%  runtime.atomicload64
+      0.01s  0.65% 98.05%      0.41s 26.62%  runtime.mCentral_CacheSpan
+      0.01s  0.65% 98.70%      0.03s  1.95%  runtime.scanblock
+      0.01s  0.65% 99.35%      0.01s  0.65%  runtime.schedule
+      0.01s  0.65%   100%      0.01s  0.65%  runtime.xchg
+          0     0%   100%      1.49s 96.75%  12.BenchmarkInterface
+          0     0%   100%      0.04s  2.60%  runtime.backgroundgc
+          0     0%   100%      0.01s  0.65%  runtime.deductSweepCredit
+          0     0%   100%      0.04s  2.60%  runtime.gc
+          0     0%   100%      0.02s  1.30%  runtime.gc.func1
+          0     0%   100%      0.01s  0.65%  runtime.gc.func3
+          0     0%   100%      0.01s  0.65%  runtime.gc.func4&lt;/pre&gt;&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;非ポインタ型とポインタ型の違いは？&lt;/h2&gt;
+&lt;p&gt;プロファイルをみるとわかりますが、 &lt;code&gt;runtime.convT2E&lt;/code&gt; , &lt;code&gt;runtime.assertE2T&lt;/code&gt; が非ポインタ型の場合重荷になっています。ここまで「ポインタ型」「非ポインタ型」という曖昧な表現をしていましたが、正確には
+これは &lt;code&gt;isdirectiface&lt;/code&gt; という関数の結果が &lt;code&gt;true&lt;/code&gt; かどうかです。これによりインターフェス変換の処理が変わります。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; // Can this type be stored directly in an interface word?
+ // Yes, if the representation is a single pointer.
+ func isdirectiface(t *Type) bool {
+     switch t.Etype {
+     case TPTR32,
+         TPTR64,
+         TCHAN,
+         TMAP,
+         TFUNC,
+         TUNSAFEPTR:
+         return true
+
+         // Array of 1 direct iface type can be direct.
+     case TARRAY:
+         return t.Bound == 1 &amp;amp;&amp;amp; isdirectiface(t.Type)
+
+         // Struct with 1 field of direct iface type can be direct.
+     case TSTRUCT:
+         return t.Type != nil &amp;amp;&amp;amp; t.Type.Down == nil &amp;amp;&amp;amp; isdirectiface(t.Type.Type)
+     }
+
+     return false
+ }&lt;/pre&gt;&lt;p&gt;これが &lt;code&gt;false&lt;/code&gt; になるオブジェクトをインタフェースとして利用する際は注意です。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;時にはインタフェースを使わない、という選択も&lt;/h2&gt;
+&lt;p&gt;以上のことから、特に性能が必要な場合、インタフェースを使わず擬似共用体(Goに共用体はないので)のような実装をしたほうがよい場合が出てきます。フィボナッチの例を &lt;code&gt;struct&lt;/code&gt; で書いてみましょう。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; const (
+     TypeInt int = iota
+     TypeBool
+ )
+
+ type Object struct {
+     Type      int
+     IntValue  int
+     BoolValue bool
+ }
+
+ func IntFibNoInterface(n int) int {
+     if n &amp;lt; 2 {
+         return n
+     }
+     return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
+ }
+
+ func IntFibStruct(o Object) Object {
+     if o.IntValue &amp;lt; 2 {
+         return o
+     }
+     return Object{TypeInt,
+         IntFibStruct(Object{TypeInt, o.IntValue - 1, false}).IntValue &#43;
+             IntFibStruct(Object{TypeInt, o.IntValue - 2, false}).IntValue,
+         false}
+ }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         IntFibNoInterface(20)
+     }
+ }
+
+ func BenchmarkStruct(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         IntFibStruct(Object{TypeInt, 20, false})
+     }
+ }&lt;/pre&gt;&lt;p&gt;速度ですが、インタフェースを使うより断然早く、2-3倍程度しか遅くなりません。当たり前ですが、暗黙的なメモリアロケーションも発生しません。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface       30000             58491 ns/op               0 B/op          0 allocs/op
+ BenchmarkStruct            10000            139924 ns/op               0 B/op          0 allocs/op&lt;/pre&gt;&lt;p&gt;&lt;code&gt;reflect&lt;/code&gt; を使えば・・・というのもありますが、結局 &lt;code&gt;reflect.ValueOf&lt;/code&gt; の引数が &lt;code&gt;interface{}&lt;/code&gt; なので素直に使うと &lt;code&gt;interface{}&lt;/code&gt; の場合と同様の遅さです。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; func IntFibNoInterface(n int) int {
+     if n &amp;lt; 2 {
+         return n
+     }
+     return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
+ }
+
+ func IntFibReflect(r reflect.Value) reflect.Value {
+     n := r.Int()
+     if n &amp;lt; 2 {
+         return r
+     }
+     return reflect.ValueOf(IntFibReflect(reflect.ValueOf(n-1)).Int() &#43; IntFibReflect(reflect.ValueOf(n-2)).Int())
+ }
+
+ func BenchmarkNoInterface(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         IntFibNoInterface(20)
+     }
+ }
+
+ func BenchmarkReflect(b *testing.B) {
+     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+         IntFibReflect(reflect.ValueOf(20))
+     }
+ }&lt;/pre&gt;&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface       30000             56238 ns/op               0 B/op          0 allocs/op
+ BenchmarkReflect            1000           2271026 ns/op          525376 B/op      32836 allocs/op&lt;/pre&gt;&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;ちなみにGopherLuaでは&lt;/h2&gt;
+&lt;p&gt;拙作のGo言語によるLua実装 &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; では一番おそい、非ポインタ型をインタフェースとして使う実装になっています。なのでGopherLuaはおそらく現在でもGo上で動くスクリプト言語としては最速の部類ですがさらに速くしようと思えばできたのかもなあと思っています(まぁこの例ほど言語実装は単純ではないし、擬似共用体にするにしてもサイズが大きくなるので、速くなるかどうかはやってみないとなんともいえないのですが。あとサイズがおおきくなるのでスタック型のAPIにするよりないでしょうね)。&lt;/p&gt;
+&lt;p&gt;これは使い易さや実装のし易さやメモリ効率、そして「Goらしさ」とのトレードオフだと思っています。私は、とにかく使い易いものがほしかったので一番使い易く、そして実装が楽なものを選びました。&lt;/p&gt;
+&lt;p&gt;とはいえ、特に数値型をインタフェースに変換する負荷を軽減するために、独自のアロケータを実装しています。これは一定数の &lt;code&gt;float64&lt;/code&gt; をまとめてアロケートすることでインタフェース変換コストを減らしています。かなり強引なのですが興味のある方は &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua/blob/master/alloc.go&#34;&gt;gopher-lua/alloc.go&lt;/a&gt; をご参照ください。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;最後に&lt;/h2&gt;
+&lt;p&gt;インタフェースはGoで中心的な役割を果たしていますが、時に大幅なパフォーマンス劣化を起こす可能性があります。 特に、非ポインタ型を &lt;code&gt;interface{}&lt;/code&gt; などとして引数に渡す場合が要注意です。&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 12日目は &lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/Ladicle&#34;&gt;Ladicle&lt;/a&gt; さんです。&lt;/p&gt;
+&lt;/section&gt;
+</description>
+      
+      <category>golang</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2015/12/11/go-interface-performance-penalty</guid>
+      <pubDate>10 Dec 15 15:00 UTC</pubDate>
+    </item>
     
     <item>
       <title>icebergのLinux対応版 v0.9.7リリース </title>
@@ -271,32 +587,6 @@ func main() {
       
       <guid isPermaLink="true">http://inforno.net/articles/2015/02/15/gopher-lua-released</guid>
       <pubDate>15 Feb 15 13:43 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>iceberg v0.9.6リリースしました </title>
-      <link>http://inforno.net/articles/2014/10/20/iceberg-0-9-6-released</link>
-      <description>&lt;p&gt;コマンドラインランチャー &lt;a class=&#34;reference external&#34; href=&#34;http://yuin.github.io/iceberg/&#34;&gt;iceberg&lt;/a&gt; のv0.9.6 をリリースしました。 GitHubの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/releases&#34;&gt;リリース一覧&lt;/a&gt; よりダウンロードできます。&lt;/p&gt;
-&lt;p&gt;v0.9.5からのバージョンアップ方法は同梱ドキュメントの更新履歴を参照してください。&lt;/p&gt;
-&lt;p&gt;更新点は以下です。&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;&lt;strong&gt;FIXED&lt;/strong&gt; : 一部のパスでアイコンが正しく読み込まれない問題を修正&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;FIXED&lt;/strong&gt; : 一部のパスを読み込んだ際にクラッシュする問題を修正&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;CHANGED&lt;/strong&gt; : 使用するコンパイラをMinGW-W64 4.9.1にアップグレード&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;IMPROVED&lt;/strong&gt; : 単一キーをホットキーに割り当てられるようになった&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;NEW&lt;/strong&gt; : パス補完とオプション補完でオートコンプリートを有効にする path_autocomplete と option_autocomplete を追加&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;ようやく重い腰をあげてgccのバージョンアップをしました…。icebergは今までmingw gcc4.5系を使っていて、これWindowsのくせにLP64なんですね。まぁそのおかげで＊nix生まれのライブラリでも割と普通に使えていました。&lt;/p&gt;
-&lt;p&gt;で4.9にあげたのでWindowsらしくLLP64になったわけで、fltkなんかは平気で &lt;code&gt;long&lt;/code&gt; を &lt;code&gt;void*&lt;/code&gt; にキャストしてるのでワーニング出まくりでした…。そんなクリティカルな場所はなかったので簡単なパッチ当てて終了。&lt;/p&gt;
-&lt;p&gt;鬼車も今まで使ってたバージョンは &lt;code&gt;long&lt;/code&gt; のポインタキャストがあって落ちるので最新に。&lt;/p&gt;
-&lt;p&gt;なんやかんやあったけど今のところきちんと動いている気がします。なにか問題ありましたらGithubの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/issues&#34;&gt;Issues&lt;/a&gt; までどうぞ。&lt;/p&gt;
-&lt;p&gt;あと、どうやらicebergはWindows8で動かないっぽいです(Windows7互換モードにすると動く)。 8の環境持ってないのでなんで動かないのかわかりません。コンパイラ変えただけで動くようになってたり…しないかなあ。というわけでWindows8使ってる方、もし互換モードなしで動いたらコメントください。&lt;/p&gt;
-</description>
-      
-      <category>iceberg</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2014/10/20/iceberg-0-9-6-released</guid>
-      <pubDate>20 Oct 14 11:15 UTC</pubDate>
     </item>
     
   </channel>

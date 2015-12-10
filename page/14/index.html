@@ -61,6 +61,53 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/09/12/machine-language" itemprop="url">マシン語とか</a></h3>
+<div class="meta">
+<time datetime="2007-09-12T19:17:38&#43;09:00">Sep 12, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
+  
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/programing/" rel="tag" itemprop="keywords">programing</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>最近の若いもんはマシン語をしらん、けしからん、みたいな話が盛り上がってますね。</p>
+<p>そんな若くもないのですが(22歳)、中学のころにはWindows95があって、携帯電話を持っていて、高校生のころには既にADSLなどの高速回線を普通に使っていた、そんな世代の俺の考え。まぁ俺はプログラマでもなんでもないんだけど。</p>
+<section>
+<h2>全体的な結論</h2>
+<p>全体的な結論を先に言うと、個人的にこういう原点回帰的な話というのはそんなに好きじゃない。もっと高次で活躍する人が増えてもいい、と思っているから。一人の人間の時間は有限で、それを高次レイヤにつぎ込んでもっとおもしろいことができるなら、そっちにつぎこめばいいんじゃないかな。俺はそれは全然アリ派。たとえば、音楽でいうと、DTMしかできないやつは音楽できる顔すんな、みたいなのが嫌い。DTMしかできなくてもいい曲かく人なんていっぱいいるし、それでいいと思う。なんていうか、努力とかよりも、感性にあこがれるタイプだからかな。上のレイヤからはいっても、きっと基礎を固めてちゃんとやりたい、それが必要だ、と思えば人は勉強する。だからあえて言うこと（必要だと言い切ること）でもないんじゃないかなあ。現に、だいたいコンピュータ技術者というものは最終的に下のレイヤへ下がっていく人が多いですよね。</p>
+</section>
+<section>
+<h2>マシン語とかについて</h2>
+<p>きっと議論を呼んでいるのは「絶対必要」みたいに断定してしまったからで、知っていればこんないいことがあるんだよ、という感じならみんな納得するんじゃないかなあ。</p>
+<p>上に書いたように俺の世代ってのは中学ですでにWindows95があってVBやらVCやらDelphiがあった世代で。そんなに苦労しなくても見栄えのいいGUIアプリがかける環境があったわけで。当然意識しないとマシン語とかアセンブラには触れない。俺はたしかJAVAからプログラミングに入ったけど、別にマシン語知らなくても全然大丈夫だった。</p>
+<p>んでさらにはWebアプリの台頭。Webアプリを書いているときにマシン語をしらないから、という理由で困ったこともないし、新しい言語を覚えるときに困った覚えもない。つまりプログラマでも書くプログラムによってはそんなに必要ない、ということ。そういう時代まで、先人達の努力でやってきた、ということ。暇があるなら低レイヤを覚えておくにこしたことはないけど、他に覚えるべきことがあるなら、そっちを勉強したらいいと思う。</p>
+<p>ただ、知っといたほうがいろいろいいことがあるのも事実。なので覚えたい人はがんばりましょう、ということで。</p>
+<p>同じことを書いてる人もいるけど、むしろアセンブラとかにこだわりを持っている人のほうが、「ひどい」コードを書くこともあるよね。処理効率を優先しまくって可読性を落としたりとか、何をやってるのかわからないのがイヤ、と自分で必要ないものまで書いたりとか。</p>
+</section>
+<section>
+<h2>俺と低レイヤ技術</h2>
+<p>とそんなことを書きつつ、実は低レイヤも好きな俺。すみませんすみません。個人的に低レイヤの（特にCPUとか。ネットワークとかじゃなく。）ことを勉強したいなら、エミュレータは一度書いてみるべきだと思う。一個8bitCPUのエミュレータを書いて、そのCPUの逆アセンブラを書いて、デバッガ作って、できれば自分でアセンブラを書いて、アセンブリ言語をマシン語に落として、そのコードを実行させてみれば、CPUの基礎はかなりわかると思う。データがそろってる8bitCPUならそんなに苦労することなくかけるので、一度書いてみてはいかが。アセンブリ言語の書き方も、割り込みがどーたらも、なんMhzとかってなんなの、とかサイクルってなにとかメモリってどうなってんの、DMAってなにがうれしいんだよとかそういやビット演算ってなんの役にたつの、とか色々一気に疑問が解決する。それがわかっていればあとは順をおってCPU関連技術を勉強していけば理解もはやい気がする。自分で命令セットまで考えてそのCPUをソフトで実装すればもっと完璧。</p>
+<p>実装言語はなんでもいいんじゃないかなあ。手前味噌だけど、 <a class="reference external" href="/articles/2007/03/02/nes-emulator-development-with-python-5">Pythonでもエミュレータを書こうと思えばかける</a> わけで、PerlでもRubyでもJavascriptでもいいと思う。動作速度よりも理解する過程が楽しいかと。ちなみに自分の書いたPythonでのNESエミュレータだとCPU（6502)とメモリ関連で、簡易逆アセンブラ込みで1000行ほど。速度を犠牲にすればもっと短くかける。</p>
+<p>あと、これも書かれてるけどむしろネットワークとか、DBとかのほうがよっぽど低レイヤの知識が必要だよなあ。10BASE-Tと100BASE-Tでなんでつなげるリピータハブの数が違うのかとか、これならどれだけスループットが確保できるか、それをわかるためにもCSMA/CDはなんたるかとか、実際どうやってケーブル上で衝突を検出してんのかとか色々わかってないと困るしねえ。他のネットワーク技術でも一緒。生のパケット(orフレーム）を見なけりゃいけないことも多々あるし。ソフト使ってちゃんと設定がかけます、だけだと意味ない。OSIの層を上から下までカバーしないと。そういった意味でもネットワークっておもろい。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/09/08/parser-combinators-in-python" itemprop="url">Javascriptでパーサジェネレータを書いてみた</a></h3>
 <div class="meta">
 <time datetime="2007-09-08T00:04:03&#43;09:00">Sep  8, 2007</time>
@@ -160,81 +207,10 @@ if(parseResult.success()) {
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/08/23/prototype160-rc" itemprop="url">Prototype 1.6.0 RC</a></h3>
-<div class="meta">
-<time datetime="2007-08-23T02:54:48&#43;09:00">Aug 23, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>でましたね。 <a class="reference external" href="http://prototypejs.org/2007/8/15/prototype-1-6-0-release-candidat">Prototype 1.6.0 release candidate</a></p>
-<p>WEB界隈から離れてしばらくたちますが、またいつWEB界隈に戻るかわからないので一応追ってます。</p>
-<p>1.6ではついにClass周りに手が入りました。Prototype.jsといえばシンプルすぎるClass周りとプロパティをコピーするというなんちゃって継承がウリ（？）だったわけですが、1.6からは違います。もう <a class="reference external" href="http://inforno.net/articles/2006/01/24/inheritance-in-prototype-with-ease">オレオレクラス定義ライブラリ</a> をわざわざ使わなくても大丈夫。</p>
-<p>公式にも例がありますが、こんな感じでちゃんと継承できるようになりました。</p>
-<pre class="prettyprint ">var Animal = Class.create({
-  initialize: function(name) {
-    this.name = name;
-  },
-  eat: function() {
-    return this.say("Yum!");
-  },
-  say: function(message) {
-    return this.name + ": " + message;
-  }
-});
-
-var Eatable = {
-  eaten : function() {
-    return this.say("help me!!!");
-  }
-}
-
-var Mouse = Class.create(Animal, {
-});
-//syntax sugar for Object.extend
-Class.mixin(Mouse.prototype, Eatable);
-
-// subclass that augments a method
-var Cat = Class.create(Animal, {
-  eat: function($super, food) {
-    if (food instanceof Mouse) return [food.eaten(),$super()].join("\n");
-    else return this.say("Yuk! I only eat mice.");
-  }
-});
-
-var a = new Cat("Tama");
-alert(a.eat(new Mouse("Nezumy mouse")));</pre><p>単にプロトタイプチェーンをつなげるだけではなくて、オーバライドされたメソッドの引数名を取得して（toStringしてgrepですね)、$superだった場合、自動的に親クラスのメソッドを$superとして渡してくれます。地味に便利。</p>
-<p>あとはsyntax sugarとしてClass.mixinがあります。まぁObject.extendなんですが、こっちの方がわかりやすいですよね。</p>
-<p>そのほかもいっぱい機能が追加れさてれてますね。個人的には <code><span class="pre">document.observe(&quot;contentloaded&quot;,</span> function() { ... })</code> て感じでサポートされたDOM完了時点でのイベントと、</p>
-<pre class="prettyprint ">$("container").observe("titleChanged", function(event) {
-  this.highlight({ duration: 0.5 });
-});
-
-$("title").fire("titleChanged");</pre><p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
-<hr class="docutils" />
-<p>資格の勉強とかもそろそろしなきゃなー、と思いつつ、Scalaでパーサコンビネータライブラリがついたので、Schemeの処理系でも実装したいなあ、と思い始めてる今日この頃。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/13/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li class="active">14</li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li><a href="/page/18/" class="page">18</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/15/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/13/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li class="active">14</li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li><a href="/page/18/" class="page">18</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/15/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

@@ -61,6 +61,100 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/06/30/gae-model-improvements" itemprop="url">GoogleAppEngineのモデルをいじってみた</a></h3>
+<div class="meta">
+<time datetime="2008-06-30T23:51:58&#43;09:00">Jun 30, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/gae/" rel="tag" itemprop="keywords">gae</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>なんの幸運か、Softbank（しかもJ-phone時代からの）ユーザだったので、SMS認証もアッサリ通ってGAEのアカウントをゲットしたわけですが･･･（ただしiPhoneには興味ほぼなし)。</p>
+<p>というわけで <a class="reference external" href="http://www.metareal.org/2008/05/20/porting-weblog-to-google-app-engine/">ishikawaさんがブログをGAEに移行された</a> 、というのを知って俺も移行しようかなあとか思いつつブログアプリ作りました。すでに今ブログで使っている機能は全て実装済みだったりします。デザインも全頁XHTMLTr validでCSSもvalidなことを確認済みだったりします。しかも <code>Django</code> じゃなくて <code>web.py</code> だったりします。慣れてるしね。</p>
+<p>それはおいといて、データストアまわりがそのままだと</p>
+<ul class="simple">
+<li><code><span class="pre">filter(&quot;hoge</span> =&quot;, value)</code> が長ったらしい</li>
+<li>CRUDが微妙。</li>
+<li>フォーム作成用等に空のモデルを一時的に作成したいけど、作成した時点でvalidateされるので作成できない</li>
+</ul>
+<p>らへんがいまいちだったで、ちょっといじってみました。</p>
+<pre class="prettyprint ">def _getattr(self, name):
+  if name.endswith("_eq"):
+    return lambda v: self.filter("%s ="%name[:-3], v)
+  raise AttributeError(name)
+setattr(db.Query, "__getattr__", _getattr)
+
+class ModelMixin(object):
+
+  default_order = None
+  _stab_class = None
+
+  @classmethod
+  def stab(cls):
+    if not cls._stab_class:
+      stab = type('Stab%s'%cls.__name__, (cls,), dict())
+      for k,v in stab._properties.iteritems():
+        v.required = False
+        v.choice   = None
+        v.validator= None
+      cls._stab_class = stab
+    stab = cls._stab_class()
+    for k,v in stab._properties.iteritems():
+      v.__set__(stab, v.default_value())
+    return stab
+
+  @classmethod
+  def create(cls, *a, **k):
+    obj = cls(*a, **k)
+    obj.put()
+    return obj
+
+  @classmethod
+  def find_all(cls):
+    result = cls.all()
+    if cls.default_order is not None:
+      return result.order(cls.default_order)
+    return result
+
+  def update(self, **k):
+    for prop in self.properties().values():
+      if prop.name in k:
+        prop.__set__(self, k[prop.name])
+    self.put()
+
+  def destroy(self):
+    self.delete()</pre><p>これで</p>
+<pre class="prettyprint ">class Test(ModelMixin, db.Model):
+  name = db.StringProperty(require=True)
+  created_at = db.DatetTmeProperty(auto_now_add=True)
+
+  default_order="-created_at"
+
+Test.find_all() # created_atの降順
+Test.all().name_eq("user").update(created_at = datetime.now())
+stab = Test.stab() #nameがなくても作成できる</pre><p>こんな感じにかけます。</p>
+<p>さて、そんなこんなでブログアプリを作ったのはいいんだけど、なんとなく移行する気にならない。現在はWordpressで運用しているけど、正直セキュリティホールは多いし、ソースコードを見ると泣きたくなるようなコードだし、頻繁なバージョンアップはめんどくさい･･･。プラグインのセキュリティホールまで考えるとなおめんどくさい。しかもそこまで機能を使い倒しているわけじゃないし。</p>
+<p>だからGAEにでも移行したいんだけど･･･。データがGoogleに握られるのはそこまで心配じゃない。ブログサービスでブログをやれば、そのブログサービス事業者にデータを握られるってのと同じだから気にならないんだな。移行作業自体も記事数がかなり少ないのでそんなにめんどくさそうではない。</p>
+<p>ひとつ引っかかっているのはトランザクションの問題。まぁめったにトランザクションで問題はおきないと思うけど、GAEのトランザクションは一応ある、といった程度でほとんど使えない。使おうとしたらtransactionの中でこれはしちゃだめ、これもしちゃだめ、とおこられまくったので現在トランザクション管理ができていない。GAEには集約系のメソッドがないので、月別記事数とか、タグ別記事数とかを記事のCRUD時に別モデルで管理しているわけだけど、ここのトランザクションが管理できないのは結構不安。</p>
+<p>もうひとつはなんとなーく使い切らないんだけど無料の上限である500Mという容量が微妙。画像のアップとかしなけりゃまず大丈夫なんだけど。</p>
+<p>その他にもなんとなくGoogleの罠じゃないかとかいろいろ気になって移行に踏み切れないでいる今日この頃。実際に本格的にGAEに移行した人の感想がききたいなあ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/04/03/a-python-library-for-nicovideo-testing" itemprop="url">Python版ニコニコ動画ライブラリを試しに公開してみる</a></h3>
 <div class="meta">
 <time datetime="2008-04-03T22:06:31&#43;09:00">Apr  3, 2008</time>
@@ -255,47 +349,10 @@ if(parseResult.success()) {
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/11/03/maintenance-is-difficult-than-development" itemprop="url">やっぱり新規開発より保守が難しい</a></h3>
-<div class="meta">
-<time datetime="2007-11-03T00:16:42&#43;09:00">Nov  3, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>システム開発の話ではありません。</p>
-<p>最近、やっぱりというかなんというか初音ミクに刺激されて音楽をもう一回やりたくなったんです。</p>
-<p>中学高校と音楽ばっかりやっていたので、大学の４年間やってないくらいで忘れてないだろう、と思ってたんです。</p>
-<p>でも、いろいろ忘れているわけですよ、実際。</p>
-<hr class="docutils" />
-<p>クラシック的な理論を習っていたので、感性優先で作りたいと思っても理論がわかってないと不安になっちゃう。というわけで、現在、和声法とか自由対位法とか復習しています。その次はFMとアナログでの音作りの感触を取り戻すことかな・・・</p>
-<p>でもやっぱり基礎の基礎って絶対に忘れないもんだな、と思った。久しく使ってない知識だけど、トニイホロヘハ、ヘロホイニトハ、シミラレソドファ、ファドソレラミシ、これはしっかり覚えていた。</p>
-<hr class="docutils" />
-<p>知識を保っていくことはほんとに難しい。人間の脳の記憶容量は普通に生きている限りだと無限に近い。storeにはあまり失敗しない。結局retrieveできなくなっていくのが問題だったりする。</p>
-<p>それを大学の講義で習って、しばらくして自分用のメモを残すようになった。</p>
-<p>今、昔書いた曲の譜面（ソース）をみても何でこういう進行にしたか、わからない。今回、勉強しなおしながらメモを残している。なんか、ドキュメントがないとわかんないやつになっちゃったみたいですごくむなしい。けど、やっぱりメモを残すのが一番効率がいい。記憶はそう簡単に消えない。retrieveする手がかりがあればいい。基礎とか、メモする必要はない。自分が忘れそうなことをうまく見抜いて、残していく。</p>
-<p>これは幅広くやろうとしてしまう人の宿命だよなあ。言語にしても、実は自分用メモを見ないとまったく書けない、というレベルになってしまっているものもあるんだよねえ(HaskellとかSmalltalkとか･･･最近はどう書く？orgでコードを見るおかげでそこまでひどくないが)。</p>
-<hr class="docutils" />
-<p>どう書く？orgと言えば主に <a class="reference external" href="http://ja.doukaku.org/user/82/">Scalaで参戦</a> してるわけですが、ブログでほとんどScalaに言及してないな。まぁ、Scalaの記事とか読みたい人もあんまりいないだろうし、いいか。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/8/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li class="active">9</li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/10/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/8/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li class="active">9</li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/10/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

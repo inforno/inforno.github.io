@@ -61,31 +61,53 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/04/02/attribute-selectors-in-prototype" itemprop="url">$$で属性セレクタ</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/01/31/nes-emulator-development-with-python-3" itemprop="url">PythonによるNESエミュレータ開発3</a></h3>
 <div class="meta">
-<time datetime="2006-04-02T01:37:07&#43;09:00">Apr  2, 2006</time>
+<time datetime="2007-01-31T19:37:10&#43;09:00">Jan 31, 2007</time>
 
   
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
   
-  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>これはかなり嬉しい機能だなあ。
-最近Prototype.jsの$$で属性セレクタが使用できるようになりました。</p>
-<p>どんな風にかけるのか、コードをテストから引っ張ってきてみました。</p>
-<pre class="prettyprint ">$$('a[href="http://inforno.net/#"]')
-$$('a[class~=internal]')
-$$('*[xml:lang|="es"]')
-$$('*[xml:lang|="ES"]')
-$$('a[href!=#]')
-$$('div[style] p[id] strong')
-$$('a[class~=external][href="http://inforno.net/#"]')</pre><p>こんな感じです。
-値はクオートしてもしなくても大丈夫っぽいですね。</p>
-<p>すばらすい。inputに対する操作なんかで特に便利。今までちょっとボタン操作するためだけに、そのボタンにIDふったりクラスふったりしてたんですけど$$('#hoge input[type=submit]')でいけるんだなあ。そんなにパフォーマンスに気をつかわなくて良いページでは使ってみよう。</p>
+    <p>時間があればちょっとずつ続けてます。</p>
+<p>とりあえず画面がでるようにはなりました。速度は全然追いつかないですけど。</p>
+<img alt="/statics/files/pynes0.jpg" src="/statics/files/pynes0.jpg" />
+<section>
+<h2>CPU</h2>
+<p>基本的には変化なし。細かいバグが多くて大変・・・・</p>
+<p>わずかでも速くしたいところなので、あまり構造を壊さず速度を上げられないかな、と思ってPrefetch cueを実装してみました。Prefetch cueはCPUの非常に基本的な最適化で、基本的故に単純、実装しても負荷になることはないだろう、ってことですな。</p>
+<p>エミュレーターでは（とくにPythonでは)ハードウェアでいうメモリが遅いうんぬんとは別の理由で、メモリアクセスはかなり重い処理になります。</p>
+<pre class="prettyprint ">def memory(self, addr):
+  if addr &lt; "RAMの範囲":
+    self.ram[addr]
+  elif addr &lt; "メモリマップドIOの範囲":
+    self.io.read(addr)
+  #else:
+  # .
+  # .
+  # .</pre><p>さらにページングされている場合、C言語ならポインタでいけるんですけど、Pythonではそうはいかないので、いちいち長ったらしく書くか、ページング用にメソッドを書いてそれをはさむことになります。</p>
+<p>そう、関数の呼び出しが非常に多い部分なのです。実際、profileモジュールでデータを取ってみてもメモリ読み込み書き込みが結構なウェイトをしめてました。</p>
+<p>そこでPrefetch用のクラスを作って、別スレッドで現在のPC+いくらかをとるようにしてみました。これは現在のオペコードを実行している間に実行されます。これで次のオペコードを実行する前にオペコードとオペランドを取得でき、メモリ読み込み関数を呼ぶ回数が減ります。ただし、本物のPrefetch cueと同じでジャンプ命令が多いとあんまり効果がありません。</p>
+<p>Prefetch-cueを入れてみると、まぁコードの内容によりますが、psycoを入れて1frame 0.075くらいまではいきました。PPUをいれると全然なんですけど（笑</p>
+</section>
+<section>
+<h2>PPU</h2>
+<p>なんとか表示できるまでにきました。正直つらいです（笑　特にスクロールに関しては <a class="reference external" href="http://nesdev.parodius.com/loopyppu.zip">loopyの文書</a> の文書が重要、ということをしらなかったのではじめはサッパリでした。</p>
+<p>描画部分は <a class="reference external" href="http://www.pygame.org/">pygame</a> です。pygameで描画する場合、更新したRectだけupdateするってのが常套手段なわけですが、エミュの場合はどうも・・・。というわけで今は毎回全体を描画しています。これも結構重い処理になるなあ。</p>
+<p>ほとんどスクロールしないゲームの場合、もしかしたら32x32くらいに区切ってスプライトが動いたところだけ更新するようにしたら、結構軽いのかもなあ。</p>
+<hr class="docutils" />
+<p>というわけで、PPUをつめてパッド入力あたりを書けばマッパー0のゲームなら動き出しそうな感じがします。ちなみにマッパーは全然です。とりあえずPythonで書いてみることが目的なので実際に使うことは想定して無いですし。</p>
+<p>卒論の試問会も終わり、家探しの旅も終わり、つかの間の落ち着きが戻ってきました。なんか資格とかをとらないといけないらしいので、それをちょっとずつ勉強しつつ、こっちもちょっとずつ進めていきたいなーと思ってます。</p>
+</section>
 
   </div>
 </article>
@@ -245,7 +267,7 @@ if(window.HTMLElement) {
 
 
 
-<nav class="paging"><ul><li class="previous"><a href="/page/17/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li class="active">18</li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/24/" class="page">24</a></li><li class="next"><a href="/page/19/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/17/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li class="active">18</li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/19/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>
