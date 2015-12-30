@@ -61,6 +61,107 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/05/22/erlang-process" itemprop="url">Erlangのプロセス</a></h3>
+<div class="meta">
+<time datetime="2007-05-22T23:57:09&#43;09:00">May 22, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/erlang/" rel="tag" itemprop="keywords">erlang</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>via  <a class="reference external" href="http://d.hatena.ne.jp/methane/2007051">Erlangの強さ</a></p>
+<p>最近（でもないか・・・）Erlangが話題になっていて、趣味プログラマーになったとはいえ、ちょっと触ってみたいなあと思いつつ、時間ないなあと思いつつ。</p>
+<p>んで話題のErlangのプロセスなんだけど、microthreadだろうなあ、と思っていたけどそれであってるっぽい。あんま詳しくないんでアレですが。詳しくは <a class="reference external" href="http://www.erlang.org/ml-archive/erlang-questions/200104/msg00072.html">コチラ</a> 。</p>
+<p>Erlangのプロセスについてはmethaneさんがおっしゃてる通りだと思う。要はこれを使いやすい形で言語仕様にとりこんでるあたりがErlangの良さなんだよなあ。</p>
+<p>たとえばPythonでもyieldがあるのでmicrothreadは可能で（Stackless Pythonまである)、Erlangのプロセスっぽいこともやろうと思えば可能じゃないか、って感じなんだけどあくまでやればできる、って感じだと思う。</p>
+<p>というわけでmicrothreadを用いたプログラミングに対するある意味DSL的な言語ではないのかなあ、というのが今のところの印象。パッと見た感じその他は魅力的な部分があまり見当たらなかった。かといって機能が足りてないわけでもぜんぜんないので、microthreadや分散のメリットが前面にでるならガンガンつかってもいいと思ってたりするのです。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2007/03/02/nes-emulator-development-with-python-5" itemprop="url">PythonによるNESエミュレータ開発5</a></h3>
+<div class="meta">
+<time datetime="2007-03-02T00:32:14&#43;09:00">Mar  2, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>もうすぐ引越しです。頑張って部屋を片付けないと・・・</p>
+<p>しばらくドタバタすると思し、これ以上作りこむモチベーションもないので、ここまで作ったものをあげておこうと思いました。</p>
+<p><strong>ダウンロード</strong></p>
+<p><a class="reference external" href="/statics/files/pynes-0-0-1.zip">pynes-0-0-1.zip</a></p>
+<section>
+<h2>試し方</h2>
+<p>インストールはダウンロードしたzipファイルを展開するだけです。</p>
+<p>必要なライブラリは</p>
+<ul class="simple">
+<li><a class="reference external" href="http://psyco.sourceforge.net">psyco</a></li>
+<li><a class="reference external" href="http://www.pygame.org">pygame</a></li>
+</ul>
+<p>です。
+両方とも <code>easy_install psyco</code> 、<cite>easy_install pygame</cite> でインストールできたはずです。</p>
+<p><code>roms/</code> 以下に最低1つ以上ロムファイルを置いてください。現状、マッパーに対応してませんので、マッパー0のしか動く可能性はありません。現在動作を確認してるのは、前回あげさせていただいた <a class="reference external" href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">TkShoot</a> くらいです。市販のはほとんど動かないんじゃないでしょうか。</p>
+<p>一応参考までにあげておくと、動く可能性があるのはGolf,DonkeyKongなどです。</p>
+<p><code>bin/pynesi.py</code> が起動用スクリプトです。コマンドラインから起動してください。起動したら、romファイルを番号で選択してください。</p>
+<p>キーバーインドは</p>
+<ul class="simple">
+<li>十字キー : カーソル</li>
+<li>スタート : テンキーの0</li>
+<li>セレクト : テンキーのEnter</li>
+<li>A : テンキーの3</li>
+<li>B : テンキーの2</li>
+</ul>
+<p>になってます。キーバーインドを代えたい方は <code>src/pynes/pad.py</code> を適当に書き換えてください。</p>
+<pre class="prettyprint ">self.keymap1 = {
+  K_UP : NES_PAD_UP,
+  K_DOWN : NES_PAD_DOWN,
+  K_LEFT : NES_PAD_LEFT,
+  K_RIGHT : NES_PAD_RIGHT,
+  K_KP0 : NES_PAD_START,
+  K_KP_ENTER : NES_PAD_SELECT,
+  K_KP2 : NES_PAD_B,
+  K_KP3 : NES_PAD_A
+}</pre><p>ここです。</p>
+<p>とにかく、めちゃくちゃ遅いので、固まったと思ってもしばらくすると画面がちゃんと切り替わったりします。</p>
+</section>
+<section>
+<h2>よもや話</h2>
+<p>かなり適当です。前回（PythonによるNESエミュレータ開発4)から変わってません。マッパーっぽいのが用意してありますが、これはダミーです。他のエミュのソースを参考に必要そうな部分に適当にいれただけです。</p>
+<p>一応、速度を重視しているものの、わかりやすく書いてるつもりなんで、Pythonが分かっていてかつ、エミュレータの基本的な構造が知りたい人には参考になるかもしれません。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers" itemprop="url">コマンドライン型ランチャーとexplorerの連携</a></h3>
 <div class="meta">
 <time datetime="2007-02-24T03:11:39&#43;09:00">Feb 24, 2007</time>
@@ -179,117 +280,6 @@ command名がキー、値は引数なしの関数になります。キーに大�
 <hr class="docutils" />
 <p>こんな感じです。COMなら大概なんでもできるので、便利です。しかもJScriptとexeなのでUSBメモリなどにいれて持ち運べますので、俺ポータビリティもそこそこあります。</p>
 <p>また、いかにAHKスクリプトが簡単でも、普段使い慣れた言語でかけるほうが落ち着きます。AHKなんかをみてると、完全なDSLというのは俺的に扱うのがめんどくさくて（覚える熱意があればいいんだろうけど、趣味で使うものにそれほどの情熱がでるかというと・・・）なじみにくいようだ。Rakeみたいな言語内DSLがいいよね、やっぱ。ああ、2007年はRubyの年になるんでしょうかねえ。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/05/29/programmers-and-musicians" itemprop="url">プログラマの給与未来自給はそんなもんかも：プログラマとミュージシャン</a></h3>
-<div class="meta">
-<time datetime="2007-05-29T01:22:58&#43;09:00">May 29, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
-  
-  <span class="tag"><a href="/articles/tag/job/" rel="tag" itemprop="keywords">job</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>via  <a class="reference external" href="http://hamasta.g.hatena.ne.jp/hamasta/20070526/p">雑誌記事　「日本のプログラマーの未来時給」を見て人生ｵﾜﾀ＼(＾o＾)／</a></p>
-<p>プログラマの未来自給は651円らしい。</p>
-<p>個人的には「そういう職業なんだろうなあ」という感じ。</p>
-<section>
-<h2>プログラマとミュージシャン</h2>
-<p>音楽をやっていたせいか、どうもプログラマとミュージシャンを重ねてしまう。</p>
-<p>一般的にプログラマというと、プログラミング言語でなにか書く人。音楽でいうと楽器のプレーヤー。</p>
-<p>ギターやってるなら、ベースもOKっていう人も多いはず。ついでにピアノなんかもできたり。もっといっぱい、ドラムもたたけるし、バイオリンもひけまっせ、みたいな人もいるかもしれない。そういう人はあんまりいないから目立つけど、実際はギターとベースくらいがいいところかなあ、と。プログラミング言語でもそうだと思う。</p>
-<p>こういう幅広さで有名な人もいれば、その手の演奏者として名をはせる人もいるだろう。ギターがすげー人とか。Perlのすげーハッカーとか。</p>
-<p>また、演奏者の中でも楽譜を見て演奏するだけの人もいれば、自分で曲を書く人もいる。プログラマでも確実にある程度の規模の設計をできる人はどれだけいる？10秒程度の音楽なんて誰でもつくれる。5分くらいのいい曲、かけるだろうか？</p>
-<p>常に動向をおっているだろうか？小室哲也は嫌いな人もいるだろうが、あの流行への敏感さ、流行を生み出す力はすごいと思う。それでいてある程度の中心がある。「俺はこういう音楽が好きだから、これだけでいいんだ」ってなるのは当然否定しない。、でも最低限、聞いてみるくらいはしたほうがいいと思う。自分の好きな音楽に対しても新しいアプローチとかができると思う。俺はCやってるし、別にHaskellはやっててもどうでもいいよ、もしくはHaskellの存在なんて知りもしないプログラマがほとんどだろう。</p>
-<p>基礎は固めているだろうか？「カッコいいから」って自己流でギター始めた人はどれくらいいるだろ。もちろんそれで上手くなる人もいる。そういう人は天才だからほっておいて問題ない。でも大体の人は変な癖がついて、よくない方向へいってしまう。ギターはバイオリンより入りやすい。適当にコードをならせばそれっぽくなる。でも、バイオリンと同じくらい奥が深いものだ。LLはCとかアセンブラより入りやすく、ちょっとやればそれっぽい物が作れる。でも奥深さは相当なもんだと思う。</p>
-<hr class="docutils" />
-<p>結局、活躍しているミュージシャンはほんの一握りだ。たくさんの若者が音楽に魅せられて、バンド組んだりしてプロ目指してみちゃったりする。結局、スタジオ付のプレーヤーになるのが関の山で、平凡なプレーヤーとして終わる。しかも、いまやプレーヤーの代わりにはコンピュータがいて、それを上手く操れるやつのほうがえらかったりする。スタジオの録音のエンジニアとかになったほうがまだいいわけだ。プログラマよりSE。</p>
-<p>さらにたちの悪いことに、一般ユーザーはそんな名演奏者を求めていなかったりするのだ。実際、喜んで打ち込みのJ-POPを聞いてるでしょ？（ちなみに俺はそれが悪いなんてぜんぜん言わない）。ドラムなんて名演奏者が一発で叩いたほうが速いに決まってる。でも誰かに打ち込ませたほうが安いし、ユーザーも満足なんだよ。PGでもそれは同じで、一般ユーザーは動けばそれで満足なのだ。だいたい、そのサイトがXHTML validかなんて誰が気にする？</p>
-<hr class="docutils" />
-<p>有名なプログラマーや技術者はその数少ない売れてるミュージシャンだと思う。これは名曲だ！といわしめる曲とか、もしくは新しい音楽のジャンルを作るような革新さえ起こしそうな、そんな人たちだと思う。そういう人はやっぱりお金も貰えるだろうし、ある程度自由もきくと思う。でもやっぱり、音楽学校を出た人が全員一線級のプロになれないように、多くの人、情報系を出た人でさえそのような才能を持った人はすくない。ホントは熱いロックをやりたくてもそれをやる自由もなくJ-POPのバックでやったりするんだろう。プログラマって、つくづくそんなジャンルの職業なんじゃないかなあ、と思う。きっとこういう音楽に似た部分が俺をプログラミングに引き込んだんだろうな。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/02/04/nes-emulator-development-with-python-4" itemprop="url">PythonによるNESエミュレータ開発4</a></h3>
-<div class="meta">
-<time datetime="2007-02-04T00:25:04&#43;09:00">Feb  4, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
-  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
-  
-  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <img alt="/statics/files/pynes1.jpg" src="/statics/files/pynes1.jpg" />
-<p>パッド入力部分を書いたので、動くゲームも出てきました。といってもまだほとんどのゲームが動かないんですけど。画面は <a class="reference external" href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">ブルジョアソフトウェア研究所</a> さんのTkShoot 1.00が動作している様子です。</p>
-<p>さて、ここまできたので基本的にはこの企画も終了かなー、という感じがします。目的はPythonのパフォーマンスについて知ることだったので。</p>
-<p>作成の過程でかなりPythonのパフォーマンス関連について勉強ができてよかったと思います。</p>
-<section>
-<h2>速度</h2>
-<p>サウンドは作っていないので、それを除くと1frameだいたい0.4秒弱くらいで動きます(もちろんpsycoを導入して)。変にベタ書きしたりはしていません。わりとメソッドはちゃんと分割しています。ただ、LDA $ssss(absolute addressingのLDA)だけ、実行回数が多いので完全にベタ書きしました。</p>
-<p>んで感じたのは</p>
-<ul class="simple">
-<li>プリプロセッサでマクロを使えばそこそこ実用的な速度になりえるのではないか</li>
-<li><a class="reference external" href="http://bytecodehacks.sourceforge.net/bch-docs/bch/index.html">bytecodehacks</a> でインライン化すれば結構いけるんじゃないか。ただし、bytecodehacksがオブジェクトのメソッドには対応していないので、classを使わずに書くことになる。</li>
-<li>部分的にCで拡張モジュールを書けば、わりといけそう</li>
-</ul>
-<p>ってことでしょうか。</p>
-<p>まぁただ、JAVAとかC系全く分かりません＞＜っていう人以外は、素直にC系かJAVAで書いたほうがいいと思います。</p>
-<p>高速化のためにオブジェクトのプロパティをローカルにだしたり</p>
-<pre class="prettyprint ">read = self.memory.read
-write = self.memory.write
-# .
-# .
-  for i in xrange(foo):
-    code = read(addr)
-    # .
-    # .
-    # .</pre><p>するので、無駄に行数も増えますし、ぶっちゃけ読みにくいです。それでも普段使い慣れてるLLで書けるってのは大きな利点だとは思います。</p>
-<p>10年くらいして、マシンがもっと速くなることに期待しましょう、ということで（笑</p>
-</section>
-<section>
-<h2>その他雑感</h2>
-<p>現時点でも単純なゲームくらいなら、そこそこ動くのでコンピューターの仕組みの基礎を学ぶには、もしかしたらLLでエミュレータってのはいいかも。当然ですけど、デバッグの段階ではアセンブリ言語を書くことになりますし、そのアセンブリ言語の内容も完全に自分で処理するわけですから、単に本で読むよりは格段CPUやメモリについて詳しくなれると思います。ただ、CPUの仕組みを勉強しながら書くのはきついものがあるかもしれませんが・・・</p>
-<p>他の利点としては「俺エミュレータ書いたんだぜ」と自慢できる（笑）、自分の書いたエミュレータでゲームが動くと結構感動できる、というくらいでしょうか。</p>
-<hr class="docutils" />
-<p>というわけで、とりあえず動くようになりました。今のところソースをアップする気はないです。（してもほとんどのゲームは動かないし意味無い）</p>
-<p>確実にいないと思いますが、もし、「俺もLLでエミュレータ書いてみるんだぜ！だからお前のしょーもないソースも参考にしてやるから見せるんだぜ！ついでにエミュってどうやって作るのか教えるんだぜ！」というような方や「おめーソースがないのに信用できるか！」という方がおられましたら、この記事のコメント欄やはてブなんかのコメントに、「うｐ」とか書いてください。適当にソースまとめてうｐして、それをネタに簡単なエミュの書き方でも記事にします（笑</p>
-<p>まぁとにかく書いてて楽しかったです。チャレンジ精神旺盛な方、そして時間があまっている方は是非LLでエミュにチャレンジしてみてください。</p>
-<p>#追記
-アップしました。コチラの記事へドウゾ。</p>
-<p><a class="reference external" href="/articles/2007/03/02/nes-emulator-development-with-python-5">PythonによるNESエミュレータ開発5</a></p>
 </section>
 
   </div>

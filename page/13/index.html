@@ -61,6 +61,167 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/02/21/dsl-in-python-and-ruby" itemprop="url">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></h3>
+<div class="meta">
+<time datetime="2008-02-21T18:42:22&#43;09:00">Feb 21, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
+  
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://d.hatena.ne.jp/kwatch/20080220/1203520081">Python で Rake を真似るとしたら</a> という反応を頂いたので、それにまつわるお話を。</p>
+<p>まず、CodeReposにコミットしてあるtasktoolsは__distutils及びsetuptoolsを拡張する__ということを念頭に置いています。ですのである程度distutils.core.Commandの思想というか、インターフェイスを残しています。</p>
+<ul class="simple">
+<li>タスクをクラスで定義すること</li>
+<li>オプションの定義方法</li>
+<li><code>sub_commands</code> や <code>finalize_options</code> といったメソッド</li>
+</ul>
+<p>などなどは元のまんまです。</p>
+<hr class="docutils" />
+<p>じゃあ、 <code>distutils</code> や <code>setuptools</code> を抜いて好きにRakeをPythonで真似るとしたら、というのが今回メインのお話。最初にこんな感じでコマンドを定義しますよ、というのを出してしまいます。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+from 今回作成したモジュール import *
+from subprocess import call
+
+# ここからタスク定義
+
+with namespace("test"):
+
+  @task
+  def build(t, depends = ["test:make"]):
+    """builds this modules. """
+    call(["ls"])
+    print t.name, ": build done"
+
+  @task
+  def make(t):
+    print "make"
+
+# 実行
+run()</pre><p>Rakeだとこうなる。</p>
+<pre class="prettyprint ">namespace "test" do
+
+  desc "builds this modules"
+  task "build" =&gt; "make" do |t|
+    sh("ls")
+    puts "#{t.name} done."
+  end
+
+  task "make" do |t|
+    puts "make"
+  end
+
+end</pre><p>Python版もなかなかシンプルで見やすいと思うんですがどうでしょう。あとちょっとtips。さっきの記事だと <code>os.system</code> を使ってますが、 <code>subprocess</code> モジュールの <code>call</code> や <code>check_call</code> のほうが便利じゃないかな、と思います。</p>
+<p>タスクのメタ情報は引数のデフォルト値を使います。ここで <code>&#64;task(depends = <span class="pre">[&quot;test:make&quot;])</span></code> ってしたほうがいいんじゃないの？と思う人もいるかもしれません。真っ当な意見だと思いますし、それがPythonicなやり方と思います。しかしそうするとこうなります。</p>
+<pre class="prettyprint ">with namespace("test"):
+
+  @task(depends = ["test:make"])
+  def build(t):
+    """builds this modules.  """
+    call(["ls"])
+    print t.name, ": build done"
+
+  @task() #&lt;= ここがキモくないですか？
+  def make(t):
+    print "make"</pre><p>Pythonではproperty以外では <code>()</code> をつけないとメソッドが呼び出せません。だから引数が何もない場合は空のカッコがつくわけです(まぁDescriptorでhogehogeすればできるんですがね)。これ、イケてないですよね。というわけで引数のデフォルト値を使います。</p>
+<p>ではこのタスク定義でタスクを実行するためのコードです。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+import inspect,new,sys
+from contextlib import contextmanager
+from optparse import OptionParser
+from itertools import *
+
+class _Tasks(dict):
+  def __getitem__(self,key):
+    if key in self: return dict.__getitem__(self, key)
+    _abort("Error: Unknown task: %s"%key)
+
+class Task(object):
+  def __init__(self, run, name, description,
+               depends = None, options = None):
+    self._run = new.instancemethod(run, self, self.__class__)
+    self.name = _get_current_ns()+name
+    self.description = description
+    self.depends = depends or []
+    self.options = options or []
+    tasks[self.name] = self
+
+  def run(self):
+    for depend in self.depends:
+      if tasks[depend].run() is False:
+        _abort("Error: faild %s"%depend)
+    return self._run()
+
+_namespace = []
+tasks = _Tasks()
+
+@contextmanager
+def namespace(name):
+  _namespace.append(name)
+  yield
+  _namespace.pop()
+
+def task(f):
+  names, _, _, values = inspect.getargspec(f)
+  Task(f, f.__name__, f.__doc__ or "no description", **dict(izip(names[1:], values or [])))
+
+def print_tasks():
+  maxlength = max(imap(len, tasks.iterkeys()))
+  for name in sorted(tasks.iterkeys()):
+    print name.ljust(maxlength), "#", tasks[name].description.strip()
+
+def run():
+  usage = "usage :%prog [options] targets"
+  parser = OptionParser(usage)
+  parser.add_option("-T", "--tasks", action="store_true",
+                    dest="print_tasks",
+    help="Display the tasks (matching optional PATTERN) with descriptions, then exit.")
+  (options, args) = parser.parse_args()
+  if options.print_tasks: _abort(print_tasks())
+  if not args:            _abort(parser.get_usage())
+
+  map(lambda t:t.run(), imap(tasks.__getitem__, args))
+
+def _abort(msg):
+  if msg : print msg
+  sys.exit(1)
+
+def _get_current_ns(): return _namespace and ":".join(_namespace)+":" or ""</pre><p>結構短いかな？。一応ちゃんと動きます。</p>
+<p><code>tasks.py <span class="pre">-T</span></code></p>
+<pre class="prettyprint ">test:build # builds this modules.
+test:make  # no description</pre><p><code>tasks.py test:build</code></p>
+<pre class="prettyprint ">make
+tasks.py
+test:build : build done</pre><p>うむ。</p>
+<hr class="docutils" />
+<p>結局、Rubyの言語内DSL構築能力は</p>
+<ul class="simple">
+<li><code>()</code> が省略できる</li>
+<li>ブロック(pythonではデコレータとwith_statementがありますが)</li>
+</ul>
+<p>によるものが多いと思っています。ことPythonとの対比では。「シンプルさ」「書きやすさ」なんかは好みかな、と(Rakeの例だとdocstringを持っている分Pythonの方がいい感じさえしてきます)。例えば <code>end</code> ってなんだよ、って言う人にはPythonのほうがウケがいいかもしれませんしそうじゃないかもしれません。</p>
+<p>そんなこんなで試しに書いてみたらいい感じだったんで、ちゃんと本格的にPython版Rakeとして開発を続けてみようかなあ。</p>
+<hr class="docutils" />
+<p>ところで言語内DSLといえばScalaでしょう。Rubyなんてちょろいもんですよ。なんてったってScalaは(ry</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/03/04/japanese-language-programing-in-scala" itemprop="url">日本語プログラミング言語Scala</a></h3>
 <div class="meta">
 <time datetime="2008-03-04T19:33:44&#43;09:00">Mar  4, 2008</time>
@@ -120,413 +281,118 @@ implicit def any2japanese[A](v:A) = new Japanese(v)
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala" itemprop="url">Scalaでスタック指向言語をサクッと実装する</a></h3>
+<h3 itemprop="name"><a href="/articles/2008/04/03/a-python-library-for-nicovideo-testing" itemprop="url">Python版ニコニコ動画ライブラリを試しに公開してみる</a></h3>
 <div class="meta">
-<time datetime="2008-05-17T22:30:47&#43;09:00">May 17, 2008</time>
+<time datetime="2008-04-03T22:06:31&#43;09:00">Apr  3, 2008</time>
 
   
-  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
-  
-  <span class="tag"><a href="/articles/tag/language/" rel="tag" itemprop="keywords">language</a></span>
-  
-  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
-  
-  <span class="tag"><a href="/articles/tag/compiler/" rel="tag" itemprop="keywords">compiler</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Scalaにはご存知のとおり <code>scala.util.parsing.combinator</code> というパーサコンビネータライブラリがある。さらには <code>scala.util.parsing.ast</code> というのもあるわけだけど、これは激しく開発中な感じ。Scalaはバージョンがあがるとこういう開発中ライブラリはごそっと変わったりするので今はおいておく。ちなみに、2.7.1では前のパーサコンビネータは <code>scala.util.parsing.combinatorold</code> といういかにも使いたくない名前にされてしまった。</p>
-<p>パーサコンビネータといえば言語処理系だ（そうか？）。というわけで <code>scala.util.parsing.ast</code> は置いておいて、とりあえずASTについてほとんど考える必要がない、簡単なスタック指向言語を実装してみることにする。実行はScala 2.7.1.finalで。</p>
-<section>
-<h2>スタック指向言語とは</h2>
-<p>こんなブログを見ている人は、だいたいスタック指向言語を知っているだろうから俺みたいな素人が書いてもなんだけど、一応。
-スタック指向言語にはForthやPostScriptやFactorがある。素晴らしく簡単にいうと、 <strong>「とりあえずスタックがあればなんとかなるよね」</strong> という言語だ。</p>
-<p>んでスタック使うなら逆ポーランドで書いてあったら、処理も楽だしいいんじゃね、読みにくい？Lispだって慣れてる人は無問題なんだし、慣れの問題じゃね、という感じである。</p>
-<p>関数（スタック指向言語ではwordという）もスタックに値をつんで実行すればいい。wordから値を返すときも返したい分だけスタックにつめばいい。というわけで、非常に単純なのである。</p>
-<p>今回は <code>Factor</code> ライクなスタック指向言語処理系（インタプリタ）「SimpleFactor」を作ってみることに。文法とかはだいたいFactorと一緒なのでさきにFactorの文法を学んでおくと分かりやすい。</p>
-</section>
-<section>
-<h2>まずはレクサ</h2>
-<p>まずはレクサを作る。サポートするリテラルは文字列、整数値、真偽値で以下のような感じ。</p>
-<ul class="simple">
-<li>文字列： <code>&quot;hoge&quot;</code></li>
-<li>整数値： <code>10, <span class="pre">-10</span></code></li>
-<li>真偽値： <code>t,f</code></li>
-</ul>
-<p>あと、コメントは <code>!</code> から行末までとする。ソースはこんな感じで、ScalaのDSL構築能力を生かしてかなり定義どおりに書ける。</p>
-<pre class="prettyprint ">import scala.util.parsing.combinator._
-import scala.util.parsing.combinator.syntactical._
-import scala.util.parsing.combinator.lexical._
-import scala.util.parsing.input.CharArrayReader.EofCh
-class Lexer extends StdLexical with ImplicitConversions {
-  override def token: Parser[Token] =
-    ( string ^^ StringLit
-    | '-' ~&gt; number ^^ { case num =&gt; NumericLit("-" + num) }
-    | number ^^ NumericLit
-    | EofCh ^^^ EOF
-    | delim
-    | '\"' ~&gt; failure("Unterminated string")
-    | rep(chrAny) ^^ checkKeyword
-    | failure("Illegal character")
-    )
-
-
-  def number  = zero | (nonzero ~ rep(digit) ^^ {case x ~ y =&gt; mkS(x::y)})
-  def string = '\"' ~&gt; rep(charSeq | chrExcept('\"', '\n', EofCh)) &lt;~ '\"' ^^ {case x =&gt; mkS(x)}
-  def checkKeyword(xs : List[Any]) = {
-    val strRep = mkS(xs)
-    if (reserved contains strRep){ Keyword(strRep) }
-    else if(identiferRe.findFirstIn(strRep) != None  ) { Identifier(strRep) }
-    else {ErrorToken("Not a Identifier: " + strRep)}
-  }
-
-  override def whitespace: Parser[Any] =
-    rep( whitespaceChar | '!' ~ rep( chrExcept(EofCh, '\n') ))
-  def nonzero = elem("nonzero digit", d =&gt; d.isDigit &amp;&amp; d != '0')
-  def zero: Parser[String] = '0' ^^^ "0"
-  def charSeq: Parser[String] =
-    ('\\' ~ '\"' ^^^ "\"" |'\\' ~ '\\' ^^^ "\\" |'\\' ~ '/'  ^^^ "/" |'\\' ~ 'b'  ^^^ "\b" | '\\' ~ '0' ^^^ ""
-    |'\\' ~ 'f'  ^^^ "\f" |'\\' ~ 'n'  ^^^ "\n" |'\\' ~ 'r'  ^^^ "\r" |'\\' ~ 't'  ^^^ "\t")
-  def identiferRe = """^(\w|[^"])+$""".r
-  def chrAny = chrExcept(EofCh, ' ', '\n', '\t', '\r', '\"', '!')
-
-  def mkS[A](seq: Seq[A]) = seq mkString ""
-}</pre><p>Scalaで処理系を作る場合はとりあえず <code>StdLexical</code> を継承して拡張すれば、だいたいOK。ここでは <code>Token</code> を返すパーサを定義する。 <code>Keyword</code> や <code>StringLit</code> といった <code>Token</code> を継承したケースクラスは <code>scala.util.parsing.sytax.StdTokens</code> で定義されていて、 <code>StdLexical</code> は <code>StdTokens</code> をMix-inしている。</p>
-</section>
-<section>
-<h2>抽象構文木をつくる</h2>
-<p>次に、このトークンの並びから文法を定義して、それに従って抽象構文木を作るわけだけど、スタック指向言語の場合、ここで難しいことはあまりない。</p>
-<p>とりあえず、処理(といっても4種類、しかもうち2種類は意味なし）と、抽象構文木をあらわすケースクラスを作る。インタプリタなのでオペコードとかする意味はないけど、こうしとくとVMにしようと思ったとき楽なのでそうした。というよりエミュとかを作ることが好きなので、こういう数値を見ると安心するのである。</p>
-<pre class="prettyprint ">import scala.util.logging.ConsoleLogger
-import scala.collection.mutable.{Stack, ArrayBuffer, HashMap}
-trait Opecode {
-  final val OP_NOP  : byte = 0x00
-  final val OP_PUSH : byte = 0x01
-  final val OP_CALL : byte = 0x50
-  final val OP_RTN  : byte = 0x51
-}
-
-abstract class Node {
-  type Value
-  val v:Value
-  def value = v
-}
-abstract class NodeValue extends Node
-case class NodeStr(v:String) extends NodeValue { type Value = String }
-case class NodeInt(v:int) extends NodeValue { type Value = int }
-case class NodeBool(v:boolean) extends NodeValue { type Value = boolean }
-case class NodeSymbol(override val v:String) extends NodeStr(v)
-case class NodeQuotation(val v:List[Node]) extends Node{ type Value = List[Node] }
-case class NodeOpe(v:byte, operand:List[Node]) extends Node { type Value = byte }
-case class NodeNamed(v:Named) extends NodeValue with Opecode{ type Value = Named }
-case class NodeProgram(v:List[Node]) extends Node with Opecode{
-  type Value = List[Node]
-  var quotIndex = 0
-  def nextQuotSym = { quotIndex += 1; "quot"+quotIndex }
-
-  def toplevel = {
-    val nullsf = List[NodeSymbol]()
-    val words = new ArrayBuffer[Node]
-    def visitNode(n:Node):List[Node] = n match {
-      case NodeNamed(NamedWord(name, sin, sout, body)) =&gt;
-         words += NodeNamed(NamedWord(name, sin, sout, body.flatMap(visitNode)))
-         List[Node]()
-      case NodeQuotation(nodes) =&gt;
-        val name = nextQuotSym
-        words += NodeNamed(NamedWord(name, nullsf, nullsf, nodes.flatMap(visitNode)))
-        List(NodeOpe(OP_PUSH, List(NodeSymbol(name))))
-      case x =&gt; List(x)
-    }
-    value.flatMap(visitNode)
-    words.toList
-  }
-}
-
-abstract class Named(name:String)
-case class NamedWord(name:String, stackin:List[NodeSymbol], stackout:List[NodeSymbol], body:List[Node]) extends Named(name)
-case class NamedNativeWord[T](name:String, stackin:List[NodeSymbol],
-  stackout:List[NodeSymbol], body:()=&gt;T) extends Named(name)
-class NamedTable extends HashMap[String, Named] {
-}</pre><p><code>Node</code> という抽象クラスを継承して、いろんなノードを定義する。だいたい名前をみてのとおりだけど、わかりにくいところだとこんな感じ。</p>
-<ul class="simple">
-<li>NodeNamed：名前付けされた値への参照</li>
-<li>NodeSymbol：word名</li>
-<li>NodeQuotation：無名関数(quotationという)</li>
-<li>NodeProgram：プログラム全体</li>
-</ul>
-<p><code>Named</code> は名前付けされた値なわけだけど、今回変数にあたるものはないので、wordのみがコレにあたる。 <code>NamedWord</code> がSimpleFactorで書かれたふつーのword、 <code>NamedNativeWord</code> はいわゆる組み込みwordでScalaで書いたものをあらわす。 <code>NamedTable</code> はその対応を保存する単なるハッシュマップ。</p>
-<p>さて、ではこいつらを使って構文木を作って実行する。</p>
-<pre class="prettyprint ">class SimpleFactorInterp extends StdTokenParsers with ImplicitConversions with Opecode{
-  type Tokens = Lexer
-  val lexical = new Tokens
-  lexical.reserved ++= List("t", "f", "(", ")", "[", "]", ":", ";", "--")
-  lexical.delimiters ++= List("\n", " ", "\t")
-  import lexical.{NumericLit, StringLit, Keyword, Identifier}
-
-  def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }
-  def lWord       = ":" ~ lSymbol ~ "(" ~ rep(lSymbol) ~ "--" ~ rep(lSymbol) ~ ")" ~ rep(lExpr) ~ ";" ^^
-                        { case ":" ~ name ~ "(" ~ sin ~ "--" ~ sout ~ ")" ~ body ~ ";" =&gt;
-                            NodeNamed(NamedWord(name.value, sin, sout, body+NodeOpe(OP_RTN, List[Node]()))) }
-  def lExpr:Parser[Node] = (lString | lNumber | lBool | lInvokeWord | lQuotation)
-  def lString     = accept("string", { case StringLit(n)  =&gt;  NodeOpe(OP_PUSH, List(NodeStr(n))) })
-  def lNumber     = accept("number", { case NumericLit(n) =&gt;  NodeOpe(OP_PUSH, List(NodeInt(n.toInt))) })
-  def lBool       = accept("boolean",{ case Keyword("t")  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(true)))
-                                       case Keyword("f")  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(false)))  })
-  def lInvokeWord    = accept("symbol", { case Identifier(n) =&gt; NodeOpe(OP_CALL, List(NodeSymbol(n))) })
-  def lQuotation      = "[" ~&gt; rep(lExpr) &lt;~ "]" ^^ { case expr =&gt; NodeQuotation(expr+NodeOpe(OP_RTN, List[Node]())) }
-
-  def lSymbol        = accept("symbol", { case Identifier(n) =&gt; NodeSymbol(n) })
-
-  protected val stack = new Stack[Node]
-  protected var namedTable = new NamedTable
-
-  def parse(input: String) =
-    phrase(program)(new lexical.Scanner(input)) match {
-      case Success(programNode, _) =&gt; initTopLevel(programNode.toplevel)
-      case x                       =&gt; error(x.toString)
-    }
-
-  def initTopLevel(toplevelNodes:List[Node]) = {
-    def sl(v:String) = v.split(" ").map(NodeSymbol).toList
-    def nword[T](n:String, sin:String, sout:String, m:()=&gt;T) =
-      (n, NamedNativeWord(n, sl(sin), sl(sout), m))
-    namedTable ++= List(
-      nword("drop", "x", "", ()=&gt;{ pop }),
-      nword("dup", "x", "x x", ()=&gt;{ val v = pop; npush(v,v) }),
-      nword("rotate", "x y z", "y z x", ()=&gt; npop(3) match {
-        case List(x, y, z) =&gt; npush(y, z, x)
-      }),
-      nword("swap", "x y", "y x", ()=&gt; npop(2) match {
-        case List(x, y) =&gt; npush(y, x)
-      }),
-
-      nword("+", "x y", "z", ()=&gt;{ iArI2(_+_) }),
-      nword("-", "x y", "z", ()=&gt;{ iArI2(_-_) }),
-      nword("*", "x y", "z", ()=&gt;{ iArI2(_*_) }),
-      nword("/", "x y", "z", ()=&gt;{ iArI2(_/_) }),
-
-      nword("&gt;", "x y", "?", ()=&gt;{ ilB2(_&gt;_) }),
-      nword("&lt;", "x y", "?", ()=&gt;{ ilB2(_&lt;_) }),
-      nword("==", "x y", "?", ()=&gt;{ ilB2(_==_) }),
-      nword("&gt;=", "x y", "?", ()=&gt;{ ilB2(_&gt;=_) }),
-      nword("&lt;=", "x y", "?", ()=&gt;{ ilB2(_&lt;=_) }),
-
-      nword("not", "?", "?", ()=&gt; pop match {
-        case NodeBool(v) =&gt; push(NodeBool(!v))
-      }),
-      nword("and", "? ?", "?", ()=&gt; (pop, pop) match {
-        case (NodeBool(true), NodeBool(true)) =&gt; push(NodeBool(true))
-        case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(false))
-      }),
-      nword("or", "? ?", "?", ()=&gt; (pop, pop) match {
-        case (NodeBool(false), NodeBool(false)) =&gt; push(NodeBool(false))
-        case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(true))
-      }),
-
-      nword(".", "obj", "", ()=&gt;{ println(pop.value) }),
-      nword("call", "quot", "", ()=&gt; pop match {
-        case NodeSymbol(qname) =&gt; callWord(qname)
-      }),
-
-      nword("if", "? quot quot", "", ()=&gt; (pop, pop, pop) match {
-        case (_, NodeSymbol(qname), NodeBool(true))   =&gt; callWord(qname)
-        case (NodeSymbol(qname),  _, NodeBool(false)) =&gt; callWord(qname)
-      }),
-
-      nword("string&gt;number", "str", "x", ()=&gt; pop match {
-        case NodeStr(str) =&gt; push(NodeInt(str.toInt))
-      }),
-      nword("&gt;string", "obj", "str", ()=&gt; { push(NodeStr(pop.value.toString)) })
-
-    )
-    toplevelNodes.foreach {
-      case NodeNamed(n@NamedWord(name, _, _, _)) =&gt; namedTable(name) = n
-      case _ =&gt; ()
-    }
-  }
-
-  def evaluate(input:String, args:Array[String]) = {
-    parse(input)
-    args.map(NodeStr).foreach(push _)
-    callWord("main")
-  }
-
-  def callWord(wordName:String):unit =
-    namedTable(wordName.ensuring(namedTable.contains _, "word '"+wordName+"' is not defined.")) match {
-      case NamedNativeWord(_, sin, sout, body) =&gt; try {
-          body()
-        } catch {
-          case e =&gt; wordError(wordName, sin, sout)
-                    throw e
-        }
-      case NamedWord(_, sin, sout, body) =&gt;
-        body foreach {
-          case NodeOpe(OP_PUSH, List(v, _*)) =&gt; push(v)
-          case NodeOpe(OP_CALL, List(NodeSymbol(name), _*)) =&gt;
-            try {
-              callWord(name)
-            }catch {
-              case e =&gt; wordError(wordName, sin, sout)
-                        throw e
-            }
-          case NodeOpe(OP_RTN, _) =&gt; ()
-        }
-    }
-
-  def npop(n:int):List[Node] = (1 to n).map(x=&gt;pop).reverse.toList
-  def npush(ns:Node*) = ns.reverse.foreach(push(_))
-
-  def iArI2(f:(int,int)=&gt;int) = (pop, pop) match {
-    case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeInt(f(v2,v1)))
-  }
-  def ilB2(f:(int,int)=&gt;boolean) = (pop, pop) match {
-    case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeBool(f(v2,v1)))
-  }
-  def wordError(name:String, sin:List[NodeSymbol], sout:List[NodeSymbol]) = {
-    printf("word '%s' ( %s -- %s ).\n", name, sin.map(_.value).mkString(" "),
-                                              sout.map(_.value).mkString(" "))
-  }
-  def push(a:Node) = stack.push(a)
-  def pop = stack.pop
-
-}</pre><p>はじめの方でプログラムの文法を定義し、 <code>Token</code> から <code>Node</code> のリストへ変換し、 <code>NodeProgram</code> にする。処理の簡単さのため、プログラムはwordから構成されていて、プログラム開始時にはmain wordから実行が開始されるとするので</p>
-<pre class="prettyprint ">def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }</pre><p>wordは</p>
-<pre class="prettyprint ">: add ( x y -- z )
- +
-;</pre><p>という感じに定義するので <code>lWord</code> の定義になっている。ほとんどそのまま書いた感じだ。 <code>( x y <span class="pre">--</span> z )</code> の部分はスタックエフェクトといって、このwordがスタックにどのような影響を与えるのかを記述している。あくまで説明であって本質的な意味はない。 <code>( x y <span class="pre">--</span> z )</code> ならスタックから2個取り出されて、結果が1個詰まれるのだな、ということがわかる。</p>
-<p>あとは自明なので省略。</p>
-</section>
-<section>
-<h2>実行</h2>
-<p>そんなこんなでソースコードから <code>NodeProgram</code> が作れるようになった。次に <code>NodeProgram</code> からTOPレベル環境を作る。</p>
-<p>ここでは、 <code>NodeProgram</code> に含まれるquotationを(実行する際の）簡単さのためNamedWordに変換し、変換後のNamedWordの呼び出しに変換する。組み込みwordもここで定義している。これはこの部分で定義すると、クロージャになるため定義が簡単だから( <code>pop</code> や <code>push</code> といった <code>SimpleFactorInterp</code> のメソッドがそのまま書ける)である。また、パターンマッチを活用することで非常に直感的に書けていることが見て取れるかと。やっぱりパターンマッチ最高だわぁ･･･。そして出揃ったTOPレベルのwordを <code>NamedTable</code> にマッピングし、TOPレベル環境の作成が完了する。</p>
-<p>あとは <code>main</code> wordを呼び出すだけ。</p>
-</section>
-<section>
-<h2>サンプルコード</h2>
-<p>こんな感じ。サンプルでは10の階乗を計算している。</p>
-<pre class="prettyprint ">object SimpleFactor extends ConsoleLogger{
-  def main(args: Array[String]) = {
-    log("Starting SimpleFactor.")
-    log("-"*40)
-    val ip = new SimpleFactorInterp
-    ip.evaluate("""
-! Performs a factorial calculation.
-: main ( str -- )
-string&gt;number fact .
-;
-
-: fact ( x -- y ) dup factit ;
-
-: factit ( x y -- z )
-  dup 1 &lt;=
-    [ drop ]
-    [ 1 - dup rotate * swap factit ] if
-;
-
-    """, args)
-  }
-}
-
-SimpleFactor.main(Array("10"))</pre><p>ここで使っているwordを簡単に説明すると</p>
-<ul class="simple">
-<li><cite>string&gt;number</cite>:スタックからpopし、文字列を数値に変換してpushする</li>
-<li><cite>*</cite>: スタックから2個popし、掛けたものをpushする</li>
-<li><cite>-</cite>: スタックから2個popし、引き算したものをpushする</li>
-<li><cite>&lt;=</cite>:スタックから2個popし、 <code>&lt;=</code> な比較をして真偽値をpushする</li>
-<li><cite>.</cite>: スタックからpopし、文字列表現を表示する</li>
-<li><cite>dup</cite>:スタックからpopし、それを2回pushする</li>
-<li><cite>drop</cite>:スタックからpopする</li>
-<li><cite>rotate</cite>:「x y z」というスタックのトップ部分を、「y z x」にローテーションする</li>
-<li><cite>swap</cite>:「x y」というスタックのトップ部分を「y x」に入れ替える</li>
-<li><cite>if</cite>:「真偽値 真のとき実行するquotation 偽のとき実行するquotation」というスタックのトップ部分から条件を判定しquotationを実行する</li>
-</ul>
-<p>てな感じ。これだけの命令でもちゃんとプログラムが書けて、条件分岐、ループが実現できるのはスタック指向言語を知らない人から見ると面白い部分かも。 <code>3 fact</code> なら</p>
-<ul class="simple">
-<li>[ 3 3 ] : fact内 <code>dup</code></li>
-<li>[ 3 3 3 ] : factit内 <code>dup</code></li>
-<li>[ 3 3 3 1 ] : <code>1</code></li>
-<li>[ 3 3 f ] : <code>&lt;=</code></li>
-<li>[ 3 3 f quot ] : <code>[ drop ]</code></li>
-<li>[ 3 3 f quot quot ] : <code>[1 - ... ]</code></li>
-<li>[ 3 3 ] : <code>if</code></li>
-<li>[ 3 3 1 ] : <code>1</code></li>
-<li>[ 3 2 ] :  <code>-</code></li>
-<li>[ 3 2 2 ] : <code>dup</code></li>
-<li>[ 2 2 3 ] : <code>rotate</code></li>
-<li>[ 2 6 ] : <code>*</code></li>
-<li>[ 6 2 ] : <code>swap</code></li>
-<li>factitに戻る</li>
-</ul>
-<p>こんな感じで計算される。</p>
-<p>またLispのS式とマクロによる拡張性は名高いと思うが、スタック指向言語も単純に空白で区切られたwordが並んでいる、という点で非常に自己拡張性が高い。こういう変態的(?)な部分も魅力の一つ。</p>
-<p>ForthはSUNのOpen Firmware、Firefox4で採用が予定されているJavascriptの処理系Tamarinの中など、今でもあまり表には見えてこない部分で使用されているので、これを機会にスタック指向言語を嗜んでみては。Forthは基本だけど、今なら注目され始めている(？)Factorかなあ。</p>
-</section>
-<section>
-<h2>簡単に作れます</h2>
-<p>というわけでScalaで簡単なスタック指向言語処理系を作ってみたわけだけど、非常に簡単。さくっと作れる。 <code>scala.util.parsing.ast</code> ができたら、またなんか処理系を試し書きしてみようかな。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/05/28/yahoo-jlp-api-wrapper-for-python-2" itemprop="url">Python版Yahooテキスト解析 APIライブラリをかな漢字変換に対応させました</a></h3>
-<div class="meta">
-<time datetime="2008-05-28T20:08:20&#43;09:00">May 28, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/api/" rel="tag" itemprop="keywords">api</a></span>
+  <span class="tag"><a href="/articles/tag/nicovideo/" rel="tag" itemprop="keywords">nicovideo</a></span>
   
   <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
   
   <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
   
-  <span class="tag"><a href="/articles/tag/text/" rel="tag" itemprop="keywords">text</a></span>
-  
-  <span class="tag"><a href="/articles/tag/yahoo/" rel="tag" itemprop="keywords">yahoo</a></span>
-  
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>まぁ需要はないと思うんですが一応。内部的には <code><span class="pre">WebService::Simple</span></code> みたいになってるんでサクッと対応できます。</p>
+    <p>※あくまで試験的に公開しています</p>
+<p>まぁありきたりというか、なんというかなんですけどニコニコ動画の自分用ライブラリを以前から作っていました。公開してもよかったんですけど、需要があるかわかんないし、まとまってないですし、ニコニコ動画的にもこういうライブラリをつかってごにゃごにゃするのはちょっと･･･という感じらしいので公開してませんでした。</p>
+<p>なんですけど、公開されてるライブラリもありますし、せっかくなんで試験的に公開しておけばなんかの役に立つかな、と思いまして。使ってくれる人が多かったりすれば、まとめなおしてCodeReposに突っ込むかもしれません。</p>
 <section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/yahooapi_0_2.zip">yahooapi</a></p>
+<h2>ダウンロードしてみる奇特な方はどうぞ</h2>
+<p><a class="reference external" href="/statics/files/nicovideo.zip">nicovideo.zip</a></p>
+<section>
+<h3>必要なもの</h3>
+<pre class="prettyprint ">easy_install mechanize
+easy_install lxml</pre></section>
+<section>
+<h3>使い方</h3>
+<pre class="prettyprint ">import nicovideo as n
+client = n.NicoClient("mail", "pass", cookie_file="")
+
+print "nickname: %s" % client.nickname
+
+client.video("sm9").download(with_comments=True)
+
+print "search"
+for video in client.video_search("test", by=n.SEARCH_KEYWORD, sort=n.SORT_POSTED_AT, order=n.ORDER_DESC)[:10]:
+  print video.title
+
+print "ranking"
+for video in client.video_ranking(by=n.RANKING_MYLIST, span=n.RANKING_DAILY, category="all")[:10]:
+  print video.title
+
+print "new arrival"
+for video in client.video_newarrival()[100:110]:
+  print video.title
+
+print "mylist"
+for video in client.video_mylist(2792158)[100:110]:
+  print video.title
+
+print "random"
+for video in client.video_random():
+  print video.title</pre><p>こんな感じです。ニコニコ動画に負荷をかけないように、各httpリクエストの間に最低1秒待つので遅いです。ですが、できるかぎり情報はlazyにとりに行くようになっています。たとえば、 <code>video_search</code> でかえってくる <code>Video</code> はidとタイトルの情報のみもっていて、その他の情報(lengthなど)にアクセスすると自動的にメタ情報を取りにいきます。メタ情報は</p>
+<pre class="prettyprint ">print client.video("sm9").meta
+# =&gt;
+description レッツゴー！陰陽師（フルコーラスバージョン）
+tags {'#text': '', u'tag': [u'\u9670\u967d\u5e2b', u'\u30ec\u30c3\u30c4\u30b4\u30fc\uff01\u9670\u967d\u5e2b', u'\u516c\u5f0f', u'\u904b\u55b6\u516c\u8a8d\u52d5\u753b', u'\u3053\u306e\u52d5\u753b\u306e\u3046\uff50\u4e3b\u306fnicovideo', u'\u97f3\u697d', u'\u4f1d\u8aac\u306esm9', u'\u03b2\u6642\u4ee3\u306e\u82f1\u96c4', u'\u5439\u3044\u305f\u3089\u6210\u4ecf', u'\u30de\u30a4\u30ea\u30b9\uff15\uff10\u4e07\u796d\u308a\u4f1a\u5834']}
+file_type flv
+comment_num 2618200
+l 320
+is_premium 0
+thread_id 1173108780
+view_counter 3839233
+link http://www.smilevideo.jp/view/9/350170
+nickname name
+user_id 00000
+title 新・豪血寺一族 -煩悩解放 - レッツゴー！陰陽師
+url http://smile-clb42.nicovideo.jp/smile?v=9.0468
+posted_at 2007-03-06 00:33:00
+video_id sm9
+thumb_type video
+watch_url http://www.nicovideo.jp/watch/sm9
+first_retrieve 2007-03-06 00:33:00
+mylist_counter 49956
+length 00:05:20
+thumbnail_url http://tn-skr.smilevideo.jp/smile?i=9
+ms http://msg.nicovideo.jp/10/api/
+time 1207225894
+done true
+#text
+last_res_body 1人だけじゃね</pre><p>こんな感じのがとれます。基本的にthubnail APIからとってきて適当に型変換しています。thumbnail APIでの情報に加えて、file_typeなんかが付け加えられます。file_typeもちゃんと判別するのでflvでもmp4でもswfでももちろんちゃんとダウンロードできます。</p>
+<p>ほかにも <code><span class="pre">client.video_newarrival()[100:110]</span></code> とすると、自動的に何ページ目かを計算してそのページからhttpアクセスしてとりにいきます。</p>
+<p>あと、ちょっとダウンロード中の表示がリッチな感じです。</p>
+</section>
 </section>
 <section>
-<h2>使い方</h2>
-<pre class="prettyprint ">import yahooapi.jlp as jlp
+<h2>ちょっと設計について</h2>
+<p>基本的に、NicoClientを拡張して機能を実装します。拡張方法は <code>NicoClientExtension</code> クラスを拡張したクラスを定義する、以上です。これでNicoClientに自動的にクラス名をunderscoreしたメソッドが生えます。</p>
+<p>たとえば <code>Video</code> も <code>NicoClientExtension</code> です。</p>
+<pre class="prettyprint ">class Video(NicoClientExtension):
+  URL_WATCH = NicoClient.URL_BASE + "watch/%s"
+  URL_API_GET_FLV = NicoClient.URL_BASE + "api/getflv/%s"
+  URL_API_GET_THUMB_INFO = NicoClient.URL_BASE + "api/getthumbinfo/%s"
 
-client = jlp.JIMServiceAPI("your_apikey")
-result = client.conversion(sentence=u"かなかんじへんかんたいしょうのてきすとです")
-for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
-  print i
-#=&gt;
-#かな
-#佳な
-#仮名
-#カナ
-#ｶﾅ
-#加奈
-#可奈
-#佳奈
-#香奈
-#香菜
-#華奈
-#花奈
-#哉
-#金</pre><p>うむ。</p>
+  FILE_TYPE_RE = re.compile(".*/smile\?([a-z]{1})\=.*")
+
+  def __init__(self, client, id, meta = None):
+    self.client = client
+    self.id = id
+    self.meta = meta or {}
+
+# ...</pre><p>という定義で <code>client.video</code> というメソッドが生えるという設計になっています。メタクラスにはこういう使い方があります。検索機能も、新着も、気まぐれも全部 <code>NicoClientExtension</code> として実装されています。</p>
+<section>
+<h3>問題点</h3>
+<ul class="simple">
+<li>まとまってません。1ファイルに適当につめこんでいます。</li>
+<li>全然テストしてません。</li>
+<li>sm9(陰陽師)が消されると動かなくなります</li>
+</ul>
+<hr class="docutils" />
+<p>こんな感じです。</p>
+</section>
 </section>
 
   </div>

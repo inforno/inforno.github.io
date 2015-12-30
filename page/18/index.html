@@ -61,6 +61,74 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/02/04/nes-emulator-development-with-python-4" itemprop="url">PythonによるNESエミュレータ開発4</a></h3>
+<div class="meta">
+<time datetime="2007-02-04T00:25:04&#43;09:00">Feb  4, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <img alt="/statics/files/pynes1.jpg" src="/statics/files/pynes1.jpg" />
+<p>パッド入力部分を書いたので、動くゲームも出てきました。といってもまだほとんどのゲームが動かないんですけど。画面は <a class="reference external" href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">ブルジョアソフトウェア研究所</a> さんのTkShoot 1.00が動作している様子です。</p>
+<p>さて、ここまできたので基本的にはこの企画も終了かなー、という感じがします。目的はPythonのパフォーマンスについて知ることだったので。</p>
+<p>作成の過程でかなりPythonのパフォーマンス関連について勉強ができてよかったと思います。</p>
+<section>
+<h2>速度</h2>
+<p>サウンドは作っていないので、それを除くと1frameだいたい0.4秒弱くらいで動きます(もちろんpsycoを導入して)。変にベタ書きしたりはしていません。わりとメソッドはちゃんと分割しています。ただ、LDA $ssss(absolute addressingのLDA)だけ、実行回数が多いので完全にベタ書きしました。</p>
+<p>んで感じたのは</p>
+<ul class="simple">
+<li>プリプロセッサでマクロを使えばそこそこ実用的な速度になりえるのではないか</li>
+<li><a class="reference external" href="http://bytecodehacks.sourceforge.net/bch-docs/bch/index.html">bytecodehacks</a> でインライン化すれば結構いけるんじゃないか。ただし、bytecodehacksがオブジェクトのメソッドには対応していないので、classを使わずに書くことになる。</li>
+<li>部分的にCで拡張モジュールを書けば、わりといけそう</li>
+</ul>
+<p>ってことでしょうか。</p>
+<p>まぁただ、JAVAとかC系全く分かりません＞＜っていう人以外は、素直にC系かJAVAで書いたほうがいいと思います。</p>
+<p>高速化のためにオブジェクトのプロパティをローカルにだしたり</p>
+<pre class="prettyprint ">read = self.memory.read
+write = self.memory.write
+# .
+# .
+  for i in xrange(foo):
+    code = read(addr)
+    # .
+    # .
+    # .</pre><p>するので、無駄に行数も増えますし、ぶっちゃけ読みにくいです。それでも普段使い慣れてるLLで書けるってのは大きな利点だとは思います。</p>
+<p>10年くらいして、マシンがもっと速くなることに期待しましょう、ということで（笑</p>
+</section>
+<section>
+<h2>その他雑感</h2>
+<p>現時点でも単純なゲームくらいなら、そこそこ動くのでコンピューターの仕組みの基礎を学ぶには、もしかしたらLLでエミュレータってのはいいかも。当然ですけど、デバッグの段階ではアセンブリ言語を書くことになりますし、そのアセンブリ言語の内容も完全に自分で処理するわけですから、単に本で読むよりは格段CPUやメモリについて詳しくなれると思います。ただ、CPUの仕組みを勉強しながら書くのはきついものがあるかもしれませんが・・・</p>
+<p>他の利点としては「俺エミュレータ書いたんだぜ」と自慢できる（笑）、自分の書いたエミュレータでゲームが動くと結構感動できる、というくらいでしょうか。</p>
+<hr class="docutils" />
+<p>というわけで、とりあえず動くようになりました。今のところソースをアップする気はないです。（してもほとんどのゲームは動かないし意味無い）</p>
+<p>確実にいないと思いますが、もし、「俺もLLでエミュレータ書いてみるんだぜ！だからお前のしょーもないソースも参考にしてやるから見せるんだぜ！ついでにエミュってどうやって作るのか教えるんだぜ！」というような方や「おめーソースがないのに信用できるか！」という方がおられましたら、この記事のコメント欄やはてブなんかのコメントに、「うｐ」とか書いてください。適当にソースまとめてうｐして、それをネタに簡単なエミュの書き方でも記事にします（笑</p>
+<p>まぁとにかく書いてて楽しかったです。チャレンジ精神旺盛な方、そして時間があまっている方は是非LLでエミュにチャレンジしてみてください。</p>
+<p>#追記
+アップしました。コチラの記事へドウゾ。</p>
+<p><a class="reference external" href="/articles/2007/03/02/nes-emulator-development-with-python-5">PythonによるNESエミュレータ開発5</a></p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/01/31/nes-emulator-development-with-python-3" itemprop="url">PythonによるNESエミュレータ開発3</a></h3>
 <div class="meta">
 <time datetime="2007-01-31T19:37:10&#43;09:00">Jan 31, 2007</time>
@@ -108,69 +176,6 @@
 <p>というわけで、PPUをつめてパッド入力あたりを書けばマッパー0のゲームなら動き出しそうな感じがします。ちなみにマッパーは全然です。とりあえずPythonで書いてみることが目的なので実際に使うことは想定して無いですし。</p>
 <p>卒論の試問会も終わり、家探しの旅も終わり、つかの間の落ち着きが戻ってきました。なんか資格とかをとらないといけないらしいので、それをちょっとずつ勉強しつつ、こっちもちょっとずつ進めていきたいなーと思ってます。</p>
 </section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/03/31/current-development-in-element-extend" itemprop="url">Element.extendの動向。</a></h3>
-<div class="meta">
-<time datetime="2006-03-31T01:33:46&#43;09:00">Mar 31, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>最近prototype.jsではSelectorとDOMがよく動きます。
-仕事でも使っているし、重要な部分なのでここのところウォッチしています。</p>
-<p>最近、実は書こうと思ってたElement.extendの問題が解決されました。
-問題：<a class="reference external" href="http://dev.rubyonrails.org/ticket/4465">Incredible memory leak in IE</a></p>
-<p>これは見る人が見ればパッと見で「これはヤバいんじゃね？」と思ったんじゃないでしょうか。
-わからなかった人は上記のURLにも載っている
-<a class="reference external" href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp">http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp</a>
-を見ておくと今後悩むことが減るかもしれません。</p>
-<p>リンク先をみたらなにが問題かわかるのであえては書きません。</p>
-<p>もう一個、興味深いのは <a class="reference external" href="http://dev.rubyonrails.org/ticket/4477">Element.extend cripples $() performance</a> での議論です。
-<a class="reference external" href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements">前に書いた記事</a> と似た主張や議論がなされています。うちの会社にも英語苦手な人がいるので簡単に要旨を。</p>
-<ul>
-<li><dl class="first docutils">
-<dt>Element.extendはパフォーマンスに問題がある。前のままにしてほしい。</dt>
-<dd><ul class="first last">
-<li><p class="first"><a class="reference external" href="http://dev.rubyonrails.org/changeset/4094">http://dev.rubyonrails.org/changeset/4094</a> でだいぶマシになっているよ？</p>
-</li>
-<li><p class="first">解説：以前はそれぞれのElementについてElement.Methodsのメソッドにelementをbindしてコピーしていた。つまりElementの数に比例してメモリを使用する。しかし4094でキャッシュを導入したので一定数のメソッドしか生成しない。</p>
-</li>
-<li><p class="first">とりあえずElement.extendのパフォーマンスをあげることにフォーカスしよう。</p>
-</li>
-<li><dl class="first docutils">
-<dt>Element.extend = Prototype.Kってかけばとりあえず大丈夫じゃね？</dt>
-<dd><ul class="first last simple">
-<li>でもscriptaculousが完全にextendされてる前提でコードかいてるから動かなくなるじゃん。</li>
-<li>解説：scriptaculousは3月28日にprototype.js 1.5_pre1をバンドルしてバージョン1.6をリリースした。このバージョンではelement.setStyle({top: ''})とかelement.show();みたいにガンガンElement.extendを活用している。まぁとりあえずElement.extendが必要ないときはPrototype.Kにしとけばいい。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">FirefoxやSafariは高速化できる（前のエントリーとほぼ同じ）。しかしprototype.jsに組み込むとscriptaculousのElement.Methods拡張が反映されない。</p>
-</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-<p>というわけでElement.extendはこれでちょっと落ち着いた感じ。個人的にはElement.extend無効化して使っていきたいなーって思ってたりしてたんですけどscriptaculousがやっぱりガンガン使ってきたので、まぁ様子見てみます。</p>
 
   </div>
 </article>

@@ -61,6 +61,282 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/09/19/sexp-library-for-python" itemprop="url">Python: S式パーサライブラリを作りました</a></h3>
+<div class="meta">
+<time datetime="2008-09-19T17:51:25&#43;09:00">Sep 19, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/sexp/" rel="tag" itemprop="keywords">sexp</a></span>
+  
+  <span class="tag"><a href="/articles/tag/scheme/" rel="tag" itemprop="keywords">scheme</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
+<p>実装には引き続き <code>re.Scanner</code> を活用しています。おかげで短い行数でキレイにかけているのではないかと。</p>
+<section>
+<h2>ダウンロード</h2>
+<p><a class="reference external" href="/statics/files/simplesexp.zip">simplesexp.py</a></p>
+<p>ソースはこんな感じ（テストのぞく）。</p>
+<pre class="prettyprint ">import re, sys
+from unicodedata import east_asian_width
+
+try:
+  from re import Scanner
+except ImportError:
+  from sre import Scanner
+
+class ParseError(StandardError): pass
+
+class Ident(unicode):
+  def __repr__(self):
+    return "Ident(%s)"%unicode.__repr__(self)
+
+class Symbol(unicode):
+  def __repr__(self):
+    return "Symbol(%s)"%unicode.__repr__(self)
+
+class Pair(list):
+  def __repr__(self):
+    return "Pair(%s)"%list.__repr__(self)
+
+class Token(object):
+  def __init__(self, value, pos):
+    self.value = value
+    self.pos   = pos
+  def __repr__(self):
+    return repr(self.value)
+
+class Binding(object):
+  def __init__(self, dct):
+    self.dct = dict(((k, k.__class__), v) for k,v in dct.iteritems())
+  __contains__ = lambda self, key: (key, key.__class__) in self.dct
+  __getitem__  = lambda self,key:  self.dct[(key, key.__class__)]
+
+default_binding = {"#t":True, "true":True, "#f":False, "false":False, "nil":None, "dict":Ident(u'alist-&gt;hash-table')}
+
+class Reader(object):
+  PAREN = {"]":"[", ")":"("}
+  def __init__(self, binding=None, symbol_marker="'", use_dict=True):
+    self.binding = binding or default_binding
+    self.symbol_marker = symbol_marker
+    self.use_dict = use_dict
+
+  def read(self, value):
+    self.result = []
+    self.paren_stack = []
+    self.source = value
+    self.pos = 0
+    self.scanner = Scanner([
+      (r"\s+", self("skip")),
+      (r";[^\n]*\n", self("skip")),
+      (r""""(((?&lt;=\\)")|[^"])*((?&lt;!\\)")""", self("str")),
+      (r"(\(|\[)", self("open")),
+      (r"(\)|\])", self("close")),
+      (r"(([\d]+|(((\d+)?\.[\d]+)|([\d]+\.)))e[\+\-]?[\d]+)|(((\d+)?\.[\d]+)|([\d]+\.))", self("number")),
+      (r"\-?((0x[\da-f]+)|(0[0-7]+)|([1-9][\d]*)|0)[l]?", self("number")),
+      (r"""%s([^\(\[\)\]\s"]+)"""%self.symbol_marker, self("symbol")),
+      (r"""([^\(\[\)\]\s"]+)""", self("ident")),
+      (r"""".*""", self("unterm_str")),
+      (r".*", self("unknown_token"))
+    ], re.M|re.S|re.I)
+    self.scanner.scan(self.source)
+    if self.paren_stack:
+      self.raise_error("missing closing parenthesis.")
+    return self.parse(self.result)
+
+  def append(self, v):
+    self.last().append(Token(v, self.pos))
+
+  def __call__(self, name):
+    def _(scanner, s):
+      self.pos += len(s)
+      return getattr(self, name)(s)
+    return _
+
+  def unknown_token(self,s): self.raise_error("unknown token: %s"%s)
+  def skip(self, _): pass
+  def open(self, s):
+      new_lst = []
+      self.last().append(new_lst)
+      self.paren_stack.append([s, new_lst])
+  def close(self, s):
+      if not self.paren_stack:
+        self.raise_error("missing opening parenthesis.")
+      if self.PAREN[s] != self.paren_stack.pop()[0]:
+        self.raise_error("missing closing parenthesis.")
+  def str(self, s): self.append(eval('u""'+s+'""'))
+  def unterm_str(self, s): self.raise_error("unterminated string literal.")
+  def number(self, s): self.append(eval(s))
+  def symbol(self, s): self.append(Symbol(s[1:]))
+  def ident(self, s):
+    if s in self.binding:
+      self.append(self.binding[s])
+    else:
+      self.append(Ident(s))
+
+  def last(self):
+    if self.paren_stack:
+      return self.paren_stack[-1][1]
+    else:
+      return self.result
+
+  def parse(self, rs):
+    def is_ident(value, expected):
+      return getattr(value,"value", None) == Ident(expected)
+    def is_pair(rs):
+      return getattr(rs, "__len__", lambda :0)()==3 and is_ident(rs[1], u".")
+
+    if isinstance(rs, list):
+      if not len(rs):
+        return []
+      elif self.use_dict and is_ident(rs[0], u"alist-&gt;hash-table"):
+        if len(rs) != 2:
+          self.raise_error("alist-&gt;hash-table: expected 1 arguments, got %d."%(len(rs)-1), rs[0].pos)
+        if not all(is_pair(a) for a in rs[1]):
+          self.raise_error("alist-&gt;hash-table: aruguments must be alist", rs[0].pos)
+        return dict((self.parse(i[0]), self.parse(i[2])) for i in rs[1])
+      elif len(rs)!=3 and any(is_ident(t, u".") for t in rs):
+        self.raise_error('illegal use of "."', rs[0].pos)
+      elif is_pair(rs):
+        parsed = self.parse(rs[2])
+        if not isinstance(rs[2], list):
+          return Pair([rs[0].value, parsed])
+        if isinstance(parsed, Pair):
+          return Pair([rs[0].value, parsed])
+        elif isinstance(parsed, list):
+          return [rs[0].value]+parsed
+        else:
+          return [rs[0].value, parsed]
+      else:
+        return map(self.parse, rs)
+    else:
+      return rs.value
+
+  def raise_error(self, msg="parse error", pos=None, range=3):
+    pos = pos or self.pos
+    lines = self.source.split("\n")
+    curline = self.source[:pos].count("\n")
+    linepos = pos - len("\n".join(lines[:curline]))
+    buf = ["\n"]
+    for i in xrange(max(0, curline-range), curline+1):
+      buf.append("% 5d: %s"%(i+1, lines[i]))
+    width = 7 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in unicode(lines[i]))
+    buf.append("%s~"%(" "*width))
+    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
+    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
+
+class Dumper(object):
+  def __init__(self, binding=None ,symbol_marker="'"):
+    binding = binding or default_binding
+    self.binding = Binding(dict(zip(binding.values(), binding)))
+    self.symbol_marker = symbol_marker
+
+  def dump(self, obj):
+    result = self.to_sexp(obj, [])
+    if isinstance(result, list) and len(result) and result[0]=="(":
+      result = result[1:-1]
+    return u" ".join(result)
+
+  def to_sexp(self, obj, result):
+    ap = result.append
+    tos = lambda v: self.to_sexp(v, result)
+    if isinstance(obj, Pair):
+      ap("(")
+      tos(obj[0])
+      ap(" . ")
+      tos(obj[1])
+      ap(")")
+    elif isinstance(obj, (tuple, list)):
+      ap("(")
+      map(tos, obj)
+      ap(")")
+    else:
+      if isinstance(obj, dict):
+        ap("( alist-&gt;hash-table ")
+        tos([(k, Ident(u"."), v) for k,v in obj.items()])
+        ap(" ) ")
+      elif obj in self.binding:
+        ap(unicode(Ident(self.binding[obj])))
+      elif isinstance(obj, Symbol):
+        ap(u"'%s"%unicode(obj))
+      elif isinstance(obj, (Ident,int, float, long)):
+        ap(unicode(obj))
+      else:
+        s = unicode(repr(obj)).decode("unicode_escape")
+        m = re.match(r"""^[u|r]?["|'](.*)["|']$""", s, re.M|re.S)
+        if m:
+          s = m.group(1)
+        ap("\"%s\""%s.replace('"','\\"').replace("\\'","'"))
+    return result
+
+dumper = Dumper()
+read = Reader().read
+dump = dumper.dump</pre></section>
+<section>
+<h2>概要</h2>
+<p>特徴は</p>
+<ul class="simple">
+<li>辞書を定義できる</li>
+<li>ドット対に対応</li>
+<li>識別子に対して、任意のバインディングを指定できる</li>
+<li>わりとちゃんとエラー表示される</li>
+<li>シンボル表記、数値表記(python表記)に対応</li>
+</ul>
+<p>といった当たりでしょうか。具体的にはテストコードを見てもらうと分かるかと。</p>
+<pre class="prettyprint ">(あああ hoge-&gt;fuga123 (1 . (2 . 3)) "hoge\\"hoge" ;comment2
+foo "aaa" #t &lt;= 'foo
+"hogehoge
+foo
+" (5 . (6 .()))
+)
+(dict (
+  ("いいい" .
+    (alist-&gt;hash-table (
+      ("a-1" . "vvv")
+      ("a-2" . (
+        hoge foo bar
+      ))
+    )))
+))
+(10 1L -45 010 0x10 -10 -0x10 3.14 10. .001 1e100 3.14e-10 0e0)
+; comment3 ()(
+
+""")</pre><p>という感じのS式が</p>
+<pre class="prettyprint ">[
+  [Ident(u'あああ'), Ident(u'hoge-&gt;fuga123'), Pair([1, Pair([2, 3])]), u'hoge"hoge',
+  Ident(u'foo'), u'aaa', True, Ident(u'&lt;='), Symbol(u'foo'),
+  u'hogehoge\nfoo\n', [5,6]],
+  {u'いいい':
+    {u'a-1': u'vvv',
+    u'a-2': [Ident(u'hoge'), Ident(u'foo'), Ident(u'bar')]}},
+  [10, 1L, -45, 010, 0x10, -10, -0x10, 3.14, 10., .001, 1e100, 3.14e-10, 0e0]
+]</pre><p>となります。 <code>Ident</code> や <code>Symbol</code> はunicodeのサブクラス、 <code>Pair</code> はリストのサブクラスになっているので、違和感なく使えると思います。</p>
+<p>また、 <code><span class="pre">alist-&gt;hash-table</span></code> で辞書が作れます。デフォルトで <code>dict</code> に <code><span class="pre">alist-&gt;hash-table</span></code> をバインドしてますので、 <code>dict</code> でも辞書が作れます。この機能はオンオフ切り替えも可能です。</p>
+<p>その他、 <code>#t</code> を <code>True</code> などSchemeっぽくデフォルトバインディングが用意してあります。もちろん、バインディングは変更可能ですのでCLっぽくもできます。</p>
+<hr class="docutils" />
+<p>と、こんな感じです。一番便利なのはやっぱり辞書ですかねえ。なので、YAML,JSONで書いてる設定ファイルをS式で置き換え･･･なんてことができるかもしれません。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/08/08/sexp-parser-in-python-re-scanner" itemprop="url">Python:re.ScannerでS式パーサ</a></h3>
 <div class="meta">
 <time datetime="2008-08-08T20:38:00&#43;09:00">Aug  8, 2008</time>
@@ -291,143 +567,6 @@ line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ�
 <p>という感じで出来上がったのがこのブログだ。もうひとつ、実はこのブログ、XREAでしかもPython2.5で動かしている。あれ、XREAでPython2.5使えたっけ、というあなた。実は簡単に使えちゃうワザがあるんですよ。それについては、また。</p>
 <hr class="docutils" />
 <p>あまりテストもせず試験的に移行してみたのでおかしい部分もあるかと思いますが、そこはおいおい。パーマリンクはそのままになっていると思います。基本的にURLは変更していません。また、CGIで動かしていますので、負荷が高ければ前のに戻す予定です。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/07/04/strong-arm-approach-toward-gae-transactions" itemprop="url">GoogleAppEngineのトランザクションをねじふせる</a></h3>
-<div class="meta">
-<time datetime="2008-07-04T02:19:49&#43;09:00">Jul  4, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/gae/" rel="tag" itemprop="keywords">gae</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p><a class="reference external" href="http://inforno.net/articles/2008/06/30/gae-model-improvements">前のエントリー</a> で書いたように、GoogleAppEngineのトランザクションは使い勝手が悪い。しかし、GAEにブログを移行しようと思うとこれは乗り越えなければならない。</p>
-<p>GAEでトランザクションを行う条件を簡単にまとめると</p>
-<ul class="simple">
-<li>db.run_in_transactionにトランザクションとして実行したい関数を渡すがその関数内では</li>
-<li>同じエンティティグループに属しているモデルで</li>
-<li>get, put, deleteのみ</li>
-</ul>
-<p>しか実行できない。なのでトランザクションのページに紹介されているような</p>
-<pre class="prettyprint ">from google.appengine.ext import db
-
-class Accumulator(db.Model):
-  counter = db.IntegerProperty()
-
-def increment_counter(key, amount):
-  obj = db.get(key)
-  obj.counter += amount
-  obj.put()
-
-q = db.GqlQuery("SELECT * FROM Accumulator")
-acc = q.get()
-
-db.run_in_transaction(increment_counter, acc.key(), 5)</pre><p>先にGQLを発行しておいて、 <code>run_in_transaction</code> に渡す関数ではGQLの結果として取得した <code>key</code> を引数にとる、という回りくどいコードになる。コレは書きづらい。</p>
-<p>これも前のエントリーに書いたように、今回作ったブログアプリでは月別アーカイブやタグアーカイブの記事数をエントリのCRUD時に操作している。</p>
-<p>エントリ作成時なら</p>
-<pre class="prettyprint ">@classmethod
-def create(cls, *a, **k):
-  obj = super(Entry, cls).create(*a, **k)
-  TagCount.inc(obj.status, *obj.tags)
-  MonthCount.inc(obj.status, obj.created_month)
-  return obj</pre><p>というような感じだ( <code>status</code> は公開、とか非公開とかが入る)。当然、この <code>create</code> メソッドでは <code>TagCount</code> , <code>MonthCount</code> と <code>obj</code> について一貫性が保たれなければならない。しかし、 <code>TagCount.inc</code> では対象のタグを検索して、なければ作成し <code>put</code> する、という操作を行う。「対象のタグを検索して」というトランザクション内で許可されていない操作が入っているのだ。</p>
-<p>さて、こういうときはとりあえず？力技で乗り切ろう。かなり強引だが、下のようなコードで乗り切ってみた。一応、サーバにアップロードして動作することは確認している。</p>
-<pre class="prettyprint ">class RootModel(db.Model):
-  id = db.IntegerProperty(default=1)
-  def __call__(self, k):
-    v = k or {}
-    v.update(parent=with_parent)
-    return v
-with_parent = RootModel.get_or_insert("id", id=1)</pre><p>まず、全てのエンティティを同一エンティティグループに所属させることにする。そのため、全てのエンティティの親となるエンティティを作成する。</p>
-<p>次は強引さの根源のようなクラスだ。</p>
-<pre class="prettyprint ">class Transaction(object):
-  MAGIC_NAME = "__magic__lst__"
-  SEARCH_MAX = 12
-  def __init__(self, f):
-    self.f = f
-
-  def execute(self):
-    __magic__lst__ = []
-    result = self.f()
-    def commit():
-      for dbop in __magic__lst__:
-        dbop()
-      return True
-    committed = db.run_in_transaction(commit)
-    if committed is None:
-      raise db.Rollback()
-    return result</pre><p>これだけでは分からないと思うが、 <code>execute</code> 内で <code>run_in_transaction</code> が実行されている。その引数には <code>commit</code> 。 <code>commit</code> の中では <code>__magic__lst__</code> というリスト内の関数を実行しているようだが、 <code>__magic__lst__</code> に要素が追加されている形跡がない。</p>
-<p>そして、全てのモデルの親となる基本モデルを定義する。</p>
-<pre class="prettyprint ">class BaseModel(db.Model):
-  @classmethod
-  def create(cls, *a, **k):
-    obj = cls(*a, **with_parent(k))
-    obj.put()
-    return obj
-
-  def _with_transaction(self, name):
-    i = 1
-    f = sys._getframe(i)
-    while f and i &lt; Transaction.SEARCH_MAX:
-      if Transaction.MAGIC_NAME in f.f_locals:
-        f.f_locals[Transaction.MAGIC_NAME].append( \
-          lambda : getattr(super(BaseModel, self), name)())
-        return
-      i += 1
-      f = sys._getframe(i)
-    return getattr(super(BaseModel, self),name)()
-
-  def put(self):
-    return self._with_transaction("put")
-
-  def delete(self):
-    return self._with_transaction("delete")
-
-  def update(self, **k):
-    for prop in self.properties().values():
-      if prop.name in k:
-        prop.__set__(self, k[prop.name])
-    self.put()
-
-  @classmethod
-  def get_by_id(cls, id):
-    return super(BaseModel, cls).get_by_id(id, parent=with_parent)</pre><p>この基本クラスではまず、 <code>create</code> というメソッドを定義し、エンティティはすべてこのメソッドを通して作成するようにしている。 <code>create</code> では必ず親エンティティとして <code>with_parent</code> を指定する。これにより全てのエンティティは同一エンティティグループに属することになる。</p>
-<ul class="simple">
-<li>同じエンティティグループに属しているモデルで</li>
-</ul>
-<p>という条件はクリアしたことになる。次は</p>
-<ul class="simple">
-<li>get, put, deleteのみ</li>
-</ul>
-<p>という条件だ。これは <code>_with_transaction</code> というメソッドでクリアしている。 <code>put</code> と <code>delete</code> をオーバーライドして <code>_with_transaction</code> を呼び出すようにしている。さて、この <code>_with_transaction</code> ではフレームをさかのぼって、 <code>__magic__lst__</code> という名前のローカル変数が存在するフレームがないか探索する。そのフレームが存在した場合、一連のトランザクション内での実行とみなし、 <code>__magic__lst__</code> に <code>put</code> , <code>delete</code> を行うthunkを登録し、終了する。存在しない場合は通常の実行ということで、その場で <code>put</code> ,  <code>delete</code> を行う。つまり、トランザクション内で実行されたことを検出して <code>put</code> , <code>delete</code> の評価を遅延させるのだ。</p>
-<p>さきほどの <code>create</code> は</p>
-<pre class="prettyprint ">@classmethod
-def create(cls, *a, **k):
-  def _():
-    obj = super(Entry, cls).create(*a, **k)
-    TagCount.inc(obj.status, *obj.tags)
-    MonthCount.inc(obj.status, obj.created_month)
-    return obj
-  return Transaction(_).execute()</pre><p>と若干のコード挿入のみできちんと一貫性が保証されるようになる。</p>
-<hr class="docutils" />
-<p>というわけで、かなり強引な気がするけどトランザクションの問題は一応クリアされた。めんどくさければHTTPリクエストを受けてから、レスポンスを返すまでを関数でラップし、 <code>Transaction.execute</code> すれば大丈夫だ。</p>
-<p>ここまでやってしまったので、やっぱり今のブログはGAEに移行しようかなあ、と思い始めたり。デザインも今と似ているけどやっぱ一から自分でマークアップしたから好みだし、なによりXHTMLとしてValidだ。機能的にはあと、スパム対策さえあれば大丈夫。</p>
-<p>実はOpenIDも自分でサーバ立ててたりするので、それもGAEで実装しなおしたいなあとか色々やりたいことは尽きない。GAEでの開発はこのモデルの問題さえつぶしてしまえばかなり楽だし、夢がひろがるなあ。</p>
 
   </div>
 </article>

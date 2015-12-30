@@ -7,10 +7,53 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>10 Dec 15 15:00 UTC</lastBuildDate>
+    <lastBuildDate>30 Dec 15 08:44 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
+    
+    <item>
+      <title>30歳の一年だった。今後について考える。 </title>
+      <link>http://inforno.net/articles/2015/12/30/30-years-old-this-year</link>
+      <description>&lt;p&gt;もう2015年も終わろうとしています。今31歳ですが私は誕生日が後半なのでこの1年はほぼ30歳として過ごしたことになります。&lt;/p&gt;
+&lt;section&gt;
+&lt;h2&gt;GopherLua&lt;/h2&gt;
+&lt;p&gt;さて、今年は2月に公開した &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; がGithubで1000スター以上もいただき、バンバンIssueやPRが来て新しい体験ができた年でした。&lt;/p&gt;
+&lt;p&gt;自分としてはGoは現状速い言語を書くには向いていないし、これは設定ファイルの拡張用、くらいに思っていたのですが意外とサーバサイドに使おうという人がいて驚きましたね。それでもやはり圧倒的にコマンドラインツールの拡張用が多くてシングルバイナリ＋拡張言語がマッチする分野だと思います。&lt;/p&gt;
+&lt;p&gt;私はあくまで趣味プログラマなのでこういった機会はOSS活動をしていなければできない経験だったのでとても有益でしたね。英語にとても苦手意識があるのですが、案外適当な英語で通じるものです。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;なんで趣味でOSSを書いているか&lt;/h2&gt;
+&lt;p&gt;なんで趣味でOSSを書いているか…まぁ好きだからですよね。とにかくプログラミングが好きです。&lt;/p&gt;
+&lt;p&gt;あとは…どこかに「自分はまだ最低これくらい書ける」というのを確認したいという思いがあるのだと思います。そしてその裏には「やっぱり仕事でコード書きたいなあ」という思いがあるのでしょう。&lt;/p&gt;
+&lt;p&gt;この業界は実務経験がすべてですから、もはや実務から離れて久しい私がWEBやモバイル業界に行くことはないでしょうけど、万が一の時に自分の技術力を示す手段としてGithubという場を借りているのかな、と。&lt;/p&gt;
+&lt;p&gt;意外と？成果物経由で仕事しませんかというメールをもらえたりとGithubは見られてるんだな、と思いましたね。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;今後は…&lt;/h2&gt;
+&lt;p&gt;転職は35が限界、などという話もありますし今後をどうするか考える時期ですね。正直なところ今の勤め先が定年まで現状維持できる気がまったくしないので&lt;/p&gt;
+&lt;ol class=&#34;arabic simple&#34;&gt;
+&lt;li&gt;もっと安定している職業へ転職する&lt;/li&gt;
+&lt;li&gt;いっそWEB、モバイル業界にチャレンジする&lt;/li&gt;
+&lt;li&gt;(深く考えず今の勤め先で頑張る)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;くらいでしょうか。安定している…というと公務員系ですかね。&lt;/p&gt;
+&lt;p&gt;いざという時に支えてくれる人がいればリスクを取りやすいのでしょうが、あいにく実家は離婚の上極貧、親戚づきあいなし、兄弟なし、独身(そして結婚も子供も予定なし)とある意味頼れるのは自分と会社だけ、という人間です。&lt;/p&gt;
+&lt;p&gt;さらに健康上の理由で海外は絶対行きたくない、となると1しかない気がしてきています。&lt;/p&gt;
+&lt;p&gt;その場合は、もうOSSでコード書いてもしかたないかなあ、とかこのブログも消そうかなあ、とか思うところはあります。&lt;/p&gt;
+&lt;p&gt;実際には惰性で3.でしょうが(まぁ20年くらいはつぶれないし待遇もそこまで落ちないでしょ…)。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;2016年&lt;/h2&gt;
+&lt;p&gt;とはいえ、2016年もなにかまとまったものが書ければな…とは思っているんです。やっぱり独自言語書きたいですね、普通にCで。 Goで実用的なものもなにか書きたいんですけど、ほんと趣味レベルではなかなかいいモノが思いつきません。いやー、実践でGo書いてみたいので副業できるなら喜んでGoで何か書ける仕事探すんですがねえ…。&lt;/p&gt;
+&lt;/section&gt;
+</description>
+      
+      <category>life</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2015/12/30/30-years-old-this-year</guid>
+      <pubDate>30 Dec 15 08:44 UTC</pubDate>
+    </item>
     
     <item>
       <title>Goのインタフェースがパフォーマンスに及ぼす影響 </title>
@@ -474,119 +517,6 @@ selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ�
       
       <guid isPermaLink="true">http://inforno.net/articles/2015/02/24/channel-support-in-gopher-lua</guid>
       <pubDate>24 Feb 15 11:00 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>LuaのGo言語実装を公開しました </title>
-      <link>http://inforno.net/articles/2015/02/15/gopher-lua-released</link>
-      <description>&lt;p&gt;LuaをGo言語のみで実装した &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; を公開しました。&lt;/p&gt;
-&lt;p&gt;詳しくはGithubのREADMEを見ていただくとして、特徴としては以下になります。&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;dl class=&#34;first docutils&#34;&gt;
-&lt;dt&gt;Lua5.1ベース&lt;/dt&gt;
-&lt;dd&gt;&lt;ul class=&#34;first last simple&#34;&gt;
-&lt;li&gt;5.1の機能はほぼ実装済み&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/dd&gt;
-&lt;/dl&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p class=&#34;first&#34;&gt;Compiler, VMともに完全にGo言語のみで実装&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p class=&#34;first&#34;&gt;引数の受け渡し以外でのスタック操作が不要で使いやすいAPI&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;section&gt;
-&lt;h2&gt;なぜ作ろうと思ったか&lt;/h2&gt;
-&lt;p&gt;もともとC言語でものを作るときにはLuaを設定ファイルの代わりとして取り入れていました。Goではあまり拡張言語実装がないので、jsonだったりiniだったりを設定ファイルとして使っていましたが、やっぱり微妙にめんどくさい。変数くらい欲しいなあ･･･とか。&lt;/p&gt;
-&lt;p&gt;結局、固い言語だけでモノを作るのは難しく、やわらかさが必要になるポイントがあります。そういうところはまず、「設定ファイル」として外だしされます。そしてその設定ファイルがどんどん肥大化したり複雑化したりして･･･(XML地獄とか)。Cに対するLua、PythonやRuby、Javaに対するGroovyなど「固い言語」＋「拡張言語」は自分的に一番しっくりくる構成です。それをGoで実現するために実装してみました。&lt;/p&gt;
-&lt;p&gt;もうひとつは単純にLuaに興味があったこと。正確にはLuaというよりレジスタ型VMに。スタック型VMは実装したことがあるのですが、レジスタ型で実装してみたかったのです。&lt;/p&gt;
-&lt;p&gt;最後に、Go言語で処理系を実装してみたかったこと。実行ファイルが吐けるし、速度はそれなりに速いし、Go自体がGCを持っているのでかなり処理系作るのが楽だと思われるのでどんなものかな、と。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;簡単な使い方&lt;/h2&gt;
-&lt;p&gt;こうして&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt;import (
-    &#34;github.com/yuin/gopher-lua&#34;
-)&lt;/pre&gt;&lt;p&gt;こんな感じですね。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt;L := lua.NewState()
-defer L.Close()
-if err := L.DoString(`print(&#34;hello&#34;)`); err != nil {
-    panic(err)
-}&lt;/pre&gt;&lt;p&gt;Go関数をLuaで呼ぶ場合は以下のような感じ。LuaとGoの間の引数と戻り値の受け渡しのみにスタックを使います。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt;func Double(L lua.LState) int {
-    lv := L.ToInt(1)             // get argument
-    L.Push(lua.LNumber(lv * 2))  // push result
-    return 1                     // number of results
-}
-
-func main() {
-    L := lua.NewState()
-    defer L.Close()
-    L.SetGlobal(&#34;double&#34;, L.NewFunction(Double)) // Original lua_setglobal uses stack...
-}&lt;/pre&gt;&lt;p&gt;あとは &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;README&lt;/a&gt; をみていただければ大体分かるかと思います。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;実装について&lt;/h2&gt;
-&lt;section&gt;
-&lt;h3&gt;全般の話&lt;/h3&gt;
-&lt;p&gt;まず、そんなにLua自体のコードは読んでません(おい)。Luaは1パスでコード生成までできる文法で本家はそういう実装ですが、GopherLuaでは&lt;/p&gt;
-&lt;ol class=&#34;arabic simple&#34;&gt;
-&lt;li&gt;トークナイズ(Lexer, 手書き)&lt;/li&gt;
-&lt;li&gt;パース(go-yacc)&lt;/li&gt;
-&lt;li&gt;コード生成&lt;/li&gt;
-&lt;li&gt;最適化&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;まったく違うパス構成なので実装は完全に独自実装です。またyaccなのでユーザが文法を簡単に変えられます。&lt;/p&gt;
-&lt;p&gt;現状最適化はほとんどやっていません。複数JMPをまとめるくらい。&lt;/p&gt;
-&lt;p&gt;あと、やっぱ三項演算子欲しい･･･。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h3&gt;データモデルの話&lt;/h3&gt;
-&lt;p&gt;こういう言語を実装する場合はいわゆる共用体のような、1つの型で複数の型を判別できるものが必要となります。Cでは共用体やポインタの下位ビットを使いますが、Goでは以下の選択肢があります。&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;&lt;code&gt;reflect.Value&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;interface&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;unsafe.Pointer&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;GopherLuaでは &lt;code&gt;interface&lt;/code&gt; を使っています。 &lt;code&gt;interface&lt;/code&gt; は&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;Go側のAPIを考えたとき一番分かりやすい&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;という利点がある一方&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;ネイティブ型をラップした &lt;code&gt;interface&lt;/code&gt; の場合、 &lt;code&gt;interface&lt;/code&gt; への変換が発生して速度低下を招く&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;という欠点があります。そこで簡単なベンチマークをしたのですが&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;単純な例(フィボナッチ計算)では確かに &lt;code&gt;reflect.Value&lt;/code&gt; などが速い。&lt;/li&gt;
-&lt;li&gt;一方、複雑な例になればそれほど差が無いように見えた&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;ため &lt;code&gt;interface&lt;/code&gt; を採用しました。ただ、プロファイルをとるとかなりの部分が &lt;code&gt;interface&lt;/code&gt; への変換に取られているので、ここが(Goが進化して)速くなればGopherLuaも速くなると思います。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h3&gt;速度の話&lt;/h3&gt;
-&lt;p&gt;それほどパフォーマンスチューニングはしていませんが、フィボナッチではperlと同じくらいの性能は出ているようです。メモリ確保はそもそも気をつけて減らしているので後は&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
-&lt;li&gt;関数をベタ書きする&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;くらいかなあ。Goは短い関数をinline化してくれますが、そのinline化はそんなに賢くないのでやっぱりダメですね。ためしにVMの関数コール部分などをベタ書きすると1.2倍くらいの速度になりました。今のところそこまで速度を求めていないので元に戻しましたけど。&lt;/p&gt;
-&lt;p&gt;やっぱマクロ欲しいなあ･･･&lt;/p&gt;
-&lt;/section&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;とりあえず、使えるはずです&lt;/h2&gt;
-&lt;p&gt;Lua5.1のテストは主要なものは通っているので使えるものになっているはずです。設定ファイルのかわりに使うもよし、プラグインの仕組みに使うのもよし。今後はGopherLuaのTableをGoのstructにマッピングするような( &lt;code&gt;json&lt;/code&gt; や &lt;code&gt;xml&lt;/code&gt; パッケージみたいな)ライブラリとか作りたいなと思っていたりします。&lt;/p&gt;
-&lt;/section&gt;
-</description>
-      
-      <category>golang</category>
-      
-      <category>lua</category>
-      
-      <category>gopherlua</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2015/02/15/gopher-lua-released</guid>
-      <pubDate>15 Feb 15 13:43 UTC</pubDate>
     </item>
     
   </channel>

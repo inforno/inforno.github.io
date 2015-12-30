@@ -133,6 +133,62 @@ prototype.jsのAjax.Updaterあたりをハックすれば結構使えるもの�
 </article>
 
 
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2006/02/20/xml2json-with-the-javascript-template-engine" itemprop="url">XML2JSON&#43;javascriptテンプレートエンジンでRSS表示</a></h3>
+<div class="meta">
+<time datetime="2006-02-20T01:18:51&#43;09:00">Feb 20, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/feed/" rel="tag" itemprop="keywords">feed</a></span>
+  
+  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
+<p>ということで早速ハックしてみました。</p>
+<p><a class="reference external" href="http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation">前のエントリーで書いた</a> Javascriptテンプレートと組み合わせてめちゃくちゃ簡単にRSSを表示できます。</p>
+<p><a class="reference external" href="/statics/files/xml2json.zip">サンプルはこちら</a></p>
+<p>使い方ですが、多分ソースをみてもらったほうが速いです。</p>
+<p>サンプルHTMLから抜粋</p>
+<pre class="prettyprint ">Event.observe(window, "load", function(){
+        new XML2JSON("&lt;a href="http://feeds.feedburner.com/Inforno"&gt;http://feeds.feedburner.com/Inforno&lt;/a&gt;", {container: "test", template : {element:"template"}});
+});</pre><p>初期化コードはｺﾚだけです。
+containerでinnerHTMLに結果を流し込みたいElementを指定します。
+templateは <a class="reference external" href="/articles/2006/02/15/the-embed-javascript-implementation">Lyase.View.render</a> の引数と同じです。
+例ではtextareaエレメントのid:&quot;tempalte&quot;のinnerHTMLをテンプレートとして扱います。</p>
+<pre class="prettyprint ">//テンプレート
+  &lt;textarea id="template" style="display:none;"&gt;
+
+&lt;h3&gt;&lt; %= context.channel.title %&gt;&lt;/h3&gt;
+
+&lt;ul class="items"&gt;
+      &lt; % context.channel.item.each(function(item,index){%&gt;
+
+    &lt;li&gt;&lt;a href="&lt;%= item.link%&gt;" target="_blank"&gt;&lt; %= item.title%&gt;&lt;/a&gt;&lt;/li&gt;
+        &lt; % if(index &gt; 5){throw $break;}%&gt;
+      &lt; %})%&gt;
+   &lt;/ul&gt;
+  &lt;/textarea&gt;</pre><p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。
+またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで
+おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
+
+  </div>
+</article>
+
+
 
 
 

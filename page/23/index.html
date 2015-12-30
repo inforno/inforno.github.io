@@ -98,50 +98,57 @@ $$('a[class~=external][href="http://inforno.net/#"]')</pre><p>こんな感じで
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/02/20/xml2json-with-the-javascript-template-engine" itemprop="url">XML2JSON&#43;javascriptテンプレートエンジンでRSS表示</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/03/31/current-development-in-element-extend" itemprop="url">Element.extendの動向。</a></h3>
 <div class="meta">
-<time datetime="2006-02-20T01:18:51&#43;09:00">Feb 20, 2006</time>
+<time datetime="2006-03-31T01:33:46&#43;09:00">Mar 31, 2006</time>
 
   
   <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
-  <span class="tag"><a href="/articles/tag/feed/" rel="tag" itemprop="keywords">feed</a></span>
-  
-  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
-<p>ということで早速ハックしてみました。</p>
-<p><a class="reference external" href="http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation">前のエントリーで書いた</a> Javascriptテンプレートと組み合わせてめちゃくちゃ簡単にRSSを表示できます。</p>
-<p><a class="reference external" href="/statics/files/xml2json.zip">サンプルはこちら</a></p>
-<p>使い方ですが、多分ソースをみてもらったほうが速いです。</p>
-<p>サンプルHTMLから抜粋</p>
-<pre class="prettyprint ">Event.observe(window, "load", function(){
-        new XML2JSON("&lt;a href="http://feeds.feedburner.com/Inforno"&gt;http://feeds.feedburner.com/Inforno&lt;/a&gt;", {container: "test", template : {element:"template"}});
-});</pre><p>初期化コードはｺﾚだけです。
-containerでinnerHTMLに結果を流し込みたいElementを指定します。
-templateは <a class="reference external" href="/articles/2006/02/15/the-embed-javascript-implementation">Lyase.View.render</a> の引数と同じです。
-例ではtextareaエレメントのid:&quot;tempalte&quot;のinnerHTMLをテンプレートとして扱います。</p>
-<pre class="prettyprint ">//テンプレート
-  &lt;textarea id="template" style="display:none;"&gt;
-
-&lt;h3&gt;&lt; %= context.channel.title %&gt;&lt;/h3&gt;
-
-&lt;ul class="items"&gt;
-      &lt; % context.channel.item.each(function(item,index){%&gt;
-
-    &lt;li&gt;&lt;a href="&lt;%= item.link%&gt;" target="_blank"&gt;&lt; %= item.title%&gt;&lt;/a&gt;&lt;/li&gt;
-        &lt; % if(index &gt; 5){throw $break;}%&gt;
-      &lt; %})%&gt;
-   &lt;/ul&gt;
-  &lt;/textarea&gt;</pre><p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。
-またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで
-おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
+    <p>最近prototype.jsではSelectorとDOMがよく動きます。
+仕事でも使っているし、重要な部分なのでここのところウォッチしています。</p>
+<p>最近、実は書こうと思ってたElement.extendの問題が解決されました。
+問題：<a class="reference external" href="http://dev.rubyonrails.org/ticket/4465">Incredible memory leak in IE</a></p>
+<p>これは見る人が見ればパッと見で「これはヤバいんじゃね？」と思ったんじゃないでしょうか。
+わからなかった人は上記のURLにも載っている
+<a class="reference external" href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp">http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp</a>
+を見ておくと今後悩むことが減るかもしれません。</p>
+<p>リンク先をみたらなにが問題かわかるのであえては書きません。</p>
+<p>もう一個、興味深いのは <a class="reference external" href="http://dev.rubyonrails.org/ticket/4477">Element.extend cripples $() performance</a> での議論です。
+<a class="reference external" href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements">前に書いた記事</a> と似た主張や議論がなされています。うちの会社にも英語苦手な人がいるので簡単に要旨を。</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Element.extendはパフォーマンスに問題がある。前のままにしてほしい。</dt>
+<dd><ul class="first last">
+<li><p class="first"><a class="reference external" href="http://dev.rubyonrails.org/changeset/4094">http://dev.rubyonrails.org/changeset/4094</a> でだいぶマシになっているよ？</p>
+</li>
+<li><p class="first">解説：以前はそれぞれのElementについてElement.Methodsのメソッドにelementをbindしてコピーしていた。つまりElementの数に比例してメモリを使用する。しかし4094でキャッシュを導入したので一定数のメソッドしか生成しない。</p>
+</li>
+<li><p class="first">とりあえずElement.extendのパフォーマンスをあげることにフォーカスしよう。</p>
+</li>
+<li><dl class="first docutils">
+<dt>Element.extend = Prototype.Kってかけばとりあえず大丈夫じゃね？</dt>
+<dd><ul class="first last simple">
+<li>でもscriptaculousが完全にextendされてる前提でコードかいてるから動かなくなるじゃん。</li>
+<li>解説：scriptaculousは3月28日にprototype.js 1.5_pre1をバンドルしてバージョン1.6をリリースした。このバージョンではelement.setStyle({top: ''})とかelement.show();みたいにガンガンElement.extendを活用している。まぁとりあえずElement.extendが必要ないときはPrototype.Kにしとけばいい。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">FirefoxやSafariは高速化できる（前のエントリーとほぼ同じ）。しかしprototype.jsに組み込むとscriptaculousのElement.Methods拡張が反映されない。</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>というわけでElement.extendはこれでちょっと落ち着いた感じ。個人的にはElement.extend無効化して使っていきたいなーって思ってたりしてたんですけどscriptaculousがやっぱりガンガン使ってきたので、まぁ様子見てみます。</p>
 
   </div>
 </article>
