@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
@@ -184,7 +184,6 @@ def create(cls, *a, **k):
 <p>というわけで、かなり強引な気がするけどトランザクションの問題は一応クリアされた。めんどくさければHTTPリクエストを受けてから、レスポンスを返すまでを関数でラップし、 <code>Transaction.execute</code> すれば大丈夫だ。</p>
 <p>ここまでやってしまったので、やっぱり今のブログはGAEに移行しようかなあ、と思い始めたり。デザインも今と似ているけどやっぱ一から自分でマークアップしたから好みだし、なによりXHTMLとしてValidだ。機能的にはあと、スパム対策さえあれば大丈夫。</p>
 <p>実はOpenIDも自分でサーバ立ててたりするので、それもGAEで実装しなおしたいなあとか色々やりたいことは尽きない。GAEでの開発はこのモデルの問題さえつぶしてしまえばかなり楽だし、夢がひろがるなあ。</p>
-
 
     <div class="seealso">
       <ul><h3>See Also</h3>

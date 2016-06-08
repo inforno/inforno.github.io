@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
@@ -118,7 +118,6 @@ out_file.write(io.read())
 io.close()
 out_file.close()</pre><p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ
 pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
-
   </div>
 </article>
 
@@ -225,7 +224,6 @@ guiconsole.start(main, "GUIコンソールのテスト")</pre><p>でこんな風
 なので単純にstdoutとstdinをTkのウィジットに置き換えてメインループに入り、別スレッドでメインの処理を実行してやっているだけ。</p>
 <p>見栄えも生のDOSプロンプトよりはいいし、処理が終わってもウィンドウを閉じない限り結果を見ることができる。
 プチ便利なので、はやくも自分で使いまくりです（笑</p>
-
   </div>
 </article>
 
@@ -358,7 +356,6 @@ print obj.get_test()
 Pythonはやっぱり関数をオブジェクトとして扱いやすい、というのが楽。Rubyのobj.some_methodでメソッドが呼び出せるのは便利だが、その点ではやっぱキツい。ループもPythonほうが好きだな。</p>
 <p>ま、やっぱり個人の好み、としかいいようがないなあ。最近ではWindowsの小物はほとんどpythonで書いてるけど（インストーラーがあって関連付けまでしてくれて、楽）、Linuxのほうはそうでもないし。</p>
 </section>
-
   </div>
 </article>
 

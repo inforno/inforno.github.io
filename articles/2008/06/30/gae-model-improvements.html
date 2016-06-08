@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
@@ -141,7 +141,6 @@ stab = Test.stab() #nameがなくても作成できる</pre><p>こんな感じ�
 <p>ひとつ引っかかっているのはトランザクションの問題。まぁめったにトランザクションで問題はおきないと思うけど、GAEのトランザクションは一応ある、といった程度でほとんど使えない。使おうとしたらtransactionの中でこれはしちゃだめ、これもしちゃだめ、とおこられまくったので現在トランザクション管理ができていない。GAEには集約系のメソッドがないので、月別記事数とか、タグ別記事数とかを記事のCRUD時に別モデルで管理しているわけだけど、ここのトランザクションが管理できないのは結構不安。</p>
 <p>もうひとつはなんとなーく使い切らないんだけど無料の上限である500Mという容量が微妙。画像のアップとかしなけりゃまず大丈夫なんだけど。</p>
 <p>その他にもなんとなくGoogleの罠じゃないかとかいろいろ気になって移行に踏み切れないでいる今日この頃。実際に本格的にGAEに移行した人の感想がききたいなあ。</p>
-
 
     <div class="seealso">
       <ul><h3>See Also</h3>

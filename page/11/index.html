@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
@@ -55,82 +55,6 @@
     <div role="main">
       
 
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/11/18/parser-combinators-in-javascript" itemprop="url">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></h3>
-<div class="meta">
-<time datetime="2007-11-18T02:17:40&#43;09:00">Nov 18, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>近頃、 <a class="reference external" href="http://d.hatena.ne.jp/yukoba/20071108/p1">JavascriptでOreScript</a> なんてのがちょっとはやっていたりしまして。</p>
-<p>OreScript書くのにある程度ちゃんと動くパーサコンビネータがあれば便利かも、とおもったので以前書いたパーサコンビネータをいじってみました。</p>
-<section>
-<h2>変更点</h2>
-<ul class="simple">
-<li>メソッド名などをHaskellにあわせた</li>
-<li>よくもわるくも、記号含有率をあげた(and -&gt; $に、or -&gt; l に)</li>
-<li>相互再帰をサポートした</li>
-<li>左再帰(chainl1)をサポートした</li>
-<li>右再帰(chanr1)をサポートした</li>
-</ul>
-<p>ということで、そこそこの用途に耐えるものになったと思います。</p>
-</section>
-<section>
-<h2>ダウンロード</h2>
-<p>完全にアンドキュメントです。すみません。ただ、ソースは200行くらいなんで見ればわかるかと。というか、HaskellのParsecのマニュアルを読めば基本一緒なので使い方がわかると思います。</p>
-<p><a class="reference external" href="/statics/files/parsec0-1-0.js">ダウンロード</a></p>
-</section>
-<section>
-<h2>サンプル</h2>
-<p><a class="reference external" href="http://d.hatena.ne.jp/amachang/20070829/1188400850">id:amachangさんが書いていたような数式パーサ</a> を定義してみましょう。</p>
-<p>残念ながらLexerはつくっていないので、空白は受け入れられません。</p>
-<pre class="prettyprint ">var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){
-  var mul = function(a,b){return a*b;};
-  var div = function(a,b){return a/b;};
-  var add = function(a,b){return a+b;};
-  var sub = function(a,b){return a-b;};
-
-  this.numbers =  many1( chrLike(function(c) { return (c &gt;= '0' &amp;&amp; c &lt;= '9'); }) ) .ret(function(ns){
-                    return parseInt(ns.join(""));
-                  });
-  this.expr = chainl1(p("term"), p("addop"));
-  this.term = chainl1(p("factor"), p("mulop"));
-  this.factor = (between(chr("("), p("expr"), chr(")"))) .l (numbers)
-  this.mulop = (chr("*") .retval(mul)) .l (chr("/") .retval(div));
-  this.addop = (chr("+") .retval(add)) .l (chr("-") .retval(sub));
-}});
-
-var test = "100*(100+200)/10";
-
-var parser = new ExprParser(test);
-var parseResult = parser.expr.parse();
-if(parseResult.success()) {
-  alert(parseResult.result);
-  // =&gt; 3000
-}</pre><p>すごく、Parsecです･･･</p>
-<hr class="docutils" />
-<p>こういうのを最近はやりの <a class="reference external" href="http://coderepos.org/share">CodeRepos</a> でやればいいのかなあ。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
 
 
 
@@ -311,7 +235,6 @@ hello,  Test1</pre><p>サブコマンドのdb_create_test2が実行されてい�
 <hr class="docutils" />
 <p>標準的な機能だけでもRakeのようなタスクはつくれますが、30行程度の工夫で断然便利になります。Rakeと違いrakeコマンドのような外部コマンドも必要なく、pythonのスクリプト1つで実現できるのも手軽です。というわけで、雑多なタスクはdistutilsでまとめてみてはいかがでしょうか。</p>
 </section>
-
   </div>
 </article>
 
@@ -461,7 +384,32 @@ println(
 )</pre><hr class="docutils" />
 <p>さて、数少ない日本人Scala好きの皆さん。どれくらいご存知でしたでしょうか。まぁ、基礎からちょっとScalaやればこれくらいは皆さんご存知だと思うんですが、やはりScalaはカオスな言語なので、なかなか見つけられない機能も多いんで、最近Scalaやりはじめた人は参考にしてもらえるとうれしいです。</p>
 </section>
+  </div>
+</article>
 
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2008/02/04/the-scala-most-instructive-language" itemprop="url">最もタメになる「初心者用言語」はScala!</a></h3>
+<div class="meta">
+<time datetime="2008-02-04T20:13:59&#43;09:00">Feb  4, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/scrap/" rel="tag" itemprop="keywords">scrap</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>コレだけはガチ。続きは書くかもしれないけど、たぶん書かない。</p>
+<hr class="docutils" />
+<p>P.S</p>
+<p>Schemeが好きです。Gaucheが好きです。でもういんどうずだとGaucheさんはちょっとアレなので、社内ソフトがWindowsしか対応してないとか、データ保護ソフトがWindowsしか対応してないとか、社内システムがIE限定だとか、ういんどうずを使わざるを得ない人には使えません。Pythonサイコー</p>
   </div>
 </article>
 

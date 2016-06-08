@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
@@ -85,7 +85,6 @@
 <p>メモリ周りもIO以外はだいたい作ったので、今日の時点で単純なコードなら実行可能に。早速アセンブラを書いてNESASMで.NESファイルを作成。それを読み込んで動かしてみました。とりあえず動くことは動く・・・が全命令が正しく実装されているかはまだ分からないです（笑</p>
 <p>というわけで次はデバッグ環境を整えて、命令のテストをしないとなあ。</p>
 <p>余談。いやー卒論という重圧がないのは非常にプログラミングがはかどる。別にギリギリなわけでもないのに「卒論完全に出来上がってないのにこんなことしてていいのかなーって感じちゃう」的なものがないし。</p>
-
   </div>
 </article>
 
@@ -190,7 +189,6 @@
 <p>という感じです。</p>
 <p>エミュレーターのほうはあのあとCPUを若干チューニングして、1フレーム0.1はキリました。今はPPUを書いてるんですが、そろそろ就職に備えて家を探さないといけません。京都と関東を行き来するのはいろいろこたえます。移動中はシグマリオンのPocketSchemeでSchemeでも書いて暇つぶしです。</p>
 </section>
-
   </div>
 </article>
 
@@ -356,7 +354,6 @@ self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やって
 <p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに <code>A &amp; 0xff</code> みたいなことをやっていて、どーもめんどくさい。</p>
 <p>じゃぁLLでエミュレーターを書く意味ってなんだ、というと・・・うーん（笑　自己満足以外なにもないでしょうねえ。というわけで自己満足のために、今後もヒマができれば、ちょっとづつ書き進めてみようかなあ。</p>
 </section>
-
   </div>
 </article>
 

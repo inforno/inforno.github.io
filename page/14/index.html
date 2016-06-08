@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
@@ -61,66 +61,6 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2008/05/28/yahoo-jlp-api-wrapper-for-python-2" itemprop="url">Python版Yahooテキスト解析 APIライブラリをかな漢字変換に対応させました</a></h3>
-<div class="meta">
-<time datetime="2008-05-28T20:08:20&#43;09:00">May 28, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/api/" rel="tag" itemprop="keywords">api</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/text/" rel="tag" itemprop="keywords">text</a></span>
-  
-  <span class="tag"><a href="/articles/tag/yahoo/" rel="tag" itemprop="keywords">yahoo</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>まぁ需要はないと思うんですが一応。内部的には <code><span class="pre">WebService::Simple</span></code> みたいになってるんでサクッと対応できます。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/yahooapi_0_2.zip">yahooapi</a></p>
-</section>
-<section>
-<h2>使い方</h2>
-<pre class="prettyprint ">import yahooapi.jlp as jlp
-
-client = jlp.JIMServiceAPI("your_apikey")
-result = client.conversion(sentence=u"かなかんじへんかんたいしょうのてきすとです")
-for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
-  print i
-#=&gt;
-#かな
-#佳な
-#仮名
-#カナ
-#ｶﾅ
-#加奈
-#可奈
-#佳奈
-#香奈
-#香菜
-#華奈
-#花奈
-#哉
-#金</pre><p>うむ。</p>
-</section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
 <h3 itemprop="name"><a href="/articles/2007/09/12/machine-language" itemprop="url">マシン語とか</a></h3>
 <div class="meta">
 <time datetime="2007-09-12T19:17:38&#43;09:00">Sep 12, 2007</time>
@@ -156,7 +96,6 @@ for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
 <p>実装言語はなんでもいいんじゃないかなあ。手前味噌だけど、 <a class="reference external" href="/articles/2007/03/02/nes-emulator-development-with-python-5">Pythonでもエミュレータを書こうと思えばかける</a> わけで、PerlでもRubyでもJavascriptでもいいと思う。動作速度よりも理解する過程が楽しいかと。ちなみに自分の書いたPythonでのNESエミュレータだとCPU（6502)とメモリ関連で、簡易逆アセンブラ込みで1000行ほど。速度を犠牲にすればもっと短くかける。</p>
 <p>あと、これも書かれてるけどむしろネットワークとか、DBとかのほうがよっぽど低レイヤの知識が必要だよなあ。10BASE-Tと100BASE-Tでなんでつなげるリピータハブの数が違うのかとか、これならどれだけスループットが確保できるか、それをわかるためにもCSMA/CDはなんたるかとか、実際どうやってケーブル上で衝突を検出してんのかとか色々わかってないと困るしねえ。他のネットワーク技術でも一緒。生のパケット(orフレーム）を見なけりゃいけないことも多々あるし。ソフト使ってちゃんと設定がかけます、だけだと意味ない。OSIの層を上から下までカバーしないと。そういった意味でもネットワークっておもろい。</p>
 </section>
-
   </div>
 </article>
 
@@ -223,7 +162,44 @@ if(parseResult.success()) {
   }
 }</pre><p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり
 、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
+  </div>
+</article>
 
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2007/06/24/creating-what-im-interested-in-anyway-or-else-about-that-a-jack-of-all-trades-is-master-of-none" itemprop="url">とにかく好きなものを作るということ、あるいは器用貧乏について</a></h3>
+<div class="meta">
+<time datetime="2007-06-24T00:36:19&#43;09:00">Jun 24, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>via  <a class="reference external" href="http://la.ma.la/blog/diary_200706231433.ht">つまらなくて役に立つ物を作るということ</a></p>
+<p>実は俺のプログラミングというかクリエイティブなことについての考えはシンプルで、「とにかく作りたいものを作る」それだけだったりする。まぁ結局その作りたいものがゲームだったり、XMLをパースしたりすることだったりするわけなんだろうけど。</p>
+<hr class="docutils" />
+<p>もっと突っ込んで言うと、作りたいものを作る、それだけなので別に何も残せなくても俺はぜんぜん気にしない。死ぬまでのなかで、あの人は○○を作った人だ、とかそんな人になりたいとは思わない。</p>
+<p>事実、俺が個人で作っているものは好き勝手だ。</p>
+<p>このブログに出してる成果物で言えば、あるときはRailsを触っていろいろやっていたり（まぁこれは仕事もあったが）、Javascriptをいじってテンプレートエンジンつくったりいろいろしたり、PythonでNESエミュレータを書いたり。</p>
+<p>ma.laさんとは違ってゲームも作る。SDLを使って2Dのも作るし(Ruby/SDLやpygameではない。CあるいはC++、昔だとDXLibかなあ)、最近はIrrlichtも勉強していて3Dゲームも作りたい。</p>
+<p>言語とかその他の面でも手を出しまくりだ。普段からC,C++,Java,Ruby,Python,Javascript,Schemeなどを書くし（作りたいものに一番便利な言語を使うだけ）、単に勉強として変な言語にも手を出す。</p>
+<p>他にはReasonやハード音源を使って自作の曲をだしてたりもした（別名義）。一応小さいころから音楽はやっていて、しかもきちんと音楽理論も教えてくれるとこだったので、そこそこのクオリティだと思う。DTM特有の技術も、一通りの生楽器の奏法の再現法を勉強したり、エフェクトをいじり倒したりした。</p>
+<p>画像もやる。そこまで絵心があるわけじゃないけど、いろいろなソフトを経てGimpに落ち着き、ある程度の画像処理ならできるし、ゲームのマップ作成とか位なら普通にやる(A5のインテュオスほしいなあ・・・)。前にも書いたけど、3Dにも手を出している。</p>
+<hr class="docutils" />
+<p>んで、そんなに手を出しまくってお前は何を残せたんだ、と言われたら「何も残してないよ」だ。何も誇れるものなんてない。結局どれも中途半端で役立たずだ。だから、俺はWEBプログラマでもなければ、ゲームプログラマでもなく、プログラマですらなく、ミュージシャンでもなく、絵描きでもない。</p>
+<p>実はこれは結構悩んだ。というか悩んでる人は結構いるんじゃないかと思っている。世の中、スペシャリストスペシャリストで、仕事をしようにも俺みたいな器用貧乏タイプの人は困る。だから、無理に自分がほんとに好きなものはどれなんだ、とか何か残せているのか、とか自問したりする。</p>
+<p>それに対しての俺の結論は、「器用貧乏で何が悪い」だ。楽しければそれでいいのだ。俺は作ることすべてが好きなんだ。たとえ何の才能もなくて何も残せなくても作る過程が大好きなんだよ。少なくとも、世の中がスペシャリスト優遇だからといって自分を抑えて、スペシャリストになって生きるよりは、不器用に器用貧乏で生きるほうが絶対楽しい。めざせ最強の器用貧乏。なにかひとつ、スペシャリストになるほど好きなものが持てる人は運が良かっただけなのだ。</p>
+<hr class="docutils" />
+<p>ただ、器用貧乏じゃないとできないこともあるんだぜ、とは常々思っている。器用貧乏タイプの人はどうか、負けないでほしい。</p>
   </div>
 </article>
 

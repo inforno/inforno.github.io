@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
@@ -119,7 +119,6 @@ class byte_ref(object):
 <p>ここをctypesでポインタを使えば考えなくてもよかったんですが、あえてPythonなんだ、ということで（笑</p>
 <p>近況はこんな感じです。</p>
 <p>ついに就職が近づいてきました。仕事はプログラマではないので、プログラムを書く時間はあんまり取れないかもしれません。でもまぁ、日曜プログラマとして細々やっていけたらなあ、と思っています。</p>
-
   </div>
 </article>
 
@@ -186,7 +185,6 @@ nmap ,c :call SyncClipboard()&lt;CR&gt;</pre><p>こんな感じなのを.vimrc�
 <p>というわけでこのツールは使われないまま終わる（笑
 coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
 </section>
-
   </div>
 </article>
 
@@ -340,7 +338,6 @@ exec("self.__%s = None" % (attr_name)) -->
 <p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code><span class="pre">self.__dict__[&quot;_classname__x&quot;]</span> = &quot;hoge&quot;</code> に変換される。</p>
 <p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
 <p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
-
   </div>
 </article>
 

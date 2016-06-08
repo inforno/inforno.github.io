@@ -8,7 +8,7 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
     <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
@@ -61,33 +61,6 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2008/02/04/the-scala-most-instructive-language" itemprop="url">最もタメになる「初心者用言語」はScala!</a></h3>
-<div class="meta">
-<time datetime="2008-02-04T20:13:59&#43;09:00">Feb  4, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/scrap/" rel="tag" itemprop="keywords">scrap</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>コレだけはガチ。続きは書くかもしれないけど、たぶん書かない。</p>
-<hr class="docutils" />
-<p>P.S</p>
-<p>Schemeが好きです。Gaucheが好きです。でもういんどうずだとGaucheさんはちょっとアレなので、社内ソフトがWindowsしか対応してないとか、データ保護ソフトがWindowsしか対応してないとか、社内システムがIE限定だとか、ういんどうずを使わざるを得ない人には使えません。Pythonサイコー</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
 <h3 itemprop="name"><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell" itemprop="url">Scalaで無限リスト：Haskellライクに</a></h3>
 <div class="meta">
 <time datetime="2008-02-09T23:52:10&#43;09:00">Feb  9, 2008</time>
@@ -115,7 +88,6 @@ iterate((x:int)=&gt;x+1, 0) take 10 print
 
 replicate(3, 1) take 10 print
 // =&gt; 1, 1, 1, Stream.empty</pre><p>うんうん。</p>
-
   </div>
 </article>
 
@@ -272,7 +244,166 @@ create /tmp/change.txt</pre><p>ちゃんとオプションが渡されていま�
 <p>せっかくCodereposに突っ込んだのでバグなんかが見つかったらガンガン直しちゃってください。</p>
 </section>
 </section>
+  </div>
+</article>
 
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2008/02/21/dsl-in-python-and-ruby" itemprop="url">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></h3>
+<div class="meta">
+<time datetime="2008-02-21T18:42:22&#43;09:00">Feb 21, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
+  
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://d.hatena.ne.jp/kwatch/20080220/1203520081">Python で Rake を真似るとしたら</a> という反応を頂いたので、それにまつわるお話を。</p>
+<p>まず、CodeReposにコミットしてあるtasktoolsは__distutils及びsetuptoolsを拡張する__ということを念頭に置いています。ですのである程度distutils.core.Commandの思想というか、インターフェイスを残しています。</p>
+<ul class="simple">
+<li>タスクをクラスで定義すること</li>
+<li>オプションの定義方法</li>
+<li><code>sub_commands</code> や <code>finalize_options</code> といったメソッド</li>
+</ul>
+<p>などなどは元のまんまです。</p>
+<hr class="docutils" />
+<p>じゃあ、 <code>distutils</code> や <code>setuptools</code> を抜いて好きにRakeをPythonで真似るとしたら、というのが今回メインのお話。最初にこんな感じでコマンドを定義しますよ、というのを出してしまいます。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+from 今回作成したモジュール import *
+from subprocess import call
+
+# ここからタスク定義
+
+with namespace("test"):
+
+  @task
+  def build(t, depends = ["test:make"]):
+    """builds this modules. """
+    call(["ls"])
+    print t.name, ": build done"
+
+  @task
+  def make(t):
+    print "make"
+
+# 実行
+run()</pre><p>Rakeだとこうなる。</p>
+<pre class="prettyprint ">namespace "test" do
+
+  desc "builds this modules"
+  task "build" =&gt; "make" do |t|
+    sh("ls")
+    puts "#{t.name} done."
+  end
+
+  task "make" do |t|
+    puts "make"
+  end
+
+end</pre><p>Python版もなかなかシンプルで見やすいと思うんですがどうでしょう。あとちょっとtips。さっきの記事だと <code>os.system</code> を使ってますが、 <code>subprocess</code> モジュールの <code>call</code> や <code>check_call</code> のほうが便利じゃないかな、と思います。</p>
+<p>タスクのメタ情報は引数のデフォルト値を使います。ここで <code>&#64;task(depends = <span class="pre">[&quot;test:make&quot;])</span></code> ってしたほうがいいんじゃないの？と思う人もいるかもしれません。真っ当な意見だと思いますし、それがPythonicなやり方と思います。しかしそうするとこうなります。</p>
+<pre class="prettyprint ">with namespace("test"):
+
+  @task(depends = ["test:make"])
+  def build(t):
+    """builds this modules.  """
+    call(["ls"])
+    print t.name, ": build done"
+
+  @task() #&lt;= ここがキモくないですか？
+  def make(t):
+    print "make"</pre><p>Pythonではproperty以外では <code>()</code> をつけないとメソッドが呼び出せません。だから引数が何もない場合は空のカッコがつくわけです(まぁDescriptorでhogehogeすればできるんですがね)。これ、イケてないですよね。というわけで引数のデフォルト値を使います。</p>
+<p>ではこのタスク定義でタスクを実行するためのコードです。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+import inspect,new,sys
+from contextlib import contextmanager
+from optparse import OptionParser
+from itertools import *
+
+class _Tasks(dict):
+  def __getitem__(self,key):
+    if key in self: return dict.__getitem__(self, key)
+    _abort("Error: Unknown task: %s"%key)
+
+class Task(object):
+  def __init__(self, run, name, description,
+               depends = None, options = None):
+    self._run = new.instancemethod(run, self, self.__class__)
+    self.name = _get_current_ns()+name
+    self.description = description
+    self.depends = depends or []
+    self.options = options or []
+    tasks[self.name] = self
+
+  def run(self):
+    for depend in self.depends:
+      if tasks[depend].run() is False:
+        _abort("Error: faild %s"%depend)
+    return self._run()
+
+_namespace = []
+tasks = _Tasks()
+
+@contextmanager
+def namespace(name):
+  _namespace.append(name)
+  yield
+  _namespace.pop()
+
+def task(f):
+  names, _, _, values = inspect.getargspec(f)
+  Task(f, f.__name__, f.__doc__ or "no description", **dict(izip(names[1:], values or [])))
+
+def print_tasks():
+  maxlength = max(imap(len, tasks.iterkeys()))
+  for name in sorted(tasks.iterkeys()):
+    print name.ljust(maxlength), "#", tasks[name].description.strip()
+
+def run():
+  usage = "usage :%prog [options] targets"
+  parser = OptionParser(usage)
+  parser.add_option("-T", "--tasks", action="store_true",
+                    dest="print_tasks",
+    help="Display the tasks (matching optional PATTERN) with descriptions, then exit.")
+  (options, args) = parser.parse_args()
+  if options.print_tasks: _abort(print_tasks())
+  if not args:            _abort(parser.get_usage())
+
+  map(lambda t:t.run(), imap(tasks.__getitem__, args))
+
+def _abort(msg):
+  if msg : print msg
+  sys.exit(1)
+
+def _get_current_ns(): return _namespace and ":".join(_namespace)+":" or ""</pre><p>結構短いかな？。一応ちゃんと動きます。</p>
+<p><code>tasks.py <span class="pre">-T</span></code></p>
+<pre class="prettyprint ">test:build # builds this modules.
+test:make  # no description</pre><p><code>tasks.py test:build</code></p>
+<pre class="prettyprint ">make
+tasks.py
+test:build : build done</pre><p>うむ。</p>
+<hr class="docutils" />
+<p>結局、Rubyの言語内DSL構築能力は</p>
+<ul class="simple">
+<li><code>()</code> が省略できる</li>
+<li>ブロック(pythonではデコレータとwith_statementがありますが)</li>
+</ul>
+<p>によるものが多いと思っています。ことPythonとの対比では。「シンプルさ」「書きやすさ」なんかは好みかな、と(Rakeの例だとdocstringを持っている分Pythonの方がいい感じさえしてきます)。例えば <code>end</code> ってなんだよ、って言う人にはPythonのほうがウケがいいかもしれませんしそうじゃないかもしれません。</p>
+<p>そんなこんなで試しに書いてみたらいい感じだったんで、ちゃんと本格的にPython版Rakeとして開発を続けてみようかなあ。</p>
+<hr class="docutils" />
+<p>ところで言語内DSLといえばScalaでしょう。Rubyなんてちょろいもんですよ。なんてったってScalaは(ry</p>
   </div>
 </article>
 
