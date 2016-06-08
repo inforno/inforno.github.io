@@ -61,6 +61,44 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2014/10/20/iceberg-0-9-6-released" itemprop="url">iceberg v0.9.6リリースしました</a></h3>
+<div class="meta">
+<time datetime="2014-10-20T20:15:03&#43;09:00">Oct 20, 2014</time>
+
+  
+  <span class="tag"><a href="/articles/tag/iceberg/" rel="tag" itemprop="keywords">iceberg</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>コマンドラインランチャー <a class="reference external" href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.6 をリリースしました。 GitHubの <a class="reference external" href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
+<p>v0.9.5からのバージョンアップ方法は同梱ドキュメントの更新履歴を参照してください。</p>
+<p>更新点は以下です。</p>
+<ul class="simple">
+<li><strong>FIXED</strong> : 一部のパスでアイコンが正しく読み込まれない問題を修正</li>
+<li><strong>FIXED</strong> : 一部のパスを読み込んだ際にクラッシュする問題を修正</li>
+<li><strong>CHANGED</strong> : 使用するコンパイラをMinGW-W64 4.9.1にアップグレード</li>
+<li><strong>IMPROVED</strong> : 単一キーをホットキーに割り当てられるようになった</li>
+<li><strong>NEW</strong> : パス補完とオプション補完でオートコンプリートを有効にする path_autocomplete と option_autocomplete を追加</li>
+</ul>
+<p>ようやく重い腰をあげてgccのバージョンアップをしました…。icebergは今までmingw gcc4.5系を使っていて、これWindowsのくせにLP64なんですね。まぁそのおかげで＊nix生まれのライブラリでも割と普通に使えていました。</p>
+<p>で4.9にあげたのでWindowsらしくLLP64になったわけで、fltkなんかは平気で <code>long</code> を <code>void*</code> にキャストしてるのでワーニング出まくりでした…。そんなクリティカルな場所はなかったので簡単なパッチ当てて終了。</p>
+<p>鬼車も今まで使ってたバージョンは <code>long</code> のポインタキャストがあって落ちるので最新に。</p>
+<p>なんやかんやあったけど今のところきちんと動いている気がします。なにか問題ありましたらGithubの <a class="reference external" href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
+<p>あと、どうやらicebergはWindows8で動かないっぽいです(Windows7互換モードにすると動く)。 8の環境持ってないのでなんで動かないのかわかりません。コンパイラ変えただけで動くようになってたり…しないかなあ。というわけでWindows8使ってる方、もし互換モードなしで動いたらコメントください。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2014/10/06/cidre-my-new-webframework-in-golang" itemprop="url">cidre: 軽量Go言語用WEBフレームワーク</a></h3>
 <div class="meta">
 <time datetime="2014-10-06T20:52:33&#43;09:00">Oct  6, 2014</time>
@@ -194,6 +232,7 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
 <h2>今後について</h2>
 <p>今後も細々メンテしていくつもりですし、ミドルウェアなんかも追加していきたいなあと思っています。やっぱGo言語はさらっと書けるそれなりに速いし、いいっす。</p>
 </section>
+
   </div>
 </article>
 
@@ -240,153 +279,7 @@ config.Timeout = 0</pre><p>あと利便性のためこういう書き方もで�
 <img alt="http://inforno.net/statics/files/iceberg-weather.gif" src="http://inforno.net/statics/files/iceberg-weather.gif" />
 <p>Windows7以降はOS自体にWin+Rより高度なコマンドラインランチャー的な機能が内蔵されたこともあって、こういうのがあるとコマンドラインランチャを使う意義みたいなのも高まるかな、と。</p>
 </section>
-  </div>
-</article>
 
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2013/10/15/ansible-tips" itemprop="url">Ansibleのツボ</a></h3>
-<div class="meta">
-<time datetime="2013-10-15T02:37:20&#43;09:00">Oct 15, 2013</time>
-
-  
-  <span class="tag"><a href="/articles/tag/ansible/" rel="tag" itemprop="keywords">ansible</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>ようやく自宅サーバや開発環境仮想マシンの構築手順を <a class="reference external" href="http://www.ansibleworks.com/">Ansible</a> 化した。</p>
-<p>この手のツールはハマりポイント＋よく使うイディオムを抑えるのが大事。Pythonプロダクトらしく非常にドキュメントが充実しているのだけど、充実しすぎているのでポイントを自分のためにもまとめておくことにする。</p>
-<p>例はおもに <a class="reference external" href="http://www.ansibleworks.com/">Ansible</a> のドキュメントから引用させていただきました。</p>
-<section>
-<h2>設定ファイルを書きかえる（一行)</h2>
-<p><code>lineinfile</code> モジュールを使う。使い方は以下のような形になる。</p>
-<pre class="prettyprint lang-yaml"> name: enalbe sudo without password if user belongs to the wheel group
- lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"</pre><p><code>state</code> を <code>absent</code> にすれば削除することができる。動きとしては <code>regexp</code> にマッチする行をみつけたら <code>line</code> に書きかえる、という動作になる。またデフォルトでは <code>regexp</code> にマッチする行がない場合最終行に追加される。</p>
-<p>上記のほかにも <code>regexp</code> にマッチする業の前後に追記するなど柔軟な動作が可能。</p>
-</section>
-<section>
-<h2>ファイルコピーを行う（再帰的)</h2>
-<p><code>copy</code> モジュールを使えばファイルコピーできるのは当たり前なのだが、じゃあディレクトリの場合どうするかというとてっとりばやくは以下のようにするとよい。</p>
-<pre class="prettyprint lang-yaml"> shell: rsync -a /path_to/source/  /path_to/dest/ creates=/path_to/dest/hoge</pre><p>このとおり、 <code>rsync</code> してしまうのがよい。上記はターゲットマシン上どうしでの <code>rsync</code> で、playbookを実行しているホスト→ターゲットマシンで実行する場合は以下。</p>
-<pre class="prettyprint lang-yaml"> local_action: command rsync -a /path_to/source/ {{ inventory_hostname }}:/path_to/dest/</pre><p><code>local_action</code> を使うとターゲット上でなくplaybookを実行しているホスト上でコマンドを実行できる。</p>
-</section>
-<section>
-<h2>make installする</h2>
-<p><code>make install</code> するソフトウェアをどうするか。一つ目のパターンはよく見る形で以下のように1個ずつタスクにする。</p>
-<pre class="prettyprint lang-yaml"> - name: "wget hoge src"
-   command: wget -O http://example.com/hoge.tar.gz  creates=hoge.tar.gz
-
- - name: "expand src"
-   command: tar xvfz hoge.tar.gz creates=hoge
-
- # 続く…</pre><p>私の場合こっちというのは以下のような形で1個にまとめてしまう。たかが <code>make install</code> に上記のようにつらつらタスクを書きまくるのはしんどいので。</p>
-<pre class="prettyprint lang-yaml"> name: install python3.3
- shell: &gt;-
-   wget http://www.python.org/ftp/python/3.3.2/Python-3.3.2.tgz &amp;&amp;
-   tar zxvf Python-3.3.2.tgz &amp;&amp;
-   rm -f Python-3.3.2.tgz &amp;&amp;
-   cd Python-3.3.2 &amp;&amp;
-   ./configure --prefix=/usr/local/python3.3.2 --enable-shared &amp;&amp;
-   make &amp;&amp;
-   paco -D make install
-   chdir=/usr/local/src creates=/usr/local/python3.3.2/bin/python3.3</pre><p>もちろん、途中でこけると中途半端なことになるのだがそうそうコケないのでこれでよいと思っている。</p>
-</section>
-<section>
-<h2>変数を使いこなす</h2>
-<p>ターゲット固有の情報はデフォルトで収集される。内容を見たければ <code>ansible hostname <span class="pre">-m</span> setup</code> と実行すればよい。</p>
-<p>他のホストの情報は以下のようにすればアクセスできる。</p>
-<pre class="prettyprint lang-yaml"> {{ hostvars['test.example.com']['ansible_distribution'] }}</pre><p>変数は実行時にコマンドラインオプションで上書きできる。</p>
-<pre class="prettyprint lang-yaml"> ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"</pre></section>
-<section>
-<h2>ループを使いこなす</h2>
-<p>Ansibleは結構複雑なループが使える。ただ実用的な範囲で言うと以下ぐらいを抑えておくとよいのでは。</p>
-<p><code>with_items</code> による単純ループ</p>
-<pre class="prettyprint lang-yaml"> name: add several users
- user: name={{ item }} state=present groups=wheel
- with_items:
-    - testuser1
-    - testuser2</pre><p><code>with_items</code> + 辞書によるループ</p>
-<pre class="prettyprint lang-yaml"> name: add several users
- user: name={{ item.name }} state=present groups={{ item.groups }}
- with_items:
-   - { name: 'testuser1', groups: 'wheel' }
-   - { name: 'testuser2', groups: 'root' }</pre><p>コマンド実行結果を <code>with_items</code> で回す</p>
-<pre class="prettyprint lang-yaml"> - name: retrieve the list of home directories
-   command: ls /home
-   register: home_dirs
-
- - name: add home dirs to the backup spooler
-   file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
-   with_items: home_dirs.stdout_lines
-   # same as with_items: home_dirs.stdout.split()</pre><p><code>with_sequence</code> による整数範囲ループ(Pythonの <code>range</code> のようなもの)</p>
-<pre class="prettyprint lang-yaml"> file: dest=/var/stuff/{{ item }} state=directory
- with_sequence: start=4 end=16 stride=2</pre><p>do-until(+sleep)ループ</p>
-<pre class="prettyprint lang-yaml"> action: shell /usr/bin/foo
- register: result
- until: result.stdout.find("all systems go") != -1
- retries: 5
- delay: 10</pre><p>ファイルglobでループ</p>
-<pre class="prettyprint lang-yaml"> copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
- with_fileglob:
-   - /playbooks/files/fooapp/*</pre></section>
-<section>
-<h2>条件分岐を使いこなす</h2>
-<p>これまた条件分岐もいろいろできることはあるのだが、以下のパターンを抑えておくとよいと思う。</p>
-<p>単純な変数による分岐</p>
-<pre class="prettyprint lang-yaml"> - name: "shutdown Debian flavored systems"
-   command: /sbin/shutdown -t now
-   when: ansible_os_family == "Debian"</pre><p>コマンド実行結果による分岐</p>
-<pre class="prettyprint lang-yaml"> tasks:
-   # まずはコマンドを実行してresultに格納
-   - shell: /usr/bin/foo
-     register: result
-     ignore_errors: True
-
-   # タスクが失敗した場合
-   - debug: msg="it failed"
-     when: result|failed
-
-   # タスクにより更新された場合
-   - debug: msg="it changed"
-     when: result|changed
-
-   # タスクが成功した場合
-   - debug: msg="it succeeded"
-     when: result|success
-
-   # タスクがskipされた場合
-   - debug: msg="it was skipped"
-     when: result|skipped
-
-   # タスクの標準出力によって分岐
-   - shell: echo "hi does not found"
-     when: result.stdout.find('hi') != -1</pre></section>
-<section>
-<h2>複数ターゲットが関連するタスクを実行する</h2>
-<p>ローリングアップデートのように複数ターゲットが連動して動くタスクがある。その場合、playbookを実行するマシンを核としてタスクを作ればよい。</p>
-<pre class="prettyprint lang-yaml"> - hosts: webservers
-   serial: 5
-
-   tasks:
-     - name: take out of load balancer pool
-       local_action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
-
-     - name: actual steps would go here
-       yum: name=acme-web-stack state=latest
-
-     - name: add back to load balancer pool
-       local_action: command: /usr/bin/add_back_to_pool {{ inventory_hostname }}</pre><p><code>local_action</code> モジュールはplaybookを実行しているホストで実行するコマンドを定義する。上記の例だとWEBサーバを5並列でLB切り離し→更新→LB組み込みを実行する。</p>
-<hr class="docutils" />
-<p>この程度を理解していればだいたいやりたいことはできるはず。あとはモジュール一覧を頭にいれるだけですね。ついつい <code>shell</code> でゴリ押ししそうになるのでぐっとそこをこらえて…</p>
-</section>
   </div>
 </article>
 

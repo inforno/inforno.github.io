@@ -61,130 +61,100 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/01/01/happy-late-new-year-and-how-i-am-doing" itemprop="url">謹賀新年＆近況</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers" itemprop="url">キーボード派のWindows開発環境</a></h3>
 <div class="meta">
-<time datetime="2007-01-01T23:39:16&#43;09:00">Jan  1, 2007</time>
+<time datetime="2007-01-17T01:50:22&#43;09:00">Jan 17, 2007</time>
 
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/life/" rel="tag" itemprop="keywords">life</a></span>
-  
-  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>2007年になりましたね。月に1回更新するか怪しいこのブログを購読してくださってる方々、ありがとうございます（笑</p>
-<p>無事卒論も提出し、気楽な学生気分を満喫しています。ちなみに、卒論は完璧にコンピュータは関係ないもので、まぁラットと戯れていました。生物、こと脳にかかわる話も面白いですよ。まったくもって大した研究ではないのですが、教授が今年ヨーロッパの学会で発表してくださるらしいです。とりあえず書けて何より。</p>
-<p>さて、プログラミング関連ですが、卒論もようやく終わり4月までは暇な学生生活、まとまった時間がとれるようになったので、ちょろちょろ書き始めています。</p>
-<p>書いているのは・・・なんと今更NESエミュレータ。</p>
-<p>一から自分で解析してエミュレータを書くのは達人ワザですが、十分なハードウェアの情報がある場合、実はそんなに難しくなかったりします。</p>
-<p>というわけで書いているんですが、ここで普通にC言語やアセンブラで書こうというような楽？はしてません！NESエミュレータをPythonで書いてみる、これがチャレンジング。ぶっちゃけPythonで速度がシビアに求められるものを書いたことがないので、チャレンジです。</p>
-<p>書く上で、とりあえず</p>
-<ul class="simple">
-<li>ctypesは使わない（Cの流儀をそのままもっていってもおもしろくない)</li>
-<li>当然Cで拡張モジュールは書かない</li>
-</ul>
-<p>というポリシーで書き進めています。</p>
-<p>しかしやっぱりキツイ。絶対Cの方が楽な気がするのは気のせいだろうか・・・。現在はだいたいCPU（6502）のコアが書き終わったので、メモリ周りを書き進めてます。とりあえず.NESファイルから読み込んでメモリに読み込み、PCをセットするあたりまで書きました。</p>
-<p>まず、NESのヘッダ読み込むのもめんどくさい。Cならfreadで構造体にマップしておわり、なのにPythonだとそうは行かない。そしてなんといってもポインタがない。これ。メモリのミラーリングとかめんどくさいだろうな・・・（笑</p>
-<p>そうこう書いてるうちに、Pythonでのバイナリの扱いが上手くなってきました（きたような気がします）。</p>
-<p>今のところ以下のような関数が活躍しています。エディアンは今のところ決めうちです。</p>
-<pre class="prettyprint ">from struct import *
-from array import array
-
-def unpack_byte(b):
-  return unpack("&lt;B", b)[0]
-
-def zero_filled(n):
-  n /= 2
-  return pack('h'*n, *([0]*n))
-
-def byte_array(v):
-  return array('c', v)
-
-class byte_ref(object):
-  def __init__(self, p):
-    self._value = p
-  def get_value(self):
-    return self._value
-  def set_value(self, v):
-    self.value[0:] = byte_array(v)
-  value = property(get_value, set_value)</pre><p>まず、PythonでRAMをエミュレートしようと思うと、可変なunsigned charな配列が当然必要です。</p>
-<p>Pythonで <code>data = <span class="pre">open(&quot;name&quot;,</span> <span class="pre">&quot;rb&quot;).read()</span></code> とした場合、きちんとバイナリデータがdataに入って、 <code>unpack_byte(data[0:1])</code> などとするとちゃんとデータを取り出せます。</p>
-<p>しかし、この場合、Pythonの内部では*不変な型である*文字列型として扱われているので <code>data[w_addr &amp; 0x7ff] = 0x12</code> みたいなことは出来ません。つまりROMにはなりますが、RAMになれません。じゃあどうやってunsigned charの配列を表現するか、ということで <code>array</code> モジュールの登場なわけです。 <code>data = <span class="pre">byte_array(open(&quot;name&quot;,</span> <span class="pre">&quot;rb&quot;).read())</span></code> という感じで使っています。生成方法がことなるだけで <code>data[0]</code> みたいなインデックスによるアクセスも出来るし、部分書き換えも可能です。</p>
-<p>byte_refは・・・別になくてもいいかもしれませんが、byte配列に対する参照を表現するオブジェクトです。といっても注意して使わないと意味がないクラスで気持ちの問題かもしれません。</p>
-<p>ここをctypesでポインタを使えば考えなくてもよかったんですが、あえてPythonなんだ、ということで（笑</p>
-<p>近況はこんな感じです。</p>
-<p>ついに就職が近づいてきました。仕事はプログラマではないので、プログラムを書く時間はあんまり取れないかもしれません。でもまぁ、日曜プログラマとして細々やっていけたらなあ、と思っています。</p>
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware" itemprop="url">vimでvmwareとWindowsのクリップボードを同期する</a></h3>
-<div class="meta">
-<time datetime="2006-11-28T00:19:12&#43;09:00">Nov 28, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/linux/" rel="tag" itemprop="keywords">linux</a></span>
-  
-  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
   
   <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
   
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/craftlaunch/" rel="tag" itemprop="keywords">craftlaunch</a></span>
+  
+  <span class="tag"><a href="/articles/tag/cltc/" rel="tag" itemprop="keywords">cltc</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a>  とか  <a class="reference external" href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a>
-から。</p>
-<p>上記のサイトのをもってきて.vimrcをちょろっと書けばいいんだけど、テキストを受信するサーバーは常時立ち上げていそうで、スクリプトだとなんとなくアレなので、exeがいいなあ。簡単にできそうなので、とりあえず探すよりは作ってみるメソッド。</p>
+    <p>そういえば、こういうサイトに定番っぽい開発環境を書いたのがないので、自己紹介？も兼ねて晒してみます。</p>
+<p>開発はだいたいWindows上のvmware(Debian)でやってます。ただし、そこは定番どころばっかりなのでパス。まぁvim+screen+zshです。puttyでつないでますよ。sambaでマウントしてますよ。ええ。それぞれ結構設定しまくっていて、グローバルなSVNサーバーにおいてあります。</p>
 <section>
-<h2>ファイル一式</h2>
-<p><a class="reference external" href="/statics/files/clsync.zip">clsync.zip</a></p>
-<p>内容は</p>
+<h2>Windowsでの開発環境</h2>
+<p>あんまりWindowsは好きではないけど、Macよりは好きだったりする。というわけでWindows。普段使いのOSでもあるので、主に自分用の小物を書くことが多いです。怠け者なので、自動化できるものはすぐプログラムに置き換えちゃいます。でも言語は結構様々。もとから言語にこだわらず、一番適しているものを使う主義なので小物が多いにもかかわらず、言語は結構多いのかも。</p>
+<p>今のところ、だいたい</p>
 <ul class="simple">
-<li>clipboard_server.exe：Windows側で実行するサーバー</li>
-<li>clipboard_server.ini：サーバーのポートの設定</li>
-<li>clsync.py：vmware側におくクライアントスクリプト</li>
+<li>それなりのGUIが必要なアプリ:Delphi6</li>
+<li>一枚ウインドウがあるくらいのGUIアプリ:Python(wxWidgets)</li>
+<li>GUIがなく、立ち上がりの速さや軽さが欲しいもの：C(MinGW)</li>
+<li>それ以外の小物:Python</li>
 </ul>
+<p>という感じで適材適所。</p>
+<p>Linuxではまったく定番な感じ（定番が自分にしっくりきた）だったけど、Windowsにはキーボード派の定番ってのは少ない気がするので、結構独特なのかも。方針は</p>
+<ul class="simple">
+<li>キーボードで操作しやすいように。</li>
+<li>なるべくlinuxと同じような感覚（←これ重要)で。</li>
+</ul>
+<p>感覚なので一緒じゃなくてもいいのです。</p>
+<section>
+<h3>gvim</h3>
+<p>開発はほとんどこいつです。Delphi以外は。Linuxのvimと同じ設定ファイルを共有してます。俺はvimがなくちゃ生きていけない人間なので、USBメモリにいれてもち運べるようにしてあります。</p>
 </section>
 <section>
-<h2>使い方など</h2>
-<p>Windows側ではclipboard_server.iniで適当にポートを設定して（当然外部から見えないやつを）、clipboard_server.exeを起動しておいてください。タスクトレイにアイコンが表示されてますので、そこから終了できます。</p>
-<p>vmware上のLinuxですが、まずnkfがインストールされている必要があります。すみません、クライアント側手抜きするために使っています。そしてclsync.pyをパスの通ったところにおきます。clsync.pyにはホストのWindows側で動いてるサーバーのポートとIPを設定する箇所があるので、適宜書き換えます。またポートとIPはオプションでも渡せます（詳しくはclsync.py -hで）。</p>
-<p>あとは</p>
-<pre class="prettyprint ">function! SyncClipboard()
-  let cliptext = substitute(getreg(), "'", "'\"'\"'", 'g')
-  let cmd = "echo '" . cliptext . "' | clsync.py"
-  call system(cmd)
-endfunction
-nmap ,c :call SyncClipboard()&lt;CR&gt;</pre><p>こんな感じなのを.vimrcに追加すればOK。最後にyankしたものが,cでホストのWindowsのクリップボードに送られます。</p>
-<p>追記：
-っとよく考えたらvmw copyとまったく一緒。.vimrcのclsync.pyの部分をvmw copyに置き換えれば同じように動作する。ただ、vmwの説明には</p>
-<blockquote>
-コピーするテキストに改行コード以外の非 ASCII 文字を含めることはできません。
-ゲストおよびホスト OS によっては、キャリッジリターンの付与・除去が行われ
-ます。
-コピー可能なテキストの最大長は約 65,000 バイトです。</blockquote>
-<p>ってある。
-今回作ったモノの場合はnkfをかませているのでもちろんいつでも日本語オーケー。
-それ以上は深くみてないけど、UTF-8だと日本語でもvmw copyしても問題なさそうだ。EUC-JPの「ほげほげ」とかいう内容のtest.txtをvmw copy test.txtとかするとダメだった。</p>
-<p>ま、というわけで、 cat test.txt | nkf -w | vmw copyで万事解決なんだけど。</p>
-<p>というわけでこのツールは使われないまま終わる（笑
-coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
+<h3>Firefox</h3>
+<p>ブラウザはこいつ。ただし <a class="reference external" href="http://portablefirefox.mozdev.org/">PortableFirefox</a> です。これもUSBメモリにいれて持ち運べるように。学校にいってもUSBメモリをさすだけで普段の環境。拡張も結構つっこんでます。</p>
 </section>
+<section>
+<h3><a class="reference external" href="http://d.hatena.ne.jp/cogma">cltc</a></h3>
+<p>タスク切り替えが便利になるソフト。こんな感じで表示されます。インクリメンタル検索での選択や、カーソルキーでの選択ができます。</p>
+<a class="reference external image-reference" href="http://inforno.net/statics/files/cltc.jpg"><img alt="http://inforno.net/statics/files/cltc.thumbnail.jpg" src="http://inforno.net/statics/files/cltc.thumbnail.jpg" /></a>
+<p>windowsでタスク切り替えというと`Alt+TAB`ですが、これ非常に使いづらい。そこでこのソフト。ここでキモになるのがキー設定で</p>
+<ul class="simple">
+<li><code>Ctrl+Shift+z</code> で起動</li>
+<li><code>Ctrl+j</code> と <code>Ctrl+k</code> でタスクを選択</li>
+</ul>
+<p>という風に設定しています。俺と同じLinux開発環境の人は分かるでしょう（笑</p>
+<p><code>Ctrl+z` がscreenのエスケープで ``jk</code> はvim。これだけでかなりLinuxと同じ感覚でタスクが選べるようになります。</p>
+</section>
+<section>
+<h3>MigemizeExplorer</h3>
+<p>こりゃ定番。説明不要ですよねえ。超便利。</p>
+</section>
+<section>
+<h3><a class="reference external" href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h3>
+<p>これがないと始まらない。コマンド型ランチャー。craftlanuchラブ。こいつはデスクトップ用と持ち運び用（USBメモリに入れる用）の2個も用意してます。起動用ホットキーはeclipseなんてもんは使ってないので <code>Ctrl+Space</code> です。</p>
+<p>俺の場合はほぼ全ての作業の起点がこのソフト。ランチャーとしてのソフト起動から簡易シェルとしてまで大活躍。中でもオススメなのはexplorer.exe(windows標準のシェル)+craftlaunchの連携。</p>
+<p>craftlaunchというと「 <a class="reference external" href="http://www.h5.dion.ne.jp/~akt/">あふ</a> 」との連携が有名ですが、俺はあえてexplorer.exeと連携してます。というのも、なにぶん普段使いのOSですから、マルチメディアのファイルなんかも多いわけです。重くてもプレビューが見れたりするのは便利なもんです。日本語のファイル名だし、ファイラーつかってもファイル選択するのがめんどくさいもんです。</p>
+<p>どうやって連携してるかというと、基本的に小物アプリ＋ショートカットキー。この使い方をはじめるきっかけになったのは「せっかくcraftlaunchからキーボードだけでフォルダ開けるんだから、ホームポジションで楽にキーボードだけで閉じたいなあ」という思い。</p>
+<p><code>ctrl+space</code>, <code>ctrl+[</code></p>
+<p>の2ステップでウインドウが閉じられます。ctrlは押しっぱなしでいいので非常に軽快に閉じられます。鉄の小指を持つemacs使いの人ならなおのことでしょう（笑</p>
+</section>
+</section>
+<section>
+<h2>その他の連携</h2>
+<p><strong>フォルダの新規作成</strong></p>
+<p>windowのexplorerの不満はフォルダを作るのがめんどくさいことですよね。キーボードなら <code>Alt+F W F</code> でしょうか。というわけでfiniのような自作コマンドで対応してます。超テキトーなのですが、あげておきます。</p>
+<p><a class="reference external" href="/statics/files/amkdir.zi">amkdir.zip</a></p>
+<p>こいつを <code>ctrl+n</code> にショートカットとして割り当ててあります。すると・・・</p>
+<p>craftlaunchでフォルダを開く→MigemizeExplorerで快適にフォルダをたどる→「フォルダつくりてえ」→ <code>ctrl+space</code> フォルダ名入力 <code>ctrl+n</code></p>
+<p>という感じになるわけで、結構ハッピーです。</p>
+<p><strong>コンソール</strong></p>
+<p>おなじような感じで、表示されているフォルダをカレントディレクトリとしてcmd.exeを起動するものもつくってあります。ほとんどつかわないけど。</p>
+<p>以上のような、変なWindowsで日々暮らしています。cltcでブラウザやvim、コンソールを行き来しながらIDEはあんまり使わないでガリガリ書いています。</p>
+<p>まぁ、だいたいvmware上のLinuxにいるんですけど（笑</p>
+<p>まとめると</p>
+<ul class="simple">
+<li>cltcで <code>ctrl+z</code> に <code>ctrl+j,k</code> 。快適ですよ。</li>
+<li>MigemizeExplorerはWindows標準装備になればいいのに。</li>
+<li>craftlaunchはあふと連携してもいいけど、explorerと連携してもハッピーですよ。</li>
+</ul>
+<p>という感じです。</p>
+<p>エミュレーターのほうはあのあとCPUを若干チューニングして、1フレーム0.1はキリました。今はPPUを書いてるんですが、そろそろ就職に備えて家を探さないといけません。京都と関東を行き来するのはいろいろこたえます。移動中はシグマリオンのPocketSchemeでSchemeでも書いて暇つぶしです。</p>
+</section>
+
   </div>
 </article>
 
@@ -338,6 +308,76 @@ exec("self.__%s = None" % (attr_name)) -->
 <p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code><span class="pre">self.__dict__[&quot;_classname__x&quot;]</span> = &quot;hoge&quot;</code> に変換される。</p>
 <p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
 <p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2006/10/05/hide-the-console-window-with-python" itemprop="url">Python:バイナリでコンソールを表示しないようにするには？</a></h3>
+<div class="meta">
+<time datetime="2006-10-05T14:59:11&#43;09:00">Oct  5, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/gui/" rel="tag" itemprop="keywords">gui</a></span>
+  
+  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>Pythonのコードをwindows用exeにするには当然、 <a class="reference external" href="http://www.py2exe.org/">py2exe</a> を使います。</p>
+<p>で、そのとき、</p>
+<pre class="prettyprint ">python setup.py py2exe --windows</pre><p>とすれば、コンソールを表示しないようにできます。</p>
+<div class="note">
+<p class="first">Note</p>
+<p class="last">これはもう古いやり方で、現在のバージョンのpy2exeでは動きません・・・。現在はターゲットファイルの拡張子を.pywにする、もしくは <code>windows = <span class="pre">[{'script'</span> : 'script.py', &quot;icon_resources&quot;: <span class="pre">[(1,&quot;script.ico&quot;)]}]</span></code> というオプションをsetupに渡す、という方法になっています。</p>
+</div>
+<p>今日、昔py2exeで作ったファイルが出てきたんですが、困ったことにpythonのソースファイルはない。いや、別に改良とかもうしないしいいんだけど。
+ふと起動してみるとGUI with console。かっちょわりい。</p>
+<p>コンソールが表示される、というのは単純にPEファイルのオプションなわけで。</p>
+<img alt="/statics/files/pe.jpg" src="/statics/files/pe.jpg" />
+<p>この部分を変更してやればとりあえずは直る。ちなみに、</p>
+<ul class="simple">
+<li>00 00:未知のサブシステム</li>
+<li>01 00:デバイス ライバおよびWindowsNTネイティブプロセス用</li>
+<li>02 00:GUIで実行されるファイル</li>
+<li>03 00:コンソールで実行されるファイル</li>
+<li>07 00:Posixコンソールで実行されるファイル</li>
+<li>09 00:WindowsCEで実行されるファイル</li>
+</ul>
+<p>なので02h 00hにしてやればオッケー。</p>
+<p>Pythonでバイナリファイルの読み書きとかしたことないので練習もかねて。</p>
+<pre class="prettyprint "># vim: fileencoding=utf-8
+import sys
+from struct import *
+target_file = len(sys.argv) &gt; 1 and sys.argv[1] or sys.exit("Target file is not specified.")
+target_file = unicode(target_file, "mbcs")
+out_file    = open(target_file + "_gui", "wb")
+
+io = open(target_file, "rb")
+while 1 :
+  if io.read(1) == "P" and io.read(1) == "E" : break
+subsystem_pos = io.tell() +90
+io.seek(0)
+out_file.write(io.read(subsystem_pos))
+io.seek(4, 1)
+out_file.write(pack('hh', 2, 0))
+out_file.write(io.read())
+
+io.close()
+out_file.close()</pre><p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ
+pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
+
   </div>
 </article>
 

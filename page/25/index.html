@@ -61,73 +61,174 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/02/15/the-embed-javascript-implementation" itemprop="url">埋め込みjavascriptを実装してみました。</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/01/24/inheritance-in-prototype-with-ease" itemprop="url">prototype.jsでの継承を楽にする</a></h3>
 <div class="meta">
-<time datetime="2006-02-15T01:09:43&#43;09:00">Feb 15, 2006</time>
+<time datetime="2006-01-24T00:19:36&#43;09:00">Jan 24, 2006</time>
 
   
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
   <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
-<p>同様の実装として <a class="reference external" href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
-<p><a class="reference external" href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
-<p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。
-実際の動作はサンプルファイルを見ていただくとして</p>
-<p>lyase_view.jsの説明どおり</p>
-<pre class="prettyprint ">/*
- *   using innerHTML
- *   -------------
- *   //in HTML
- *   &lt;textarea id="template" style="display:none"&gt;
- *     The value of x is:&lt; %= context.x%&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:"template"}, {x : 10}));
- *
- *   using a template file
- *   -------------
- *   //in /template.jhtml
- *   The value of x is:&lt; %= context.x%&gt;
- *   //code
- *   document.write(Lyase.View.render({file:"/template.jhtml"}, {x : 10}));
- *
- *   Of course, you can embed more complex codes.
- *   //in HTML, with prototype.js
- *   &lt;textarea id="template" style="display:none"&gt;
- *     &lt; % context.list.each(function(pair){%&gt;
- *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
- *     &lt; % }) %&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:"template"},
- *     {list :[{name : "x", value : 10}, {name : "y", value : 20}]}));
- */</pre><p>こんな感じでjavascriptのコードが読み込めます。</p>
-<p>また</p>
-<pre class="prettyprint ">&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
- この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
+    <p>Mochikitも好きですが、普段はRails使いということもあってprototype.jsを使っています。</p>
+<p>そういえばjavascriptのライブラリでOOなもの、ということで初めて出会ったのは <a class="reference external" href="http://jsolait.net">jsolait</a> でした。
+当時の印象としては「んー確かにがんばってるんだけど・・・ちょっと大げさっていうか・・・」って感じでした。</p>
+<p>そして去年、prototype.jsに出会うわけですが「class-style OO」とうたっている部分がかなりシンプル（すぎ）で衝撃でした。</p>
+<p>ただ、やっぱりjavascriptにおいて「継承」というのはやっかいな問題です。
+というわけで誰か作ってると思うんですが、より簡単に継承できるライブラリを作ってみました。</p>
+<pre class="prettyprint ">Class.def = function(definition) {
+  var klass = Class.create();
+  if(definition.__extend__)
+    Class.inherit(klass, definition.__extend__);
+  if(definition.__static__)
+    Object.extend(klass, definition.__static__);
+  if(definition.__include__) {
+    if(definition.__include__.constructor != Array)
+      definition.__include__ = [definition.__include__];
+    definition.__include__.each(function(include){
+      Object.extend(klass.prototype, include);
+    });
+  }
+  ["__static__","__extend__","__include__"].each(function(n){delete definition[n];}
+  Object.extend(klass.prototype, definition);
+  return klass;
+}
+
+Class.inherit = function(child, parent) {
+  Object.extend(child, parent);
+  child.__super__ = parent.prototype;
+  var dummy = function(){};
+  dummy.prototype = parent.prototype;
+  child.prototype = new dummy();
+  child.prototype.constructor = child;
+  return child;
+}</pre><p>こんだけです。
+使い方はサンプルをみるほうがわかりやすいと思うので、サンプルをどーぞ。</p>
+<pre class="prettyprint ">var IncludedClass = Class.def({
+  __static__ : {
+    includedMethod : function() {
+      return "includedMethod:"+this.value;
+    }
+  }
+});
+
+var AClass = Class.def({__include__ : IncludedClass,
+  __static__ : {
+    A : "A static"
+  },
+
+  initialize : function(val) {
+    if(!val) throw "error";
+    this.val = val;
+    this.klass = "AClass";
+  },
+
+  inspect : function() {
+    return "&lt; "+this.klass+" : "+this.val+"&gt;";
+  }
+});
+
+var BClass = Class.def({ __extend__ : AClass,
+  __static__ : {
+    B : "B static"
+  },
+
+  initialize : function(val) {
+    BClass.__super__.initialize.call(this, val);
+    this.klass = "BClass";
+  }
+});
+
+var CClass = Class.def({ __extend__ : BClass,
+  __static__ : {
+    C : "C static"
+  },
+
+    initialize : function(val) {
+      CClass.__super__.initialize.call(this, val);
+      this.klass = "CClass";
+    }
+});
+
+var a = new AClass("aaaaaaa");
+var b = new BClass("bbbbbbb");
+var c = new CClass("ccccccc");
+alert("a inspect:"+a.inspect()); //=&gt; a inspect:
+alert("b inspect:"+b.inspect()); //=&gt; b inspect:
+alert("c inspect:"+c.inspect()); //=&gt; c inspect:
+alert("includedMethod:"+a.includedMethod()); //=&gt; includedMethod:included aaaaaa
+alert("CClass.A:"+CClass.A); //=&gt; CClass.A:A static
+alert("CClass.B:"+CClass.B); //=&gt; CClass.B:B static
+alert("CClass.C:"+CClass.C); //=&gt; CClass.C:C static
+alert("b.constructor = a.constructor:"+(b.constructor == a.constructor).toString()); //=&gt;b.constructor = a.constructor:false
+alert("b instanceof BClass:"+(b instanceof BClass).toString()); //=&gt;b instanceof BClass:true
+alert("b instanceof AClass:"+(b instanceof AClass).toString()); //=&gt;b instanceof AClass:true
+alert("c instanceof BClass:"+(c instanceof BClass).toString()); //=&gt;c instanceof BClass:true
+alert("c instanceof AClass:"+(c instanceof AClass).toString()); //=&gt;c instanceof AClass:true&lt;/div&gt;</pre><p>継承の処理がかなり楽になっていると思います。
+テキトーに場当たりで単純にnewを使って継承していたりすると</p>
+<p>「親クラスのコンストラクタに必須な引数があって、それがないとエラーでるから継承できねーよ、しゃーない適当に引数付けとくか」</p>
+<p>ということになったりするもんですが（俺はよくなってますｗ）このライブラリを使えば大丈夫。
+また、こんな変な書き方イヤだよ！！って方でも継承の部分はClass.inheritに独立させてあるのでそこだけつかえばオッケーです。</p>
+<p>一応動作は確認していますがおかしいところあったら報告していただけるとありがたいです。</p>
+
+  </div>
+</article>
 
 
-以下のようにクロージャも問題なく使用できます。
+  <hr class="list1sep" />
 
-&lt; % var c = "," %&gt;
-&lt; % context.list.each(function(num){ %&gt;
-  &lt; %= num+c %&gt;
 
-&lt; % })%&gt;
 
-&lt; %= render({file :"./sample2.jhtml"}, context)%&gt; &lt;!--ココに注目--!&gt;</pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
-<p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。
-prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2006/01/22/fckeditor" itemprop="url">FCKEditor</a></h3>
+<div class="meta">
+<time datetime="2006-01-22T00:05:29&#43;09:00">Jan 22, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/fckeditor/" rel="tag" itemprop="keywords">fckeditor</a></span>
+  
+  <span class="tag"><a href="/articles/tag/typo/" rel="tag" itemprop="keywords">typo</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a class="reference external" href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。
+WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
+<p>こちらもTinyMCEと同じく</p>
+<ul class="simple">
+<li>JavaScript で記述された</li>
+<li>LGPL でオープンソースな</li>
+<li>クロスプラットフォームの</li>
+<li>多言語対応もしてて</li>
+<li>簡単に使える</li>
+</ul>
+<p>ライブラリなんです。かなり使いやすいですよ。</p>
+<p>導入も簡単です。typoの場合、</p>
+<pre class="prettyprint ">&lt;script src="http://inforno.net/FCKeditor_install_path/fckeditor.js" type="text/javascript"&gt;&lt;/script&gt;
+&lt;script language="javascript"&gt;
+Event.observe(window, "load", function(){
+  var list = ["article_extended", "article_body"];
+  for(var i=0,l=list.length; i &lt; l; i++) {
+    var fck = new FCKeditor(list[i]);
+    fck.BasePath = "FCKeditor_install_path";
+    fck.Config["CustomConfigurationsPath"] = fck.BasePath + "myconfig.js";
+    fck.Height = 400;
+    fck.ReplaceTextarea();
+  }
+});
+&lt;/script&gt;[/js]</pre><p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
+<a class="reference external image-reference" href="/statics/files/fck.jpg"><img alt="/statics/files/fck.thumbnail.jpg" src="/statics/files/fck.thumbnail.jpg" /></a>
+<p>海外ではAPIを使ったデスクトップクライアントが結構人気みたいですけど、日本じゃあんまり使ってる人聞かない・・・Typoもデフォルトはデスクトップクライアント使え！みたいな感じなんですけどFCKeditorで一件落着。便利便利。</p>
+
   </div>
 </article>
 
