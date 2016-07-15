@@ -61,6 +61,78 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2006/03/12/element-methods-in-prototype" itemprop="url">prototype.js 1.5のElement.Methods</a></h3>
+<div class="meta">
+<time datetime="2006-03-12T01:24:30&#43;09:00">Mar 12, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>prototype.js1.5ではみんながこうしたいなーと思っていた機能が実装されました。(via <a class="reference external" href="http://encytemedia.com/blog/articles/2006/03/07/prototype-gets-some-serious-syntactic-sugar">Encytemedia</a> )
+（SVN co <a class="reference external" href="http://dev.rubyonrails.org/svn/rails/spinoffs/prototype">http://dev.rubyonrails.org/svn/rails/spinoffs/prototype</a> して rake distしたもの ）</p>
+<p>■Element.Methods</p>
+<p>1.4まではelementに対する操作は</p>
+<pre class="prettyprint ">Element.show($("test"));
+Element.update($("test"), "hoge");</pre><p>のように書く必要がありました。</p>
+<p>これが</p>
+<pre class="prettyprint ">$("test").show();
+$("test").update("hoge");</pre><p>と書けるようになりました。</p>
+<p>これはprototype.jsで最も偉大な$メソッドの変更によるモノです。</p>
+<pre class="prettyprint ">function $() {
+  var results = [], element;
+  for (var i = 0; i &lt; arguments.length; i++) {
+    element = arguments[i];
+    if (typeof element == 'string')
+      element = document.getElementById(element);
+    results.push(Element.extend(element)); //&lt;= ココ！
+  }
+  return results.length &lt; 2 ? results[0] : results;
+}</pre><p>つまり取得したelementに対してElement.extendが適応されるようになった、と。
+んでそのElement.extendは</p>
+<pre class="prettyprint ">Element.extend = function(element) {
+  if (!element) return;
+
+  if (!element._extended &amp;&amp; element.tagName &amp;&amp; element != window) {
+    var methods = Element.Methods;
+    for (property in methods) {
+      var value = methods[property];
+      if (typeof value == 'function')
+        element[property] = value.bind(null, element);
+    }
+  }
+  element._extended = true;
+  return element;
+}</pre><p>Element.Methodsのメソッドがelementに対して第1引数をそのelementに束縛した状態でセットされます。
+つまりElement.Methodsにメソッドを追加すれば自動的に$で取得したelementに対してそのメソッドが追加されます。</p>
+<p>ちなみにscriptaculousでも</p>
+<pre class="prettyprint ">if(Element.Methods) {
+  Element.Methods.visualEffect = function(element, effect, options) {
+    s = effect.gsub(/_/, '-').camelize();
+    effect_class = s.charAt(0).toUpperCase() + s.substring(1);
+    new Effect[effect_class](element, options);
+    return $(element);
+  }
+}</pre><p>というコードが追加されています。
+クラス名変換のオーバーヘッドはあるものの、$(&quot;test&quot;).visualEffect('scale')と書けるようになりました。</p>
+<p>IEで$$が動くようになっていたりと1.5のリリースが待ち遠しいですね。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2006/02/20/xml2json-with-the-javascript-template-engine" itemprop="url">XML2JSON&#43;javascriptテンプレートエンジンでRSS表示</a></h3>
 <div class="meta">
 <time datetime="2006-02-20T01:18:51&#43;09:00">Feb 20, 2006</time>
@@ -184,53 +256,6 @@ templateは <a class="reference external" href="/articles/2006/02/15/the-embed-j
 &lt; %= render({file :"./sample2.jhtml"}, context)%&gt; &lt;!--ココに注目--!&gt;</pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
 <p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。
 prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/02/06/garbled-multibyte-character-problem-in-live-search-on-typo" itemprop="url">Typoでlive search文字化け</a></h3>
-<div class="meta">
-<time datetime="2006-02-06T01:12:28&#43;09:00">Feb  6, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
-  
-  <span class="tag"><a href="/articles/tag/typo/" rel="tag" itemprop="keywords">typo</a></span>
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Typoでのlive search文字化けについては多くのブログで解決策が示されています。</p>
-<ul class="simple">
-<li><a class="reference external" href="http://www.flatz.jp/articles/2005/12/14/live-search%E3%82%92%E7%9B%B4%E3%81%97%E3%81%9F%E3%82%88%E3%80%82">live searchの文字化けを修正</a></li>
-<li><a class="reference external" href="http://typo.ctrl.jp/articles/2005/11/14/typo2.6.0-release-to-live-search-no-nihongo-bug">Typo2.6.0リリースとLive Searhの日本語バグ</a></li>
-</ul>
-<p>最新でもやっぱり文字化けしているわけで。
-僕も直してみました。</p>
-<pre class="prettyprint ">Index: app/views/shared/_search.rhtml
-===================================================================
---- app/views/shared/_search.rhtml      (revision 850)
-+++ app/views/shared/_search.rhtml      (working copy)
-@@ -7,4 +7,4 @@
-     :loading =&gt; "Element.show('search_spinner')",
-     :complete =&gt; "Element.hide('search_spinner')",
-     :update =&gt; "search-results",
--    :with =&gt; "'q=' + escape($F('q'))" -%&gt;
-+    :with =&gt; "'q=' + encodeURIComponent($F('q'))" -%&gt;</pre><p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・）
-あ、このファイルはテーマにも含まれてますので注意です。
-てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・
-ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
 
   </div>
 </article>

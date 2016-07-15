@@ -61,6 +61,53 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2006/02/06/garbled-multibyte-character-problem-in-live-search-on-typo" itemprop="url">Typoでlive search文字化け</a></h3>
+<div class="meta">
+<time datetime="2006-02-06T01:12:28&#43;09:00">Feb  6, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
+  
+  <span class="tag"><a href="/articles/tag/typo/" rel="tag" itemprop="keywords">typo</a></span>
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>Typoでのlive search文字化けについては多くのブログで解決策が示されています。</p>
+<ul class="simple">
+<li><a class="reference external" href="http://www.flatz.jp/articles/2005/12/14/live-search%E3%82%92%E7%9B%B4%E3%81%97%E3%81%9F%E3%82%88%E3%80%82">live searchの文字化けを修正</a></li>
+<li><a class="reference external" href="http://typo.ctrl.jp/articles/2005/11/14/typo2.6.0-release-to-live-search-no-nihongo-bug">Typo2.6.0リリースとLive Searhの日本語バグ</a></li>
+</ul>
+<p>最新でもやっぱり文字化けしているわけで。
+僕も直してみました。</p>
+<pre class="prettyprint ">Index: app/views/shared/_search.rhtml
+===================================================================
+--- app/views/shared/_search.rhtml      (revision 850)
++++ app/views/shared/_search.rhtml      (working copy)
+@@ -7,4 +7,4 @@
+     :loading =&gt; "Element.show('search_spinner')",
+     :complete =&gt; "Element.hide('search_spinner')",
+     :update =&gt; "search-results",
+-    :with =&gt; "'q=' + escape($F('q'))" -%&gt;
++    :with =&gt; "'q=' + encodeURIComponent($F('q'))" -%&gt;</pre><p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・）
+あ、このファイルはテーマにも含まれてますので注意です。
+てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・
+ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2006/01/24/inheritance-in-prototype-with-ease" itemprop="url">prototype.jsでの継承を楽にする</a></h3>
 <div class="meta">
 <time datetime="2006-01-24T00:19:36&#43;09:00">Jan 24, 2006</time>

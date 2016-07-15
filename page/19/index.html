@@ -61,6 +61,73 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware" itemprop="url">vimでvmwareとWindowsのクリップボードを同期する</a></h3>
+<div class="meta">
+<time datetime="2006-11-28T00:19:12&#43;09:00">Nov 28, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/linux/" rel="tag" itemprop="keywords">linux</a></span>
+  
+  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
+  
+  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a>  とか  <a class="reference external" href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a>
+から。</p>
+<p>上記のサイトのをもってきて.vimrcをちょろっと書けばいいんだけど、テキストを受信するサーバーは常時立ち上げていそうで、スクリプトだとなんとなくアレなので、exeがいいなあ。簡単にできそうなので、とりあえず探すよりは作ってみるメソッド。</p>
+<section>
+<h2>ファイル一式</h2>
+<p><a class="reference external" href="/statics/files/clsync.zip">clsync.zip</a></p>
+<p>内容は</p>
+<ul class="simple">
+<li>clipboard_server.exe：Windows側で実行するサーバー</li>
+<li>clipboard_server.ini：サーバーのポートの設定</li>
+<li>clsync.py：vmware側におくクライアントスクリプト</li>
+</ul>
+</section>
+<section>
+<h2>使い方など</h2>
+<p>Windows側ではclipboard_server.iniで適当にポートを設定して（当然外部から見えないやつを）、clipboard_server.exeを起動しておいてください。タスクトレイにアイコンが表示されてますので、そこから終了できます。</p>
+<p>vmware上のLinuxですが、まずnkfがインストールされている必要があります。すみません、クライアント側手抜きするために使っています。そしてclsync.pyをパスの通ったところにおきます。clsync.pyにはホストのWindows側で動いてるサーバーのポートとIPを設定する箇所があるので、適宜書き換えます。またポートとIPはオプションでも渡せます（詳しくはclsync.py -hで）。</p>
+<p>あとは</p>
+<pre class="prettyprint ">function! SyncClipboard()
+  let cliptext = substitute(getreg(), "'", "'\"'\"'", 'g')
+  let cmd = "echo '" . cliptext . "' | clsync.py"
+  call system(cmd)
+endfunction
+nmap ,c :call SyncClipboard()&lt;CR&gt;</pre><p>こんな感じなのを.vimrcに追加すればOK。最後にyankしたものが,cでホストのWindowsのクリップボードに送られます。</p>
+<p>追記：
+っとよく考えたらvmw copyとまったく一緒。.vimrcのclsync.pyの部分をvmw copyに置き換えれば同じように動作する。ただ、vmwの説明には</p>
+<blockquote>
+コピーするテキストに改行コード以外の非 ASCII 文字を含めることはできません。
+ゲストおよびホスト OS によっては、キャリッジリターンの付与・除去が行われ
+ます。
+コピー可能なテキストの最大長は約 65,000 バイトです。</blockquote>
+<p>ってある。
+今回作ったモノの場合はnkfをかませているのでもちろんいつでも日本語オーケー。
+それ以上は深くみてないけど、UTF-8だと日本語でもvmw copyしても問題なさそうだ。EUC-JPの「ほげほげ」とかいう内容のtest.txtをvmw copy test.txtとかするとダメだった。</p>
+<p>ま、というわけで、 cat test.txt | nkf -w | vmw copyで万事解決なんだけど。</p>
+<p>というわけでこのツールは使われないまま終わる（笑
+coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/01/12/nes-emulator-development-with-python-2" itemprop="url">PythonによるNESエミュレータ開発2</a></h3>
 <div class="meta">
 <time datetime="2007-01-12T02:50:02&#43;09:00">Jan 12, 2007</time>
@@ -303,76 +370,6 @@ if(window.HTMLElement) {
 
 })();</pre><p>赤色で示した部分が追加部分です。これでIEでもdocument.createElementした後に直接Element.Methodsのメソッドが実行できます。何度も言いますがパフォーマンス低下がいやな人はこの追加部分を省いてください。</p>
 <p>というわけで今回はElement.Methodsの問題への対応策を示してみました。要はIEがelementがプロトタイプチェーンを持つようにしてくれれば万事解決なわけなんですよね。でも結局IE7でも実装されていないようで、なかなか・・・</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/01/01/happy-late-new-year-and-how-i-am-doing" itemprop="url">謹賀新年＆近況</a></h3>
-<div class="meta">
-<time datetime="2007-01-01T23:39:16&#43;09:00">Jan  1, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/life/" rel="tag" itemprop="keywords">life</a></span>
-  
-  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>2007年になりましたね。月に1回更新するか怪しいこのブログを購読してくださってる方々、ありがとうございます（笑</p>
-<p>無事卒論も提出し、気楽な学生気分を満喫しています。ちなみに、卒論は完璧にコンピュータは関係ないもので、まぁラットと戯れていました。生物、こと脳にかかわる話も面白いですよ。まったくもって大した研究ではないのですが、教授が今年ヨーロッパの学会で発表してくださるらしいです。とりあえず書けて何より。</p>
-<p>さて、プログラミング関連ですが、卒論もようやく終わり4月までは暇な学生生活、まとまった時間がとれるようになったので、ちょろちょろ書き始めています。</p>
-<p>書いているのは・・・なんと今更NESエミュレータ。</p>
-<p>一から自分で解析してエミュレータを書くのは達人ワザですが、十分なハードウェアの情報がある場合、実はそんなに難しくなかったりします。</p>
-<p>というわけで書いているんですが、ここで普通にC言語やアセンブラで書こうというような楽？はしてません！NESエミュレータをPythonで書いてみる、これがチャレンジング。ぶっちゃけPythonで速度がシビアに求められるものを書いたことがないので、チャレンジです。</p>
-<p>書く上で、とりあえず</p>
-<ul class="simple">
-<li>ctypesは使わない（Cの流儀をそのままもっていってもおもしろくない)</li>
-<li>当然Cで拡張モジュールは書かない</li>
-</ul>
-<p>というポリシーで書き進めています。</p>
-<p>しかしやっぱりキツイ。絶対Cの方が楽な気がするのは気のせいだろうか・・・。現在はだいたいCPU（6502）のコアが書き終わったので、メモリ周りを書き進めてます。とりあえず.NESファイルから読み込んでメモリに読み込み、PCをセットするあたりまで書きました。</p>
-<p>まず、NESのヘッダ読み込むのもめんどくさい。Cならfreadで構造体にマップしておわり、なのにPythonだとそうは行かない。そしてなんといってもポインタがない。これ。メモリのミラーリングとかめんどくさいだろうな・・・（笑</p>
-<p>そうこう書いてるうちに、Pythonでのバイナリの扱いが上手くなってきました（きたような気がします）。</p>
-<p>今のところ以下のような関数が活躍しています。エディアンは今のところ決めうちです。</p>
-<pre class="prettyprint ">from struct import *
-from array import array
-
-def unpack_byte(b):
-  return unpack("&lt;B", b)[0]
-
-def zero_filled(n):
-  n /= 2
-  return pack('h'*n, *([0]*n))
-
-def byte_array(v):
-  return array('c', v)
-
-class byte_ref(object):
-  def __init__(self, p):
-    self._value = p
-  def get_value(self):
-    return self._value
-  def set_value(self, v):
-    self.value[0:] = byte_array(v)
-  value = property(get_value, set_value)</pre><p>まず、PythonでRAMをエミュレートしようと思うと、可変なunsigned charな配列が当然必要です。</p>
-<p>Pythonで <code>data = <span class="pre">open(&quot;name&quot;,</span> <span class="pre">&quot;rb&quot;).read()</span></code> とした場合、きちんとバイナリデータがdataに入って、 <code>unpack_byte(data[0:1])</code> などとするとちゃんとデータを取り出せます。</p>
-<p>しかし、この場合、Pythonの内部では*不変な型である*文字列型として扱われているので <code>data[w_addr &amp; 0x7ff] = 0x12</code> みたいなことは出来ません。つまりROMにはなりますが、RAMになれません。じゃあどうやってunsigned charの配列を表現するか、ということで <code>array</code> モジュールの登場なわけです。 <code>data = <span class="pre">byte_array(open(&quot;name&quot;,</span> <span class="pre">&quot;rb&quot;).read())</span></code> という感じで使っています。生成方法がことなるだけで <code>data[0]</code> みたいなインデックスによるアクセスも出来るし、部分書き換えも可能です。</p>
-<p>byte_refは・・・別になくてもいいかもしれませんが、byte配列に対する参照を表現するオブジェクトです。といっても注意して使わないと意味がないクラスで気持ちの問題かもしれません。</p>
-<p>ここをctypesでポインタを使えば考えなくてもよかったんですが、あえてPythonなんだ、ということで（笑</p>
-<p>近況はこんな感じです。</p>
-<p>ついに就職が近づいてきました。仕事はプログラマではないので、プログラムを書く時間はあんまり取れないかもしれません。でもまぁ、日曜プログラマとして細々やっていけたらなあ、と思っています。</p>
 
   </div>
 </article>

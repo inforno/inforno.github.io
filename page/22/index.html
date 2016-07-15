@@ -61,6 +61,99 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields" itemprop="url">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></h3>
+<div class="meta">
+<time datetime="2006-09-23T22:41:49&#43;09:00">Sep 23, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/scriptaculous/" rel="tag" itemprop="keywords">scriptaculous</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/webpy/" rel="tag" itemprop="keywords">webpy</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>nil.to_sが&quot;nil&quot;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。
+Rubyより関数志向での開発がしやすくて楽しいですよねえ。</p>
+<p>リハビリを兼ねてweb.pyで個人的なツールを作ってます。web.pyはシンプルで軽いので、個人用途（非公開でツールとして使う）だったらレンタルサーバーでCGIとして動作させても問題なさそうです。(XREAでは簡単なものなら負荷率0ptでした。Railsとかならいれるだけでダメなんで、素晴らしい)</p>
+<p>そこで、scriptaculousのAjax.InPlaceEditorを使っているわけですが、困ったことがひとつ。InPlace___Editor___なわけで、値を当然入力します。でその値がサーバー側でバリデーションエラーな時どうしたもんかと。</p>
+<p>理想的な動作としては</p>
+<ul class="simple">
+<li>エラーをユーザーに通知する</li>
+<li>サブミットする前の値のままtextareaを表示しておく</li>
+</ul>
+<p>なんですが、コンストラクタの中のoptionsあたりをのぞいてもそれらしきオプションはなさげ。</p>
+<p>ということでとりあえず場当たり的に書いてみたものが以下。</p>
+<pre class="prettyprint ">(function(){
+Ajax.RollbackableInPlaceEditor = Class.create();
+var dummy = function(){};
+dummy.prototype = Ajax.InPlaceEditor.prototype;
+Ajax.RollbackableInPlaceEditor.prototype = new dummy;
+Ajax.RollbackableInPlaceEditor.prototype.constructor = Ajax.RollbackableInPlaceEditor;
+})();
+Object.extend(Ajax.RollbackableInPlaceEditor.prototype, {
+  initialize : function(element, url, options) {
+    var self = this;
+    options = Object.extend({
+      callback: function(form) {
+        self.oldValue = self.editField.value;
+        return Form.serialize(form);
+      },
+      onFailure : Prototype.emptyFunction
+    }, options || {});
+    Ajax.InPlaceEditor.prototype.initialize.apply(this, [element, url, options]);
+  },
+  onclickCancel: function() {
+    this.onComplete();
+    this.element.innerHTML = this._oldInnerHTML;
+    this.element.show();
+    return false;
+  },
+  onComplete: function(transport) {
+    this.leaveEditMode();
+    if(transport &amp;&amp; !Ajax.Base.prototype.responseIsSuccess.call({transport:transport})) {
+      this.options.onFailure.bind(this)(transport, this.element);
+      return this.enterEditMode();
+    }else {
+      this.oldValue = null;
+    }
+    this.options.onComplete.bind(this)(transport, this.element);
+  },
+  onFailure: function(transport) {
+    return false;
+  },
+  getText : function() {
+     if(this.oldValue != null &amp;&amp; this.oldValue != undefined){var v = this.oldValue; this.oldValue = null; return v;}
+    this._oldInnerHTML = this.element.innerHTML;
+    return this.element.innerHTML;
+  }
+});</pre><p>サーバー側でエラーがあったときは適当に500とか406とかでレスポンスを返せばオッケーです。</p>
+<p>なのでサーバー側ではたとえばweb.pyなら</p>
+<pre class="prettyprint "># errors = ['データが長すぎます。']　など
+if len(errors) != 0:
+  web.header("Content-Type", "text/javascript"),
+  web.ctx["status"] = "406 Not Acceptable"
+  print "".join(["alert('", "\n".join(errors), "');"])
+  return</pre><p>とすればエラーになって（エラーメッセージがアラートされる）、サブミットした内容のままで再度編集できます。</p>
+<p>豆知識ですが、以上のようにサーバー側でtext/javascriptでレスポンスを返すとprototype.jsでは自動的にjavascriptとして評価してくれます。</p>
+<p>うーむ、まさに場当たり的。いろいろまずそうだけど、まぁ動いてるっぽいし気にしないことにしとこう・・・・</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2006/09/13/getframe-function-in-python" itemprop="url">Pythonで関数呼び出しもとの情報を取得</a></h3>
 <div class="meta">
 <time datetime="2006-09-13T20:24:43&#43;09:00">Sep 13, 2006</time>
@@ -121,43 +214,6 @@ me.validates_confirmation_of :password #...
 me.validates_presence_of :password#...
 end</pre><p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
 <p>まぁ、やっぱり一番カッコいいのはto_procなんですけど。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/04/02/attribute-selectors-in-prototype" itemprop="url">$$で属性セレクタ</a></h3>
-<div class="meta">
-<time datetime="2006-04-02T01:37:07&#43;09:00">Apr  2, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>これはかなり嬉しい機能だなあ。
-最近Prototype.jsの$$で属性セレクタが使用できるようになりました。</p>
-<p>どんな風にかけるのか、コードをテストから引っ張ってきてみました。</p>
-<pre class="prettyprint ">$$('a[href="http://inforno.net/#"]')
-$$('a[class~=internal]')
-$$('*[xml:lang|="es"]')
-$$('*[xml:lang|="ES"]')
-$$('a[href!=#]')
-$$('div[style] p[id] strong')
-$$('a[class~=external][href="http://inforno.net/#"]')</pre><p>こんな感じです。
-値はクオートしてもしなくても大丈夫っぽいですね。</p>
-<p>すばらすい。inputに対する操作なんかで特に便利。今までちょっとボタン操作するためだけに、そのボタンにIDふったりクラスふったりしてたんですけど$$('#hoge input[type=submit]')でいけるんだなあ。そんなにパフォーマンスに気をつかわなくて良いページでは使ってみよう。</p>
 
   </div>
 </article>

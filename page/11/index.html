@@ -61,6 +61,65 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/03/04/japanese-language-programing-in-scala" itemprop="url">日本語プログラミング言語Scala</a></h3>
+<div class="meta">
+<time datetime="2008-03-04T19:33:44&#43;09:00">Mar  4, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>via</p>
+<ul class="simple">
+<li><a class="reference external" href="http://wiredvision.jp/blog/masui/200803/200803030100.htm">第20回 日本語でおk</a></li>
+<li><a class="reference external" href="http://d.hatena.ne.jp/sumim/20080303/p">Ruby もいいけど Smalltalk でも、おｋ。</a></li>
+</ul>
+<p>Scalaはメソッド名に日本語使えるよ。Scalaは日本語プログラミング言語だよ(言いすぎ)。</p>
+<pre class="prettyprint ">object JapaneseLanguage {
+  class Standard[A](self:A) {
+    def の[B](f:(A) =&gt; B) = f(self)
+    def を[B](f:(A) =&gt; B) = f(self)
+    def する() = ()
+  }
+
+  class PseudoKansai[A](self:A) {
+    def のな[B](f:(A) =&gt; B) = f(self)
+    def をな[B](f:(A) =&gt; B) = f(self)
+    def すんねん() = ()
+  }
+}
+
+
+def 平方根(v:int) = Math.sqrt(v.asInstanceOf[double])
+def 逆数(v:double) = 1/v
+def 表示(v:Any) = { println(v); v }</pre><p>とりあえず標準語とエセ関西弁を用意しておきました。</p>
+<p>標準語を使いたい方は</p>
+<pre class="prettyprint ">import JapaneseLanguage.{Standard =&gt; Japanese}
+implicit def any2japanese[A](v:A) = new Japanese(v)
+
+100 の 平方根 の 逆数 を 表示 する
+// =&gt; 0.1</pre><p>とでも、エセ関西弁が使いたい方は</p>
+<pre class="prettyprint ">import JapaneseLanguage.{PseudoKansai =&gt; Japanese}
+implicit def any2japanese[A](v:A) = new Japanese(v)
+
+100 のな 平方根 のな 逆数 をな 表示 すんねん
+// =&gt; 0.1</pre><p>とでもしてください。</p>
+<p>いやー日本人にやさしいプログラミング言語ですね、Scalaは！最近日本の人たちに注目されてきている理由もわかります！</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/02/21/dsl-in-python-and-ruby" itemprop="url">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></h3>
 <div class="meta">
 <time datetime="2008-02-21T18:42:22&#43;09:00">Feb 21, 2008</time>
@@ -367,45 +426,6 @@ create /tmp/change.txt</pre><p>ちゃんとオプションが渡されていま�
 <p>せっかくCodereposに突っ込んだのでバグなんかが見つかったらガンガン直しちゃってください。</p>
 </section>
 </section>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell" itemprop="url">Scalaで無限リスト：Haskellライクに</a></h3>
-<div class="meta">
-<time datetime="2008-02-09T23:52:10&#43;09:00">Feb  9, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>ScalaにはStreamという無限リストがあるんだけど、微妙に使いづらい、というか分かりづらい。Haskellでいうcycleはどうだ、とかよく忘れるのでメモ。</p>
-<pre class="prettyprint ">def repeat[T](a:T) = Stream.const(a)
-def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
-def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
-def replicate[T](n:int, elem:T) = Stream.make(n, elem)</pre><p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
-<pre class="prettyprint ">repeat(1) take 10 print
-// =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
-
-cycle(1 to 4) take 10 print
-// =&gt; 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, Stream.empty
-
-iterate((x:int)=&gt;x+1, 0) take 10 print
-// =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
-
-replicate(3, 1) take 10 print
-// =&gt; 1, 1, 1, Stream.empty</pre><p>うんうん。</p>
 
   </div>
 </article>

@@ -7,10 +7,41 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>30 Dec 15 08:44 UTC</lastBuildDate>
+    <lastBuildDate>13 Jul 16 15:23 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
+    
+    <item>
+      <title>Goで文字コードを手軽に変換するライブラリ作った </title>
+      <link>http://inforno.net/articles/2016/07/14/go-charsetutil</link>
+      <description>&lt;p&gt;日本人である以上、いくらUTF-8が主権を得てきたといっても文字コード変換というカルマからは逃れられません。Pure Goでの文字コード変換はLLに比べるといろいろめんどくさい。&lt;/p&gt;
+&lt;p&gt;それに、そのままだと任意の文字コードを指定させるのが難しい。特定の文字コード決め打ちならいいんですけど、全世界の利用者に向けて任意の文字コード設定できるようにする場合とかはさらにめんどくさいし、かといって &lt;code&gt;iconv&lt;/code&gt; に依存するのも嫌なのライブラリにしました。&lt;/p&gt;
+&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/charsetutil&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;p&gt;以下のような感じで簡単に文字コードを変換できます。Pythonと同じで &lt;code&gt;encode&lt;/code&gt; がUTF-8からUTF-8以外へ、 &lt;code&gt;decode&lt;/code&gt; がUTF-8以外からUTF-8へ、です。内部では &lt;code&gt;golang.org/x/net/html/charset&lt;/code&gt; を使っているので文字コードの指定もそれに習います。(WHATWGで定義されている名前になります) 。なので &lt;code&gt;cp932&lt;/code&gt; などではなく &lt;code&gt;&lt;span class=&#34;pre&#34;&gt;Windows-31J&lt;/span&gt;&lt;/code&gt; です。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; b, err = EncodeString(&#34;こんにちわ&#34;, &#34;Windows-31J&#34;)
+ b, err = Encode(&#34;こんにちわ&#34;, &#34;Windows-31J&#34;)
+ b, err = EncodeBytes([]byte(&#34;こんにちわ&#34;), &#34;Windows-31J&#34;)
+ b, err = EncodeReader(strings.NewReader(&#34;こんにちわ&#34;), &#34;Windows-31J&#34;)
+ b = MustEncodeString(&#34;こんにちわ&#34;, &#34;Windows-31J&#34;)
+ b = MustEncode(&#34;こんにちわ&#34;, &#34;Windows-31J&#34;)
+ b = MustEncodeBytes([]byte(&#34;こんにちわ&#34;), &#34;Windows-31J&#34;)
+ b = MustEncodeReader(strings.NewReader(&#34;こんにちわ&#34;), &#34;Windows-31J&#34;)
+
+ s, err = DecodeString(string(source), &#34;Windows-31J&#34;)
+ s, err = Decode(source, &#34;Windows-31J&#34;)
+ s, err = DecodeBytes(source, &#34;Windows-31J&#34;)
+ s, err = DecodeReader(bytes.NewReader(source), &#34;Windows-31J&#34;)
+ s = MustDecodeString(string(source), &#34;Windows-31J&#34;)
+ s = MustDecode(source, &#34;Windows-31J&#34;)
+ s = MustDecodeBytes(source, &#34;Windows-31J&#34;)
+ s = MustDecodeReader(bytes.NewReader(source), &#34;Windows-31J&#34;)&lt;/pre&gt;
+</description>
+      
+      <category>golang</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2016/07/14/go-charsetutil</guid>
+      <pubDate>13 Jul 16 15:23 UTC</pubDate>
+    </item>
     
     <item>
       <title>30歳の一年だった。今後について考える。 </title>
@@ -439,84 +470,6 @@ LLではそもそも全てがオブジェクトだったりで話題になりま
       
       <guid isPermaLink="true">http://inforno.net/articles/2015/03/23/gluamapper-released</guid>
       <pubDate>23 Mar 15 12:12 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>GopherLuaでchannelを扱えるようにした </title>
-      <link>http://inforno.net/articles/2015/02/24/channel-support-in-gopher-lua</link>
-      <description>&lt;p&gt;先日公開した &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; ですが。&lt;/p&gt;
-&lt;p&gt;GopherLuaはLuaなので、ホスト言語との親和性を重視しております。GolangなのにGoroutine関係のサポートがないとだめでしょ！ということで、とりあえずですが、channelを扱えるようにしました。&lt;/p&gt;
-&lt;p&gt;これもまたReadmeに書いてありますが、以下のように使います。
-selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ通信できます。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; func receiver(ch, quit chan lua.LValue) {
-     L := lua.NewState()
-     defer L.Close()
-     L.SetGlobal(&#34;ch&#34;, lua.LChannel(ch))
-     L.SetGlobal(&#34;quit&#34;, lua.LChannel(quit))
-     if err := L.DoString(`
-     local exit = false
-     while not exit do
-       channel.select(
-         {&#34;|&amp;lt;-&#34;, ch, function(ok, v)
-           if not ok then
-             print(&#34;channel closed&#34;)
-             exit = true
-           else
-             print(&#34;received:&#34;, v)
-           end
-         end},
-         {&#34;|&amp;lt;-&#34;, quit, function(ok, v)
-             print(&#34;quit&#34;)
-             exit = true
-         end}
-       )
-     end
-   `); err != nil {
-         panic(err)
-     }
- }
-
- func sender(ch, quit chan lua.LValue) {
-     L := lua.NewState()
-     defer L.Close()
-     L.SetGlobal(&#34;ch&#34;, lua.LChannel(ch))
-     L.SetGlobal(&#34;quit&#34;, lua.LChannel(quit))
-     if err := L.DoString(`
-     ch:send(&#34;1&#34;)
-     ch:send(&#34;2&#34;)
-   `); err != nil {
-         panic(err)
-     }
-     ch &amp;lt;- lua.LString(&#34;3&#34;)
-     quit &amp;lt;- lua.LTrue
- }
-
- func main() {
-     ch := make(chan lua.LValue)
-     quit := make(chan lua.LValue)
-     go receiver(ch, quit)
-     go sender(ch, quit)
-     time.Sleep(3 * time.Second)
- }&lt;/pre&gt;&lt;p&gt;こんな感じですね。Luaと同じくState自体はスレッドセーフではないので、goroutineごとにStateをもってChannelで通信します。&lt;/p&gt;
-&lt;section&gt;
-&lt;h2&gt;実装について&lt;/h2&gt;
-&lt;p&gt;迷ったんですが、channelは &lt;strong&gt;基本型&lt;/strong&gt; として実装しています。 ユーザーデータ型でもよかったんですが、channelはGolangの特徴の一つですし、基本型にしたほうが親和性がよいので。&lt;/p&gt;
-&lt;p&gt;あと、内部的にはリフレクションなのでそんなに性能はよくないかもしれません。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;よければ使ってみてください&lt;/h2&gt;
-&lt;p&gt;実装してみたものの、正直私は職業プログラマでなく趣味プログラマなのであんまり使うシーンがないです。なんかいい使いどころがあれば使ってみてください。&lt;/p&gt;
-&lt;/section&gt;
-</description>
-      
-      <category>golang</category>
-      
-      <category>gopherlua</category>
-      
-      <category>lua</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2015/02/24/channel-support-in-gopher-lua</guid>
-      <pubDate>24 Feb 15 11:00 UTC</pubDate>
     </item>
     
   </channel>
