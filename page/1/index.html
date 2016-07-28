@@ -61,6 +61,101 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2016/07/28/golbot" itemprop="url">Go&#43;Luaのチャットボットフレームワークを作った</a></h3>
+<div class="meta">
+<time datetime="2016-07-28T20:32:33&#43;09:00">Jul 28, 2016</time>
+
+  
+  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>たまには実用的なものをつくろうと思って、Go+Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。</p>
+<div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script><p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
+<p>特徴は以下です。</p>
+<ul class="simple">
+<li>Goなので置けば動く</li>
+<li>それでいてLuaでスクリプトを書ける</li>
+<li>最初からマルチスレッド(複数goroutine)を考慮している</li>
+<li>HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる</li>
+<li>定期ジョブも流せる</li>
+</ul>
+<pre class="prettyprint lang-lua">function main()
+  local bot = golbot.newbot("Slack", { token = "xxxxx" })
+
+  bot:respond([[\s*(\d+)\s*\+\s*(\d+)\s*]], function(m, e) -- 3
+    bot:say(e.target, tostring(tonumber(m[2]) + tonumber(m[3])))
+  end)
+
+  bot:serve(function(msg)
+    if msg.type == "say" then
+      bot:say(msg.channel, msg.message)
+      respond(msg, true)
+    end
+  end)
+end</pre><p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
+<pre class="prettyprint lang-lua">function main()
+  bot:respond([[deploy]], function(m, e)
+    bot:say(e.target, "accepted")
+    goworker({target=e.target, type="deploy"})
+  end)
+
+  bot:serve(function(msg)
+    if msg.type == "say" then
+      bot:say(msg.target, msg.message)
+    end
+  end)
+end
+
+function worker(msg)
+  if msg.type == "deploy" then
+    do_deploy()
+    notifymain({type="say", target=msg.target, message="your deployment has been completed"})
+  end
+end</pre><p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
+<p>HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。</p>
+<pre class="prettyprint lang-lua"> function http(r)
+   if r.method == "POST" and r.URL.path == "/webhook" then
+     local data = assert(json.decode(r:readbody()))
+     local message = data.item.message.message
+     local user = data.item.message.from.name
+     local room = data.item.room.name
+
+     local ret = {
+       message = "hello! from webhook",
+       message_format = "html"
+     }
+
+     return 200, headers, json.encode(ret)
+   end
+   return 400, headers, json.encode({result="not found"})
+ end</pre><p>定期ジョブは以下のような感じ。</p>
+<pre class="prettyprint lang-lua"> function main()
+   golbot.newbot("Null", {
+     http = "0.0.0.0:6669" ,
+     crons = {
+       { "0 * * * * * ", "job1"}
+     }
+   }):serve(function() end)
+ end
+
+ function job1()
+   print "hello!"
+ end</pre><p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2016/07/14/go-charsetutil" itemprop="url">Goで文字コードを手軽に変換するライブラリ作った</a></h3>
 <div class="meta">
 <time datetime="2016-07-14T00:23:19&#43;09:00">Jul 14, 2016</time>
@@ -152,338 +247,10 @@
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2015/12/11/go-interface-performance-penalty" itemprop="url">Goのインタフェースがパフォーマンスに及ぼす影響</a></h3>
-<div class="meta">
-<time datetime="2015-12-11T00:00:00&#43;09:00">Dec 11, 2015</time>
-
-  
-  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p><a class="reference external" href="http://qiita.com/advent-calendar/2015/go3">Go Advent Calendar 2015 その3</a> 11日目です。その3まであるなんてGo大人気ですね。</p>
-<p>Gopherというのはいろいろな人がいてLLからGoへ、という方も多いかと思います。</p>
-LLではそもそも全てがオブジェクトだったりで話題になりませんが、よりマシンに近く<s>変態的に</s>速度を重視される方が多いC++では例えば仮想関数や実行時キャストのコストが議論になります。<p>Goにおいてこういう多態性はインタフェースで表現されます。結論からいうと、 <strong>Goのインタフェースにもそれなりのコストがあります。</strong> なので極限までパフォーマンスを要求される場合には <strong>例えばインターフェースを使わない</strong> というも選択肢に入ってくるのではないかと思います。</p>
-<section>
-<h2>Go言語におけるインタフェースの内部表現</h2>
-<p>さて、Goはブートストラップ化(言語処理系をその言語自身で実装する)を進めており、1.5ではGoのコンパイラ、ランタイムはほぼほぼGoで実装されています。ということはインターフェースもGoで実装されているはずですね。</p>
-<p>Goのインタフェースは２個のポインタを持った <code>struct</code> です。例えば、 <code>reflect/value.go</code> では以下のようなコードがあります。</p>
-<p><a class="reference external" href="https://raw.githubusercontent.com/golang/go/master/src/reflect/value.go">reflect/value.go</a> :</p>
-<pre class="prettyprint lang-go"> // emptyInterface is the header for an interface{} value.
- type emptyInterface struct {
-     typ  *rtype
-     word unsafe.Pointer
- }
-
- // nonEmptyInterface is the header for a interface value with methods.
- type nonEmptyInterface struct {
-     // see ../runtime/iface.go:/Itab
-     itab *struct {
-         ityp   *rtype // static interface type
-         typ    *rtype // dynamic concrete type
-         link   unsafe.Pointer
-         bad    int32
-         unused int32
-         fun    [100000]unsafe.Pointer // method table
-     }
-     word unsafe.Pointer
- }</pre><p>コメントに書かれているように実態は <code>runtime/iface.go</code> ですがこちらのほうが簡略化されていてわかりやすいでしょう。1個目のポインタは 「空のインタフェース( <code>iterface{}</code> )」(これを <code>eface</code> という)の場合、型情報、そうでない場合(これを <code>iface</code> という)の場合 <code>itab</code> と呼ばれるC++における仮想テーブルのようなものです。2個目に値が格納されます。2個目はどちらもポインタであることに注意してください。</p>
-</section>
-<section>
-<h2>インターフェース経由のメソッド呼び出し</h2>
-<p>ここで、インターフェースを使用するとどの程度パフォーマンスペナルティがあるのか、様々なケースで見てみます。</p>
-<p>まずは、直接メソッドを呼び出すのと、インタフェース経由で呼び出す場合の違いを見てみましょう。</p>
-<pre class="prettyprint lang-go"> type MyError struct{}
- func (e *MyError) Error() string { return "error" }
-
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         err := &amp;MyError{}
-         err.Error()
-     }
- }
-
- func BenchmarkInterface(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         var err error = &amp;MyError{}
-         err.Error()
-     }
- }</pre><p>結果は以下のようになります。10倍程度遅くなります。単位が単位なので微々たる違いですが極限までパフォーマンスを追求したい場合は考慮しておいたほうがいいかもしれませんね。</p>
-<pre class="prettyprint lang-bash"> BenchmarkNoInterface    2000000000               0.73 ns/op
- BenchmarkInterface      200000000                9.56 ns/op</pre><p>しかし実はこの中には <code>*MyError</code> を <code>error</code> インタフェースに変換するコストも含まれていて、そのコストを除くと5倍くらいの遅さです。次はそのインタフェースへの変換コストを詳しく見ていこうと思います。</p>
-</section>
-<section>
-<h2>インターフェースへの変換コスト(非ポインタ型)</h2>
-<p>Goにおけるインタフェースの変換時はC++におけるキャストよりも複雑なことが発生します。</p>
-<p>Goでは「なんでも」を表すために <code>interface{}</code> を使いますね。 <code>int</code> などの組み込み型かつ非ポインタ型を <code>interface{}</code> として処理するとなにが起こるでしょうか？以下のようにフィボナッチを計算させてみます。</p>
-<pre class="prettyprint lang-go"> func IntFibNoInterface(n int) int {
-     if n &lt; 2 {
-         return n
-     }
-     return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
- }
-
- func IntFibInterface(o interface{}) interface{} {
-     n := o.(int)
-     if n &lt; 2 {
-         return o
-     }
-     return IntFibInterface(n-1).(int) + IntFibInterface(n-2).(int)
- }
-
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         IntFibNoInterface(20)
-     }
- }
-
- func BenchmarkInterface(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         IntFibInterface(20)
-     }
- }</pre><p>結果は以下。40 - 50倍くらいおそくなりますね。これを見ると気軽にインタフェースを使いたくなくなるかもしれません。</p>
-<pre class="prettyprint lang-bash"> BenchmarkNoInterface       30000             57938 ns/op               0 B/op          0 allocs/op
- BenchmarkInterface           500           2448250 ns/op          525376 B/op      32836 allocs/op</pre><p>はじめに書いたように、インタフェースは <strong>ポインタとして値を保持します</strong> 。 そのためコード上アロケートしていなくても、内部的に <code>int</code> をアロケートしそこに値をコピーせねばなりません。</p>
-<p>どのような処理が実行されたか、プロファイルを見てみましょう。</p>
-<pre class="prettyprint lang-bash"> 1.46s of 1.46s total (  100%)
- Showing top 20 nodes out of 35 (cum &gt;= 0.01s)
-       flat  flat%   sum%        cum   cum%
-      0.37s 25.34% 25.34%      0.68s 46.58%  runtime.mallocgc
-      0.26s 17.81% 43.15%      1.44s 98.63%  12.IntFibInterface
-      0.20s 13.70% 56.85%      0.20s 13.70%  runtime.memmove
-      0.16s 10.96% 67.81%      0.16s 10.96%  runtime.mSpan_Sweep.func1
-      0.12s  8.22% 76.03%      0.96s 65.75%  runtime.convT2E
-      0.11s  7.53% 83.56%      0.31s 21.23%  runtime.typedmemmove
-      0.10s  6.85% 90.41%      0.26s 17.81%  runtime.heapBitsSweepSpan
-      0.05s  3.42% 93.84%      0.22s 15.07%  runtime.assertE2T
-      0.02s  1.37% 95.21%      0.70s 47.95%  runtime.newobject
-      0.02s  1.37% 96.58%      0.02s  1.37%  runtime.prefetchnta
-      0.01s  0.68% 97.26%      0.01s  0.68%  runtime.(*gcControllerState).findRunnableGCWorker
-      0.01s  0.68% 97.95%      0.01s  0.68%  runtime.lock
-      0.01s  0.68% 98.63%      0.01s  0.68%  runtime.mSpanList_InsertBack
-      0.01s  0.68% 99.32%      0.01s  0.68%  runtime.xadd64
-      0.01s  0.68%   100%      0.01s  0.68%  runtime.xchg
-          0     0%   100%      1.44s 98.63%  12.BenchmarkInterface
-          0     0%   100%      0.01s  0.68%  runtime.GC
-          0     0%   100%      0.01s  0.68%  runtime.deductSweepCredit
-          0     0%   100%      0.01s  0.68%  runtime.gc
-          0     0%   100%      0.01s  0.68%  runtime.gc.func4</pre></section>
-<section>
-<h2>非ポインタ型のインターフェースへの変換コスト</h2>
-<p>では、ということで自分でアロケーションしてみましょう。 <code>int</code> ではなく <code>*int</code> を使ってみます。</p>
-<pre class="prettyprint lang-go"> func IntFibNoInterface(n int) int {
-     if n &lt; 2 {
-         return n
-     }
-     return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
- }
-
- func IntFibPointer(i *int) *int {
-     n := *i
-     if n &lt; 2 {
-         return i
-     }
-     a1 := new(int)
-     *a1 = n - 1
-     a2 := new(int)
-     *a2 = n - 2
-     v1 := IntFibPointer(a1)
-     v2 := IntFibPointer(a2)
-     ret := new(int)
-     *ret = *v1 + *v2
-     return ret
- }
-
- func IntFibInterface(o interface{}) interface{} {
-     n := *(o.(*int))
-     if n &lt; 2 {
-         return o
-     }
-     a1 := new(int)
-     *a1 = n - 1
-     a2 := new(int)
-     *a2 = n - 2
-     v1 := IntFibInterface(a1).(*int)
-     v2 := IntFibInterface(a2).(*int)
-     ret := new(int)
-     *ret = *v1 + *v2
-     return ret
- }
-
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         IntFibNoInterface(20)
-     }
- }
-
- func BenchmarkPointer(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         a := new(int)
-         *a = 20
-         IntFibPointer(a)
-     }
- }
-
- func BenchmarkInterface(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         a := new(int)
-         *a = 20
-         IntFibInterface(a)
-     }
- }</pre><p>結果は以下のようになります。20-30倍というところでしょうか。こちらのほうがコードだけ見ると遅そうですが、なんと <code>int</code> を使った場合より速いのです。そして、インタフェースへの変換コストは少ない、ということがわかります。</p>
-<pre class="prettyprint lang-bash"> BenchmarkNoInterface       30000             55558 ns/op               0 B/op          0 allocs/op
- BenchmarkPointer            1000           1297598 ns/op          525376 B/op      32836 allocs/op
- BenchmarkInterface          1000           1357172 ns/op          525376 B/op      32836 allocs/op</pre><pre class="prettyprint lang-bash"> 1.54s of 1.54s total (  100%)
- Showing top 20 nodes out of 37 (cum &gt;= 0.01s)
-       flat  flat%   sum%        cum   cum%
-      0.75s 48.70% 48.70%      1.24s 80.52%  runtime.mallocgc
-      0.22s 14.29% 62.99%      0.22s 14.29%  runtime.mSpan_Sweep.func1
-      0.16s 10.39% 73.38%      0.38s 24.68%  runtime.heapBitsSweepSpan
-      0.14s  9.09% 82.47%      1.38s 89.61%  runtime.newobject
-      0.11s  7.14% 89.61%      1.49s 96.75%  12.IntFibInterface
-      0.08s  5.19% 94.81%      0.08s  5.19%  runtime.prefetchnta
-      0.02s  1.30% 96.10%      0.02s  1.30%  runtime.heapBitsForObject
-      0.01s  0.65% 96.75%      0.01s  0.65%  runtime.(*bucket).mp
-      0.01s  0.65% 97.40%      0.01s  0.65%  runtime.atomicload64
-      0.01s  0.65% 98.05%      0.41s 26.62%  runtime.mCentral_CacheSpan
-      0.01s  0.65% 98.70%      0.03s  1.95%  runtime.scanblock
-      0.01s  0.65% 99.35%      0.01s  0.65%  runtime.schedule
-      0.01s  0.65%   100%      0.01s  0.65%  runtime.xchg
-          0     0%   100%      1.49s 96.75%  12.BenchmarkInterface
-          0     0%   100%      0.04s  2.60%  runtime.backgroundgc
-          0     0%   100%      0.01s  0.65%  runtime.deductSweepCredit
-          0     0%   100%      0.04s  2.60%  runtime.gc
-          0     0%   100%      0.02s  1.30%  runtime.gc.func1
-          0     0%   100%      0.01s  0.65%  runtime.gc.func3
-          0     0%   100%      0.01s  0.65%  runtime.gc.func4</pre></section>
-<section>
-<h2>非ポインタ型とポインタ型の違いは？</h2>
-<p>プロファイルをみるとわかりますが、 <code>runtime.convT2E</code> , <code>runtime.assertE2T</code> が非ポインタ型の場合重荷になっています。ここまで「ポインタ型」「非ポインタ型」という曖昧な表現をしていましたが、正確には
-これは <code>isdirectiface</code> という関数の結果が <code>true</code> かどうかです。これによりインターフェス変換の処理が変わります。</p>
-<pre class="prettyprint lang-go"> // Can this type be stored directly in an interface word?
- // Yes, if the representation is a single pointer.
- func isdirectiface(t *Type) bool {
-     switch t.Etype {
-     case TPTR32,
-         TPTR64,
-         TCHAN,
-         TMAP,
-         TFUNC,
-         TUNSAFEPTR:
-         return true
-
-         // Array of 1 direct iface type can be direct.
-     case TARRAY:
-         return t.Bound == 1 &amp;&amp; isdirectiface(t.Type)
-
-         // Struct with 1 field of direct iface type can be direct.
-     case TSTRUCT:
-         return t.Type != nil &amp;&amp; t.Type.Down == nil &amp;&amp; isdirectiface(t.Type.Type)
-     }
-
-     return false
- }</pre><p>これが <code>false</code> になるオブジェクトをインタフェースとして利用する際は注意です。</p>
-</section>
-<section>
-<h2>時にはインタフェースを使わない、という選択も</h2>
-<p>以上のことから、特に性能が必要な場合、インタフェースを使わず擬似共用体(Goに共用体はないので)のような実装をしたほうがよい場合が出てきます。フィボナッチの例を <code>struct</code> で書いてみましょう。</p>
-<pre class="prettyprint lang-go"> const (
-     TypeInt int = iota
-     TypeBool
- )
-
- type Object struct {
-     Type      int
-     IntValue  int
-     BoolValue bool
- }
-
- func IntFibNoInterface(n int) int {
-     if n &lt; 2 {
-         return n
-     }
-     return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
- }
-
- func IntFibStruct(o Object) Object {
-     if o.IntValue &lt; 2 {
-         return o
-     }
-     return Object{TypeInt,
-         IntFibStruct(Object{TypeInt, o.IntValue - 1, false}).IntValue +
-             IntFibStruct(Object{TypeInt, o.IntValue - 2, false}).IntValue,
-         false}
- }
-
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         IntFibNoInterface(20)
-     }
- }
-
- func BenchmarkStruct(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         IntFibStruct(Object{TypeInt, 20, false})
-     }
- }</pre><p>速度ですが、インタフェースを使うより断然早く、2-3倍程度しか遅くなりません。当たり前ですが、暗黙的なメモリアロケーションも発生しません。</p>
-<pre class="prettyprint lang-bash"> BenchmarkNoInterface       30000             58491 ns/op               0 B/op          0 allocs/op
- BenchmarkStruct            10000            139924 ns/op               0 B/op          0 allocs/op</pre><p><code>reflect</code> を使えば・・・というのもありますが、結局 <code>reflect.ValueOf</code> の引数が <code>interface{}</code> なので素直に使うと <code>interface{}</code> の場合と同様の遅さです。</p>
-<pre class="prettyprint lang-go"> func IntFibNoInterface(n int) int {
-     if n &lt; 2 {
-         return n
-     }
-     return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
- }
-
- func IntFibReflect(r reflect.Value) reflect.Value {
-     n := r.Int()
-     if n &lt; 2 {
-         return r
-     }
-     return reflect.ValueOf(IntFibReflect(reflect.ValueOf(n-1)).Int() + IntFibReflect(reflect.ValueOf(n-2)).Int())
- }
-
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         IntFibNoInterface(20)
-     }
- }
-
- func BenchmarkReflect(b *testing.B) {
-     for i := 0; i &lt; b.N; i++ {
-         IntFibReflect(reflect.ValueOf(20))
-     }
- }</pre><pre class="prettyprint lang-bash"> BenchmarkNoInterface       30000             56238 ns/op               0 B/op          0 allocs/op
- BenchmarkReflect            1000           2271026 ns/op          525376 B/op      32836 allocs/op</pre></section>
-<section>
-<h2>ちなみにGopherLuaでは</h2>
-<p>拙作のGo言語によるLua実装 <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> では一番おそい、非ポインタ型をインタフェースとして使う実装になっています。なのでGopherLuaはおそらく現在でもGo上で動くスクリプト言語としては最速の部類ですがさらに速くしようと思えばできたのかもなあと思っています(まぁこの例ほど言語実装は単純ではないし、擬似共用体にするにしてもサイズが大きくなるので、速くなるかどうかはやってみないとなんともいえないのですが。あとサイズがおおきくなるのでスタック型のAPIにするよりないでしょうね)。</p>
-<p>これは使い易さや実装のし易さやメモリ効率、そして「Goらしさ」とのトレードオフだと思っています。私は、とにかく使い易いものがほしかったので一番使い易く、そして実装が楽なものを選びました。</p>
-<p>とはいえ、特に数値型をインタフェースに変換する負荷を軽減するために、独自のアロケータを実装しています。これは一定数の <code>float64</code> をまとめてアロケートすることでインタフェース変換コストを減らしています。かなり強引なのですが興味のある方は <a class="reference external" href="https://github.com/yuin/gopher-lua/blob/master/alloc.go">gopher-lua/alloc.go</a> をご参照ください。</p>
-</section>
-<section>
-<h2>最後に</h2>
-<p>インタフェースはGoで中心的な役割を果たしていますが、時に大幅なパフォーマンス劣化を起こす可能性があります。 特に、非ポインタ型を <code>interface{}</code> などとして引数に渡す場合が要注意です。</p>
-<p><a class="reference external" href="http://qiita.com/advent-calendar/2015/go3">Go Advent Calendar 2015 その3</a> 12日目は <a class="reference external" href="http://qiita.com/Ladicle">Ladicle</a> さんです。</p>
-</section>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous-off">&laquo;Previous</li><li class="active">1</li><li><a href="/page/2/" class="page">2</a></li><li><a href="/page/3/" class="page">3</a></li><li><a href="/page/4/" class="page">4</a></li><li><a href="/page/5/" class="page">5</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/2/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous-off">&laquo;Previous</li><li class="active">1</li><li><a href="/page/2/" class="page">2</a></li><li><a href="/page/3/" class="page">3</a></li><li><a href="/page/4/" class="page">4</a></li><li><a href="/page/5/" class="page">5</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/2/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

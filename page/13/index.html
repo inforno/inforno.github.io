@@ -137,54 +137,30 @@ if(parseResult.success()) {
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2008/05/28/yahoo-jlp-api-wrapper-for-python-2" itemprop="url">Python版Yahooテキスト解析 APIライブラリをかな漢字変換に対応させました</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/12/18/i-dont-know-the-doukaku-org-will-be-a-multilingual-cookbook" itemprop="url">どう書く？orgは多言語クックブックになれるか</a></h3>
 <div class="meta">
-<time datetime="2008-05-28T20:08:20&#43;09:00">May 28, 2008</time>
+<time datetime="2007-12-18T21:02:09&#43;09:00">Dec 18, 2007</time>
 
   
-  <span class="tag"><a href="/articles/tag/api/" rel="tag" itemprop="keywords">api</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/text/" rel="tag" itemprop="keywords">text</a></span>
-  
-  <span class="tag"><a href="/articles/tag/yahoo/" rel="tag" itemprop="keywords">yahoo</a></span>
+  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>まぁ需要はないと思うんですが一応。内部的には <code><span class="pre">WebService::Simple</span></code> みたいになってるんでサクッと対応できます。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/yahooapi_0_2.zip">yahooapi</a></p>
-</section>
-<section>
-<h2>使い方</h2>
-<pre class="prettyprint ">import yahooapi.jlp as jlp
-
-client = jlp.JIMServiceAPI("your_apikey")
-result = client.conversion(sentence=u"かなかんじへんかんたいしょうのてきすとです")
-for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
-  print i
-#=&gt;
-#かな
-#佳な
-#仮名
-#カナ
-#ｶﾅ
-#加奈
-#可奈
-#佳奈
-#香奈
-#香菜
-#華奈
-#花奈
-#哉
-#金</pre><p>うむ。</p>
-</section>
+    <p>最近は手が空いたときにまとめてお題をとくようになってきました。 <a class="reference external" href="http://ja.doukaku.org/">どう書く？org</a> です。あいかわらず、Scalaです。はい。</p>
+<p>そのどう書く？orgですが、今のままだとちょっと「多言語クックブック」にはならない気がしてます。クックブックってのが曖昧ですが、あくまで俺の中のイメージのクックブックです。</p>
+<p>一般投稿が可になった時に、ちょっと感じてたんですがやっぱり最近ある傾向が顕著で。というのは数学パズル系とか、(数学的な、事務処理などではない)アルゴリズム勝負！なお題ばっかりなんですよね。プログラミング自体が好きな人ってやっぱり関数型言語界隈の方々だったり、数学的なバックグラウンド持っている人が多いですから。一般投稿が可になればまぁそういう方々がお題を投稿してくださることが多いのかな、と思ってます。</p>
+<p>もちろん、頭使ってそういうアルゴリズム考えたりするのは楽しいんですけどね、そればっかりだとちょっと･･･。ならお前がお題考えろ、ですよね、ほんとすみません。</p>
+<ul class="simple">
+<li>JPEGをGETして色反転して保存</li>
+<li>アクセスログのIPアドレスを逆引き</li>
+<li>ローカル変数の一覧を取得</li>
+</ul>
+<p>こういうお題、結構好きだったんですよね。この言語ってどんなことできるんだろ、ライブラリとかそろってるのかな、っていういろんな側面を見せてくれるじゃないですか。</p>
+<p>一方、数学パズル系とかだとほとんどがリスト処理とか、コレクションの処理になっちゃう。ぶっちゃけていえば、「その言語だから」っていうのが少なくなるって言うか・・・。大抵そのままほかの言語に移植可能だったり･･･。もちろん、Haskellだから、遅延評価だから、Lispだから、マクロだから、Ｃだからビット演算だから、とかはあると思うんですがね。</p>
+<p>実用系のお題とパズル系のお題が3:7くらいだと一番個人的にはうれしいかなあ。</p>
+<p>そんな私は、最近、ボーナスがでた勢いで（音楽用）キーボード、エレキギターを相次いで購入。あれほど音楽はもうやめよっかな、と思っていたのに。機材を実家においてきたのに。ほんとに好きなものって、やっぱやめられないんですね。願わくば、俺にとってプログラミングもそうであらんことを。</p>
 
   </div>
 </article>
@@ -197,180 +173,33 @@ for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules" itemprop="url">Python標準モジュールでRakeもどき</a></h3>
+<h3 itemprop="name"><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell" itemprop="url">Scalaで無限リスト：Haskellライクに</a></h3>
 <div class="meta">
-<time datetime="2008-01-23T04:30:23&#43;09:00">Jan 23, 2008</time>
+<time datetime="2008-02-09T23:52:10&#43;09:00">Feb  9, 2008</time>
 
   
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>誰もが一度使うと便利さと気軽さに感動するRubyが誇るライブラリ、 <a class="reference external" href="http://raa.ruby-lang.org/project/rake/">Rake</a> 。</p>
-<p>プログラムのビルドもそうなんですが、雑多なタスクを簡単に書けて、整理できるのがなんといっても魅力的。RailsなんかではDBの作成から何から、ばんばんRakeタスクにされていますよね。</p>
-<p>さて、俺はPythonistasなので、PythonでRakeみたいなのがほしいわけです。ビルドに限っていえばPythonは <a class="reference external" href="http://www.scons.org/">Scons</a> という素晴らしいツールがあります。C言語はおろか、JAVA、PDF、PostScriptなどなど、さらにはSubversionもサポートしていますし、並列コンパイルもでき、実績も多数で申し分ありません。</p>
-<p>でも俺がしたいのは、雑多なタスクを放り込む、コレ。そういうのを簡単にやるライブラリってPythonではないんでしょうか。RubyではRakeが標準添付されるというのに。いえ、あります。前からあるんです。それが <a class="reference external" href="http://www.python.jp/doc/nightly/lib/module-distutils.html">distutils</a> 。</p>
-<p>distutils(およびその拡張のsetuptools)はPythonの標準的なパッケージ配布システムとして有名です。でも実は自分でコマンドを定義してRakeのように使うことができることはあまりしられていないのではないでしょうか。</p>
-<section>
-<h2>distutilsでコマンドを定義する</h2>
-<p>distutilsでコマンドを定義するにはdistutils.core.Commandクラスを継承し、色々オーバーライドします。説明もつけられますし、オプションもとれて、sub_commandsで依存関係(コマンド分割)を設定することもできます。</p>
-<pre class="prettyprint ">class MyCommand(Command):
-  description = "コマンドの説明"
-  user_options = [("host=", "h", "hostname")] # オプション
-  sub_commands = [("pre_task", None)] # サブコマンド
-  def run(self): pass # 実行する内容
-  def initialize_options(self): # オプションの初期化
-    self.host = None
-  def finalize_options(self):
-    if not self.host: raise "Error"
+    <p>ScalaにはStreamという無限リストがあるんだけど、微妙に使いづらい、というか分かりづらい。Haskellでいうcycleはどうだ、とかよく忘れるのでメモ。</p>
+<pre class="prettyprint ">def repeat[T](a:T) = Stream.const(a)
+def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
+def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
+def replicate[T](n:int, elem:T) = Stream.make(n, elem)</pre><p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
+<pre class="prettyprint ">repeat(1) take 10 print
+// =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
 
-setup(cmdclass={"my_command":MyCommand})</pre><p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
-</section>
-<section>
-<h2>もっと簡単にdistutilsでタスク</h2>
-<p>30行程度のテンプレを足して、簡単にタスクを定義できるようにしましょう。namespace機能はPython2.5以上限定です。</p>
-<pre class="prettyprint ">from __future__ import with_statement
-from distutils.core import Command, setup
-from contextlib import contextmanager
+cycle(1 to 4) take 10 print
+// =&gt; 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, Stream.empty
 
-_cmds = {}
-_namespace = []
-_get_ns = lambda:_namespace and "_".join(_namespace)+"_" or ""
-class CommandType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    d = dict(user_options=[], finalize_options=lambda s:None)
-    d.update(classdict)
-    def _(self):
-      [setattr(self,i[0].rstrip("="),None) for i in d["user_options"]]
-    d["initialize_options"] = _
-    d["boolean_options"] = [i for i,j,k in d["user_options"] if not i.endswith("=")]
-    def _(self):
-      map(self.run_command, self.get_sub_commands())
-      return classdict["run"](self)
-    d["run"] = _
-    name = _get_ns()+class_name.lower()
-    cls = type.__new__(cls, name, class_bases + (object,), d)
-    cls.description = cls.__doc__
-    if class_name != "BaseCommand" : _cmds[name] = cls
-    return cls
-class BaseCommand(Command): __metaclass__ = CommandType
+iterate((x:int)=&gt;x+1, 0) take 10 print
+// =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
 
-@contextmanager
-def namespace(name):
-  _namespace.append(name)
-  yield _get_ns()
-  _namespace.pop()</pre><p>これだけです。これでかなり簡単にタスクが作れるようになります。例を示しましょう。</p>
-<pre class="prettyprint ">with namespace("db") as ns:
-  with namespace("create") as ns:
-    class Test1(BaseCommand):
-      """test1 discription
-      """
-      user_options = [ ("host=", "h", "hostname"),
-                      ("port=", "p", "port"),
-                      ("force", "f", "force execute")]
-      def run(self):
-        print self.host
-        print self.force
-        print "hello, ", self.__class__.__name__
-
-      sub_commands = [(ns+"test2",None)]
-
-    class Test2(BaseCommand):
-      """test2 discription
-      """
-      def run(self):
-        print "hello, ", self.__class__.__name__
-
-
-  class Test3(BaseCommand):
-    """test3 discription
-    """
-    def run(self):
-      print "hello, ", self.__class__.__name__
-
-class Test4(BaseCommand):
-  """test4 discription
-  """
-  user_options = [ ("host=", "h", "hostname") ]
-  def run(self):
-    print "hello, ", self.__class__.__name__
-
-  def finalize_options(self):
-    if not self.host:
-      raise ValueError("host must not be None")
-
-
-setup(cmdclass=_cmds)</pre><p>かなり直感的になったのではないでしょうか。withを使えば名前空間も結構簡単に実現できます。コマンドのヘルプを見てみましょう。</p>
-<pre class="prettyprint "># python task.py --help-commands
-Standard commands:
-  build            build everything needed to install
-  build_py         "build" pure Python modules (copy to build directory)
-  build_ext        build C/C++ extensions (compile/link to build directory)
-  build_clib       build C/C++ libraries used by Python extensions
-  build_scripts    "build" scripts (copy and fixup #! line)
-  clean            clean up temporary files from 'build' command
-  install          install everything from build directory
-  install_lib      install all Python modules (extensions and pure Python)
-  install_headers  install C/C++ header files
-  install_scripts  install scripts (Python or otherwise)
-  install_data     install data files
-  sdist            create a source distribution (tarball, zip file, etc.)
-  register         register the distribution with the Python package index
-  bdist            create a built (binary) distribution
-  bdist_dumb       create a "dumb" built distribution
-  bdist_rpm        create an RPM distribution
-  bdist_wininst    create an executable installer for MS Windows
-
-Extra commands:
-  db_test3         test3 discription
-
-  db_create_test2  test2 discription
-
-  db_create_test1  test1 discription
-
-  test4            test4 discription
-
-
-usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: task.py --help [cmd1 cmd2 ...]
-  or: task.py --help-commands
-  or: task.py cmd --help</pre><p>こんな感じで、標準コマンドに加え「Extra commands」という形で定義したタスクが使えるようになります。もちろん、distutilsのビルド機能、パッケージ管理機能も使えますよ。</p>
-<p>db_create_test1のヘルプを見てみましょう。</p>
-<pre class="prettyprint "># python task.py db_create_test1 --help
-Common commands: (see '--help-commands' for more)
-
-  setup.py build      will build the package underneath 'build/'
-  setup.py install    will install the package
-
-Global options:
-  --verbose (-v)  run verbosely (default)
-  --quiet (-q)    run quietly (turns verbosity off)
-  --dry-run (-n)  don't actually do anything
-  --help (-h)     show detailed help message
-
-Options for 'db_create_test1' command:
-  --host (-h)   hostname
-  --port (-p)   port
-  --force (-f)  force execute
-
-usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: task.py --help [cmd1 cmd2 ...]
-  or: task.py --help-commands
-  or: task.py cmd --help</pre><p>ちゃんとオプションが表示されていますね。最後に、db_create_test1タスクを実行してみましょう。</p>
-<pre class="prettyprint "># python task.py db_create_test1 --host=localhost
-running db_create_test1
-running db_create_test2
-hello,  Test2
-localhost
-None
-hello,  Test1</pre><p>サブコマンドのdb_create_test2が実行されていること、きちんとオプションがselfの属性として設定されていることがわかりますね。</p>
-<hr class="docutils" />
-<p>標準的な機能だけでもRakeのようなタスクはつくれますが、30行程度の工夫で断然便利になります。Rakeと違いrakeコマンドのような外部コマンドも必要なく、pythonのスクリプト1つで実現できるのも手軽です。というわけで、雑多なタスクはdistutilsでまとめてみてはいかがでしょうか。</p>
-</section>
+replicate(3, 1) take 10 print
+// =&gt; 1, 1, 1, Stream.empty</pre><p>うんうん。</p>
 
   </div>
 </article>
@@ -379,7 +208,7 @@ hello,  Test1</pre><p>サブコマンドのdb_create_test2が実行されてい�
 
 
 
-<nav class="paging"><ul><li class="previous"><a href="/page/12/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li class="active">13</li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/14/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/12/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li class="active">13</li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/14/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

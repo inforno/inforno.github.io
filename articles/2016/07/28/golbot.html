@@ -2,7 +2,7 @@
 <html lang="ja-JP">
   <head>
     <meta charset="utf-8">
-    <title>inforno :: Goで文字コードを手軽に変換するライブラリ作った</title>
+    <title>inforno :: Go&amp;#43;Luaのチャットボットフレームワークを作った</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
@@ -59,9 +59,9 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name">Goで文字コードを手軽に変換するライブラリ作った</h3>
+<h3 itemprop="name">Go&#43;Luaのチャットボットフレームワークを作った</h3>
 <div class="meta">
-<time datetime="2016-07-14T00:23:19&#43;09:00">Jul 14, 2016</time>
+<time datetime="2016-07-28T20:32:33&#43;09:00">Jul 28, 2016</time>
 
   
   <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
@@ -70,31 +70,83 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>日本人である以上、いくらUTF-8が主権を得てきたといっても文字コード変換というカルマからは逃れられません。Pure Goでの文字コード変換はLLに比べるといろいろめんどくさい。</p>
-<p>それに、そのままだと任意の文字コードを指定させるのが難しい。特定の文字コード決め打ちならいいんですけど、全世界の利用者に向けて任意の文字コード設定できるようにする場合とかはさらにめんどくさいし、かといって <code>iconv</code> に依存するのも嫌なのライブラリにしました。</p>
-<div data-theme="default" data-height="150" data-width="400" data-github="yuin/charsetutil" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script><p>以下のような感じで簡単に文字コードを変換できます。Pythonと同じで <code>encode</code> がUTF-8からUTF-8以外へ、 <code>decode</code> がUTF-8以外からUTF-8へ、です。内部では <code>golang.org/x/net/html/charset</code> を使っているので文字コードの指定もそれに習います。(WHATWGで定義されている名前になります) 。なので <code>cp932</code> などではなく <code><span class="pre">Windows-31J</span></code> です。</p>
-<pre class="prettyprint lang-go"> b, err = EncodeString("こんにちわ", "Windows-31J")
- b, err = Encode("こんにちわ", "Windows-31J")
- b, err = EncodeBytes([]byte("こんにちわ"), "Windows-31J")
- b, err = EncodeReader(strings.NewReader("こんにちわ"), "Windows-31J")
- b = MustEncodeString("こんにちわ", "Windows-31J")
- b = MustEncode("こんにちわ", "Windows-31J")
- b = MustEncodeBytes([]byte("こんにちわ"), "Windows-31J")
- b = MustEncodeReader(strings.NewReader("こんにちわ"), "Windows-31J")
+    <p>たまには実用的なものをつくろうと思って、Go+Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。</p>
+<div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script><p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
+<p>特徴は以下です。</p>
+<ul class="simple">
+<li>Goなので置けば動く</li>
+<li>それでいてLuaでスクリプトを書ける</li>
+<li>最初からマルチスレッド(複数goroutine)を考慮している</li>
+<li>HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる</li>
+<li>定期ジョブも流せる</li>
+</ul>
+<pre class="prettyprint lang-lua">function main()
+  local bot = golbot.newbot("Slack", { token = "xxxxx" })
 
- s, err = DecodeString(string(source), "Windows-31J")
- s, err = Decode(source, "Windows-31J")
- s, err = DecodeBytes(source, "Windows-31J")
- s, err = DecodeReader(bytes.NewReader(source), "Windows-31J")
- s = MustDecodeString(string(source), "Windows-31J")
- s = MustDecode(source, "Windows-31J")
- s = MustDecodeBytes(source, "Windows-31J")
- s = MustDecodeReader(bytes.NewReader(source), "Windows-31J")</pre>
+  bot:respond([[\s*(\d+)\s*\+\s*(\d+)\s*]], function(m, e) -- 3
+    bot:say(e.target, tostring(tonumber(m[2]) + tonumber(m[3])))
+  end)
+
+  bot:serve(function(msg)
+    if msg.type == "say" then
+      bot:say(msg.channel, msg.message)
+      respond(msg, true)
+    end
+  end)
+end</pre><p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
+<pre class="prettyprint lang-lua">function main()
+  bot:respond([[deploy]], function(m, e)
+    bot:say(e.target, "accepted")
+    goworker({target=e.target, type="deploy"})
+  end)
+
+  bot:serve(function(msg)
+    if msg.type == "say" then
+      bot:say(msg.target, msg.message)
+    end
+  end)
+end
+
+function worker(msg)
+  if msg.type == "deploy" then
+    do_deploy()
+    notifymain({type="say", target=msg.target, message="your deployment has been completed"})
+  end
+end</pre><p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
+<p>HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。</p>
+<pre class="prettyprint lang-lua"> function http(r)
+   if r.method == "POST" and r.URL.path == "/webhook" then
+     local data = assert(json.decode(r:readbody()))
+     local message = data.item.message.message
+     local user = data.item.message.from.name
+     local room = data.item.room.name
+
+     local ret = {
+       message = "hello! from webhook",
+       message_format = "html"
+     }
+
+     return 200, headers, json.encode(ret)
+   end
+   return 400, headers, json.encode({result="not found"})
+ end</pre><p>定期ジョブは以下のような感じ。</p>
+<pre class="prettyprint lang-lua"> function main()
+   golbot.newbot("Null", {
+     http = "0.0.0.0:6669" ,
+     crons = {
+       { "0 * * * * * ", "job1"}
+     }
+   }):serve(function() end)
+ end
+
+ function job1()
+   print "hello!"
+ end</pre><p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
 
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2016/07/28/golbot">Go+Luaのチャットボットフレームワークを作った</a></li>
+<li><a href="/articles/2016/07/14/go-charsetutil">Goで文字コードを手軽に変換するライブラリ作った</a></li>
 <li><a href="/articles/2015/12/11/go-interface-performance-penalty">Goのインタフェースがパフォーマンスに及ぼす影響</a></li>
 <li><a href="/articles/2015/03/23/gluamapper-released">GopherLuaを設定ファイルで使うライブラリを書きました</a></li>
 <li><a href="/articles/2015/02/24/channel-support-in-gopher-lua">GopherLuaでchannelを扱えるようにした</a></li>
@@ -105,11 +157,11 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2016/07/14/go-charsetutil" class="hatena-bookmark-button" data-hatena-bookmark-title="Goで文字コードを手軽に変換するライブラリ作った" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2016/07/28/golbot" class="hatena-bookmark-button" data-hatena-bookmark-title="Go&#43;Luaのチャットボットフレームワークを作った" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>
-      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2016/07/14/go-charsetutil" itemprop="url">Permalink</a></dt>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2016/07/28/golbot" itemprop="url">Permalink</a></dt>
       <dd> </dd>
     </dl>
   </footer>
@@ -118,7 +170,7 @@
 <div id="disqus_thread"></div>
 <script type="text/javascript">
   var disqus_shortname = 'inforno';
-  var disqus_identifier = 'articles\/2016\/07\/14\/go-charsetutil';
+  var disqus_identifier = 'articles\/2016\/07\/28\/golbot';
   var disqus_developer = 0;
   if(islocal) {
     disqus_developer = 1;

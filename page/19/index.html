@@ -61,6 +61,65 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/01/31/nes-emulator-development-with-python-3" itemprop="url">PythonによるNESエミュレータ開発3</a></h3>
+<div class="meta">
+<time datetime="2007-01-31T19:37:10&#43;09:00">Jan 31, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>時間があればちょっとずつ続けてます。</p>
+<p>とりあえず画面がでるようにはなりました。速度は全然追いつかないですけど。</p>
+<img alt="/statics/files/pynes0.jpg" src="/statics/files/pynes0.jpg" />
+<section>
+<h2>CPU</h2>
+<p>基本的には変化なし。細かいバグが多くて大変・・・・</p>
+<p>わずかでも速くしたいところなので、あまり構造を壊さず速度を上げられないかな、と思ってPrefetch cueを実装してみました。Prefetch cueはCPUの非常に基本的な最適化で、基本的故に単純、実装しても負荷になることはないだろう、ってことですな。</p>
+<p>エミュレーターでは（とくにPythonでは)ハードウェアでいうメモリが遅いうんぬんとは別の理由で、メモリアクセスはかなり重い処理になります。</p>
+<pre class="prettyprint ">def memory(self, addr):
+  if addr &lt; "RAMの範囲":
+    self.ram[addr]
+  elif addr &lt; "メモリマップドIOの範囲":
+    self.io.read(addr)
+  #else:
+  # .
+  # .
+  # .</pre><p>さらにページングされている場合、C言語ならポインタでいけるんですけど、Pythonではそうはいかないので、いちいち長ったらしく書くか、ページング用にメソッドを書いてそれをはさむことになります。</p>
+<p>そう、関数の呼び出しが非常に多い部分なのです。実際、profileモジュールでデータを取ってみてもメモリ読み込み書き込みが結構なウェイトをしめてました。</p>
+<p>そこでPrefetch用のクラスを作って、別スレッドで現在のPC+いくらかをとるようにしてみました。これは現在のオペコードを実行している間に実行されます。これで次のオペコードを実行する前にオペコードとオペランドを取得でき、メモリ読み込み関数を呼ぶ回数が減ります。ただし、本物のPrefetch cueと同じでジャンプ命令が多いとあんまり効果がありません。</p>
+<p>Prefetch-cueを入れてみると、まぁコードの内容によりますが、psycoを入れて1frame 0.075くらいまではいきました。PPUをいれると全然なんですけど（笑</p>
+</section>
+<section>
+<h2>PPU</h2>
+<p>なんとか表示できるまでにきました。正直つらいです（笑　特にスクロールに関しては <a class="reference external" href="http://nesdev.parodius.com/loopyppu.zip">loopyの文書</a> の文書が重要、ということをしらなかったのではじめはサッパリでした。</p>
+<p>描画部分は <a class="reference external" href="http://www.pygame.org/">pygame</a> です。pygameで描画する場合、更新したRectだけupdateするってのが常套手段なわけですが、エミュの場合はどうも・・・。というわけで今は毎回全体を描画しています。これも結構重い処理になるなあ。</p>
+<p>ほとんどスクロールしないゲームの場合、もしかしたら32x32くらいに区切ってスプライトが動いたところだけ更新するようにしたら、結構軽いのかもなあ。</p>
+<hr class="docutils" />
+<p>というわけで、PPUをつめてパッド入力あたりを書けばマッパー0のゲームなら動き出しそうな感じがします。ちなみにマッパーは全然です。とりあえずPythonで書いてみることが目的なので実際に使うことは想定して無いですし。</p>
+<p>卒論の試問会も終わり、家探しの旅も終わり、つかの間の落ち着きが戻ってきました。なんか資格とかをとらないといけないらしいので、それをちょっとずつ勉強しつつ、こっちもちょっとずつ進めていきたいなーと思ってます。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware" itemprop="url">vimでvmwareとWindowsのクリップボードを同期する</a></h3>
 <div class="meta">
 <time datetime="2006-11-28T00:19:12&#43;09:00">Nov 28, 2006</time>
@@ -287,98 +346,10 @@ self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やって
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements" itemprop="url">続Element.Methods。問題とちょっと改良</a></h3>
-<div class="meta">
-<time datetime="2006-03-22T01:28:03&#43;09:00">Mar 22, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p><a class="reference external" href="http://inforno.net/articles/2006/03/12/element-methods-in-prototype">以前のエントリー</a> でprototype.js1.5のElement.Methodsについて書きました。
-前回はいいところをプッシュして書いたんですが、皆さんご存じの通り問題児でもあります。</p>
-<p>Element.Methodsの問題点</p>
-<ul class="simple">
-<li>elementを拡張するかしないかが選択できない。</li>
-<li>プロトタイプチェーンがつながっていない。</li>
-<li>document.createElementが考慮されていない。</li>
-</ul>
-<p>■elementを拡張するかしないかが選択できない。</p>
-<p>まずわかりやすくこれから。elementは取得された時に拡張されるわけですが、当然パフォーマンスに影響があります。使いたくない人もいるでしょう。しかし、Element.extendによる拡張は$にも$$にも組み込まれていて選択できません。メソッドを置き換えて回避は可能ですが、組み込まれている、ということを考慮すると当然extendされている、ということを前提としたライブラリも出てくるでしょう。となった場合にやっかいです。別名のメソッドを定義してもいいですが・・・やっぱり$って名前がいいよね！（何</p>
-<p>■プロトタイプチェーンがつながっていない。</p>
-<p>これは当然の問題。Element.extendは文字通りelementにElement.Methodsのメソッドをコピーしているだけ。しかも一回取得すると、_extendedというフラグが立って次回からはもうextendされない（パフォーマンスを考慮してのこと）。つまり Element.Methodsへのメソッド追加が反映されない、メソッドの内容変更も反映されない。
-　つまり、恐らく$か$$されるだろう、window.onloadイベント前にElement.Methodsへのメソッド追加を完了させ、それ以降変化させない、という事に注意しないといけない。</p>
-<p>ではなぜプロトタイプチェーンがつながっていないのだろうか。Elementは拡張できないんだろうか。これはYesでありNoです。
-まず、このElement.Methodsによる害をある程度押さえ込むことのできるソースを示します。
-これはFirefoxなどMozilla系、safari、Operaで有効です。</p>
-<pre class="prettyprint ">(function() {
-if(!window.HTMLElement) window.HTMLElement = document.createElement("xxx").constructor;
-if(window.HTMLElement) {
-    var methods = Element.Methods, property;
-    var bind = function(name, method) {
-      HTMLElement.prototype[name] = function(){
-        Array.prototype.unshift.call(arguments, this);
-        return method.apply(null, arguments) || this;
-      }
-    }
-    for (property in methods) {
-      var value = methods[property];
-      if (typeof value == 'function') bind(property, value);
-    }
-    HTMLElement.prototype._extended = true;
-}
-
-})();</pre><p>このコードを <strong>最後に(window.onloadの直前で)実行すれば</strong> OKです（scriptaculousとかもElement.Methodsを拡張するので、その拡張が終わった後）。
-これでelementがプロトタイプチェーンでつながっているブラウザでは$による負荷を軽減できます。$(&quot;test&quot;).show()とかも実行できますし、引数操作によるパフォーマンス低下がいやならElement.show(&quot;test&quot;)と実行すれば良いだけです。しかも地味にreturn method.apply(null, arguments) || this;とすることによって$(&quot;test&quot;).update(&quot;hogehoge&quot;).show()とか書けるようにもしてみました（笑</p>
-<p>しかしIEはどうしようもありません。 <strong>そもそもIEはelementがプロトタイプチェーンをもっていません。</strong>
-document.createElement (&quot;div&quot;).constructorとやってもprototypeとやってもundefinedと抜かす強敵です。これは昔から対策が考えられていますが、つまるところElement.Methodsと同様にコピーするだけです。それをhtcをつかってみたり、コンストラクタを擬似的に作ってみたり、とかっていう方法で実装しているだけです。なのでElement prototypingしようと思うとIEでは現状これが限界です。</p>
-<p>■　document.createElementが考慮されていない。</p>
-<p>先ほど示したソースでelementがプロトタイプチェーンをもつブラウザでは当然document.createElementで作成した elementもElement.Methodsのメソッドが実行できます。しかしIEではそれができません。この document.createElementも考慮して先ほどのElement.Methods対策ソースを改良しましょう。</p>
-<pre class="prettyprint ">(function() {
-if(!window.HTMLElement) window.HTMLElement = document.createElement("xxx").constructor;
-if(window.HTMLElement) {
-    var methods = Element.Methods, property;
-    var bind = function(name, method) {
-      HTMLElement.prototype[name] = function(){
-        Array.prototype.unshift.call(arguments, this);
-        return method.apply(null, arguments) || this;
-      }
-    }
-    for (property in methods) {
-      var value = methods[property];
-      if (typeof value == 'function') bind(property, value);
-    }
-    HTMLElement.prototype._extended = true;
-}else {
-  document._createElement = document.createElement;
-  document.createElement = function(tag){
-    return Element.extend(document._createElement(tag));
-  }
-}
-
-})();</pre><p>赤色で示した部分が追加部分です。これでIEでもdocument.createElementした後に直接Element.Methodsのメソッドが実行できます。何度も言いますがパフォーマンス低下がいやな人はこの追加部分を省いてください。</p>
-<p>というわけで今回はElement.Methodsの問題への対応策を示してみました。要はIEがelementがプロトタイプチェーンを持つようにしてくれれば万事解決なわけなんですよね。でも結局IE7でも実装されていないようで、なかなか・・・</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/18/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li><a href="/page/18/" class="page">18</a></li><li class="active">19</li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li><a href="/page/23/" class="page">23</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/20/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/18/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li><a href="/page/18/" class="page">18</a></li><li class="active">19</li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li><a href="/page/23/" class="page">23</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/20/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

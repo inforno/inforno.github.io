@@ -61,33 +61,63 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/06/24/creating-what-im-interested-in-anyway-or-else-about-that-a-jack-of-all-trades-is-master-of-none" itemprop="url">とにかく好きなものを作るということ、あるいは器用貧乏について</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/07/30/parser-combinators-in-scala" itemprop="url">Scalaでパーサコンビネータ</a></h3>
 <div class="meta">
-<time datetime="2007-06-24T00:36:19&#43;09:00">Jun 24, 2007</time>
+<time datetime="2007-07-30T19:50:16&#43;09:00">Jul 30, 2007</time>
 
   
-  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>via  <a class="reference external" href="http://la.ma.la/blog/diary_200706231433.ht">つまらなくて役に立つ物を作るということ</a></p>
-<p>実は俺のプログラミングというかクリエイティブなことについての考えはシンプルで、「とにかく作りたいものを作る」それだけだったりする。まぁ結局その作りたいものがゲームだったり、XMLをパースしたりすることだったりするわけなんだろうけど。</p>
-<hr class="docutils" />
-<p>もっと突っ込んで言うと、作りたいものを作る、それだけなので別に何も残せなくても俺はぜんぜん気にしない。死ぬまでのなかで、あの人は○○を作った人だ、とかそんな人になりたいとは思わない。</p>
-<p>事実、俺が個人で作っているものは好き勝手だ。</p>
-<p>このブログに出してる成果物で言えば、あるときはRailsを触っていろいろやっていたり（まぁこれは仕事もあったが）、Javascriptをいじってテンプレートエンジンつくったりいろいろしたり、PythonでNESエミュレータを書いたり。</p>
-<p>ma.laさんとは違ってゲームも作る。SDLを使って2Dのも作るし(Ruby/SDLやpygameではない。CあるいはC++、昔だとDXLibかなあ)、最近はIrrlichtも勉強していて3Dゲームも作りたい。</p>
-<p>言語とかその他の面でも手を出しまくりだ。普段からC,C++,Java,Ruby,Python,Javascript,Schemeなどを書くし（作りたいものに一番便利な言語を使うだけ）、単に勉強として変な言語にも手を出す。</p>
-<p>他にはReasonやハード音源を使って自作の曲をだしてたりもした（別名義）。一応小さいころから音楽はやっていて、しかもきちんと音楽理論も教えてくれるとこだったので、そこそこのクオリティだと思う。DTM特有の技術も、一通りの生楽器の奏法の再現法を勉強したり、エフェクトをいじり倒したりした。</p>
-<p>画像もやる。そこまで絵心があるわけじゃないけど、いろいろなソフトを経てGimpに落ち着き、ある程度の画像処理ならできるし、ゲームのマップ作成とか位なら普通にやる(A5のインテュオスほしいなあ・・・)。前にも書いたけど、3Dにも手を出している。</p>
-<hr class="docutils" />
-<p>んで、そんなに手を出しまくってお前は何を残せたんだ、と言われたら「何も残してないよ」だ。何も誇れるものなんてない。結局どれも中途半端で役立たずだ。だから、俺はWEBプログラマでもなければ、ゲームプログラマでもなく、プログラマですらなく、ミュージシャンでもなく、絵描きでもない。</p>
-<p>実はこれは結構悩んだ。というか悩んでる人は結構いるんじゃないかと思っている。世の中、スペシャリストスペシャリストで、仕事をしようにも俺みたいな器用貧乏タイプの人は困る。だから、無理に自分がほんとに好きなものはどれなんだ、とか何か残せているのか、とか自問したりする。</p>
-<p>それに対しての俺の結論は、「器用貧乏で何が悪い」だ。楽しければそれでいいのだ。俺は作ることすべてが好きなんだ。たとえ何の才能もなくて何も残せなくても作る過程が大好きなんだよ。少なくとも、世の中がスペシャリスト優遇だからといって自分を抑えて、スペシャリストになって生きるよりは、不器用に器用貧乏で生きるほうが絶対楽しい。めざせ最強の器用貧乏。なにかひとつ、スペシャリストになるほど好きなものが持てる人は運が良かっただけなのだ。</p>
-<hr class="docutils" />
-<p>ただ、器用貧乏じゃないとできないこともあるんだぜ、とは常々思っている。器用貧乏タイプの人はどうか、負けないでほしい。</p>
+    <p>Scala 2.6.0-RC1 でscala.util.parsing.combinatorが標準パッケージになりました。というわけでリファレンスとちょっとしたサンプルくらしかなかったのだけど、とりあえず書いてみた。</p>
+<p><a class="reference external" href="http://ja.doukaku.org/33/">どう書く?org</a> に投稿した、ExcelライクCSVのパーサ。</p>
+<pre class="prettyprint ">import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
+import scala.util.parsing.input.CharArrayReader
+import Character.isISOControl
+
+object CSVParser {
+ trait Base
+ case class Field(s:String) extends Base {
+   override def toString = s
+ }
+ case class Record(fields: List[Field]) extends Base
+ case class File(records :List[Record]) extends Base
+
+ def mkString(cs :List[Any]) = cs.mkString("")
+ class CSVParser extends Parsers {
+   type Elem = Char
+   def notMeta(c:Elem) = c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='"' &amp;&amp; !isISOControl(c)
+
+   lazy val file   = record.*('\n') ^^ File
+   lazy val record = (field|quotedField|nullableField).*(',') ^^ Record
+   lazy val field = chars.+ ^^ {cs =&gt; Field(mkString(cs))}
+   lazy val nullableField = chars.* ^^ {cs =&gt; Field("")}
+   lazy val quotedField = '"' ~ (charsInQuote|quoteInQuote).* ~ '"' ^^ {cs =&gt; Field(mkString(cs))}
+   lazy val charsInQuote = elem("chars in field", _!='"')
+   lazy val quoteInQuote = repN(2, quote) ^^ {cs =&gt; '"'}
+   lazy val quote  = '"' ^^ success
+   lazy val chars  = elem("chars", notMeta)
+ }
+}
+
+val data = """
+"aaa","b
+bb","ccc",zzz,"y""Y""y",xxx
+""".trim
+
+(new CSVParser.CSVParser).file(new
+CharArrayReader(data.toCharArray)).map(file =&gt; {
+ file.records.map({record =&gt;
+   val fields = record.fields
+   (1 to fields.length).foreach(i =&gt; println(i +" =&gt; " + fields(i-1)))
+ })
+})</pre><p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
+<p>時間が出来たらもうちょっといじってみよう。よさげな解説してるサイトがあったら是非教えてください。</p>
 
   </div>
 </article>
@@ -143,23 +173,33 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/05/22/erlang-process" itemprop="url">Erlangのプロセス</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/06/24/creating-what-im-interested-in-anyway-or-else-about-that-a-jack-of-all-trades-is-master-of-none" itemprop="url">とにかく好きなものを作るということ、あるいは器用貧乏について</a></h3>
 <div class="meta">
-<time datetime="2007-05-22T23:57:09&#43;09:00">May 22, 2007</time>
+<time datetime="2007-06-24T00:36:19&#43;09:00">Jun 24, 2007</time>
 
   
-  <span class="tag"><a href="/articles/tag/erlang/" rel="tag" itemprop="keywords">erlang</a></span>
+  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>via  <a class="reference external" href="http://d.hatena.ne.jp/methane/2007051">Erlangの強さ</a></p>
-<p>最近（でもないか・・・）Erlangが話題になっていて、趣味プログラマーになったとはいえ、ちょっと触ってみたいなあと思いつつ、時間ないなあと思いつつ。</p>
-<p>んで話題のErlangのプロセスなんだけど、microthreadだろうなあ、と思っていたけどそれであってるっぽい。あんま詳しくないんでアレですが。詳しくは <a class="reference external" href="http://www.erlang.org/ml-archive/erlang-questions/200104/msg00072.html">コチラ</a> 。</p>
-<p>Erlangのプロセスについてはmethaneさんがおっしゃてる通りだと思う。要はこれを使いやすい形で言語仕様にとりこんでるあたりがErlangの良さなんだよなあ。</p>
-<p>たとえばPythonでもyieldがあるのでmicrothreadは可能で（Stackless Pythonまである)、Erlangのプロセスっぽいこともやろうと思えば可能じゃないか、って感じなんだけどあくまでやればできる、って感じだと思う。</p>
-<p>というわけでmicrothreadを用いたプログラミングに対するある意味DSL的な言語ではないのかなあ、というのが今のところの印象。パッと見た感じその他は魅力的な部分があまり見当たらなかった。かといって機能が足りてないわけでもぜんぜんないので、microthreadや分散のメリットが前面にでるならガンガンつかってもいいと思ってたりするのです。</p>
+    <p>via  <a class="reference external" href="http://la.ma.la/blog/diary_200706231433.ht">つまらなくて役に立つ物を作るということ</a></p>
+<p>実は俺のプログラミングというかクリエイティブなことについての考えはシンプルで、「とにかく作りたいものを作る」それだけだったりする。まぁ結局その作りたいものがゲームだったり、XMLをパースしたりすることだったりするわけなんだろうけど。</p>
+<hr class="docutils" />
+<p>もっと突っ込んで言うと、作りたいものを作る、それだけなので別に何も残せなくても俺はぜんぜん気にしない。死ぬまでのなかで、あの人は○○を作った人だ、とかそんな人になりたいとは思わない。</p>
+<p>事実、俺が個人で作っているものは好き勝手だ。</p>
+<p>このブログに出してる成果物で言えば、あるときはRailsを触っていろいろやっていたり（まぁこれは仕事もあったが）、Javascriptをいじってテンプレートエンジンつくったりいろいろしたり、PythonでNESエミュレータを書いたり。</p>
+<p>ma.laさんとは違ってゲームも作る。SDLを使って2Dのも作るし(Ruby/SDLやpygameではない。CあるいはC++、昔だとDXLibかなあ)、最近はIrrlichtも勉強していて3Dゲームも作りたい。</p>
+<p>言語とかその他の面でも手を出しまくりだ。普段からC,C++,Java,Ruby,Python,Javascript,Schemeなどを書くし（作りたいものに一番便利な言語を使うだけ）、単に勉強として変な言語にも手を出す。</p>
+<p>他にはReasonやハード音源を使って自作の曲をだしてたりもした（別名義）。一応小さいころから音楽はやっていて、しかもきちんと音楽理論も教えてくれるとこだったので、そこそこのクオリティだと思う。DTM特有の技術も、一通りの生楽器の奏法の再現法を勉強したり、エフェクトをいじり倒したりした。</p>
+<p>画像もやる。そこまで絵心があるわけじゃないけど、いろいろなソフトを経てGimpに落ち着き、ある程度の画像処理ならできるし、ゲームのマップ作成とか位なら普通にやる(A5のインテュオスほしいなあ・・・)。前にも書いたけど、3Dにも手を出している。</p>
+<hr class="docutils" />
+<p>んで、そんなに手を出しまくってお前は何を残せたんだ、と言われたら「何も残してないよ」だ。何も誇れるものなんてない。結局どれも中途半端で役立たずだ。だから、俺はWEBプログラマでもなければ、ゲームプログラマでもなく、プログラマですらなく、ミュージシャンでもなく、絵描きでもない。</p>
+<p>実はこれは結構悩んだ。というか悩んでる人は結構いるんじゃないかと思っている。世の中、スペシャリストスペシャリストで、仕事をしようにも俺みたいな器用貧乏タイプの人は困る。だから、無理に自分がほんとに好きなものはどれなんだ、とか何か残せているのか、とか自問したりする。</p>
+<p>それに対しての俺の結論は、「器用貧乏で何が悪い」だ。楽しければそれでいいのだ。俺は作ることすべてが好きなんだ。たとえ何の才能もなくて何も残せなくても作る過程が大好きなんだよ。少なくとも、世の中がスペシャリスト優遇だからといって自分を抑えて、スペシャリストになって生きるよりは、不器用に器用貧乏で生きるほうが絶対楽しい。めざせ最強の器用貧乏。なにかひとつ、スペシャリストになるほど好きなものが持てる人は運が良かっただけなのだ。</p>
+<hr class="docutils" />
+<p>ただ、器用貧乏じゃないとできないこともあるんだぜ、とは常々思っている。器用貧乏タイプの人はどうか、負けないでほしい。</p>
 
   </div>
 </article>
@@ -168,7 +208,7 @@
 
 
 
-<nav class="paging"><ul><li class="previous"><a href="/page/15/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li class="active">16</li><li><a href="/page/17/" class="page">17</a></li><li><a href="/page/18/" class="page">18</a></li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/17/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/15/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li class="active">16</li><li><a href="/page/17/" class="page">17</a></li><li><a href="/page/18/" class="page">18</a></li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/17/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

@@ -61,6 +61,173 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/08/08/sexp-parser-in-python-re-scanner" itemprop="url">Python:re.ScannerでS式パーサ</a></h3>
+<div class="meta">
+<time datetime="2008-08-08T20:38:00&#43;09:00">Aug  8, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
+<p>一方、Pythonにはexperimentalながら <code>re.Scanner</code> というクラスがあります( <code>&gt;= 2.4</code> )。experimentalなのでマニュアルにはのっていませんが。この <code>re.Scanner</code> はかなりシンプルなんですが典型的な <code>StringScanner</code> の使い方の範疇では、こちらのほうがキレイに書けるような気がします。</p>
+<section>
+<h2><code>re.Scanner</code> の使い方</h2>
+<p>使い方は非常に簡単で</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</dt>
+<dd><ul class="first last simple">
+<li><code>action</code> は(scanner, string_matched) =&gt; stringな関数、Noneを返せば結果は無視される。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">scanメソッドでスキャン。結果が配列で返ってくる</p>
+</li>
+</ul>
+<p>といった感じ。関数を渡すので、 <code>StringScanner</code> のようなwhileループを作る必要がなく、キレイにまとまります。</p>
+</section>
+<section>
+<h2>例：S式パーサ</h2>
+<p><code>re.Scanner</code> は簡単、ということでS式パーサでも。トークナイズ+αな処理をするので、 <code>action</code> をインスタンスメソッドにして状態を保存することにします。</p>
+<p>目標は</p>
+<ul class="simple">
+<li>数値(っぽいもの)、文字列、シンボルが使える</li>
+<li>シンボルのみ、新たにクラスを定義して(unicodeのサブクラス)それにマップ。それ以外は組み込み型に。</li>
+<li>パースエラーも分かりやすく</li>
+<li>結果はPythonのリストorオブジェクトとして返る</li>
+</ul>
+<p>で</p>
+<pre class="prettyprint ">import re, sys
+from unicodedata import east_asian_width
+
+try:
+  from re import Scanner
+except ImportError:
+  from sre import Scanner
+
+class ParseError(StandardError): pass
+
+class Symbol(unicode):
+  def __repr__(self):
+    return "Symbol(%s)"%unicode.__repr__(self)
+
+class TokenProcessor(object):
+  PAREN = {"]":"[", ")":"("}
+  def __init__(self, value):
+    self.result = []
+    self.append = self.result.append
+    self.string = value
+    self.paren_stack = []
+    self.pos = 0
+
+  def __call__(self, name):
+    def _(*a):
+      self.before(*a)
+      return getattr(self, name)(*a)
+    return _
+
+  def before(self, scanner, s):
+    self.pos += len(s)
+    self.skip(scanner, s)
+
+  def error(self, scanner, s): self.raise_error("unknown token: %s"%s)
+
+  def skip_whitespaces(self, scanner, s): self.append(",")
+
+  def skip(self, scanner, s):
+    last = "".join(self.result[-2:])
+    if last in ["[,", ",,", ",]"]:
+      self.result[-2:] = sorted(last, key=ord)[1]
+
+  def atom(self, scanner, s):
+    if s in ["(", "["]:
+      self.append("[")
+      self.paren_stack.append(s)
+    elif s in [")", "]"]:
+      if not self.paren_stack:
+        self.raise_error("missing opening parenthesis.")
+      if self.PAREN[s] != self.paren_stack.pop():
+        self.raise_error("missing closing parenthesis.")
+      self.append("]")
+    elif re.match(r"""^(".*)$""", s or ""):
+      self.append("u"+s)
+    elif re.match(r"""^((\-?\d[\de\.]+)|(\s*)|(.*"))$""", s or ""):
+      self.append(s)
+    else:
+      self.append("Symbol(u\"%s\")"%s)
+
+  def raise_error(self, msg="parse error", range=3):
+    lines = self.string.split("\n")
+    curline = self.string[:self.pos].count("\n")
+    linepos = self.pos - len("\n".join(lines[:curline]))
+    buf = ["\n"]
+    for i in xrange(max(0, curline-range), curline+1):
+      buf.append("% 5d: %s"%(i+1, lines[i]))
+    width = 6 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in lines[i])
+    buf.append("%s~"%(" "*width))
+    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
+    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
+
+def read_sexp(sexp):
+  processor = TokenProcessor(sexp)
+  scanner = Scanner([
+    (r"\s+", processor("skip_whitespaces")),
+    (r";[^\n]*\n", processor("skip")),
+    (r""""(?:[^"])*"|(\]|\[|\)|\(|[^\(\)\s]+)""", processor("atom")),
+    (r".*", processor("error"))
+  ], re.M)
+  scanner.scan(processor.string)
+  if processor.paren_stack:
+    processor.raise_error("missing closing parenthesis.")
+  result = eval("".join(processor.result).lstrip(","))
+  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]</pre><p>こんな感じ。非常にシンプルな気がします。</p>
+<pre class="prettyprint ">print read_sexp(u"""("ほげほげ"
+;comment
+  ;comment
+  (hogehoge 123) ;aaaaaaa
+  "hoge\\"aaaa"
+;comment
+;comment
+
+aaaa          b)""")</pre><p>output:</p>
+<pre class="prettyprint ">[u'\u307b\u3052\u307b\u3052', [Symbol(u'hogehoge'), 123], u'hoge"aaaa', Symbol(u'aaaa'), Symbol(u'b')]</pre><p>エラーも一応。</p>
+<pre class="prettyprint ">print read_sexp(u"""(
+aaaa
+bbbb (ccc ddd) )
+(eee
+ああああああ""")</pre><p>output:</p>
+<pre class="prettyprint ">__main__.ParseError:
+
+    2: aaaa
+    3: bbbb (ccc ddd) )
+    4: (eee
+    5: ああああああ
+                  ~
+line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
+</section>
+<section>
+<h2>というわけで</h2>
+<p>Pythonでトークナイズするときにはかなり便利なんじゃないかと思いました。</p>
+</section>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/07/28/use-my-own-blog-software-on-a-trial-basis" itemprop="url">試験的に自作ブログに移行しました</a></h3>
 <div class="meta">
 <time datetime="2008-07-28T02:25:25&#43;09:00">Jul 28, 2008</time>
@@ -266,104 +433,10 @@ def create(cls, *a, **k):
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/06/30/gae-model-improvements" itemprop="url">GoogleAppEngineのモデルをいじってみた</a></h3>
-<div class="meta">
-<time datetime="2008-06-30T23:51:58&#43;09:00">Jun 30, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/gae/" rel="tag" itemprop="keywords">gae</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>なんの幸運か、Softbank（しかもJ-phone時代からの）ユーザだったので、SMS認証もアッサリ通ってGAEのアカウントをゲットしたわけですが･･･（ただしiPhoneには興味ほぼなし)。</p>
-<p>というわけで <a class="reference external" href="http://www.metareal.org/2008/05/20/porting-weblog-to-google-app-engine/">ishikawaさんがブログをGAEに移行された</a> 、というのを知って俺も移行しようかなあとか思いつつブログアプリ作りました。すでに今ブログで使っている機能は全て実装済みだったりします。デザインも全頁XHTMLTr validでCSSもvalidなことを確認済みだったりします。しかも <code>Django</code> じゃなくて <code>web.py</code> だったりします。慣れてるしね。</p>
-<p>それはおいといて、データストアまわりがそのままだと</p>
-<ul class="simple">
-<li><code><span class="pre">filter(&quot;hoge</span> =&quot;, value)</code> が長ったらしい</li>
-<li>CRUDが微妙。</li>
-<li>フォーム作成用等に空のモデルを一時的に作成したいけど、作成した時点でvalidateされるので作成できない</li>
-</ul>
-<p>らへんがいまいちだったで、ちょっといじってみました。</p>
-<pre class="prettyprint ">def _getattr(self, name):
-  if name.endswith("_eq"):
-    return lambda v: self.filter("%s ="%name[:-3], v)
-  raise AttributeError(name)
-setattr(db.Query, "__getattr__", _getattr)
-
-class ModelMixin(object):
-
-  default_order = None
-  _stab_class = None
-
-  @classmethod
-  def stab(cls):
-    if not cls._stab_class:
-      stab = type('Stab%s'%cls.__name__, (cls,), dict())
-      for k,v in stab._properties.iteritems():
-        v.required = False
-        v.choice   = None
-        v.validator= None
-      cls._stab_class = stab
-    stab = cls._stab_class()
-    for k,v in stab._properties.iteritems():
-      v.__set__(stab, v.default_value())
-    return stab
-
-  @classmethod
-  def create(cls, *a, **k):
-    obj = cls(*a, **k)
-    obj.put()
-    return obj
-
-  @classmethod
-  def find_all(cls):
-    result = cls.all()
-    if cls.default_order is not None:
-      return result.order(cls.default_order)
-    return result
-
-  def update(self, **k):
-    for prop in self.properties().values():
-      if prop.name in k:
-        prop.__set__(self, k[prop.name])
-    self.put()
-
-  def destroy(self):
-    self.delete()</pre><p>これで</p>
-<pre class="prettyprint ">class Test(ModelMixin, db.Model):
-  name = db.StringProperty(require=True)
-  created_at = db.DatetTmeProperty(auto_now_add=True)
-
-  default_order="-created_at"
-
-Test.find_all() # created_atの降順
-Test.all().name_eq("user").update(created_at = datetime.now())
-stab = Test.stab() #nameがなくても作成できる</pre><p>こんな感じにかけます。</p>
-<p>さて、そんなこんなでブログアプリを作ったのはいいんだけど、なんとなく移行する気にならない。現在はWordpressで運用しているけど、正直セキュリティホールは多いし、ソースコードを見ると泣きたくなるようなコードだし、頻繁なバージョンアップはめんどくさい･･･。プラグインのセキュリティホールまで考えるとなおめんどくさい。しかもそこまで機能を使い倒しているわけじゃないし。</p>
-<p>だからGAEにでも移行したいんだけど･･･。データがGoogleに握られるのはそこまで心配じゃない。ブログサービスでブログをやれば、そのブログサービス事業者にデータを握られるってのと同じだから気にならないんだな。移行作業自体も記事数がかなり少ないのでそんなにめんどくさそうではない。</p>
-<p>ひとつ引っかかっているのはトランザクションの問題。まぁめったにトランザクションで問題はおきないと思うけど、GAEのトランザクションは一応ある、といった程度でほとんど使えない。使おうとしたらtransactionの中でこれはしちゃだめ、これもしちゃだめ、とおこられまくったので現在トランザクション管理ができていない。GAEには集約系のメソッドがないので、月別記事数とか、タグ別記事数とかを記事のCRUD時に別モデルで管理しているわけだけど、ここのトランザクションが管理できないのは結構不安。</p>
-<p>もうひとつはなんとなーく使い切らないんだけど無料の上限である500Mという容量が微妙。画像のアップとかしなけりゃまず大丈夫なんだけど。</p>
-<p>その他にもなんとなくGoogleの罠じゃないかとかいろいろ気になって移行に踏み切れないでいる今日この頃。実際に本格的にGAEに移行した人の感想がききたいなあ。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/8/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li class="active">9</li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/10/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/8/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li class="active">9</li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/10/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

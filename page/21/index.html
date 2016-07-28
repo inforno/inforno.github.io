@@ -61,6 +61,160 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2006/10/24/python-generating-accessors-using-property" itemprop="url">Python:続・アクセサの生成</a></h3>
+<div class="meta">
+<time datetime="2006-10-24T18:32:02&#43;09:00">Oct 24, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="/articles/2006/09/30/python-generating-accessors">以前書いてみたアクセサ</a> をpropertyを使って改良してみる。</p>
+<p>propertyというのはnew-styleクラスに対してのみ使える、メソッドで</p>
+<pre class="prettyprint ">class C(object):
+    def __init__(self): self.__x = None
+    def getx(self): return self.__x
+    def setx(self, value): self.__x = value
+    def delx(self): del self.__x
+    x = property(getx, setx, delx, "I'm the 'x' property.")</pre><p>こんな感じで使う。</p>
+<p>Rubyを使った人なら分かると思うけど、プロパティ名でのアクセス＝アクセサ呼び出しになるのは結構便利。
+ActiveRecordなんかでは、特に便利だと感じる。あ、このプロパティ、もういっそエンコードされた値を返したい、と思ったときにそのクラスにプロパティ名と同じメソッドを定義するだけでいいし。</p>
+<p>前につくったアクセサは「get_hoge()」や「set_hoge()」といった感じで呼び出されたけど、これにpropertyを使うことによってRubyと同じような属性アクセスが可能になる。</p>
+<p>とりあえずこんな感じ。</p>
+<pre class="prettyprint ">#!/usr/bin/python
+# vim: fileencoding=utf-8
+from itertools import *
+
+def property_accessor(cls, *names):
+  _property(cls, names)
+
+def property_reader(cls, *names):
+  _property(cls, names, True)
+
+def property_writer(cls, *names):
+  _property(cls, names, False, True)
+
+def _property(cls, names, error_setter = False, error_getter = False):
+  for attr_name, doc in _name_and_docs(names):
+    real_name = _real_name(cls, attr_name)
+    setter  = _add_setter(cls, attr_name, real_name, error_setter)
+    getter  = _add_getter(cls, attr_name, real_name, error_getter)
+    deleter = _add_deleter(cls, attr_name, real_name)
+    setattr(cls, attr_name, property(getter, setter, deleter, doc))
+
+def _name_and_docs(name_or_tuples):
+  return imap(_name_and_doc ,name_or_tuples)
+
+def _name_and_doc(name_or_tupple):
+  if isinstance(name_or_tupple, ("".__class__, u"".__class__)) :
+    return (name_or_tupple, "")
+  else:
+    return name_or_tupple
+
+def _real_name(cls, name) :
+  return "_%s__%s"%(cls.__name__, name)
+
+def _add_method(cls, verb, name, method_to_add):
+  method_name = "%s_%s" % (verb, name)
+  method = cls.__dict__.get(method_name)
+  if not method :
+    method = method_to_add
+    setattr(cls, method_name, method)
+  return method
+
+def _add_setter(cls, name, real_name, error = False) :
+  if error:
+    def setter(self, v):
+      raise AttributeError, "class %s: %s is a read-only attribute." % (cls.__name__, name)
+  else:
+    setter = lambda self, v : setattr(self, real_name, v)
+  return _add_method(cls, "set", name, setter)
+
+def _add_getter(cls, name, real_name, error = False) :
+  if error:
+    def getter(self):
+      raise AttributeError, "class %s: %s is a write-only attribute." % (cls.__name__, name)
+  else:
+    getter = lambda self : getattr(self, real_name)
+  return _add_method(cls, "get", name, getter)
+
+def _add_deleter(cls, name, real_name) :
+  deleter = lambda self : delattr(self, real_name)
+  return _add_method(cls, "delete", name, deleter)
+
+class AccessorType(type):
+  def __new__(cls, class_name, class_bases, classdict):
+    cls = type.__new__(cls, class_name, class_bases, classdict)
+    list = ["__accessor__", "__reader__", "__writer__"]
+    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
+    for accessor_type, method in izip(list, methods):
+        if classdict.has_key(accessor_type):
+          method(cls, *classdict[accessor_type])
+    return cls
+
+class Accessor(object):
+  __metaclass__ = AccessorType
+  def __init__(self, *args) :
+    list = ["__accessor__", "__reader__", "__writer__"]
+    for accessor_type in list:
+      if not self.__class__.__dict__.has_key(accessor_type) : continue
+      for name in self.__class__.__dict__.get(accessor_type):
+        attr_name, doc = _name_and_doc(name)
+        if not self.__dict__.get(attr_name):
+          exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>使い方は</p>
+<pre class="prettyprint ">#!/usr/bin/python
+# vim: fenc=utf-8
+import accessor
+
+class Test(accessor.Accessor) :
+  __accessor__ = [("x", "This is x value"), "y", "z"]
+  __reader__    = ["r"]
+
+  def __init__(self):
+    accessor.Accessor.__init__(self)
+
+  def get_y(self) :
+    return "new y value"
+
+obj = Test()
+obj.x = "hoge"
+
+print obj.x
+# =&gt; hoge
+
+print Test.x.__doc__
+# =&gt; This is x value
+
+print obj.y
+# =&gt; new y value
+
+obj.r = "value"
+# =&gt; AttributeError: class Test: r is a read-only attribute.</pre><p>こんな感じ。</p>
+<p><code>get_*` とか ``set_*</code> を定義すれば、独自のアクセサを定義できる。
+属性は全て <code>private(__*)</code> として保存されているので、 <code>self.__x</code> みたいな感じでクラス内ではアクセスできる。</p>
+<p>これやっててはまったのはココ。</p>
+<pre class="prettyprint ">exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
+<!-- sou
+
+exec("self.__%s = None" % (attr_name)) -->
+<p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code><span class="pre">self.__dict__[&quot;_classname__x&quot;]</span> = &quot;hoge&quot;</code> に変換される。</p>
+<p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
+<p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2006/10/05/hide-the-console-window-with-python" itemprop="url">Python:バイナリでコンソールを表示しないようにするには？</a></h3>
 <div class="meta">
 <time datetime="2006-10-05T14:59:11&#43;09:00">Oct  5, 2006</time>
@@ -230,143 +384,10 @@ guiconsole.start(main, "GUIコンソールのテスト")</pre><p>でこんな風
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/09/30/python-generating-accessors" itemprop="url">Python:アクセサの生成</a></h3>
-<div class="meta">
-<time datetime="2006-09-30T00:18:33&#43;09:00">Sep 30, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Pythonの練習がてら、アクセサの生成をやってみる。どうせ探したらいっぱいコードが転がってるだろうし、練習にはうってつけかな、と。</p>
-<p>まず、ダメそうだけど、Rubyをやってる人からするとこうかきたい、というコード。</p>
-<pre class="prettyprint ">class Test(Accessor):
-  attr_accessor("__test", "__test2", "test3", "_test4")
-
-  def __init__(self):
-    self.__test = "test_value"
-    self.__test2 = "test2_value"
-    self.test3 = "test3_value"
-    self._test4 = "test4_value"</pre><p>こんな感じ。まぁ、絶対にダメそうだ（笑
-でも組み込みとはいえ、classmethodやstaticmethodみたいなのもあるから無理やりにならできるのかもしれない。</p>
-<pre class="prettyprint ">def test():
-  print sys._getframe(1).f_code.co_name
-
-class Test:
-  test()
-
-#=&gt; 文字列"Test"を出力</pre><p>こんな感じで呼び出しもとのクラス名は取得できる。ならevalすれば、というところなのだが予想通り</p>
-<pre class="prettyprint ">def test():
-  exec "cls = %s" % sys._getframe(1).f_code.co_name
-
-class Test:
-  test()
-
-#=&gt; NameError: name 'Test' is not defined</pre><p>この時点ではクラスオブジェクトの生成が完了していないので無理なようだ。Rubyのようにはいかない。</p>
-<p>結局のところ__metaclass__を使うことになる。
-マニュアルにもズバリ
-&gt; メタクラスは限りない潜在的利用価値を持っています。これまで試されてきたアイデアには、ログ記録、インタフェースのチェック、自動デリゲーション、 <strong>自動プロパティ生成</strong> 、プロキシ、フレームワーク、そして自動リソースロック／同期といったものがあります。</p>
-<p>と書いてあるのだ。</p>
-<ul class="simple">
-<li>後からもアクセサを追加したい(メソッドとしても独立させたい)</li>
-<li>当然、読み出しと書き込み、そして両方を行えるインターフェイス</li>
-<li>オーバーライドはできないとまずい</li>
-</ul>
-<p>というアクセサ生成としては至極当たり前なことを考えつつ、コードを書いてみる。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
-from itertools import *
-
-def property_accessor(cls, *names):
-  map(lambda n : _add_setter(cls, n[0], n[1]) or
-                 _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
-
-def property_reader(cls, *names):
-  map(lambda n : _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
-
-def property_writer(cls, *names):
-  map(lambda n : _add_setter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
-
-def _real_names(cls, names) :
-  cls_name = cls.__name__
-  return imap(lambda n : n.startswith("__") and "_%s%s"%(cls_name, n) or n, names)
-
-def _add_setter(cls, name, real_name) :
-  setter_name = "set_%s" % name.lstrip("_")
-  if cls.__dict__.has_key(setter_name): return
-  setattr(cls, setter_name, lambda self, v: setattr(self, real_name, v))
-
-def _add_getter(cls, name, real_name) :
-  getter_name = "get_%s" % name.lstrip("_")
-  if cls.__dict__.has_key(getter_name): return
-  setattr(cls, getter_name, lambda self: getattr(self, real_name))
-
-class AccessorType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    cls = type.__new__(cls, class_name, class_bases, classdict)
-    list = ["__accessor__", "__reader__", "__writer__"]
-    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
-    map(lambda n:
-          classdict.has_key(n[0]) and
-            n[1](cls, *classdict[n[0]]), izip(list, methods))
-    return cls
-
-class Accessor:
-  __metaclass__ = AccessorType
-
-class Test(Accessor):
-  __accessor__ = ["__test2", "test3", "_test4"]
-  __reader__   = ["__test"]
-
-  def __init__(self):
-    self.__test = "test_value"
-    self.__test2 = "test2_value"
-    self.test3 = "test3_value"
-    self._test4 = "test4_value"
-
-  def get_test3(self) :
-    return "changed_test3_value"
-
-obj = Test()
-
-print obj.get_test2()
-# =&gt; "test2_value"
-print obj.get_test3()
-# =&gt; "changed_test3_value"
-
-property_writer(Test, "__test")
-obj.set_test("new_test_value")
-print obj.get_test()
-# =&gt; "new_test_value"</pre><p>テストもろくにしてないし、汚いコードだけどなんとなくそれっぽい動き。だいたい40行くらいで実装できる。パフォーマンスを考えなければitertoolsがなくても大丈夫。</p>
-<p>そして、回答をさがしてみる。とりあえず「python accessor __metaclass__」あたりでググるとすぐにコードが見つかる。</p>
-<ul class="simple">
-<li><a class="reference external" href="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/307969">ASPN : Python Cookbook : Generating get/set methods using a metaclass</a></li>
-</ul>
-<p>見事なくらい同じようなコード。ただ、自分で書いたやつのほうが、オーバーライドできる、あとからもアクセサが生成できる、という点ではいい感じ。</p>
-<section>
-<h2>感想</h2>
-<p>ここらへんのメタプログラミングはやっぱりRubyのほうが柔軟性があってかつ、一貫しているので楽かな。
-Pythonはやっぱり関数をオブジェクトとして扱いやすい、というのが楽。Rubyのobj.some_methodでメソッドが呼び出せるのは便利だが、その点ではやっぱキツい。ループもPythonほうが好きだな。</p>
-<p>ま、やっぱり個人の好み、としかいいようがないなあ。最近ではWindowsの小物はほとんどpythonで書いてるけど（インストーラーがあって関連付けまでしてくれて、楽）、Linuxのほうはそうでもないし。</p>
-</section>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/20/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/17/" class="page">17</a></li><li><a href="/page/18/" class="page">18</a></li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li class="active">21</li><li><a href="/page/22/" class="page">22</a></li><li><a href="/page/23/" class="page">23</a></li><li><a href="/page/24/" class="page">24</a></li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/22/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/20/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/17/" class="page">17</a></li><li><a href="/page/18/" class="page">18</a></li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li class="active">21</li><li><a href="/page/22/" class="page">22</a></li><li><a href="/page/23/" class="page">23</a></li><li><a href="/page/24/" class="page">24</a></li><li><a href="/page/25/" class="page">25</a></li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/22/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

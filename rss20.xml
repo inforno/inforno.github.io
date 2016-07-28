@@ -7,10 +7,93 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>13 Jul 16 15:23 UTC</lastBuildDate>
+    <lastBuildDate>28 Jul 16 11:32 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
+    
+    <item>
+      <title>Go&#43;Luaのチャットボットフレームワークを作った </title>
+      <link>http://inforno.net/articles/2016/07/28/golbot</link>
+      <description>&lt;p&gt;たまには実用的なものをつくろうと思って、Go&#43;Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。&lt;/p&gt;
+&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/golbot&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;p&gt;チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。&lt;/p&gt;
+&lt;p&gt;特徴は以下です。&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;Goなので置けば動く&lt;/li&gt;
+&lt;li&gt;それでいてLuaでスクリプトを書ける&lt;/li&gt;
+&lt;li&gt;最初からマルチスレッド(複数goroutine)を考慮している&lt;/li&gt;
+&lt;li&gt;HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる&lt;/li&gt;
+&lt;li&gt;定期ジョブも流せる&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class=&#34;prettyprint lang-lua&#34;&gt;function main()
+  local bot = golbot.newbot(&#34;Slack&#34;, { token = &#34;xxxxx&#34; })
+
+  bot:respond([[\s*(\d&#43;)\s*\&#43;\s*(\d&#43;)\s*]], function(m, e) -- 3
+    bot:say(e.target, tostring(tonumber(m[2]) &#43; tonumber(m[3])))
+  end)
+
+  bot:serve(function(msg)
+    if msg.type == &#34;say&#34; then
+      bot:say(msg.channel, msg.message)
+      respond(msg, true)
+    end
+  end)
+end&lt;/pre&gt;&lt;p&gt;こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-lua&#34;&gt;function main()
+  bot:respond([[deploy]], function(m, e)
+    bot:say(e.target, &#34;accepted&#34;)
+    goworker({target=e.target, type=&#34;deploy&#34;})
+  end)
+
+  bot:serve(function(msg)
+    if msg.type == &#34;say&#34; then
+      bot:say(msg.target, msg.message)
+    end
+  end)
+end
+
+function worker(msg)
+  if msg.type == &#34;deploy&#34; then
+    do_deploy()
+    notifymain({type=&#34;say&#34;, target=msg.target, message=&#34;your deployment has been completed&#34;})
+  end
+end&lt;/pre&gt;&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは &lt;code&gt;notifymain&lt;/code&gt; でメインGroutineにメッセージをおくることができます。&lt;/p&gt;
+&lt;p&gt;HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-lua&#34;&gt; function http(r)
+   if r.method == &#34;POST&#34; and r.URL.path == &#34;/webhook&#34; then
+     local data = assert(json.decode(r:readbody()))
+     local message = data.item.message.message
+     local user = data.item.message.from.name
+     local room = data.item.room.name
+
+     local ret = {
+       message = &#34;hello! from webhook&#34;,
+       message_format = &#34;html&#34;
+     }
+
+     return 200, headers, json.encode(ret)
+   end
+   return 400, headers, json.encode({result=&#34;not found&#34;})
+ end&lt;/pre&gt;&lt;p&gt;定期ジョブは以下のような感じ。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-lua&#34;&gt; function main()
+   golbot.newbot(&#34;Null&#34;, {
+     http = &#34;0.0.0.0:6669&#34; ,
+     crons = {
+       { &#34;0 * * * * * &#34;, &#34;job1&#34;}
+     }
+   }):serve(function() end)
+ end
+
+ function job1()
+   print &#34;hello!&#34;
+ end&lt;/pre&gt;&lt;p&gt;チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。&lt;/p&gt;
+</description>
+      
+      <category>golang</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2016/07/28/golbot</guid>
+      <pubDate>28 Jul 16 11:32 UTC</pubDate>
+    </item>
     
     <item>
       <title>Goで文字コードを手軽に変換するライブラリ作った </title>
@@ -418,58 +501,6 @@ LLではそもそも全てがオブジェクトだったりで話題になりま
       
       <guid isPermaLink="true">http://inforno.net/articles/2015/11/19/iceberg-0-9-7-released</guid>
       <pubDate>19 Nov 15 11:58 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>GopherLuaを設定ファイルで使うライブラリを書きました </title>
-      <link>http://inforno.net/articles/2015/03/23/gluamapper-released</link>
-      <description>&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; で設定ファイルを書くためのライブラリを書きました。設定ファイル以外にも使えますけど。&lt;/p&gt;
-&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/gluamapper&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;p&gt;モノとしてはGopherLuaのテーブルをGoの構造体にマップしてくれます。といっても、内部動作的にはHashicorpの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/mitchellh/mapstructure&#34;&gt;mapstructure&lt;/a&gt; を使っているだけだったりします。一度GopherLuaのテーブルを &lt;code&gt;map[string]interface{}&lt;/code&gt; に変換してあげて、あとはmapstructureにおまかせ。&lt;/p&gt;
-&lt;p&gt;ただ、一般的なLuaの命名規則とGoの命名規則が違うので名前を変換する関数が指定できます。デフォルトでは &lt;code&gt;snake_case&lt;/code&gt; を &lt;code&gt;CamelCase&lt;/code&gt; に変換します。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; type Role struct {
-     Name string
- }
-
- type Person struct {
-     Name      string
-     Age       int
-     WorkPlace string
-     Role      []*Role
- }
-
- L := lua.NewState()
- if err := L.DoString(`
- person = {
-   name = &#34;Michel&#34;,
-   age  = &#34;31&#34;, -- weakly input
-   work_place = &#34;San Jose&#34;,
-   role = {
-     {
-       name = &#34;Administrator&#34;
-     },
-     {
-       name = &#34;Operator&#34;
-     }
-   }
- }
- `); err != nil {
-     panic(err)
- }
- var person Person
- if err := gluamapper.Map(L.GetGlobal(&#34;person&#34;).(*lua.LTable), &amp;amp;person); err != nil {
-     panic(err)
- }
- fmt.Printf(&#34;%s %d&#34;, person.Name, person.Age)&lt;/pre&gt;&lt;p&gt;のように非常に簡単にLuaを設定ファイルとして使うことができます。Luaは可読性が高く、JSONと異なりコメントが書けて、YAMLよりも簡単に値を変数化できるので設定ファイルにすると便利です(なんでも出来てしまう、というのがネックと言えばネックですが)。&lt;/p&gt;
-</description>
-      
-      <category>gopherlua</category>
-      
-      <category>golang</category>
-      
-      <category>lua</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2015/03/23/gluamapper-released</guid>
-      <pubDate>23 Mar 15 12:12 UTC</pubDate>
     </item>
     
   </channel>

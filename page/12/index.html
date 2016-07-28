@@ -61,33 +61,151 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell" itemprop="url">Scalaで無限リスト：Haskellライクに</a></h3>
+<h3 itemprop="name"><a href="/articles/2008/02/19/tasktools-committed-to-the-coderepos" itemprop="url">Python版Rake「tasktools」をCodeReposにコミットした</a></h3>
 <div class="meta">
-<time datetime="2008-02-09T23:52:10&#43;09:00">Feb  9, 2008</time>
+<time datetime="2008-02-19T01:13:10&#43;09:00">Feb 19, 2008</time>
 
   
-  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/tasktools/" rel="tag" itemprop="keywords">tasktools</a></span>
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>ScalaにはStreamという無限リストがあるんだけど、微妙に使いづらい、というか分かりづらい。Haskellでいうcycleはどうだ、とかよく忘れるのでメモ。</p>
-<pre class="prettyprint ">def repeat[T](a:T) = Stream.const(a)
-def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
-def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
-def replicate[T](n:int, elem:T) = Stream.make(n, elem)</pre><p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
-<pre class="prettyprint ">repeat(1) take 10 print
-// =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
+    <p><a class="reference external" href="http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules">以前紹介したPython版Rakeもどき</a> を改良してCodeReposに突っ込みました。まだ100行くらいです。自分では一番使っている自作モジュールなのでそろそろまとめようと思っていたのです。</p>
+<p><a class="reference external" href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.p">http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py</a></p>
+<section>
+<h2>改良点</h2>
+<ul class="simple">
+<li><code>setuptools</code> があるときはそっちを使うようにした。</li>
+<li><code>use_without_standard</code> メソッドによって <code>distutils</code> 標準タスクを消すことができる。これによって <code><span class="pre">--help-commands</span></code> の画面がすっきりする。また、この場合名前空間のセパレータに <code>:</code> を用いるようになった。</li>
+<li><code>global_description</code> によってタスクファイル自体に説明がつけられるようになった。</li>
+<li><code>load_path</code> メソッドで指定したディレクトリ以下を再帰的に検索し「 <code>tasks.py</code> 」という名前のファイルを読み込むことができるようになった。</li>
+<li><code><span class="pre">--help-commands</span></code> で表示されるコマンドの並び順をソートするようにした。</li>
+<li><code><span class="pre">--help-commands</span></code> でサブコマンドを一覧表示するようにした。</li>
+</ul>
+</section>
+<section>
+<h2>使用方法</h2>
+<p>以前書いたのとほとんど同じなんですが、まとめなおしておきます。</p>
+<section>
+<h3>tasktoolsとは？</h3>
+<p><code>distutils</code> および <code>setuptools</code> を拡張してextra commandを簡単に作成するためのユーティリティです。RubyにおけるRakeのようなものです。ビルド機能がほしい場合は <code>distutils</code> , <code>setuptools</code> の標準ビルド機能、もしくは <code>SCons</code> と組み合わせるとハッピーになれます。</p>
+<p>ちなみに、 <code>tasktools</code> というのは同じく <code>distutils</code> の拡張である <code>setuptools</code> の命名規則に習っています。 <code>task</code> 機能を強化するから <code>tasktools</code> です。</p>
+</section>
+<section>
+<h3>チュートリアル</h3>
+<p>典型的な <code>tasktools</code> の使い方です。</p>
+<p>まず <code>tasks.py</code> というファイルを作成します。典型的には以下の様になります。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+from tasktools import *
 
-cycle(1 to 4) take 10 print
-// =&gt; 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, Stream.empty
+global_description(u"""
+サンプルタスクファイルです。
+""")
 
-iterate((x:int)=&gt;x+1, 0) take 10 print
-// =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
+use_without_standard() # distutilsの標準コマンドを使用しないことを宣言します。
+load_path("./tasks") # "./tasks"以下のtasks.pyを再帰的に読み込みます
 
-replicate(3, 1) take 10 print
-// =&gt; 1, 1, 1, Stream.empty</pre><p>うんうん。</p>
+
+with namespace("file") as ns:
+  class mktmpfile(Task):
+    u"""一時ファイルを作成します。
+    """
+    user_options = [("path=", "p", u"作成するパスです")]
+    def run(self):
+      print "create %s"%self.path
+
+    def finalize_options(self):
+      if not self.path: self.path = "/tmp/tmp.txt"
+
+  class mklogfile(Task):
+    u"""ログファイルを作成します。
+    """
+    def run(self):
+      print "create log file"
+
+  class init(Task):
+    u"""ファイルを初期化します。
+    """
+    def run(self):
+      pass
+
+    sub_commands = [("file:mktmpfile", None),
+                    ("file:mklogfile", None)]
+
+if __name__ == "__main__":
+  run()</pre><p>では <code>python tasks.py <span class="pre">--help-commands</span></code> と実行してみましょう</p>
+<pre class="prettyprint ">############################################################
+
+サンプルタスクファイルです。
+
+############################################################
+
+Commands:
+  file:init        ファイルを初期化します。
+        sub commands:
+                file:mktmpfile
+                file:mklogfile
+  file:mklogfile   ログファイルを作成します。
+  file:mktmpfile   一時ファイルを作成します。
+
+usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+  or: tasks.py --help [cmd1 cmd2 ...]
+  or: tasks.py --help-commands
+  or: tasks.py cmd --help</pre><p>この様に <code>global_description</code> で設定した説明と、定義したタスクの一覧が表示されます。</p>
+<p>次に <code>./tasks/tasks.py</code> を作成してみます。</p>
+<pre class="prettyprint ">from __future__ import with_statement
+from tasktools import *
+
+use_without_standard()
+with namespace("subs") as ns:
+  class test1(Task):
+    u"""サブディレクトリで定義されたタスクです
+    """
+    def run(self):
+      print "sub test"
+
+if __name__ == "__main__":
+  run()</pre><p>このファイルは <code>./tasks.py</code> で <code><span class="pre">load_path(&quot;./tasks&quot;)</span></code> と宣言しているので <code>./tasks.py</code> を実行すると自動的に読み込まれます。
+もう一度 <code>python tasks.py <span class="pre">--help-commands</span></code> と実行してみましょう</p>
+<pre class="prettyprint ">############################################################
+
+サンプルタスクファイルです。
+
+############################################################
+
+Commands:
+  file:init        ファイルを初期化します。
+        sub commands:
+                file:mktmpfile
+                file:mklogfile
+  file:mklogfile   ログファイルを作成します。
+  file:mktmpfile   一時ファイルを作成します。
+  subs:test1       サブディレクトリで定義されたタスクです
+
+usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+  or: tasks.py --help [cmd1 cmd2 ...]
+  or: tasks.py --help-commands
+  or: tasks.py cmd --help</pre><p>確かに <code>subs:test1</code> コマンドが追加されています。</p>
+<p>ではタスクを実行してみましょう。 <code>python tasks.py file:init</code> を実行してみます。</p>
+<pre class="prettyprint ">running file:init
+running file:mktmpfile
+create /tmp/tmp.txt
+running file:mklogfile
+create log file</pre><p>おお、実行されましたね。</p>
+<p>user_optionsを定義しているタスクではオプションも渡せます。 <code>python tasks.py file:mktmpfile <span class="pre">--path=/tmp/change.txt</span></code> を実行してみましょう。</p>
+<pre class="prettyprint ">running file:mktmpfile
+create /tmp/change.txt</pre><p>ちゃんとオプションが渡されていますね。</p>
+<hr class="docutils" />
+<p>こんな感じです。distutilsの独自コマンドに関する説明は <a class="reference external" href="http://www.python.jp/doc/2.4/dist/node79.html">46 新しいDistutilsコマンドの作成</a> を参照してください。正直使えないページですが･･･。一応説明しておくとinitialize_optionsはuser_optionsの定義から自動生成するようになっています。また <code>distutils.core.Command</code> を継承しているのでこのクラスの機能も使えます。</p>
+<p>せっかくCodereposに突っ込んだのでバグなんかが見つかったらガンガン直しちゃってください。</p>
+</section>
+</section>
 
   </div>
 </article>
@@ -269,7 +387,7 @@ p.reverse_run_hooks({"hello":[1,2,3]})
 
 
 
-<nav class="paging"><ul><li class="previous"><a href="/page/11/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li class="active">12</li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/25/" class="page">25</a></li><li class="next"><a href="/page/13/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/11/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li class="active">12</li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/13/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>
