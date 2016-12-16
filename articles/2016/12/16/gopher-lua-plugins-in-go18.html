@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+  <head>
+    <meta charset="utf-8">
+    <title>inforno :: Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="/statics/css/main.css" rel="stylesheet">
+    <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
+    <script>
+      function get(id) {return document.getElementById(id)};
+      function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
+      function ready(fn) {if (document.readyState != 'loading'){fn();} else {document.addEventListener('DOMContentLoaded', fn);};}
+      var islocal = "http:\/\/inforno.net\/".indexOf(location.host) == -1
+
+      ready(function(){
+        load("\/include\/menu", "menu-body");
+      });
+
+      if(!islocal) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+        ga('create', 'UA-251608-1', 'auto');
+        ga('send', 'pageview');
+      }
+    </script>
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <header role="banner">
+      <h1><a href="/" rel="home">inforno</a></h1>
+      <h2>information &#43; inferno ... inforno</h2>
+  </header>
+  <div class="wrapper clearfix">
+    <div role="search">
+      <form action="https://google.com/search" method="get">
+        <fieldset>
+          <span class="add-on"><i class="icon-search"></i></span>
+          <input class="search" type="text" name="q" placeholder="Search..." />
+          <input type="hidden" name="hq" value="inurl:http://inforno.net/" />
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="wrapper clearfix">
+    <div role="main">
+      
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name">Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた</h3>
+<div class="meta">
+<time datetime="2016-12-16T21:10:26&#43;09:00">Dec 16, 2016</time>
+
+  
+  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
+  
+  <span class="tag"><a href="/articles/tag/lua/" rel="tag" itemprop="keywords">lua</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://qiita.com/advent-calendar/2016/go">Go Advent Calendar 2016</a> 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。</p>
+<p>さて、Go1.8では待望？のShared Libraryのロードが可能になります。 <a class="reference external" href="https://tip.golang.org/pkg/plugin/">pluginパッケージ</a> を使います。</p>
+<p>Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。</p>
+<p>Advent Calendar 2の <a class="reference external" href="http://qiita.com/qt-luigi/items/47a7913145fc747da0c7">qt-luigiさんのネタ</a> と被ってしまったのですが実戦的に使ってみました、ということで許してください。</p>
+<section>
+<h2>プラグインの作成とコンパイル</h2>
+<p>マニュアルページにあるとおり、以下のようになります。</p>
+<pre class="prettyprint lang-go"> package main
+
+ // // No C code needed.
+ import "C"
+
+ import "fmt"
+
+ var V int
+
+ func F() { fmt.Printf("Hello, number %d\n", V) }</pre><p>ポイントは</p>
+<ul class="simple">
+<li>Cのコードはないが、 <code>import &quot;C&quot;</code> が必要</li>
+<li><code>package</code> は <code>main</code></li>
+</ul>
+<p>という２点です。コンパイルは</p>
+<pre class="prettyprint bash"> $ go build -buildmode=plugin -o plugin.so plugin.go</pre><p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
+</section>
+<section>
+<h2>プラグインのロード</h2>
+<p>これまたマニュアルページどおりですが</p>
+<pre class="prettyprint lang-go"> p, err := plugin.Open("plugin.so")
+ if err != nil {
+     panic(err)
+ }
+ v, err := p.Lookup("V")
+ if err != nil {
+     panic(err)
+ }
+ f, err := p.Lookup("F")
+ if err != nil {
+     panic(err)
+ }
+ *v.(*int) = 7
+ f.(func())() // prints "Hello, number 7"</pre><p>のように非常に直感的に使えます。</p>
+</section>
+<section>
+<h2>GopherLuaで使ってみた</h2>
+<p>拙作のPure GoによるLua実装 <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。</p>
+<p>そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。</p>
+<p>こちらは <a class="reference external" href="https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins">feature-exp-go1.8pluginsブランチ</a> で実際に動かせます。プラグイン部分のコミットは <a class="reference external" href="https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b">571b031</a> です。</p>
+<p>まずプラグイン側から。Luaのお作法通りです。</p>
+<pre class="prettyprint lang-go"> package main
+
+ import (
+     "C"
+     "github.com/yuin/gopher-lua"
+ )
+
+ func Add(L *lua.LState) int {
+     v1 := L.CheckInt(1)
+     v2 := L.CheckInt(2)
+     L.Push(lua.LNumber(v1 + v2))
+     return 1
+ }
+
+ func LuaOpenPlugin(L *lua.LState) int {
+     L.Push(
+             L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+                     "add": Add,
+             }))
+     return 1
+ }</pre><p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
+<p>こいつをコンパイルして・・・</p>
+<pre class="prettyprint bash"> $ cd /home/yuin/tmp/plugin
+ $ go build -buildmode=plugin -o plugin.so plugin.go</pre><p>こうじゃ</p>
+<pre class="prettyprint ">$ glua
+&gt; package.cpath = package.cpath .. ";" .. "/home/yuin/tmp/plugin/?.so"
+&gt; adder = require("plugin")
+&gt; print(adder.add(1, 2))
+3</pre><p>おおおおおおおおおおおおお</p>
+<p>普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。</p>
+<pre class="prettyprint ">&lt;string&gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua</pre><p><code>package.loadlib</code> も実装しました。</p>
+<pre class="prettyprint ">$ glua
+&gt; print(package.loadlib("/home/yuin/tmp/plugin/notfound", "foo"))
+nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
+&gt; print(package.loadlib("/home/yuin/tmp/plugin/plugin.so", "foo"))
+nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
+&gt; print(package.loadlib("/home/yuin/tmp/plugin/plugin.so", "LuaOpenPlugin"))
+function: 0xc4200c9840
+&gt;</pre><p>完璧ですね。</p>
+</section>
+<section>
+<h2>pluginパッケージ、使えそうですが・・・</h2>
+<p>少なくとも、Linuxでは <code>plugin</code> パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。</p>
+<p>Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。</p>
+</section>
+
+
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2015/12/11/go-interface-performance-penalty">Goのインタフェースがパフォーマンスに及ぼす影響</a></li>
+<li><a href="/articles/2015/03/23/gluamapper-released">GopherLuaを設定ファイルで使うライブラリを書きました</a></li>
+<li><a href="/articles/2015/02/24/channel-support-in-gopher-lua">GopherLuaでchannelを扱えるようにした</a></li>
+<li><a href="/articles/2015/02/15/gopher-lua-released">LuaのGo言語実装を公開しました</a></li>
+<li><a href="/articles/2014/10/06/cidre-my-new-webframework-in-golang">cidre: 軽量Go言語用WEBフレームワーク</a></li>
+</ul>
+    </div>
+  </div>
+  <footer>
+    <dl>
+      <dt>
+        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2016/12/16/gopher-lua-plugins-in-go18" class="hatena-bookmark-button" data-hatena-bookmark-title="Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+       <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+      </dt>
+      <dd> </dd>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2016/12/16/gopher-lua-plugins-in-go18" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
+</article>
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2016\/12\/16\/gopher-lua-plugins-in-go18';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </div>
+
+  </div>
+  <div id="menu">
+    <div class="wrapper clearfix" id="menu-body">
+    </div>
+
+    <footer>
+      <p>&copy; Yusuke Inuzuka </p>
+      <p>powered by <a href="http://github.com/yuin/silkylog" rel="external">silkylog</a></p>
+    </footer>
+  </div>
+
+  <script type="text/javascript">
+    var disqus_shortname = 'inforno';
+    var disqus_developer = 0;
+    if(islocal) {
+      disqus_developer = 1;
+    }
+    
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+  </script>
+  </body>
+</html>

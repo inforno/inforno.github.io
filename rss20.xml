@@ -7,11 +7,117 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>28 Jul 16 11:32 UTC</lastBuildDate>
+    <lastBuildDate>16 Dec 16 12:10 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
     
+    <item>
+      <title>Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた </title>
+      <link>http://inforno.net/articles/2016/12/16/gopher-lua-plugins-in-go18</link>
+      <description>&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/advent-calendar/2016/go&#34;&gt;Go Advent Calendar 2016&lt;/a&gt; 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。&lt;/p&gt;
+&lt;p&gt;さて、Go1.8では待望？のShared Libraryのロードが可能になります。 &lt;a class=&#34;reference external&#34; href=&#34;https://tip.golang.org/pkg/plugin/&#34;&gt;pluginパッケージ&lt;/a&gt; を使います。&lt;/p&gt;
+&lt;p&gt;Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。&lt;/p&gt;
+&lt;p&gt;Advent Calendar 2の &lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/qt-luigi/items/47a7913145fc747da0c7&#34;&gt;qt-luigiさんのネタ&lt;/a&gt; と被ってしまったのですが実戦的に使ってみました、ということで許してください。&lt;/p&gt;
+&lt;section&gt;
+&lt;h2&gt;プラグインの作成とコンパイル&lt;/h2&gt;
+&lt;p&gt;マニュアルページにあるとおり、以下のようになります。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; package main
+
+ // // No C code needed.
+ import &#34;C&#34;
+
+ import &#34;fmt&#34;
+
+ var V int
+
+ func F() { fmt.Printf(&#34;Hello, number %d\n&#34;, V) }&lt;/pre&gt;&lt;p&gt;ポイントは&lt;/p&gt;
+&lt;ul class=&#34;simple&#34;&gt;
+&lt;li&gt;Cのコードはないが、 &lt;code&gt;import &amp;quot;C&amp;quot;&lt;/code&gt; が必要&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;package&lt;/code&gt; は &lt;code&gt;main&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;という２点です。コンパイルは&lt;/p&gt;
+&lt;pre class=&#34;prettyprint bash&#34;&gt; $ go build -buildmode=plugin -o plugin.so plugin.go&lt;/pre&gt;&lt;p&gt;でOK。簡単ですね。これで &lt;code&gt;plugin.so&lt;/code&gt; が生成されます。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;プラグインのロード&lt;/h2&gt;
+&lt;p&gt;これまたマニュアルページどおりですが&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; p, err := plugin.Open(&#34;plugin.so&#34;)
+ if err != nil {
+     panic(err)
+ }
+ v, err := p.Lookup(&#34;V&#34;)
+ if err != nil {
+     panic(err)
+ }
+ f, err := p.Lookup(&#34;F&#34;)
+ if err != nil {
+     panic(err)
+ }
+ *v.(*int) = 7
+ f.(func())() // prints &#34;Hello, number 7&#34;&lt;/pre&gt;&lt;p&gt;のように非常に直感的に使えます。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;GopherLuaで使ってみた&lt;/h2&gt;
+&lt;p&gt;拙作のPure GoによるLua実装 &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。&lt;/p&gt;
+&lt;p&gt;そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。&lt;/p&gt;
+&lt;p&gt;こちらは &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins&#34;&gt;feature-exp-go1.8pluginsブランチ&lt;/a&gt; で実際に動かせます。プラグイン部分のコミットは &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b&#34;&gt;571b031&lt;/a&gt; です。&lt;/p&gt;
+&lt;p&gt;まずプラグイン側から。Luaのお作法通りです。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint lang-go&#34;&gt; package main
+
+ import (
+     &#34;C&#34;
+     &#34;github.com/yuin/gopher-lua&#34;
+ )
+
+ func Add(L *lua.LState) int {
+     v1 := L.CheckInt(1)
+     v2 := L.CheckInt(2)
+     L.Push(lua.LNumber(v1 &#43; v2))
+     return 1
+ }
+
+ func LuaOpenPlugin(L *lua.LState) int {
+     L.Push(
+             L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+                     &#34;add&#34;: Add,
+             }))
+     return 1
+ }&lt;/pre&gt;&lt;p&gt;C実装のLuaでは &lt;code&gt;luaopen_共有ライブラリファイル名&lt;/code&gt; が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。&lt;/p&gt;
+&lt;p&gt;こいつをコンパイルして・・・&lt;/p&gt;
+&lt;pre class=&#34;prettyprint bash&#34;&gt; $ cd /home/yuin/tmp/plugin
+ $ go build -buildmode=plugin -o plugin.so plugin.go&lt;/pre&gt;&lt;p&gt;こうじゃ&lt;/p&gt;
+&lt;pre class=&#34;prettyprint &#34;&gt;$ glua
+&amp;gt; package.cpath = package.cpath .. &#34;;&#34; .. &#34;/home/yuin/tmp/plugin/?.so&#34;
+&amp;gt; adder = require(&#34;plugin&#34;)
+&amp;gt; print(adder.add(1, 2))
+3&lt;/pre&gt;&lt;p&gt;おおおおおおおおおおおおお&lt;/p&gt;
+&lt;p&gt;普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint &#34;&gt;&amp;lt;string&amp;gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua&lt;/pre&gt;&lt;p&gt;&lt;code&gt;package.loadlib&lt;/code&gt; も実装しました。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint &#34;&gt;$ glua
+&amp;gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/notfound&#34;, &#34;foo&#34;))
+nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
+&amp;gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/plugin.so&#34;, &#34;foo&#34;))
+nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
+&amp;gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/plugin.so&#34;, &#34;LuaOpenPlugin&#34;))
+function: 0xc4200c9840
+&amp;gt;&lt;/pre&gt;&lt;p&gt;完璧ですね。&lt;/p&gt;
+&lt;/section&gt;
+&lt;section&gt;
+&lt;h2&gt;pluginパッケージ、使えそうですが・・・&lt;/h2&gt;
+&lt;p&gt;少なくとも、Linuxでは &lt;code&gt;plugin&lt;/code&gt; パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。&lt;/p&gt;
+&lt;p&gt;Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。&lt;/p&gt;
+&lt;/section&gt;
+</description>
+      
+      <category>golang</category>
+      
+      <category>lua</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2016/12/16/gopher-lua-plugins-in-go18</guid>
+      <pubDate>16 Dec 16 12:10 UTC</pubDate>
+    </item>
+
     <item>
       <title>Go&#43;Luaのチャットボットフレームワークを作った </title>
       <link>http://inforno.net/articles/2016/07/28/golbot</link>
