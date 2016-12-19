@@ -107,8 +107,7 @@ function: 0xc4200c9840
 &lt;h2&gt;pluginパッケージ、使えそうですが・・・&lt;/h2&gt;
 &lt;p&gt;少なくとも、Linuxでは &lt;code&gt;plugin&lt;/code&gt; パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。&lt;/p&gt;
 &lt;p&gt;Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。&lt;/p&gt;
-&lt;/section&gt;
-</description>
+&lt;/section&gt;</description>
       
       <category>golang</category>
       
@@ -117,7 +116,7 @@ function: 0xc4200c9840
       <guid isPermaLink="true">http://inforno.net/articles/2016/12/16/gopher-lua-plugins-in-go18</guid>
       <pubDate>16 Dec 16 12:10 UTC</pubDate>
     </item>
-
+    
     <item>
       <title>Go&#43;Luaのチャットボットフレームワークを作った </title>
       <link>http://inforno.net/articles/2016/07/28/golbot</link>
@@ -192,8 +191,7 @@ end&lt;/pre&gt;&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLua
 
  function job1()
    print &#34;hello!&#34;
- end&lt;/pre&gt;&lt;p&gt;チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。&lt;/p&gt;
-</description>
+ end&lt;/pre&gt;&lt;p&gt;チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。&lt;/p&gt;</description>
       
       <category>golang</category>
       
@@ -223,8 +221,7 @@ end&lt;/pre&gt;&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLua
  s = MustDecodeString(string(source), &#34;Windows-31J&#34;)
  s = MustDecode(source, &#34;Windows-31J&#34;)
  s = MustDecodeBytes(source, &#34;Windows-31J&#34;)
- s = MustDecodeReader(bytes.NewReader(source), &#34;Windows-31J&#34;)&lt;/pre&gt;
-</description>
+ s = MustDecodeReader(bytes.NewReader(source), &#34;Windows-31J&#34;)&lt;/pre&gt;</description>
       
       <category>golang</category>
       
@@ -266,8 +263,7 @@ end&lt;/pre&gt;&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLua
 &lt;section&gt;
 &lt;h2&gt;2016年&lt;/h2&gt;
 &lt;p&gt;とはいえ、2016年もなにかまとまったものが書ければな…とは思っているんです。やっぱり独自言語書きたいですね、普通にCで。 Goで実用的なものもなにか書きたいんですけど、ほんと趣味レベルではなかなかいいモノが思いつきません。いやー、実践でGo書いてみたいので副業できるなら喜んでGoで何か書ける仕事探すんですがねえ…。&lt;/p&gt;
-&lt;/section&gt;
-</description>
+&lt;/section&gt;</description>
       
       <category>life</category>
       
@@ -582,31 +578,12 @@ LLではそもそも全てがオブジェクトだったりで話題になりま
 &lt;h2&gt;最後に&lt;/h2&gt;
 &lt;p&gt;インタフェースはGoで中心的な役割を果たしていますが、時に大幅なパフォーマンス劣化を起こす可能性があります。 特に、非ポインタ型を &lt;code&gt;interface{}&lt;/code&gt; などとして引数に渡す場合が要注意です。&lt;/p&gt;
 &lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 12日目は &lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/Ladicle&#34;&gt;Ladicle&lt;/a&gt; さんです。&lt;/p&gt;
-&lt;/section&gt;
-</description>
+&lt;/section&gt;</description>
       
       <category>golang</category>
       
       <guid isPermaLink="true">http://inforno.net/articles/2015/12/11/go-interface-performance-penalty</guid>
       <pubDate>10 Dec 15 15:00 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>icebergのLinux対応版 v0.9.7リリース </title>
-      <link>http://inforno.net/articles/2015/11/19/iceberg-0-9-7-released</link>
-      <description>&lt;p&gt;コマンドラインランチャー &lt;a class=&#34;reference external&#34; href=&#34;http://yuin.github.io/iceberg/&#34;&gt;iceberg&lt;/a&gt; のv0.9.7 をリリースしました。 GitHubの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/releases&#34;&gt;リリース一覧&lt;/a&gt; よりダウンロードできます。&lt;/p&gt;
-&lt;p&gt;今回からLinuxに対応しました。私は普段、ほぼWindowsがホストでVirtualbox上のUbuntuで開発を行っておりそこではLaunchyを使ってお茶をにごして？いたのです。がやはり慣れているicebergを使いたいと思っていたのでがんばって対応してみました。&lt;/p&gt;
-&lt;p&gt;Macを使っている人はそもそもAlfredなどを使っているでしょうけど、Windowsだと私と同じかたちの人も多いのではないかと思います。ぜひ使ってみてください。Linuxのコマンドラインランチャーでmigemo対応しているものはなかなか無いのではないでしょうか。&lt;/p&gt;
-&lt;p&gt;icebergはQtやGTKではなくfltkというミニマリストなGUIフレームワークなのでGUI以外の機能はほとんどフレームワークにありません。かといって、ここでQtやGTKに依存するのも癪だったのでLinuxではアイコンのルックアップなどを自分で実装したんですが結構しんどかったですね･･･。ただ、あらかじめマルチプラットフォームを視野にいれたつくりにしてあったので、ゴリゴリ書いていくだけで動くのは動いたのでよかったです。&lt;/p&gt;
-&lt;p&gt;内部的にはfltkのバージョンもあげました。これでWindows8以降でも互換モードなしで動いたりしないかなあ、と思っているのですが、いかんせん実機をもっていないのでどうにも。次はWindows10にすると思うので結局Windows8系は確認できないまま終わりそうです。&lt;/p&gt;
-&lt;p&gt;あと、ここまできたらなんでMacに対応しないんだ、となりそうですが単純に私がMacを持っていないからです。それに、icebergはMacの文化に合わない気がします。ただ、icebergは作者の私が一番の愛用者であるソフトなのでもし私がMacを手に入れることがあったら、対応すると思います。まぁイケてる会社のプログラマーに転職でもしないとMacを使うようなことはないと思いますが。&lt;/p&gt;
-&lt;p&gt;なにか問題ありましたらGithubの &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/iceberg/issues&#34;&gt;Issues&lt;/a&gt; までどうぞ。&lt;/p&gt;
-</description>
-      
-      <category>iceberg</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2015/11/19/iceberg-0-9-7-released</guid>
-      <pubDate>19 Nov 15 11:58 UTC</pubDate>
     </item>
     
   </channel>

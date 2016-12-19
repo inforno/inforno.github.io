@@ -61,31 +61,127 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/01/04/nes-emulator-development-with-python-1" itemprop="url">PythonによるNESエミュレータ開発1</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/09/30/python-generating-accessors" itemprop="url">Python:アクセサの生成</a></h3>
 <div class="meta">
-<time datetime="2007-01-04T03:02:21&#43;09:00">Jan  4, 2007</time>
+<time datetime="2006-09-30T00:18:33&#43;09:00">Sep 30, 2006</time>
 
   
   <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
   
-  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
-  
-  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>正月だというのにひたすらCPUの命令を実装・・・。ここはひたすら地道な作業が続く。やっぱりこういう単純作業は苦手だ・・・</p>
-<p>実装の際には <a class="reference external" href="http://www.geocities.co.jp/SiliconValley/5604/infones.html">InfoNES</a> や <a class="reference external" href="http://fms.komkon.org/EMUL8/">6502 Emulation Package</a> のソースコード、そして <a class="reference external" href="http://crystal.freespace.jp/pgate1/nes/nes_cpu.htm">NES on FPGAのCPUのページ</a> に大変お世話になりました。特にNES on FPGAのページは非常に分かりやすくまとめられていて助かりました。</p>
-<p>実装方針は前にも書いたとおり「できるだけPythonっぽく」。着々とエミュレーターっぽくないソースが出来上がってきています（笑　エミュレータのソースコードというとそれはもう、C言語でマクロ全開、register指定、inline(もしくはstatic)で出力されるコードを極限まで速く、なんて感じですが全く逆です。分かりやすさ優先。とりあえず書いてみて、ダメそうなら諦めるか頑張ってチューニングするか考えよう。</p>
-<p>今日までで、CPUの全命令は実装しました（したつもり）。ただ、Indexed Absolute AddressingのX,Y、そしてIndirect Indexed Addressingでページクロスしたとき1クロック余計に発生する、という件は今のところスルー。</p>
-<p>メモリ周りもIO以外はだいたい作ったので、今日の時点で単純なコードなら実行可能に。早速アセンブラを書いてNESASMで.NESファイルを作成。それを読み込んで動かしてみました。とりあえず動くことは動く・・・が全命令が正しく実装されているかはまだ分からないです（笑</p>
-<p>というわけで次はデバッグ環境を整えて、命令のテストをしないとなあ。</p>
-<p>余談。いやー卒論という重圧がないのは非常にプログラミングがはかどる。別にギリギリなわけでもないのに「卒論完全に出来上がってないのにこんなことしてていいのかなーって感じちゃう」的なものがないし。</p>
+    <p>Pythonの練習がてら、アクセサの生成をやってみる。どうせ探したらいっぱいコードが転がってるだろうし、練習にはうってつけかな、と。</p>
+<p>まず、ダメそうだけど、Rubyをやってる人からするとこうかきたい、というコード。</p>
+<pre class="prettyprint ">class Test(Accessor):
+  attr_accessor("__test", "__test2", "test3", "_test4")
 
+  def __init__(self):
+    self.__test = "test_value"
+    self.__test2 = "test2_value"
+    self.test3 = "test3_value"
+    self._test4 = "test4_value"</pre><p>こんな感じ。まぁ、絶対にダメそうだ（笑
+でも組み込みとはいえ、classmethodやstaticmethodみたいなのもあるから無理やりにならできるのかもしれない。</p>
+<pre class="prettyprint ">def test():
+  print sys._getframe(1).f_code.co_name
+
+class Test:
+  test()
+
+#=&gt; 文字列"Test"を出力</pre><p>こんな感じで呼び出しもとのクラス名は取得できる。ならevalすれば、というところなのだが予想通り</p>
+<pre class="prettyprint ">def test():
+  exec "cls = %s" % sys._getframe(1).f_code.co_name
+
+class Test:
+  test()
+
+#=&gt; NameError: name 'Test' is not defined</pre><p>この時点ではクラスオブジェクトの生成が完了していないので無理なようだ。Rubyのようにはいかない。</p>
+<p>結局のところ__metaclass__を使うことになる。
+マニュアルにもズバリ
+&gt; メタクラスは限りない潜在的利用価値を持っています。これまで試されてきたアイデアには、ログ記録、インタフェースのチェック、自動デリゲーション、 <strong>自動プロパティ生成</strong> 、プロキシ、フレームワーク、そして自動リソースロック／同期といったものがあります。</p>
+<p>と書いてあるのだ。</p>
+<ul class="simple">
+<li>後からもアクセサを追加したい(メソッドとしても独立させたい)</li>
+<li>当然、読み出しと書き込み、そして両方を行えるインターフェイス</li>
+<li>オーバーライドはできないとまずい</li>
+</ul>
+<p>というアクセサ生成としては至極当たり前なことを考えつつ、コードを書いてみる。</p>
+<pre class="prettyprint "># vim: fileencoding=utf-8
+from itertools import *
+
+def property_accessor(cls, *names):
+  map(lambda n : _add_setter(cls, n[0], n[1]) or
+                 _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
+
+def property_reader(cls, *names):
+  map(lambda n : _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
+
+def property_writer(cls, *names):
+  map(lambda n : _add_setter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
+
+def _real_names(cls, names) :
+  cls_name = cls.__name__
+  return imap(lambda n : n.startswith("__") and "_%s%s"%(cls_name, n) or n, names)
+
+def _add_setter(cls, name, real_name) :
+  setter_name = "set_%s" % name.lstrip("_")
+  if cls.__dict__.has_key(setter_name): return
+  setattr(cls, setter_name, lambda self, v: setattr(self, real_name, v))
+
+def _add_getter(cls, name, real_name) :
+  getter_name = "get_%s" % name.lstrip("_")
+  if cls.__dict__.has_key(getter_name): return
+  setattr(cls, getter_name, lambda self: getattr(self, real_name))
+
+class AccessorType(type):
+  def __new__(cls, class_name, class_bases, classdict):
+    cls = type.__new__(cls, class_name, class_bases, classdict)
+    list = ["__accessor__", "__reader__", "__writer__"]
+    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
+    map(lambda n:
+          classdict.has_key(n[0]) and
+            n[1](cls, *classdict[n[0]]), izip(list, methods))
+    return cls
+
+class Accessor:
+  __metaclass__ = AccessorType
+
+class Test(Accessor):
+  __accessor__ = ["__test2", "test3", "_test4"]
+  __reader__   = ["__test"]
+
+  def __init__(self):
+    self.__test = "test_value"
+    self.__test2 = "test2_value"
+    self.test3 = "test3_value"
+    self._test4 = "test4_value"
+
+  def get_test3(self) :
+    return "changed_test3_value"
+
+obj = Test()
+
+print obj.get_test2()
+# =&gt; "test2_value"
+print obj.get_test3()
+# =&gt; "changed_test3_value"
+
+property_writer(Test, "__test")
+obj.set_test("new_test_value")
+print obj.get_test()
+# =&gt; "new_test_value"</pre><p>テストもろくにしてないし、汚いコードだけどなんとなくそれっぽい動き。だいたい40行くらいで実装できる。パフォーマンスを考えなければitertoolsがなくても大丈夫。</p>
+<p>そして、回答をさがしてみる。とりあえず「python accessor __metaclass__」あたりでググるとすぐにコードが見つかる。</p>
+<ul class="simple">
+<li><a class="reference external" href="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/307969">ASPN : Python Cookbook : Generating get/set methods using a metaclass</a></li>
+</ul>
+<p>見事なくらい同じようなコード。ただ、自分で書いたやつのほうが、オーバーライドできる、あとからもアクセサが生成できる、という点ではいい感じ。</p>
+<section>
+<h2>感想</h2>
+<p>ここらへんのメタプログラミングはやっぱりRubyのほうが柔軟性があってかつ、一貫しているので楽かな。
+Pythonはやっぱり関数をオブジェクトとして扱いやすい、というのが楽。Rubyのobj.some_methodでメソッドが呼び出せるのは便利だが、その点ではやっぱキツい。ループもPythonほうが好きだな。</p>
+<p>ま、やっぱり個人の好み、としかいいようがないなあ。最近ではWindowsの小物はほとんどpythonで書いてるけど（インストーラーがあって関連付けまでしてくれて、楽）、Linuxのほうはそうでもないし。</p>
+</section>
   </div>
 </article>
 
@@ -97,67 +193,87 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/03/12/element-methods-in-prototype" itemprop="url">prototype.js 1.5のElement.Methods</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields" itemprop="url">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></h3>
 <div class="meta">
-<time datetime="2006-03-12T01:24:30&#43;09:00">Mar 12, 2006</time>
+<time datetime="2006-09-23T22:41:49&#43;09:00">Sep 23, 2006</time>
 
   
   <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
-  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  <span class="tag"><a href="/articles/tag/scriptaculous/" rel="tag" itemprop="keywords">scriptaculous</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/webpy/" rel="tag" itemprop="keywords">webpy</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>prototype.js1.5ではみんながこうしたいなーと思っていた機能が実装されました。(via <a class="reference external" href="http://encytemedia.com/blog/articles/2006/03/07/prototype-gets-some-serious-syntactic-sugar">Encytemedia</a> )
-（SVN co <a class="reference external" href="http://dev.rubyonrails.org/svn/rails/spinoffs/prototype">http://dev.rubyonrails.org/svn/rails/spinoffs/prototype</a> して rake distしたもの ）</p>
-<p>■Element.Methods</p>
-<p>1.4まではelementに対する操作は</p>
-<pre class="prettyprint ">Element.show($("test"));
-Element.update($("test"), "hoge");</pre><p>のように書く必要がありました。</p>
-<p>これが</p>
-<pre class="prettyprint ">$("test").show();
-$("test").update("hoge");</pre><p>と書けるようになりました。</p>
-<p>これはprototype.jsで最も偉大な$メソッドの変更によるモノです。</p>
-<pre class="prettyprint ">function $() {
-  var results = [], element;
-  for (var i = 0; i &lt; arguments.length; i++) {
-    element = arguments[i];
-    if (typeof element == 'string')
-      element = document.getElementById(element);
-    results.push(Element.extend(element)); //&lt;= ココ！
-  }
-  return results.length &lt; 2 ? results[0] : results;
-}</pre><p>つまり取得したelementに対してElement.extendが適応されるようになった、と。
-んでそのElement.extendは</p>
-<pre class="prettyprint ">Element.extend = function(element) {
-  if (!element) return;
-
-  if (!element._extended &amp;&amp; element.tagName &amp;&amp; element != window) {
-    var methods = Element.Methods;
-    for (property in methods) {
-      var value = methods[property];
-      if (typeof value == 'function')
-        element[property] = value.bind(null, element);
+    <p>nil.to_sが&quot;nil&quot;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。
+Rubyより関数志向での開発がしやすくて楽しいですよねえ。</p>
+<p>リハビリを兼ねてweb.pyで個人的なツールを作ってます。web.pyはシンプルで軽いので、個人用途（非公開でツールとして使う）だったらレンタルサーバーでCGIとして動作させても問題なさそうです。(XREAでは簡単なものなら負荷率0ptでした。Railsとかならいれるだけでダメなんで、素晴らしい)</p>
+<p>そこで、scriptaculousのAjax.InPlaceEditorを使っているわけですが、困ったことがひとつ。InPlace___Editor___なわけで、値を当然入力します。でその値がサーバー側でバリデーションエラーな時どうしたもんかと。</p>
+<p>理想的な動作としては</p>
+<ul class="simple">
+<li>エラーをユーザーに通知する</li>
+<li>サブミットする前の値のままtextareaを表示しておく</li>
+</ul>
+<p>なんですが、コンストラクタの中のoptionsあたりをのぞいてもそれらしきオプションはなさげ。</p>
+<p>ということでとりあえず場当たり的に書いてみたものが以下。</p>
+<pre class="prettyprint ">(function(){
+Ajax.RollbackableInPlaceEditor = Class.create();
+var dummy = function(){};
+dummy.prototype = Ajax.InPlaceEditor.prototype;
+Ajax.RollbackableInPlaceEditor.prototype = new dummy;
+Ajax.RollbackableInPlaceEditor.prototype.constructor = Ajax.RollbackableInPlaceEditor;
+})();
+Object.extend(Ajax.RollbackableInPlaceEditor.prototype, {
+  initialize : function(element, url, options) {
+    var self = this;
+    options = Object.extend({
+      callback: function(form) {
+        self.oldValue = self.editField.value;
+        return Form.serialize(form);
+      },
+      onFailure : Prototype.emptyFunction
+    }, options || {});
+    Ajax.InPlaceEditor.prototype.initialize.apply(this, [element, url, options]);
+  },
+  onclickCancel: function() {
+    this.onComplete();
+    this.element.innerHTML = this._oldInnerHTML;
+    this.element.show();
+    return false;
+  },
+  onComplete: function(transport) {
+    this.leaveEditMode();
+    if(transport &amp;&amp; !Ajax.Base.prototype.responseIsSuccess.call({transport:transport})) {
+      this.options.onFailure.bind(this)(transport, this.element);
+      return this.enterEditMode();
+    }else {
+      this.oldValue = null;
     }
+    this.options.onComplete.bind(this)(transport, this.element);
+  },
+  onFailure: function(transport) {
+    return false;
+  },
+  getText : function() {
+     if(this.oldValue != null &amp;&amp; this.oldValue != undefined){var v = this.oldValue; this.oldValue = null; return v;}
+    this._oldInnerHTML = this.element.innerHTML;
+    return this.element.innerHTML;
   }
-  element._extended = true;
-  return element;
-}</pre><p>Element.Methodsのメソッドがelementに対して第1引数をそのelementに束縛した状態でセットされます。
-つまりElement.Methodsにメソッドを追加すれば自動的に$で取得したelementに対してそのメソッドが追加されます。</p>
-<p>ちなみにscriptaculousでも</p>
-<pre class="prettyprint ">if(Element.Methods) {
-  Element.Methods.visualEffect = function(element, effect, options) {
-    s = effect.gsub(/_/, '-').camelize();
-    effect_class = s.charAt(0).toUpperCase() + s.substring(1);
-    new Effect[effect_class](element, options);
-    return $(element);
-  }
-}</pre><p>というコードが追加されています。
-クラス名変換のオーバーヘッドはあるものの、$(&quot;test&quot;).visualEffect('scale')と書けるようになりました。</p>
-<p>IEで$$が動くようになっていたりと1.5のリリースが待ち遠しいですね。</p>
-
+});</pre><p>サーバー側でエラーがあったときは適当に500とか406とかでレスポンスを返せばオッケーです。</p>
+<p>なのでサーバー側ではたとえばweb.pyなら</p>
+<pre class="prettyprint "># errors = ['データが長すぎます。']　など
+if len(errors) != 0:
+  web.header("Content-Type", "text/javascript"),
+  web.ctx["status"] = "406 Not Acceptable"
+  print "".join(["alert('", "\n".join(errors), "');"])
+  return</pre><p>とすればエラーになって（エラーメッセージがアラートされる）、サブミットした内容のままで再度編集できます。</p>
+<p>豆知識ですが、以上のようにサーバー側でtext/javascriptでレスポンスを返すとprototype.jsでは自動的にjavascriptとして評価してくれます。</p>
+<p>うーむ、まさに場当たり的。いろいろまずそうだけど、まぁ動いてるっぽいし気にしないことにしとこう・・・・</p>
   </div>
 </article>
 
@@ -169,51 +285,73 @@ $("test").update("hoge");</pre><p>と書けるようになりました。</p>
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/02/20/xml2json-with-the-javascript-template-engine" itemprop="url">XML2JSON&#43;javascriptテンプレートエンジンでRSS表示</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/02/15/the-embed-javascript-implementation" itemprop="url">埋め込みjavascriptを実装してみました。</a></h3>
 <div class="meta">
-<time datetime="2006-02-20T01:18:51&#43;09:00">Feb 20, 2006</time>
+<time datetime="2006-02-15T01:09:43&#43;09:00">Feb 15, 2006</time>
 
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-  <span class="tag"><a href="/articles/tag/feed/" rel="tag" itemprop="keywords">feed</a></span>
-  
-  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
   
   <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
   
+  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
-<p>ということで早速ハックしてみました。</p>
-<p><a class="reference external" href="http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation">前のエントリーで書いた</a> Javascriptテンプレートと組み合わせてめちゃくちゃ簡単にRSSを表示できます。</p>
-<p><a class="reference external" href="/statics/files/xml2json.zip">サンプルはこちら</a></p>
-<p>使い方ですが、多分ソースをみてもらったほうが速いです。</p>
-<p>サンプルHTMLから抜粋</p>
-<pre class="prettyprint ">Event.observe(window, "load", function(){
-        new XML2JSON("&lt;a href="http://feeds.feedburner.com/Inforno"&gt;http://feeds.feedburner.com/Inforno&lt;/a&gt;", {container: "test", template : {element:"template"}});
-});</pre><p>初期化コードはｺﾚだけです。
-containerでinnerHTMLに結果を流し込みたいElementを指定します。
-templateは <a class="reference external" href="/articles/2006/02/15/the-embed-javascript-implementation">Lyase.View.render</a> の引数と同じです。
-例ではtextareaエレメントのid:&quot;tempalte&quot;のinnerHTMLをテンプレートとして扱います。</p>
-<pre class="prettyprint ">//テンプレート
-  &lt;textarea id="template" style="display:none;"&gt;
+    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
+<p>同様の実装として <a class="reference external" href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
+<p><a class="reference external" href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
+<p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。
+実際の動作はサンプルファイルを見ていただくとして</p>
+<p>lyase_view.jsの説明どおり</p>
+<pre class="prettyprint ">/*
+ *   using innerHTML
+ *   -------------
+ *   //in HTML
+ *   &lt;textarea id="template" style="display:none"&gt;
+ *     The value of x is:&lt; %= context.x%&gt;
+ *   &lt;/textarea&gt;
+ *   //code
+ *   document.write(Lyase.View.render({element:"template"}, {x : 10}));
+ *
+ *   using a template file
+ *   -------------
+ *   //in /template.jhtml
+ *   The value of x is:&lt; %= context.x%&gt;
+ *   //code
+ *   document.write(Lyase.View.render({file:"/template.jhtml"}, {x : 10}));
+ *
+ *   Of course, you can embed more complex codes.
+ *   //in HTML, with prototype.js
+ *   &lt;textarea id="template" style="display:none"&gt;
+ *     &lt; % context.list.each(function(pair){%&gt;
+ *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
+ *     &lt; % }) %&gt;
+ *   &lt;/textarea&gt;
+ *   //code
+ *   document.write(Lyase.View.render({element:"template"},
+ *     {list :[{name : "x", value : 10}, {name : "y", value : 20}]}));
+ */</pre><p>こんな感じでjavascriptのコードが読み込めます。</p>
+<p>また</p>
+<pre class="prettyprint ">&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
+ この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
 
-&lt;h3&gt;&lt; %= context.channel.title %&gt;&lt;/h3&gt;
 
-&lt;ul class="items"&gt;
-      &lt; % context.channel.item.each(function(item,index){%&gt;
+以下のようにクロージャも問題なく使用できます。
 
-    &lt;li&gt;&lt;a href="&lt;%= item.link%&gt;" target="_blank"&gt;&lt; %= item.title%&gt;&lt;/a&gt;&lt;/li&gt;
-        &lt; % if(index &gt; 5){throw $break;}%&gt;
-      &lt; %})%&gt;
-   &lt;/ul&gt;
-  &lt;/textarea&gt;</pre><p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。
-またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで
-おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
+&lt; % var c = "," %&gt;
+&lt; % context.list.each(function(num){ %&gt;
+  &lt; %= num+c %&gt;
 
+&lt; % })%&gt;
+
+&lt; %= render({file :"./sample2.jhtml"}, context)%&gt; &lt;!--ココに注目--!&gt;</pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
+<p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。
+prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
   </div>
 </article>
 

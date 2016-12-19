@@ -61,218 +61,82 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/10/24/python-generating-accessors-using-property" itemprop="url">Python:続・アクセサの生成</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements" itemprop="url">続Element.Methods。問題とちょっと改良</a></h3>
 <div class="meta">
-<time datetime="2006-10-24T18:32:02&#43;09:00">Oct 24, 2006</time>
+<time datetime="2006-03-22T01:28:03&#43;09:00">Mar 22, 2006</time>
 
   
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="/articles/2006/09/30/python-generating-accessors">以前書いてみたアクセサ</a> をpropertyを使って改良してみる。</p>
-<p>propertyというのはnew-styleクラスに対してのみ使える、メソッドで</p>
-<pre class="prettyprint ">class C(object):
-    def __init__(self): self.__x = None
-    def getx(self): return self.__x
-    def setx(self, value): self.__x = value
-    def delx(self): del self.__x
-    x = property(getx, setx, delx, "I'm the 'x' property.")</pre><p>こんな感じで使う。</p>
-<p>Rubyを使った人なら分かると思うけど、プロパティ名でのアクセス＝アクセサ呼び出しになるのは結構便利。
-ActiveRecordなんかでは、特に便利だと感じる。あ、このプロパティ、もういっそエンコードされた値を返したい、と思ったときにそのクラスにプロパティ名と同じメソッドを定義するだけでいいし。</p>
-<p>前につくったアクセサは「get_hoge()」や「set_hoge()」といった感じで呼び出されたけど、これにpropertyを使うことによってRubyと同じような属性アクセスが可能になる。</p>
-<p>とりあえずこんな感じ。</p>
-<pre class="prettyprint ">#!/usr/bin/python
-# vim: fileencoding=utf-8
-from itertools import *
-
-def property_accessor(cls, *names):
-  _property(cls, names)
-
-def property_reader(cls, *names):
-  _property(cls, names, True)
-
-def property_writer(cls, *names):
-  _property(cls, names, False, True)
-
-def _property(cls, names, error_setter = False, error_getter = False):
-  for attr_name, doc in _name_and_docs(names):
-    real_name = _real_name(cls, attr_name)
-    setter  = _add_setter(cls, attr_name, real_name, error_setter)
-    getter  = _add_getter(cls, attr_name, real_name, error_getter)
-    deleter = _add_deleter(cls, attr_name, real_name)
-    setattr(cls, attr_name, property(getter, setter, deleter, doc))
-
-def _name_and_docs(name_or_tuples):
-  return imap(_name_and_doc ,name_or_tuples)
-
-def _name_and_doc(name_or_tupple):
-  if isinstance(name_or_tupple, ("".__class__, u"".__class__)) :
-    return (name_or_tupple, "")
-  else:
-    return name_or_tupple
-
-def _real_name(cls, name) :
-  return "_%s__%s"%(cls.__name__, name)
-
-def _add_method(cls, verb, name, method_to_add):
-  method_name = "%s_%s" % (verb, name)
-  method = cls.__dict__.get(method_name)
-  if not method :
-    method = method_to_add
-    setattr(cls, method_name, method)
-  return method
-
-def _add_setter(cls, name, real_name, error = False) :
-  if error:
-    def setter(self, v):
-      raise AttributeError, "class %s: %s is a read-only attribute." % (cls.__name__, name)
-  else:
-    setter = lambda self, v : setattr(self, real_name, v)
-  return _add_method(cls, "set", name, setter)
-
-def _add_getter(cls, name, real_name, error = False) :
-  if error:
-    def getter(self):
-      raise AttributeError, "class %s: %s is a write-only attribute." % (cls.__name__, name)
-  else:
-    getter = lambda self : getattr(self, real_name)
-  return _add_method(cls, "get", name, getter)
-
-def _add_deleter(cls, name, real_name) :
-  deleter = lambda self : delattr(self, real_name)
-  return _add_method(cls, "delete", name, deleter)
-
-class AccessorType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    cls = type.__new__(cls, class_name, class_bases, classdict)
-    list = ["__accessor__", "__reader__", "__writer__"]
-    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
-    for accessor_type, method in izip(list, methods):
-        if classdict.has_key(accessor_type):
-          method(cls, *classdict[accessor_type])
-    return cls
-
-class Accessor(object):
-  __metaclass__ = AccessorType
-  def __init__(self, *args) :
-    list = ["__accessor__", "__reader__", "__writer__"]
-    for accessor_type in list:
-      if not self.__class__.__dict__.has_key(accessor_type) : continue
-      for name in self.__class__.__dict__.get(accessor_type):
-        attr_name, doc = _name_and_doc(name)
-        if not self.__dict__.get(attr_name):
-          exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>使い方は</p>
-<pre class="prettyprint ">#!/usr/bin/python
-# vim: fenc=utf-8
-import accessor
-
-class Test(accessor.Accessor) :
-  __accessor__ = [("x", "This is x value"), "y", "z"]
-  __reader__    = ["r"]
-
-  def __init__(self):
-    accessor.Accessor.__init__(self)
-
-  def get_y(self) :
-    return "new y value"
-
-obj = Test()
-obj.x = "hoge"
-
-print obj.x
-# =&gt; hoge
-
-print Test.x.__doc__
-# =&gt; This is x value
-
-print obj.y
-# =&gt; new y value
-
-obj.r = "value"
-# =&gt; AttributeError: class Test: r is a read-only attribute.</pre><p>こんな感じ。</p>
-<p><code>get_*` とか ``set_*</code> を定義すれば、独自のアクセサを定義できる。
-属性は全て <code>private(__*)</code> として保存されているので、 <code>self.__x</code> みたいな感じでクラス内ではアクセスできる。</p>
-<p>これやっててはまったのはココ。</p>
-<pre class="prettyprint ">exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
-<!-- sou
-
-exec("self.__%s = None" % (attr_name)) -->
-<p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code><span class="pre">self.__dict__[&quot;_classname__x&quot;]</span> = &quot;hoge&quot;</code> に変換される。</p>
-<p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
-<p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/10/05/hide-the-console-window-with-python" itemprop="url">Python:バイナリでコンソールを表示しないようにするには？</a></h3>
-<div class="meta">
-<time datetime="2006-10-05T14:59:11&#43;09:00">Oct  5, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/gui/" rel="tag" itemprop="keywords">gui</a></span>
-  
-  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Pythonのコードをwindows用exeにするには当然、 <a class="reference external" href="http://www.py2exe.org/">py2exe</a> を使います。</p>
-<p>で、そのとき、</p>
-<pre class="prettyprint ">python setup.py py2exe --windows</pre><p>とすれば、コンソールを表示しないようにできます。</p>
-<div class="note">
-<p class="first">Note</p>
-<p class="last">これはもう古いやり方で、現在のバージョンのpy2exeでは動きません・・・。現在はターゲットファイルの拡張子を.pywにする、もしくは <code>windows = <span class="pre">[{'script'</span> : 'script.py', &quot;icon_resources&quot;: <span class="pre">[(1,&quot;script.ico&quot;)]}]</span></code> というオプションをsetupに渡す、という方法になっています。</p>
-</div>
-<p>今日、昔py2exeで作ったファイルが出てきたんですが、困ったことにpythonのソースファイルはない。いや、別に改良とかもうしないしいいんだけど。
-ふと起動してみるとGUI with console。かっちょわりい。</p>
-<p>コンソールが表示される、というのは単純にPEファイルのオプションなわけで。</p>
-<img alt="/statics/files/pe.jpg" src="/statics/files/pe.jpg" />
-<p>この部分を変更してやればとりあえずは直る。ちなみに、</p>
+    <p><a class="reference external" href="http://inforno.net/articles/2006/03/12/element-methods-in-prototype">以前のエントリー</a> でprototype.js1.5のElement.Methodsについて書きました。
+前回はいいところをプッシュして書いたんですが、皆さんご存じの通り問題児でもあります。</p>
+<p>Element.Methodsの問題点</p>
 <ul class="simple">
-<li>00 00:未知のサブシステム</li>
-<li>01 00:デバイス ライバおよびWindowsNTネイティブプロセス用</li>
-<li>02 00:GUIで実行されるファイル</li>
-<li>03 00:コンソールで実行されるファイル</li>
-<li>07 00:Posixコンソールで実行されるファイル</li>
-<li>09 00:WindowsCEで実行されるファイル</li>
+<li>elementを拡張するかしないかが選択できない。</li>
+<li>プロトタイプチェーンがつながっていない。</li>
+<li>document.createElementが考慮されていない。</li>
 </ul>
-<p>なので02h 00hにしてやればオッケー。</p>
-<p>Pythonでバイナリファイルの読み書きとかしたことないので練習もかねて。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
-import sys
-from struct import *
-target_file = len(sys.argv) &gt; 1 and sys.argv[1] or sys.exit("Target file is not specified.")
-target_file = unicode(target_file, "mbcs")
-out_file    = open(target_file + "_gui", "wb")
+<p>■elementを拡張するかしないかが選択できない。</p>
+<p>まずわかりやすくこれから。elementは取得された時に拡張されるわけですが、当然パフォーマンスに影響があります。使いたくない人もいるでしょう。しかし、Element.extendによる拡張は$にも$$にも組み込まれていて選択できません。メソッドを置き換えて回避は可能ですが、組み込まれている、ということを考慮すると当然extendされている、ということを前提としたライブラリも出てくるでしょう。となった場合にやっかいです。別名のメソッドを定義してもいいですが・・・やっぱり$って名前がいいよね！（何</p>
+<p>■プロトタイプチェーンがつながっていない。</p>
+<p>これは当然の問題。Element.extendは文字通りelementにElement.Methodsのメソッドをコピーしているだけ。しかも一回取得すると、_extendedというフラグが立って次回からはもうextendされない（パフォーマンスを考慮してのこと）。つまり Element.Methodsへのメソッド追加が反映されない、メソッドの内容変更も反映されない。
+　つまり、恐らく$か$$されるだろう、window.onloadイベント前にElement.Methodsへのメソッド追加を完了させ、それ以降変化させない、という事に注意しないといけない。</p>
+<p>ではなぜプロトタイプチェーンがつながっていないのだろうか。Elementは拡張できないんだろうか。これはYesでありNoです。
+まず、このElement.Methodsによる害をある程度押さえ込むことのできるソースを示します。
+これはFirefoxなどMozilla系、safari、Operaで有効です。</p>
+<pre class="prettyprint ">(function() {
+if(!window.HTMLElement) window.HTMLElement = document.createElement("xxx").constructor;
+if(window.HTMLElement) {
+    var methods = Element.Methods, property;
+    var bind = function(name, method) {
+      HTMLElement.prototype[name] = function(){
+        Array.prototype.unshift.call(arguments, this);
+        return method.apply(null, arguments) || this;
+      }
+    }
+    for (property in methods) {
+      var value = methods[property];
+      if (typeof value == 'function') bind(property, value);
+    }
+    HTMLElement.prototype._extended = true;
+}
 
-io = open(target_file, "rb")
-while 1 :
-  if io.read(1) == "P" and io.read(1) == "E" : break
-subsystem_pos = io.tell() +90
-io.seek(0)
-out_file.write(io.read(subsystem_pos))
-io.seek(4, 1)
-out_file.write(pack('hh', 2, 0))
-out_file.write(io.read())
+})();</pre><p>このコードを <strong>最後に(window.onloadの直前で)実行すれば</strong> OKです（scriptaculousとかもElement.Methodsを拡張するので、その拡張が終わった後）。
+これでelementがプロトタイプチェーンでつながっているブラウザでは$による負荷を軽減できます。$(&quot;test&quot;).show()とかも実行できますし、引数操作によるパフォーマンス低下がいやならElement.show(&quot;test&quot;)と実行すれば良いだけです。しかも地味にreturn method.apply(null, arguments) || this;とすることによって$(&quot;test&quot;).update(&quot;hogehoge&quot;).show()とか書けるようにもしてみました（笑</p>
+<p>しかしIEはどうしようもありません。 <strong>そもそもIEはelementがプロトタイプチェーンをもっていません。</strong>
+document.createElement (&quot;div&quot;).constructorとやってもprototypeとやってもundefinedと抜かす強敵です。これは昔から対策が考えられていますが、つまるところElement.Methodsと同様にコピーするだけです。それをhtcをつかってみたり、コンストラクタを擬似的に作ってみたり、とかっていう方法で実装しているだけです。なのでElement prototypingしようと思うとIEでは現状これが限界です。</p>
+<p>■　document.createElementが考慮されていない。</p>
+<p>先ほど示したソースでelementがプロトタイプチェーンをもつブラウザでは当然document.createElementで作成した elementもElement.Methodsのメソッドが実行できます。しかしIEではそれができません。この document.createElementも考慮して先ほどのElement.Methods対策ソースを改良しましょう。</p>
+<pre class="prettyprint ">(function() {
+if(!window.HTMLElement) window.HTMLElement = document.createElement("xxx").constructor;
+if(window.HTMLElement) {
+    var methods = Element.Methods, property;
+    var bind = function(name, method) {
+      HTMLElement.prototype[name] = function(){
+        Array.prototype.unshift.call(arguments, this);
+        return method.apply(null, arguments) || this;
+      }
+    }
+    for (property in methods) {
+      var value = methods[property];
+      if (typeof value == 'function') bind(property, value);
+    }
+    HTMLElement.prototype._extended = true;
+}else {
+  document._createElement = document.createElement;
+  document.createElement = function(tag){
+    return Element.extend(document._createElement(tag));
+  }
+}
 
-io.close()
-out_file.close()</pre><p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ
-pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
-
+})();</pre><p>赤色で示した部分が追加部分です。これでIEでもdocument.createElementした後に直接Element.Methodsのメソッドが実行できます。何度も言いますがパフォーマンス低下がいやな人はこの追加部分を省いてください。</p>
+<p>というわけで今回はElement.Methodsの問題への対応策を示してみました。要はIEがelementがプロトタイプチェーンを持つようにしてくれれば万事解決なわけなんですよね。でも結局IE7でも実装されていないようで、なかなか・・・</p>
   </div>
 </article>
 
@@ -284,102 +148,264 @@ pythonではバイナリを扱うときはstructモジュールを使う、と�
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/10/01/python-console-on-tk" itemprop="url">Python:Tkを使って気軽にコンソールアプリ?</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers" itemprop="url">キーボード派のWindows開発環境</a></h3>
 <div class="meta">
-<time datetime="2006-10-01T19:24:15&#43;09:00">Oct  1, 2006</time>
+<time datetime="2007-01-17T01:50:22&#43;09:00">Jan 17, 2007</time>
 
   
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
   
-  <span class="tag"><a href="/articles/tag/tk/" rel="tag" itemprop="keywords">tk</a></span>
+  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
   
-  <span class="tag"><a href="/articles/tag/cui/" rel="tag" itemprop="keywords">cui</a></span>
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
   
-  <span class="tag"><a href="/articles/tag/gui/" rel="tag" itemprop="keywords">gui</a></span>
+  <span class="tag"><a href="/articles/tag/craftlaunch/" rel="tag" itemprop="keywords">craftlaunch</a></span>
+  
+  <span class="tag"><a href="/articles/tag/cltc/" rel="tag" itemprop="keywords">cltc</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>Windowsの小物はほぼPythonで作っているわけですが。</p>
-<p>WindowsにPythonをインストーラーを使ってインストールすると*.pyにデフォルトだとpython.exeを関連付けしてくれます。
-これは非ﾌﾟﾛｸﾞﾗﾏな人にプログラムを渡すとき非常に便利で、とりあえずPythonをインストールして、このファイルをダブルクリックしろ、というだけでオッケー。exe化して無駄な容量を食わなくても大丈夫なのです。</p>
-<p>んで、作るのはだいたいコンソールで実行するもの。
-これがダブルクリックで実行できるのはいいんですが、当然、プログラムが終了するとウインドウ（DOSプロンプト）が閉じちゃうから結果が見れない。
-いちいちDOSプロンプトから実行するのもめんどくさい。しかも見た目的に非ﾌﾟﾛｸﾞﾗﾏにはいかつい。</p>
-<p>なんとかならないかなー、と思ってTkを使ってコンソールアプリを作るためのライブラリを作ってみた。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
-from Tkinter import *
-from ScrolledText import ScrolledText
-import sys
-import thread
-import time
+    <p>そういえば、こういうサイトに定番っぽい開発環境を書いたのがないので、自己紹介？も兼ねて晒してみます。</p>
+<p>開発はだいたいWindows上のvmware(Debian)でやってます。ただし、そこは定番どころばっかりなのでパス。まぁvim+screen+zshです。puttyでつないでますよ。sambaでマウントしてますよ。ええ。それぞれ結構設定しまくっていて、グローバルなSVNサーバーにおいてあります。</p>
+<section>
+<h2>Windowsでの開発環境</h2>
+<p>あんまりWindowsは好きではないけど、Macよりは好きだったりする。というわけでWindows。普段使いのOSでもあるので、主に自分用の小物を書くことが多いです。怠け者なので、自動化できるものはすぐプログラムに置き換えちゃいます。でも言語は結構様々。もとから言語にこだわらず、一番適しているものを使う主義なので小物が多いにもかかわらず、言語は結構多いのかも。</p>
+<p>今のところ、だいたい</p>
+<ul class="simple">
+<li>それなりのGUIが必要なアプリ:Delphi6</li>
+<li>一枚ウインドウがあるくらいのGUIアプリ:Python(wxWidgets)</li>
+<li>GUIがなく、立ち上がりの速さや軽さが欲しいもの：C(MinGW)</li>
+<li>それ以外の小物:Python</li>
+</ul>
+<p>という感じで適材適所。</p>
+<p>Linuxではまったく定番な感じ（定番が自分にしっくりきた）だったけど、Windowsにはキーボード派の定番ってのは少ない気がするので、結構独特なのかも。方針は</p>
+<ul class="simple">
+<li>キーボードで操作しやすいように。</li>
+<li>なるべくlinuxと同じような感覚（←これ重要)で。</li>
+</ul>
+<p>感覚なので一緒じゃなくてもいいのです。</p>
+<section>
+<h3>gvim</h3>
+<p>開発はほとんどこいつです。Delphi以外は。Linuxのvimと同じ設定ファイルを共有してます。俺はvimがなくちゃ生きていけない人間なので、USBメモリにいれてもち運べるようにしてあります。</p>
+</section>
+<section>
+<h3>Firefox</h3>
+<p>ブラウザはこいつ。ただし <a class="reference external" href="http://portablefirefox.mozdev.org/">PortableFirefox</a> です。これもUSBメモリにいれて持ち運べるように。学校にいってもUSBメモリをさすだけで普段の環境。拡張も結構つっこんでます。</p>
+</section>
+<section>
+<h3><a class="reference external" href="http://d.hatena.ne.jp/cogma">cltc</a></h3>
+<p>タスク切り替えが便利になるソフト。こんな感じで表示されます。インクリメンタル検索での選択や、カーソルキーでの選択ができます。</p>
+<a class="reference external image-reference" href="http://inforno.net/statics/files/cltc.jpg"><img alt="http://inforno.net/statics/files/cltc.thumbnail.jpg" src="http://inforno.net/statics/files/cltc.thumbnail.jpg" /></a>
+<p>windowsでタスク切り替えというと`Alt+TAB`ですが、これ非常に使いづらい。そこでこのソフト。ここでキモになるのがキー設定で</p>
+<ul class="simple">
+<li><code>Ctrl+Shift+z</code> で起動</li>
+<li><code>Ctrl+j</code> と <code>Ctrl+k</code> でタスクを選択</li>
+</ul>
+<p>という風に設定しています。俺と同じLinux開発環境の人は分かるでしょう（笑</p>
+<p><code>Ctrl+z` がscreenのエスケープで ``jk</code> はvim。これだけでかなりLinuxと同じ感覚でタスクが選べるようになります。</p>
+</section>
+<section>
+<h3>MigemizeExplorer</h3>
+<p>こりゃ定番。説明不要ですよねえ。超便利。</p>
+</section>
+<section>
+<h3><a class="reference external" href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h3>
+<p>これがないと始まらない。コマンド型ランチャー。craftlanuchラブ。こいつはデスクトップ用と持ち運び用（USBメモリに入れる用）の2個も用意してます。起動用ホットキーはeclipseなんてもんは使ってないので <code>Ctrl+Space</code> です。</p>
+<p>俺の場合はほぼ全ての作業の起点がこのソフト。ランチャーとしてのソフト起動から簡易シェルとしてまで大活躍。中でもオススメなのはexplorer.exe(windows標準のシェル)+craftlaunchの連携。</p>
+<p>craftlaunchというと「 <a class="reference external" href="http://www.h5.dion.ne.jp/~akt/">あふ</a> 」との連携が有名ですが、俺はあえてexplorer.exeと連携してます。というのも、なにぶん普段使いのOSですから、マルチメディアのファイルなんかも多いわけです。重くてもプレビューが見れたりするのは便利なもんです。日本語のファイル名だし、ファイラーつかってもファイル選択するのがめんどくさいもんです。</p>
+<p>どうやって連携してるかというと、基本的に小物アプリ＋ショートカットキー。この使い方をはじめるきっかけになったのは「せっかくcraftlaunchからキーボードだけでフォルダ開けるんだから、ホームポジションで楽にキーボードだけで閉じたいなあ」という思い。</p>
+<p><code>ctrl+space</code>, <code>ctrl+[</code></p>
+<p>の2ステップでウインドウが閉じられます。ctrlは押しっぱなしでいいので非常に軽快に閉じられます。鉄の小指を持つemacs使いの人ならなおのことでしょう（笑</p>
+</section>
+</section>
+<section>
+<h2>その他の連携</h2>
+<p><strong>フォルダの新規作成</strong></p>
+<p>windowのexplorerの不満はフォルダを作るのがめんどくさいことですよね。キーボードなら <code>Alt+F W F</code> でしょうか。というわけでfiniのような自作コマンドで対応してます。超テキトーなのですが、あげておきます。</p>
+<p><a class="reference external" href="/statics/files/amkdir.zi">amkdir.zip</a></p>
+<p>こいつを <code>ctrl+n</code> にショートカットとして割り当ててあります。すると・・・</p>
+<p>craftlaunchでフォルダを開く→MigemizeExplorerで快適にフォルダをたどる→「フォルダつくりてえ」→ <code>ctrl+space</code> フォルダ名入力 <code>ctrl+n</code></p>
+<p>という感じになるわけで、結構ハッピーです。</p>
+<p><strong>コンソール</strong></p>
+<p>おなじような感じで、表示されているフォルダをカレントディレクトリとしてcmd.exeを起動するものもつくってあります。ほとんどつかわないけど。</p>
+<p>以上のような、変なWindowsで日々暮らしています。cltcでブラウザやvim、コンソールを行き来しながらIDEはあんまり使わないでガリガリ書いています。</p>
+<p>まぁ、だいたいvmware上のLinuxにいるんですけど（笑</p>
+<p>まとめると</p>
+<ul class="simple">
+<li>cltcで <code>ctrl+z</code> に <code>ctrl+j,k</code> 。快適ですよ。</li>
+<li>MigemizeExplorerはWindows標準装備になればいいのに。</li>
+<li>craftlaunchはあふと連携してもいいけど、explorerと連携してもハッピーですよ。</li>
+</ul>
+<p>という感じです。</p>
+<p>エミュレーターのほうはあのあとCPUを若干チューニングして、1フレーム0.1はキリました。今はPPUを書いてるんですが、そろそろ就職に備えて家を探さないといけません。京都と関東を行き来するのはいろいろこたえます。移動中はシグマリオンのPocketSchemeでSchemeでも書いて暇つぶしです。</p>
+</section>
+  </div>
+</article>
 
-class GUIConsole(Frame):
-  def init(self):
-    self.init_input()
-    self.init_output()
 
-  def init_input(self):
-    self.input_var = StringVar()
-    self.input = Entry(self, width=100, textvariable=self.input_var)
-    self.input.pack(side=TOP)
-    self.input.bind('&lt;Return&gt;', self.input_enter)
+  <hr class="list1sep" />
 
-    self.input_var.readline = self.readline
-    sys.stdin = self.input_var
 
-  def init_output(self):
-    self.out = ScrolledText(self, width=100, height=30)
-    self.out.pack(side=TOP)
-    self.out.write = self.write
-    sys.stdout = self.out
 
-  def write(self, str):
-    self.out.insert(END, str)
-    time.sleep(0.0001)
-    self.out.yview_scroll(str.count("\n") + 1, "units")
 
-  def readline(self, size=None):
-    self.input.focus()
-    self.input_entered = False
-    while True:
-      time.sleep(0.5)
-      if self.input_entered == True:
-        break
-    result = self.input_var.get()
-    self.input_var.set("")
-    return result
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2007/01/12/nes-emulator-development-with-python-2" itemprop="url">PythonによるNESエミュレータ開発2</a></h3>
+<div class="meta">
+<time datetime="2007-01-12T02:50:02&#43;09:00">Jan 12, 2007</time>
 
-  def input_enter(self, event):
-    self.input_entered = True
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
 
-  def __init__(self, title, master=None):
-    self.input_entered = False
-    Frame.__init__(self, master)
-    self.pack()
-    self.master.title(title)
-    self.init()
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>実は既に結構挫折気味。</p>
+<p>やっぱりPythonではちょっと厳しいかもしれない。</p>
+<p>とりあえず一番ややこしいPPU周りの情報を調べて、ちょろちょろ書き始めたあたりでいったんCPU部分のパフォーマンスを調べてみました。</p>
+<p>かなり厳しいものがあります。CPU部分のコードはPython的な書き方で書いてたんですが、これじゃ話にならない。まず、アクセサなんてものはつかっちゃいけないのだ。</p>
+<p>以下環境はOS:WinXP,CPU:Athlon64 3000+,Memory:1G,Python2.4です。</p>
+<section>
+<h2>CPUのレジスタ関連の実装</h2>
+<p>NESのCPUである6502のレジスタはPCは16bit、それ以外は8bit。8bitの値なんてものはCならunsigned charで一発なんだけど、Pythonにはそんなものない。足し算したらどんどん大きくなるし、引き算したらどんどん小さくなる。ので</p>
+<pre class="prettyprint ">class Py6502(object):
+  def __init__(self):
+    self.A = 0
+    self.X = 0
+    self.Y = 0
+    self.PC = 0
+    #  .
+    #  .
+    #  .</pre><p>見たいなクラスにするとして、足し算するときなどは必ず <code>self.A = (self.A + x) &amp; 0xff</code> みたいにして8bitに収めないといけない。ここで</p>
+<pre class="prettyprint ">def _create_n_bit_property(name, mask):
+  rname = "_"+name
+  result = {
+    name:property(lambda self: getattr(self, rname),
+                  lambda self,v : setattr(self, rname, v &amp; mask),
+                  )
+  }
+  return result
 
-def start(main_func, title="Python") :
-  app = GUIConsole(title)
-  thread.start_new_thread(main_func, ())
-  app.mainloop()</pre><p>使い方はこんなかんじ。</p>
-<pre class="prettyprint ">import guiconsole
+class ForceNbitType(type):
+  def __new__(cls, class_name, class_bases, classdict):
+    names = classdict.get("__16bit__")
+    for name in names:
+      classdict.update(_create_n_bit_property(name, 0xffff))
+    names = classdict.get("__8bit__")
+    for name in names:
+      classdict.update(_create_n_bit_property(name, 0xff))
+    cls = type.__new__(cls, class_name, class_bases, classdict)
+    return cls</pre><p>のようなmetaclassをつくって</p>
+<pre class="prettyprint ">class Py6502(object):
+  __metaclass__ = ForceNbitType
+  __8bit__ : "A", "X", "Y"
+  __16bit__ : "PC",
+  def __init__(self):
+    self._A = 0
+    self._X = 0
+    self._Y = 0
+    self._PC = 0
+    #  .
+    #  .
+    #  .</pre><p>とすれば <code>self.A += 10</code> とかしてもちゃんと8bitに収まる。</p>
+<p>非常に上手くかけるんですが、こんなのやってらんない。遅すぎる。1Frame分(28000サイクル程度)の実行に0.5秒（笑</p>
+</section>
+<section>
+<h2>getattr</h2>
+<p><code>getattr` は遅い。 ``getattr</code> の真価は第3引数でdefault値が指定できること（だと思う）。今回のように確実に属性が存在することが分かっているなら <code>self.__getattribute__(name)</code> を使うと結構違ってくる。ちなみにPythonのソースではこんな感じ。</p>
+<pre class="prettyprint ">static PyObject *
+slot_tp_getattro(PyObject *self, PyObject *name)
+{
+    static PyObject *getattribute_str = NULL;
+    return call_method(self, "__getattribute__", &amp;getattribute_str,
+                       "(O)", name);
+}
 
-def main():
-  while True:
-    var = raw_input()
-    print var
+static PyObject *
+slot_tp_getattr_hook(PyObject *self, PyObject *name)
+{
+    PyTypeObject *tp = self-&gt;ob_type;
+    PyObject *getattr, *getattribute, *res;
+    static PyObject *getattribute_str = NULL;
+    static PyObject *getattr_str = NULL;
 
-guiconsole.start(main, "GUIコンソールのテスト")</pre><p>でこんな風にみえる。</p>
-<a class="reference external image-reference" href="/statics/files/python_tk_cui.jpg"><img alt="/statics/files/python_tk_cui.thumbnail.jpg" src="/statics/files/python_tk_cui.thumbnail.jpg" /></a>
-<p>一番上に入力欄があって、その下に結果表示エリア。</p>
-<p>Pythonの場合、stdoutはwriteというメソッド、stdinはreadlineというメソッドさえもっていればどんなオブジェクトでもオッケー。
-なので単純にstdoutとstdinをTkのウィジットに置き換えてメインループに入り、別スレッドでメインの処理を実行してやっているだけ。</p>
-<p>見栄えも生のDOSプロンプトよりはいいし、処理が終わってもウィンドウを閉じない限り結果を見ることができる。
-プチ便利なので、はやくも自分で使いまくりです（笑</p>
+    if (getattr_str == NULL) {
+            getattr_str = PyString_InternFromString("__getattr__");
+            if (getattr_str == NULL)
+                    return NULL;
+    }
+    if (getattribute_str == NULL) {
+            getattribute_str =
+                    PyString_InternFromString("__getattribute__");
+            if (getattribute_str == NULL)
+                    return NULL;
+    }
+    getattr = _PyType_Lookup(tp, getattr_str);
+    if (getattr == NULL) {
+            /* No __getattr__ hook: use a simpler dispatcher */
+            tp-&gt;tp_getattro = slot_tp_getattro;
+            return slot_tp_getattro(self, name);
+    }
+    getattribute = _PyType_Lookup(tp, getattribute_str);
+    if (getattribute == NULL ||
+        (getattribute-&gt;ob_type == &amp;PyWrapperDescr_Type &amp;&amp;
+         ((PyWrapperDescrObject *)getattribute)-&gt;d_wrapped ==
+         (void *)PyObject_GenericGetAttr))
+            res = PyObject_GenericGetAttr(self, name);
+    else
+            res = PyObject_CallFunction(getattribute, "OO", self, name);
+    if (res == NULL &amp;&amp; PyErr_ExceptionMatches(PyExc_AttributeError)) {
+            PyErr_Clear();
+            res = PyObject_CallFunction(getattr, "OO", self, name);
+    }
+    return res;
+}</pre><p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
+</section>
+<section>
+<h2>実行ループ</h2>
+<p>CPUのエミュレータなんてのはだいたい同じようなパターンで割り込みを除いて簡単に書くと</p>
+<pre class="prettyprint ">def step_execute(self, clocks):
+  while (self.passed_clocks &lt; clocks):
+    opecode = read()# opecodeを取得
+    # 実行
+    count = CLOCK[opecode] # 実行に必要なクロック数を取得
+    self.passed_clocks += count
+  self.passed_clocks -= clocks</pre><p>なんてのになるわけで、ここが激しくループするわけで。ここはガリガリにちょっとでも節約できるものは節約。</p>
+<pre class="prettyprint ">def step_execute(self, clocks):
+  read = self.memory.read
+  get_method_by_opecode = self.get_method_by_opecode
+  while (self.passed_clocks &lt; clocks):
+    old = self._PC; self._PC += 1; self._PC &amp;= 0xffff
+    opecode = read(old)
+    method = get_method_by_opecode(opecode)
+    count = method()
+    count = count != None and count or CYCLES[opecode]
+    self.passed_clocks += count
+  self.passed_clocks -= clocks</pre><p>javascriptで.(ドット)演算が遅いとかいうのは最近（？）よく言われていることで、それはPythonにも当然当てはまる。なのでループ前にだせるものはローカルに出しておく。（これが簡単にできるのがRubyよりもPythonがいい部分だよなあ）</p>
+<p>あと、実行の部分。ここはCなら関数テーブルかswitch(コンパイラによるけど大差ないと思う）になるんだけど、あいにくPythonにはswitchがないので関数テーブル的なものか <code>if opecode == 0x01: ... elif opecode == <span class="pre">0x02:...</span> <span class="pre">elif...</span></code> かになる。</p>
+<p>関数テーブル的なものは</p>
+<pre class="prettyprint ">def ope_0x01(self):
+  #code
+def ope_0x02(self):
+  #code
 
+self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
+</section>
+<section>
+<h2>結局</h2>
+<p>そんな感じでいじってみてかつpsycoを入れて1Frame:0.15程度（PPUやAPUは中身がないので、最後までつくったらもっと遅くなる）。ほかにもいじれそうなところはあって、そこをいじれば0.1は切れそうな感じがしてます。</p>
+<p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに <code>A &amp; 0xff</code> みたいなことをやっていて、どーもめんどくさい。</p>
+<p>じゃぁLLでエミュレーターを書く意味ってなんだ、というと・・・うーん（笑　自己満足以外なにもないでしょうねえ。というわけで自己満足のために、今後もヒマができれば、ちょっとづつ書き進めてみようかなあ。</p>
+</section>
   </div>
 </article>
 

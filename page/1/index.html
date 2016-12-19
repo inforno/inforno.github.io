@@ -61,6 +61,123 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2016/12/16/gopher-lua-plugins-in-go18" itemprop="url">Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた</a></h3>
+<div class="meta">
+<time datetime="2016-12-16T21:10:26&#43;09:00">Dec 16, 2016</time>
+
+  
+  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
+  
+  <span class="tag"><a href="/articles/tag/lua/" rel="tag" itemprop="keywords">lua</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://qiita.com/advent-calendar/2016/go">Go Advent Calendar 2016</a> 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。</p>
+<p>さて、Go1.8では待望？のShared Libraryのロードが可能になります。 <a class="reference external" href="https://tip.golang.org/pkg/plugin/">pluginパッケージ</a> を使います。</p>
+<p>Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。</p>
+<p>Advent Calendar 2の <a class="reference external" href="http://qiita.com/qt-luigi/items/47a7913145fc747da0c7">qt-luigiさんのネタ</a> と被ってしまったのですが実戦的に使ってみました、ということで許してください。</p>
+<section>
+<h2>プラグインの作成とコンパイル</h2>
+<p>マニュアルページにあるとおり、以下のようになります。</p>
+<pre class="prettyprint lang-go"> package main
+
+ // // No C code needed.
+ import "C"
+
+ import "fmt"
+
+ var V int
+
+ func F() { fmt.Printf("Hello, number %d\n", V) }</pre><p>ポイントは</p>
+<ul class="simple">
+<li>Cのコードはないが、 <code>import &quot;C&quot;</code> が必要</li>
+<li><code>package</code> は <code>main</code></li>
+</ul>
+<p>という２点です。コンパイルは</p>
+<pre class="prettyprint bash"> $ go build -buildmode=plugin -o plugin.so plugin.go</pre><p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
+</section>
+<section>
+<h2>プラグインのロード</h2>
+<p>これまたマニュアルページどおりですが</p>
+<pre class="prettyprint lang-go"> p, err := plugin.Open("plugin.so")
+ if err != nil {
+     panic(err)
+ }
+ v, err := p.Lookup("V")
+ if err != nil {
+     panic(err)
+ }
+ f, err := p.Lookup("F")
+ if err != nil {
+     panic(err)
+ }
+ *v.(*int) = 7
+ f.(func())() // prints "Hello, number 7"</pre><p>のように非常に直感的に使えます。</p>
+</section>
+<section>
+<h2>GopherLuaで使ってみた</h2>
+<p>拙作のPure GoによるLua実装 <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。</p>
+<p>そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。</p>
+<p>こちらは <a class="reference external" href="https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins">feature-exp-go1.8pluginsブランチ</a> で実際に動かせます。プラグイン部分のコミットは <a class="reference external" href="https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b">571b031</a> です。</p>
+<p>まずプラグイン側から。Luaのお作法通りです。</p>
+<pre class="prettyprint lang-go"> package main
+
+ import (
+     "C"
+     "github.com/yuin/gopher-lua"
+ )
+
+ func Add(L *lua.LState) int {
+     v1 := L.CheckInt(1)
+     v2 := L.CheckInt(2)
+     L.Push(lua.LNumber(v1 + v2))
+     return 1
+ }
+
+ func LuaOpenPlugin(L *lua.LState) int {
+     L.Push(
+             L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+                     "add": Add,
+             }))
+     return 1
+ }</pre><p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
+<p>こいつをコンパイルして・・・</p>
+<pre class="prettyprint bash"> $ cd /home/yuin/tmp/plugin
+ $ go build -buildmode=plugin -o plugin.so plugin.go</pre><p>こうじゃ</p>
+<pre class="prettyprint ">$ glua
+&gt; package.cpath = package.cpath .. ";" .. "/home/yuin/tmp/plugin/?.so"
+&gt; adder = require("plugin")
+&gt; print(adder.add(1, 2))
+3</pre><p>おおおおおおおおおおおおお</p>
+<p>普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。</p>
+<pre class="prettyprint ">&lt;string&gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua</pre><p><code>package.loadlib</code> も実装しました。</p>
+<pre class="prettyprint ">$ glua
+&gt; print(package.loadlib("/home/yuin/tmp/plugin/notfound", "foo"))
+nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
+&gt; print(package.loadlib("/home/yuin/tmp/plugin/plugin.so", "foo"))
+nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
+&gt; print(package.loadlib("/home/yuin/tmp/plugin/plugin.so", "LuaOpenPlugin"))
+function: 0xc4200c9840
+&gt;</pre><p>完璧ですね。</p>
+</section>
+<section>
+<h2>pluginパッケージ、使えそうですが・・・</h2>
+<p>少なくとも、Linuxでは <code>plugin</code> パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。</p>
+<p>Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。</p>
+</section>
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2016/07/28/golbot" itemprop="url">Go&#43;Luaのチャットボットフレームワークを作った</a></h3>
 <div class="meta">
 <time datetime="2016-07-28T20:32:33&#43;09:00">Jul 28, 2016</time>
@@ -144,7 +261,6 @@ end</pre><p>このように <code>goworker</code> でLuaからGoroutineをつく
  function job1()
    print "hello!"
  end</pre><p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
-
   </div>
 </article>
 
@@ -187,62 +303,6 @@ end</pre><p>このように <code>goworker</code> でLuaからGoroutineをつく
  s = MustDecode(source, "Windows-31J")
  s = MustDecodeBytes(source, "Windows-31J")
  s = MustDecodeReader(bytes.NewReader(source), "Windows-31J")</pre>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2015/12/30/30-years-old-this-year" itemprop="url">30歳の一年だった。今後について考える。</a></h3>
-<div class="meta">
-<time datetime="2015-12-30T17:44:24&#43;09:00">Dec 30, 2015</time>
-
-  
-  <span class="tag"><a href="/articles/tag/life/" rel="tag" itemprop="keywords">life</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>もう2015年も終わろうとしています。今31歳ですが私は誕生日が後半なのでこの1年はほぼ30歳として過ごしたことになります。</p>
-<section>
-<h2>GopherLua</h2>
-<p>さて、今年は2月に公開した <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> がGithubで1000スター以上もいただき、バンバンIssueやPRが来て新しい体験ができた年でした。</p>
-<p>自分としてはGoは現状速い言語を書くには向いていないし、これは設定ファイルの拡張用、くらいに思っていたのですが意外とサーバサイドに使おうという人がいて驚きましたね。それでもやはり圧倒的にコマンドラインツールの拡張用が多くてシングルバイナリ＋拡張言語がマッチする分野だと思います。</p>
-<p>私はあくまで趣味プログラマなのでこういった機会はOSS活動をしていなければできない経験だったのでとても有益でしたね。英語にとても苦手意識があるのですが、案外適当な英語で通じるものです。</p>
-</section>
-<section>
-<h2>なんで趣味でOSSを書いているか</h2>
-<p>なんで趣味でOSSを書いているか…まぁ好きだからですよね。とにかくプログラミングが好きです。</p>
-<p>あとは…どこかに「自分はまだ最低これくらい書ける」というのを確認したいという思いがあるのだと思います。そしてその裏には「やっぱり仕事でコード書きたいなあ」という思いがあるのでしょう。</p>
-<p>この業界は実務経験がすべてですから、もはや実務から離れて久しい私がWEBやモバイル業界に行くことはないでしょうけど、万が一の時に自分の技術力を示す手段としてGithubという場を借りているのかな、と。</p>
-<p>意外と？成果物経由で仕事しませんかというメールをもらえたりとGithubは見られてるんだな、と思いましたね。</p>
-</section>
-<section>
-<h2>今後は…</h2>
-<p>転職は35が限界、などという話もありますし今後をどうするか考える時期ですね。正直なところ今の勤め先が定年まで現状維持できる気がまったくしないので</p>
-<ol class="arabic simple">
-<li>もっと安定している職業へ転職する</li>
-<li>いっそWEB、モバイル業界にチャレンジする</li>
-<li>(深く考えず今の勤め先で頑張る)</li>
-</ol>
-<p>くらいでしょうか。安定している…というと公務員系ですかね。</p>
-<p>いざという時に支えてくれる人がいればリスクを取りやすいのでしょうが、あいにく実家は離婚の上極貧、親戚づきあいなし、兄弟なし、独身(そして結婚も子供も予定なし)とある意味頼れるのは自分と会社だけ、という人間です。</p>
-<p>さらに健康上の理由で海外は絶対行きたくない、となると1しかない気がしてきています。</p>
-<p>その場合は、もうOSSでコード書いてもしかたないかなあ、とかこのブログも消そうかなあ、とか思うところはあります。</p>
-<p>実際には惰性で3.でしょうが(まぁ20年くらいはつぶれないし待遇もそこまで落ちないでしょ…)。</p>
-</section>
-<section>
-<h2>2016年</h2>
-<p>とはいえ、2016年もなにかまとまったものが書ければな…とは思っているんです。やっぱり独自言語書きたいですね、普通にCで。 Goで実用的なものもなにか書きたいんですけど、ほんと趣味レベルではなかなかいいモノが思いつきません。いやー、実践でGo書いてみたいので副業できるなら喜んでGoで何か書ける仕事探すんですがねえ…。</p>
-</section>
-
   </div>
 </article>
 

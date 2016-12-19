@@ -61,85 +61,6 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/02/15/the-embed-javascript-implementation" itemprop="url">埋め込みjavascriptを実装してみました。</a></h3>
-<div class="meta">
-<time datetime="2006-02-15T01:09:43&#43;09:00">Feb 15, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
-  
-  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
-<p>同様の実装として <a class="reference external" href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
-<p><a class="reference external" href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
-<p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。
-実際の動作はサンプルファイルを見ていただくとして</p>
-<p>lyase_view.jsの説明どおり</p>
-<pre class="prettyprint ">/*
- *   using innerHTML
- *   -------------
- *   //in HTML
- *   &lt;textarea id="template" style="display:none"&gt;
- *     The value of x is:&lt; %= context.x%&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:"template"}, {x : 10}));
- *
- *   using a template file
- *   -------------
- *   //in /template.jhtml
- *   The value of x is:&lt; %= context.x%&gt;
- *   //code
- *   document.write(Lyase.View.render({file:"/template.jhtml"}, {x : 10}));
- *
- *   Of course, you can embed more complex codes.
- *   //in HTML, with prototype.js
- *   &lt;textarea id="template" style="display:none"&gt;
- *     &lt; % context.list.each(function(pair){%&gt;
- *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
- *     &lt; % }) %&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:"template"},
- *     {list :[{name : "x", value : 10}, {name : "y", value : 20}]}));
- */</pre><p>こんな感じでjavascriptのコードが読み込めます。</p>
-<p>また</p>
-<pre class="prettyprint ">&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
- この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
-
-
-以下のようにクロージャも問題なく使用できます。
-
-&lt; % var c = "," %&gt;
-&lt; % context.list.each(function(num){ %&gt;
-  &lt; %= num+c %&gt;
-
-&lt; % })%&gt;
-
-&lt; %= render({file :"./sample2.jhtml"}, context)%&gt; &lt;!--ココに注目--!&gt;</pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
-<p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。
-prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
 <h3 itemprop="name"><a href="/articles/2006/02/06/garbled-multibyte-character-problem-in-live-search-on-typo" itemprop="url">Typoでlive search文字化け</a></h3>
 <div class="meta">
 <time datetime="2006-02-06T01:12:28&#43;09:00">Feb  6, 2006</time>
@@ -175,7 +96,6 @@ prototype.jsのAjax.Updaterあたりをハックすれば結構使えるもの�
 あ、このファイルはテーマにも含まれてますので注意です。
 てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・
 ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
-
   </div>
 </article>
 
@@ -300,7 +220,59 @@ alert("c instanceof AClass:"+(c instanceof AClass).toString()); //=&gt;c instanc
 <p>ということになったりするもんですが（俺はよくなってますｗ）このライブラリを使えば大丈夫。
 また、こんな変な書き方イヤだよ！！って方でも継承の部分はClass.inheritに独立させてあるのでそこだけつかえばオッケーです。</p>
 <p>一応動作は確認していますがおかしいところあったら報告していただけるとありがたいです。</p>
+  </div>
+</article>
 
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2006/01/22/fckeditor" itemprop="url">FCKEditor</a></h3>
+<div class="meta">
+<time datetime="2006-01-22T00:05:29&#43;09:00">Jan 22, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/fckeditor/" rel="tag" itemprop="keywords">fckeditor</a></span>
+  
+  <span class="tag"><a href="/articles/tag/typo/" rel="tag" itemprop="keywords">typo</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a class="reference external" href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。
+WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
+<p>こちらもTinyMCEと同じく</p>
+<ul class="simple">
+<li>JavaScript で記述された</li>
+<li>LGPL でオープンソースな</li>
+<li>クロスプラットフォームの</li>
+<li>多言語対応もしてて</li>
+<li>簡単に使える</li>
+</ul>
+<p>ライブラリなんです。かなり使いやすいですよ。</p>
+<p>導入も簡単です。typoの場合、</p>
+<pre class="prettyprint ">&lt;script src="http://inforno.net/FCKeditor_install_path/fckeditor.js" type="text/javascript"&gt;&lt;/script&gt;
+&lt;script language="javascript"&gt;
+Event.observe(window, "load", function(){
+  var list = ["article_extended", "article_body"];
+  for(var i=0,l=list.length; i &lt; l; i++) {
+    var fck = new FCKeditor(list[i]);
+    fck.BasePath = "FCKeditor_install_path";
+    fck.Config["CustomConfigurationsPath"] = fck.BasePath + "myconfig.js";
+    fck.Height = 400;
+    fck.ReplaceTextarea();
+  }
+});
+&lt;/script&gt;[/js]</pre><p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
+<a class="reference external image-reference" href="/statics/files/fck.jpg"><img alt="/statics/files/fck.thumbnail.jpg" src="/statics/files/fck.thumbnail.jpg" /></a>
+<p>海外ではAPIを使ったデスクトップクライアントが結構人気みたいですけど、日本じゃあんまり使ってる人聞かない・・・Typoもデフォルトはデスクトップクライアント使え！みたいな感じなんですけどFCKeditorで一件落着。便利便利。</p>
   </div>
 </article>
 
