@@ -76,44 +76,52 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a>  とか  <a class="reference external" href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a>
-から。</p>
+    <p><a href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a> とか <a href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a> から。</p>
+
 <p>上記のサイトのをもってきて.vimrcをちょろっと書けばいいんだけど、テキストを受信するサーバーは常時立ち上げていそうで、スクリプトだとなんとなくアレなので、exeがいいなあ。簡単にできそうなので、とりあえず探すよりは作ってみるメソッド。</p>
-<section>
-<h2>ファイル一式</h2>
-<p><a class="reference external" href="/statics/files/clsync.zip">clsync.zip</a></p>
+
+<h1>ファイル一式</h1>
+
+<p><a href="/statics/files/clsync.zip">clsync.zip</a></p>
+
 <p>内容は</p>
-<ul class="simple">
+
+<ul>
 <li>clipboard_server.exe：Windows側で実行するサーバー</li>
 <li>clipboard_server.ini：サーバーのポートの設定</li>
 <li>clsync.py：vmware側におくクライアントスクリプト</li>
 </ul>
-</section>
-<section>
-<h2>使い方など</h2>
+
+<h1>使い方など</h1>
+
 <p>Windows側ではclipboard_server.iniで適当にポートを設定して（当然外部から見えないやつを）、clipboard_server.exeを起動しておいてください。タスクトレイにアイコンが表示されてますので、そこから終了できます。</p>
+
 <p>vmware上のLinuxですが、まずnkfがインストールされている必要があります。すみません、クライアント側手抜きするために使っています。そしてclsync.pyをパスの通ったところにおきます。clsync.pyにはホストのWindows側で動いてるサーバーのポートとIPを設定する箇所があるので、適宜書き換えます。またポートとIPはオプションでも渡せます（詳しくはclsync.py -hで）。</p>
+
 <p>あとは</p>
-<pre class="prettyprint ">function! SyncClipboard()
-  let cliptext = substitute(getreg(), "'", "'\"'\"'", 'g')
-  let cmd = "echo '" . cliptext . "' | clsync.py"
+
+<pre class="prettyprint"><code>function! SyncClipboard()
+  let cliptext = substitute(getreg(), &quot;'&quot;, &quot;'\&quot;'\&quot;'&quot;, 'g')
+  let cmd = &quot;echo '&quot; . cliptext . &quot;' | clsync.py&quot;
   call system(cmd)
 endfunction
-nmap ,c :call SyncClipboard()&lt;CR&gt;</pre><p>こんな感じなのを.vimrcに追加すればOK。最後にyankしたものが,cでホストのWindowsのクリップボードに送られます。</p>
-<p>追記：
-っとよく考えたらvmw copyとまったく一緒。.vimrcのclsync.pyの部分をvmw copyに置き換えれば同じように動作する。ただ、vmwの説明には</p>
+nmap ,c :call SyncClipboard()&lt;CR&gt;
+</code></pre>
+
+<p>こんな感じなのを.vimrcに追加すればOK。最後にyankしたものが,cでホストのWindowsのクリップボードに送られます。</p>
+
+<p>追記： っとよく考えたらvmw copyとまったく一緒。.vimrcのclsync.pyの部分をvmw copyに置き換えれば同じように動作する。ただ、vmwの説明には</p>
+
 <blockquote>
-コピーするテキストに改行コード以外の非 ASCII 文字を含めることはできません。
-ゲストおよびホスト OS によっては、キャリッジリターンの付与・除去が行われ
-ます。
-コピー可能なテキストの最大長は約 65,000 バイトです。</blockquote>
-<p>ってある。
-今回作ったモノの場合はnkfをかませているのでもちろんいつでも日本語オーケー。
-それ以上は深くみてないけど、UTF-8だと日本語でもvmw copyしても問題なさそうだ。EUC-JPの「ほげほげ」とかいう内容のtest.txtをvmw copy test.txtとかするとダメだった。</p>
+<p>コピーするテキストに改行コード以外の非 ASCII 文字を含めることはできません。 ゲストおよびホスト OS によっては、キャリッジリターンの付与・除去が行われ ます。 コピー可能なテキストの最大長は約 65,000 バイトです。</p>
+</blockquote>
+
+<p>ってある。 今回作ったモノの場合はnkfをかませているのでもちろんいつでも日本語オーケー。 それ以上は深くみてないけど、UTF-8だと日本語でもvmw copyしても問題なさそうだ。EUC-JPの「ほげほげ」とかいう内容のtest.txtをvmw copy test.txtとかするとダメだった。</p>
+
 <p>ま、というわけで、 cat test.txt | nkf -w | vmw copyで万事解決なんだけど。</p>
-<p>というわけでこのツールは使われないまま終わる（笑
-coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
-</section>
+
+<p>というわけでこのツールは使われないまま終わる（笑 coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

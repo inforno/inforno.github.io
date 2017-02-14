@@ -73,9 +73,12 @@
 </header>
   <div itemprop="articleBody">
     <p>Pythonで自分用の小物アプリを結構書き溜めてるんですけど、実はそのほとんどにプラグインシステムみたいなのをつくってたりします。</p>
+
 <p>たとえばファイルの整理自動化みたいなの。ファイルの移動前に処理を追加する、てな部分をプラグインにしてあるわけです。</p>
+
 <p>まぁ機能的にはCPANのClass::Componentっぽいもんですね。ですがそこまで高機能なのはいらないので、シンプルに自分が必要な部分だけまとめてみました。</p>
-<pre class="prettyprint ">from inspect import getmembers, ismethod
+
+<pre class="prettyprint"><code>from inspect import getmembers, ismethod
 import types
 
 class Pluggable(object):
@@ -89,7 +92,7 @@ class Pluggable(object):
   def load_config(self, *config):
     self.config = []
     for i in config:
-      if isinstance(i, ("".__class__, u"".__class__)):
+      if isinstance(i, (&quot;&quot;.__class__, u&quot;&quot;.__class__)):
         self.config.append((i, {}))
       else:
         self.config.append((i[0], len(i) &gt; 1 and i[1] or {}))
@@ -100,8 +103,8 @@ class Pluggable(object):
       try:
         plugin = eval(klass)
       except (NameError, AttributeError),e:
-        names = klass.split(".")
-        mod = __import__(".".join(names[0:-1]))
+        names = klass.split(&quot;.&quot;)
+        mod = __import__(&quot;.&quot;.join(names[0:-1]))
         globals()[names[0]] = mod
         for name in names[1:-1]: mod = getattr(mod, name)
         plugin = getattr(mod, names[-1])
@@ -110,9 +113,9 @@ class Pluggable(object):
       make_closure = lambda obj,name: lambda *a, **k: getattr(obj,name)(*a, **k)
 
       for name, method in ((n,m) for n,m in getmembers(p) if ismethod(m)):
-        if hasattr(method, "__plugin_method__"):
+        if hasattr(method, &quot;__plugin_method__&quot;):
           setattr(self, name, make_closure(p, name))
-        for hook_type in getattr(method, "__hook_types__", []):
+        for hook_type in getattr(method, &quot;__hook_types__&quot;, []):
           if hook_type not in self.hooks: self.hooks[hook_type] = []
           self.hooks[hook_type].append(getattr(p, name))
 
@@ -136,61 +139,79 @@ class Plugin(object):
   def __init__(self, config):
     self.config = config
 
-method = lambda f: setattr(f, "__plugin_method__", True) or f
-hook = lambda *args: lambda f: setattr(f, "__hook_types__", args) or f</pre><p>機能的には</p>
-<ul class="simple">
+method = lambda f: setattr(f, &quot;__plugin_method__&quot;, True) or f
+hook = lambda *args: lambda f: setattr(f, &quot;__hook_types__&quot;, args) or f
+</code></pre>
+
+<p>機能的には</p>
+
+<ul>
 <li>クラスに対して設定とともにメソッドを追加する(setattrします)</li>
 <li>任意のhookの登録と実行</li>
 </ul>
+
 <p>ぐらいです。</p>
+
 <p>使い方は</p>
-<pre class="prettyprint ">import pluggable
+
+<pre class="prettyprint"><code>import pluggable
 class People(pluggable.Pluggable):
   pass
 
 class Hacker(pluggable.Plugin):
   @pluggable.method
   def hack(self):
-    print self.config["msg"]
+    print self.config[&quot;msg&quot;]
 
-  @pluggable.hook("hello")
+  @pluggable.hook(&quot;hello&quot;)
   def hello(self, msg1, msg2, msg3):
-    print "Hello World!!", msg1, msg2, msg3
+    print &quot;Hello World!!&quot;, msg1, msg2, msg3
 
 class Otaku(pluggable.Plugin):
   @pluggable.method
   def niconico(self, msg):
-    print self.config["msg"], msg
+    print self.config[&quot;msg&quot;], msg
 
-  @pluggable.hook("hello")
+  @pluggable.hook(&quot;hello&quot;)
   def hello(self, msg1, msg2, msg3):
-    print u"にぱー", msg1, msg2, msg3</pre><p>みたいにプラグインクラスを作っておいて</p>
-<pre class="prettyprint ">p = People()
+    print u&quot;にぱー&quot;, msg1, msg2, msg3
+</code></pre>
+
+<p>みたいにプラグインクラスを作っておいて</p>
+
+<pre class="prettyprint"><code>p = People()
 p.load(
-  ("plugins.Hacker", {"msg": "Happy Hacking!"}),
-  ("plugins.Otaku",  {"msg": u"ニコ厨ですが"})
+  (&quot;plugins.Hacker&quot;, {&quot;msg&quot;: &quot;Happy Hacking!&quot;}),
+  (&quot;plugins.Otaku&quot;,  {&quot;msg&quot;: u&quot;ニコ厨ですが&quot;})
 )
 p.hack() #=&gt; Happy Hacking!
-p.niconico(u"なにか？") #=&gt; ニコ厨ですが なにか？
-p.run_hooks({"hello":([1,2],{"msg3":3})})
+p.niconico(u&quot;なにか？&quot;) #=&gt; ニコ厨ですが なにか？
+p.run_hooks({&quot;hello&quot;:([1,2],{&quot;msg3&quot;:3})})
 #=&gt; Hello World!! 1 2 3
 #=&gt; にぱー 1 2 3
-p.reverse_run_hooks({"hello":[1,2,3]})
+p.reverse_run_hooks({&quot;hello&quot;:[1,2,3]})
 #=&gt; にぱー 1 2 3
-#=&gt; Hello World!! 1 2 3</pre><p>という感じで使います。あとは設定の部分をyamlなんかに押し出せばオッケーというわけ。</p>
-<p>モジュールのインポートは自動でやってくれます。Pythonは地味に動的なimportが面倒だったので、ライブラリにまとめたことでだいぶ手元の小物アプリがすっきりしました。</p>
-<hr class="docutils" />
-<ul class="simple">
+#=&gt; Hello World!! 1 2 3
+</code></pre>
+
+<p>という感じで使います。あとは設定の部分をyamlなんかに押し出せばオッケーというわけ。</p>
+
+<p>モジュールのインポートは自動でやってくれます。Pythonは地味に動的なimportが面倒だったので、ライブラリにまとめたことでだいぶ手元の小物アプリがすっきりしました。 　</p>
+
+<hr />
+
+<ul>
 <li>2008/01/27 若干修正を加えました。</li>
 </ul>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

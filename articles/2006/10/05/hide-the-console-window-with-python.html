@@ -74,19 +74,26 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>Pythonのコードをwindows用exeにするには当然、 <a class="reference external" href="http://www.py2exe.org/">py2exe</a> を使います。</p>
+    <p>Pythonのコードをwindows用exeにするには当然、 <a href="http://www.py2exe.org/">py2exe</a> を使います。</p>
+
 <p>で、そのとき、</p>
-<pre class="prettyprint ">python setup.py py2exe --windows</pre><p>とすれば、コンソールを表示しないようにできます。</p>
-<div class="note">
-<p class="first">Note</p>
-<p class="last">これはもう古いやり方で、現在のバージョンのpy2exeでは動きません・・・。現在はターゲットファイルの拡張子を.pywにする、もしくは <code>windows = <span class="pre">[{'script'</span> : 'script.py', &quot;icon_resources&quot;: <span class="pre">[(1,&quot;script.ico&quot;)]}]</span></code> というオプションをsetupに渡す、という方法になっています。</p>
-</div>
-<p>今日、昔py2exeで作ったファイルが出てきたんですが、困ったことにpythonのソースファイルはない。いや、別に改良とかもうしないしいいんだけど。
-ふと起動してみるとGUI with console。かっちょわりい。</p>
+
+<pre class="prettyprint"><code>python setup.py py2exe --windows
+</code></pre>
+
+<p>とすれば、コンソールを表示しないようにできます。</p>
+
+<p>これはもう古いやり方で、現在のバージョンのpy2exeでは動きません・・・。現在はターゲットファイルの拡張子を.pywにする、もしくは <code>windows = [{'script' : 'script.py', &quot;icon_resources&quot;: [(1,&quot;script.ico&quot;)]}]</code> というオプションをsetupに渡す、という方法になっています。</p>
+
+<p>今日、昔py2exeで作ったファイルが出てきたんですが、困ったことにpythonのソースファイルはない。いや、別に改良とかもうしないしいいんだけど。 ふと起動してみるとGUI with console。かっちょわりい。</p>
+
 <p>コンソールが表示される、というのは単純にPEファイルのオプションなわけで。</p>
-<img alt="/statics/files/pe.jpg" src="/statics/files/pe.jpg" />
+
+<p><img src="/statics/files/pe.jpg" alt="image" /></p>
+
 <p>この部分を変更してやればとりあえずは直る。ちなみに、</p>
-<ul class="simple">
+
+<ul>
 <li>00 00:未知のサブシステム</li>
 <li>01 00:デバイス ライバおよびWindowsNTネイティブプロセス用</li>
 <li>02 00:GUIで実行されるファイル</li>
@@ -94,19 +101,22 @@
 <li>07 00:Posixコンソールで実行されるファイル</li>
 <li>09 00:WindowsCEで実行されるファイル</li>
 </ul>
-<p>なので02h 00hにしてやればオッケー。</p>
-<p>Pythonでバイナリファイルの読み書きとかしたことないので練習もかねて。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
-import sys
-from struct import *
-target_file = len(sys.argv) &gt; 1 and sys.argv[1] or sys.exit("Target file is not specified.")
-target_file = unicode(target_file, "mbcs")
-out_file    = open(target_file + "_gui", "wb")
 
-io = open(target_file, "rb")
+<p>なので02h 00hにしてやればオッケー。</p>
+
+<p>Pythonでバイナリファイルの読み書きとかしたことないので練習もかねて。</p>
+
+<pre class="prettyprint"><code># vim: fileencoding=utf-8
+import sys
+from struct import * 
+target_file = len(sys.argv) &gt; 1 and sys.argv[1] or sys.exit(&quot;Target file is not specified.&quot;)
+target_file = unicode(target_file, &quot;mbcs&quot;)
+out_file    = open(target_file + &quot;_gui&quot;, &quot;wb&quot;)
+
+io = open(target_file, &quot;rb&quot;)
 while 1 :
-  if io.read(1) == "P" and io.read(1) == "E" : break
-subsystem_pos = io.tell() +90
+  if io.read(1) == &quot;P&quot; and io.read(1) == &quot;E&quot; : break
+subsystem_pos = io.tell() +90 
 io.seek(0)
 out_file.write(io.read(subsystem_pos))
 io.seek(4, 1)
@@ -114,16 +124,19 @@ out_file.write(pack('hh', 2, 0))
 out_file.write(io.read())
 
 io.close()
-out_file.close()</pre><p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ
-pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
+out_file.close()
+</code></pre>
+
+<p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

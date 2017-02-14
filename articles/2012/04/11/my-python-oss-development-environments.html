@@ -71,31 +71,41 @@
 </header>
   <div itemprop="articleBody">
     <p>趣味プログラマです、こんにちわ。一応生きてます。</p>
+
 <p>さて、Pythonista各位におかれましてはmoratoriumをエンジョイされていますでしょうか。そろそろライブラリも著名なものはPython3に対応してきましたし、そろそろ本格的にPython3、となっているころ合いですね。というか、Python3に対応してないとちょっと恥ずかしくなってきましたね。</p>
+
 <p>とはいえ、Python2は根強く残るでしょう。というわけでPython2とPython3両方で動くコードを書きましょう。テストも書くのは当たり前ですし、せっかくなのでCIもしましょう。</p>
+
 <p>と私も最近思ったので快適に開発を進めるための環境についてメモです。</p>
-<ul class="simple">
+
+<ul>
 <li>github : 言わずもがなですね。</li>
 <li>travis : githubと連携してCIできるサービス。P言語にも対応していて、最近アツいです。</li>
-<li>tox    : 複数のPython処理系でvirtualenvを作りテストを流せる。</li>
+<li>tox : 複数のPython処理系でvirtualenvを作りテストを流せる。</li>
 <li>distribute : 改良版setuptools。</li>
 <li>pytest : toxと親和性の高いテストツール。noseでもよいですが私はpytestを押します。</li>
 </ul>
-<section>
-<h2>Python2とPython3のインストール</h2>
+
+<h1>Python2とPython3のインストール</h1>
+
 <p>あたりまえですが、Python2系とPython3系両方入れておきましょう。</p>
-</section>
-<section>
-<h2>toxのインストール</h2>
+
+<h1>toxのインストール</h1>
+
 <p>さて、早速toxを入れていくわけですがこれにはPython2系を使います。</p>
-<pre class="prettyprint ">$ wget http://python-distribute.org/distribute_setup.py
+
+<pre class="prettyprint"><code>$ wget http://python-distribute.org/distribute_setup.py 
 $ python27 distribute_setup.py
-$ easy_install virtualenv tox</pre><p>簡単ですね。</p>
-</section>
-<section>
-<h2>プロジェクトを始める - ファイル・ディレクトリ構成</h2>
+$ easy_install virtualenv tox
+</code></pre>
+
+<p>簡単ですね。</p>
+
+<h1>プロジェクトを始める - ファイル・ディレクトリ構成</h1>
+
 <p>次に、プロジェクトの基本形を作りましょう。私は以下のような構成にしています。</p>
-<pre class="prettyprint ">/
+
+<pre class="prettyprint"><code>/
   + - .tox                        : toxにより生成されるディレクトリ。
   + - docs                        : ドキュメント系はココ。
            + - source             : ドキュメントのソース。
@@ -111,12 +121,16 @@ $ easy_install virtualenv tox</pre><p>簡単ですね。</p>
   - setup.py                      : セットアップスクリプト。
   - MANIFEST.in                   : 配布パッケージ生成用定義ファイル。
   - README.rst                    : 私を読んで。
-  - CHANGES.rst                   : 変更履歴。</pre><p>普通です。ポイントは <code>docs/build/html</code> をgh-pagesへのリンクにすること。これでドキュメントの管理が非常に楽になります。</p>
-</section>
-<section>
-<h2>tox.iniの作成</h2>
+  - CHANGES.rst                   : 変更履歴。
+</code></pre>
+
+<p>普通です。ポイントは <code>docs/build/html</code> をgh-pagesへのリンクにすること。これでドキュメントの管理が非常に楽になります。</p>
+
+<h1>tox.iniの作成</h1>
+
 <p>tox.iniに依存関係と、どの処理系でテストするか、テストはなにを使ってやるかを書きましょう。だいたいの場合、それだけで十分です。</p>
-<pre class="prettyprint ">[tox]
+
+<pre class="prettyprint"><code>[tox]
 envlist = py27,py32
 
 [testenv]
@@ -129,9 +143,13 @@ commands=
     -rxs \
     --cov-report term-missing \
     --cov テスト対象パッケージ名\
-    --basetemp={envtmpdir}  \
-    []</pre><p>見ての通りの内容です。Pytnon27とPython32でテストします、と。この時処理系のパス(python.exeやpython27などのパス)はOSごとに <strong>デフォルト</strong> の場所が使われます。 <code><span class="pre">--configure</span></code> でprefixを指定していたり、Windowsで別フォルダにインストールしている場合は以下のようにします。</p>
-<pre class="prettyprint ">[tox]
+    --basetemp={envtmpdir}  \ 
+    []                        
+</code></pre>
+
+<p>見ての通りの内容です。Pytnon27とPython32でテストします、と。この時処理系のパス(python.exeやpython27などのパス)はOSごとに <strong>デフォルト</strong> の場所が使われます。 <code>--configure</code> でprefixを指定していたり、Windowsで別フォルダにインストールしている場合は以下のようにします。</p>
+
+<pre class="prettyprint"><code>[tox]
 envlist = py27,py32
 
 [testenv:py27]
@@ -150,24 +168,34 @@ commands=
     -rxs \
     --cov-report term-missing \
     --cov テスト対象パッケージ名\
-    --basetemp={envtmpdir}  \
-    []</pre></section>
-<section>
-<h2>とりあえず開発</h2>
+    --basetemp={envtmpdir}  \ 
+    []                        
+</code></pre>
+
+<h1>とりあえず開発</h1>
+
 <p>とりあえず何かコードを書いて、テストも書きましょう。</p>
-</section>
-<section>
-<h2>toxでテスト</h2>
+
+<h1>toxでテスト</h1>
+
 <p>ではtoxでテストしましょう。tox.iniがあるディレクトリに移動してから</p>
-<pre class="prettyprint ">$ tox</pre><p>これで</p>
-<ul class="simple">
+
+<pre class="prettyprint"><code>$ tox
+</code></pre>
+
+<p>これで</p>
+
+<ul>
 <li>それぞれの処理系のvirtualenvの作成</li>
 <li>依存ライブラリのインストール</li>
 <li>テストの実行</li>
 </ul>
-<p>が行われ、結果が表示されます。py27だけ流したい場合は <code>tox <span class="pre">-e</span> py27</code> とするか環境変数 <code>TOXENV=py27</code> を設定したうえで <code>tox</code> とすればOK.</p>
-<p>拙作のwebフレームワーク <a class="reference external" href="http://yuin.github.com/rays.html">rays</a> ですと以下のような感じです(長いのでpy32の結果のみ)。pytest-covを入れているのでC0カバレッジも表示されます。</p>
-<pre class="prettyprint ">_________________________________________________________________________________________ [tox sdist] __________________________________________________________________________________________
+
+<p>が行われ、結果が表示されます。py27だけ流したい場合は <code>tox -e py27</code> とするか環境変数 <code>TOXENV=py27</code> を設定したうえで <code>tox</code> とすればOK.</p>
+
+<p>拙作のwebフレームワーク <a href="http://yuin.github.com/rays.html">rays</a> ですと以下のような感じです(長いのでpy32の結果のみ)。pytest-covを入れているのでC0カバレッジも表示されます。</p>
+
+<pre class="prettyprint"><code>_________________________________________________________________________________________ [tox sdist] __________________________________________________________________________________________
 [TOX] ***creating sdist package
 [TOX] /home/yuin/github/rays$ /opt/python2.7.2/bin/python2.7 setup.py sdist --formats=zip --dist-dir .tox/dist &gt;.tox/log/0.log
 [TOX] ***copying new sdistfile to '/home/yuin/.tox/distshare/rays-0.4.0.zip'
@@ -206,33 +234,42 @@ TOTAL                                           1746    232    87%
 SKIP [3] /home/yuin/github/rays/.tox/py32/lib/python3.2/site-packages/_pytest/skipping.py:118: condition: SkipIf._no_gevent
 
 ============================================================================ 117 passed, 3 skipped in 14.81 seconds ============================================================================
-________________________________________________________________________________________ [tox summary] _________________________________________________________________________________________</pre></section>
-<section>
-<h2>.travis.ymlの作成</h2>
-<p>無事、複数のインタプリタでテストできました。次はCIです。 <a class="reference external" href="http://travis-ci.org">Travis CI</a> を使うと、githubにpushしたタイミングでビルド＆テストが自動でできます。</p>
+________________________________________________________________________________________ [tox summary] _________________________________________________________________________________________
+</code></pre>
+
+<h1>.travis.ymlの作成</h1>
+
+<p>無事、複数のインタプリタでテストできました。次はCIです。 <a href="http://travis-ci.org">Travis CI</a> を使うと、githubにpushしたタイミングでビルド＆テストが自動でできます。</p>
+
 <p>まずは、Travis CIにgithubのアカウントでログインして、対象のレポジトリでCIを有効にします。</p>
+
 <p>次に、Travis CIでのビルド＆テスト設定を.travis.ymlに書きます。ここではtoxを使っていますから、以下のようになります。</p>
-<pre class="prettyprint ">language: python
+
+<pre class="prettyprint"><code>language: python
 env:
   - TOXENV=py27
   - TOXENV=py32
-install:
+install: 
   - pip install --use-mirrors tox
-script: tox</pre><p><code>TOXENV</code> でテストする環境を指定します。今回の例ではpy27とpy32です。</p>
+script: tox
+</code></pre>
+
+<p><code>TOXENV</code> でテストする環境を指定します。今回の例ではpy27とpy32です。</p>
+
 <p>これでgithubにpushするとTravis CIが動くようになりました。</p>
-</section>
-<section>
-<h2>Travis CI + tox快適です</h2>
+
+<h1>Travis CI + tox快適です</h1>
+
 <p>ガンガンPython3対応をしましょう！</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
 <li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 </ul>
     </div>
   </div>

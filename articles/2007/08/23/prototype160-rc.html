@@ -72,25 +72,29 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>でましたね。 <a class="reference external" href="http://prototypejs.org/2007/8/15/prototype-1-6-0-release-candidat">Prototype 1.6.0 release candidate</a></p>
+    <p>でましたね。 <a href="http://prototypejs.org/2007/8/15/prototype-1-6-0-release-candidat">Prototype 1.6.0 release candidate</a></p>
+
 <p>WEB界隈から離れてしばらくたちますが、またいつWEB界隈に戻るかわからないので一応追ってます。</p>
-<p>1.6ではついにClass周りに手が入りました。Prototype.jsといえばシンプルすぎるClass周りとプロパティをコピーするというなんちゃって継承がウリ（？）だったわけですが、1.6からは違います。もう <a class="reference external" href="http://inforno.net/articles/2006/01/24/inheritance-in-prototype-with-ease">オレオレクラス定義ライブラリ</a> をわざわざ使わなくても大丈夫。</p>
+
+<p>1.6ではついにClass周りに手が入りました。Prototype.jsといえばシンプルすぎるClass周りとプロパティをコピーするというなんちゃって継承がウリ（？）だったわけですが、1.6からは違います。もう <a href="http://inforno.net/articles/2006/01/24/inheritance-in-prototype-with-ease">オレオレクラス定義ライブラリ</a> をわざわざ使わなくても大丈夫。</p>
+
 <p>公式にも例がありますが、こんな感じでちゃんと継承できるようになりました。</p>
-<pre class="prettyprint ">var Animal = Class.create({
+
+<pre class="prettyprint"><code>var Animal = Class.create({
   initialize: function(name) {
     this.name = name;
   },
   eat: function() {
-    return this.say("Yum!");
+    return this.say(&quot;Yum!&quot;);
   },
   say: function(message) {
-    return this.name + ": " + message;
+    return this.name + &quot;: &quot; + message;
   }
 });
 
 var Eatable = {
   eaten : function() {
-    return this.say("help me!!!");
+    return this.say(&quot;help me!!!&quot;);
   }
 }
 
@@ -102,30 +106,44 @@ Class.mixin(Mouse.prototype, Eatable);
 // subclass that augments a method
 var Cat = Class.create(Animal, {
   eat: function($super, food) {
-    if (food instanceof Mouse) return [food.eaten(),$super()].join("\n");
-    else return this.say("Yuk! I only eat mice.");
+    if (food instanceof Mouse) return [food.eaten(),$super()].join(&quot;\n&quot;);
+    else return this.say(&quot;Yuk! I only eat mice.&quot;);
   }
 });
 
-var a = new Cat("Tama");
-alert(a.eat(new Mouse("Nezumy mouse")));</pre><p>単にプロトタイプチェーンをつなげるだけではなくて、オーバライドされたメソッドの引数名を取得して（toStringしてgrepですね)、$superだった場合、自動的に親クラスのメソッドを$superとして渡してくれます。地味に便利。</p>
-<p>あとはsyntax sugarとしてClass.mixinがあります。まぁObject.extendなんですが、こっちの方がわかりやすいですよね。</p>
-<p>そのほかもいっぱい機能が追加れさてれてますね。個人的には <code><span class="pre">document.observe(&quot;contentloaded&quot;,</span> function() { ... })</code> て感じでサポートされたDOM完了時点でのイベントと、</p>
-<pre class="prettyprint ">$("container").observe("titleChanged", function(event) {
+var a = new Cat(&quot;Tama&quot;);
+alert(a.eat(new Mouse(&quot;Nezumy mouse&quot;)));
+</code></pre>
+
+<p>単にプロトタイプチェーンをつなげるだけではなくて、オーバライドされたメソッドの引数名を取得して（toStringしてgrepですね)、$superだった場合、自動的に親クラスのメソッドを$superとして渡してくれます。地味に便利。</p>
+
+<p>あとはsyntax sugarとしてClass.mixinがあります。まぁObject.extendなんですが、こっちの方がわかりやすいですよね。 　</p>
+
+<p>　</p>
+
+<p>　 そのほかもいっぱい機能が追加れさてれてますね。個人的には <code>document.observe(&quot;contentloaded&quot;, function() { ... })</code> て感じでサポートされたDOM完了時点でのイベントと、</p>
+
+<pre class="prettyprint"><code>$(&quot;container&quot;).observe(&quot;titleChanged&quot;, function(event) {
   this.highlight({ duration: 0.5 });
 });
 
-$("title").fire("titleChanged");</pre><p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
-<hr class="docutils" />
+$(&quot;title&quot;).fire(&quot;titleChanged&quot;);
+</code></pre>
+
+<p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
+
+<hr />
+
 <p>資格の勉強とかもそろそろしなきゃなー、と思いつつ、Scalaでパーサコンビネータライブラリがついたので、Schemeの処理系でも実装したいなあ、と思い始めてる今日この頃。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
 <li><a href="/articles/2006/03/31/current-development-in-element-extend">Element.extendの動向。</a></li>
 <li><a href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements">続Element.Methods。問題とちょっと改良</a></li>
+<li><a href="/articles/2006/03/12/element-methods-in-prototype">prototype.js 1.5のElement.Methods</a></li>
 <li><a href="/articles/2006/02/15/the-embed-javascript-implementation">埋め込みjavascriptを実装してみました。</a></li>
-<li><a href="/articles/2006/01/24/inheritance-in-prototype-with-ease">prototype.jsでの継承を楽にする</a></li>
 </ul>
     </div>
   </div>

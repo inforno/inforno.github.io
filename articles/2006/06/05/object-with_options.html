@@ -75,14 +75,21 @@
 </header>
   <div itemprop="articleBody">
     <p>個人的にActiveSupportが大好きなわけですが。</p>
+
 <p>1.1で追加されたwith_optionsがRouting以外でどーもカッコいい使いどころがなーとおもっていたんですが</p>
-<pre class="prettyprint ">with_options(:if =&gt; :validate_password?) do |me|
+
+<pre class="prettyprint"><code>with_options(:if =&gt; :validate_password?) do |me|
 me.validates_format_of :password #...
 me.validates_length_of :password # ...
 me.validates_confirmation_of :password #...
 me.validates_presence_of :password#...
-end</pre><p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
+end
+</code></pre>
+
+<p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
+
 <p>まぁ、やっぱり一番カッコいいのはto_procなんですけど。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

@@ -77,14 +77,20 @@
 </header>
   <div itemprop="articleBody">
     <p>実は既に結構挫折気味。</p>
+
 <p>やっぱりPythonではちょっと厳しいかもしれない。</p>
+
 <p>とりあえず一番ややこしいPPU周りの情報を調べて、ちょろちょろ書き始めたあたりでいったんCPU部分のパフォーマンスを調べてみました。</p>
+
 <p>かなり厳しいものがあります。CPU部分のコードはPython的な書き方で書いてたんですが、これじゃ話にならない。まず、アクセサなんてものはつかっちゃいけないのだ。</p>
+
 <p>以下環境はOS:WinXP,CPU:Athlon64 3000+,Memory:1G,Python2.4です。</p>
-<section>
-<h2>CPUのレジスタ関連の実装</h2>
+
+<h1>CPUのレジスタ関連の実装</h1>
+
 <p>NESのCPUである6502のレジスタはPCは16bit、それ以外は8bit。8bitの値なんてものはCならunsigned charで一発なんだけど、Pythonにはそんなものない。足し算したらどんどん大きくなるし、引き算したらどんどん小さくなる。ので</p>
-<pre class="prettyprint ">class Py6502(object):
+
+<pre class="prettyprint"><code>class Py6502(object):
   def __init__(self):
     self.A = 0
     self.X = 0
@@ -92,9 +98,13 @@
     self.PC = 0
     #  .
     #  .
-    #  .</pre><p>見たいなクラスにするとして、足し算するときなどは必ず <code>self.A = (self.A + x) &amp; 0xff</code> みたいにして8bitに収めないといけない。ここで</p>
-<pre class="prettyprint ">def _create_n_bit_property(name, mask):
-  rname = "_"+name
+    #  .
+</code></pre>
+
+<p>見たいなクラスにするとして、足し算するときなどは必ず <code>self.A = (self.A + x) &amp; 0xff</code> みたいにして8bitに収めないといけない。ここで</p>
+
+<pre class="prettyprint"><code>def _create_n_bit_property(name, mask):
+  rname = &quot;_&quot;+name
   result = {
     name:property(lambda self: getattr(self, rname),
                   lambda self,v : setattr(self, rname, v &amp; mask),
@@ -104,18 +114,22 @@
 
 class ForceNbitType(type):
   def __new__(cls, class_name, class_bases, classdict):
-    names = classdict.get("__16bit__")
+    names = classdict.get(&quot;__16bit__&quot;)
     for name in names:
       classdict.update(_create_n_bit_property(name, 0xffff))
-    names = classdict.get("__8bit__")
+    names = classdict.get(&quot;__8bit__&quot;)
     for name in names:
       classdict.update(_create_n_bit_property(name, 0xff))
     cls = type.__new__(cls, class_name, class_bases, classdict)
-    return cls</pre><p>のようなmetaclassをつくって</p>
-<pre class="prettyprint ">class Py6502(object):
+    return cls
+</code></pre>
+
+<p>のようなmetaclassをつくって</p>
+
+<pre class="prettyprint"><code>class Py6502(object):
   __metaclass__ = ForceNbitType
-  __8bit__ : "A", "X", "Y"
-  __16bit__ : "PC",
+  __8bit__ : &quot;A&quot;, &quot;X&quot;, &quot;Y&quot;
+  __16bit__ : &quot;PC&quot;,
   def __init__(self):
     self._A = 0
     self._X = 0
@@ -123,18 +137,23 @@ class ForceNbitType(type):
     self._PC = 0
     #  .
     #  .
-    #  .</pre><p>とすれば <code>self.A += 10</code> とかしてもちゃんと8bitに収まる。</p>
+    #  .
+</code></pre>
+
+<p>とすれば <code>self.A += 10</code> とかしてもちゃんと8bitに収まる。</p>
+
 <p>非常に上手くかけるんですが、こんなのやってらんない。遅すぎる。1Frame分(28000サイクル程度)の実行に0.5秒（笑</p>
-</section>
-<section>
-<h2>getattr</h2>
-<p><code>getattr` は遅い。 ``getattr</code> の真価は第3引数でdefault値が指定できること（だと思う）。今回のように確実に属性が存在することが分かっているなら <code>self.__getattribute__(name)</code> を使うと結構違ってくる。ちなみにPythonのソースではこんな感じ。</p>
-<pre class="prettyprint ">static PyObject *
+
+<h1>getattr</h1>
+
+<p><code>getattr</code> は遅い。 <code>getattr</code>の真価は第3引数でdefault値が指定できること（だと思う）。今回のように確実に属性が存在することが分かっているなら<code>self.__getattribute__(name)</code>を使うと結構違ってくる。ちなみにPythonのソースではこんな感じ。</p>
+
+<pre class="prettyprint"><code>static PyObject *
 slot_tp_getattro(PyObject *self, PyObject *name)
 {
     static PyObject *getattribute_str = NULL;
-    return call_method(self, "__getattribute__", &amp;getattribute_str,
-                       "(O)", name);
+    return call_method(self, &quot;__getattribute__&quot;, &amp;getattribute_str,
+                       &quot;(O)&quot;, name);
 }
 
 static PyObject *
@@ -146,13 +165,13 @@ slot_tp_getattr_hook(PyObject *self, PyObject *name)
     static PyObject *getattr_str = NULL;
 
     if (getattr_str == NULL) {
-            getattr_str = PyString_InternFromString("__getattr__");
+            getattr_str = PyString_InternFromString(&quot;__getattr__&quot;);
             if (getattr_str == NULL)
                     return NULL;
     }
     if (getattribute_str == NULL) {
             getattribute_str =
-                    PyString_InternFromString("__getattribute__");
+                    PyString_InternFromString(&quot;__getattribute__&quot;);
             if (getattribute_str == NULL)
                     return NULL;
     }
@@ -169,25 +188,33 @@ slot_tp_getattr_hook(PyObject *self, PyObject *name)
          (void *)PyObject_GenericGetAttr))
             res = PyObject_GenericGetAttr(self, name);
     else
-            res = PyObject_CallFunction(getattribute, "OO", self, name);
+            res = PyObject_CallFunction(getattribute, &quot;OO&quot;, self, name);
     if (res == NULL &amp;&amp; PyErr_ExceptionMatches(PyExc_AttributeError)) {
             PyErr_Clear();
-            res = PyObject_CallFunction(getattr, "OO", self, name);
+            res = PyObject_CallFunction(getattr, &quot;OO&quot;, self, name);
     }
     return res;
-}</pre><p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
-</section>
-<section>
-<h2>実行ループ</h2>
+}
+</code></pre>
+
+<p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
+
+<h1>実行ループ</h1>
+
 <p>CPUのエミュレータなんてのはだいたい同じようなパターンで割り込みを除いて簡単に書くと</p>
-<pre class="prettyprint ">def step_execute(self, clocks):
+
+<pre class="prettyprint"><code>def step_execute(self, clocks):
   while (self.passed_clocks &lt; clocks):
     opecode = read()# opecodeを取得
     # 実行
     count = CLOCK[opecode] # 実行に必要なクロック数を取得
     self.passed_clocks += count
-  self.passed_clocks -= clocks</pre><p>なんてのになるわけで、ここが激しくループするわけで。ここはガリガリにちょっとでも節約できるものは節約。</p>
-<pre class="prettyprint ">def step_execute(self, clocks):
+  self.passed_clocks -= clocks
+</code></pre>
+
+<p>なんてのになるわけで、ここが激しくループするわけで。ここはガリガリにちょっとでも節約できるものは節約。</p>
+
+<pre class="prettyprint"><code>def step_execute(self, clocks):
   read = self.memory.read
   get_method_by_opecode = self.get_method_by_opecode
   while (self.passed_clocks &lt; clocks):
@@ -197,27 +224,38 @@ slot_tp_getattr_hook(PyObject *self, PyObject *name)
     count = method()
     count = count != None and count or CYCLES[opecode]
     self.passed_clocks += count
-  self.passed_clocks -= clocks</pre><p>javascriptで.(ドット)演算が遅いとかいうのは最近（？）よく言われていることで、それはPythonにも当然当てはまる。なのでループ前にだせるものはローカルに出しておく。（これが簡単にできるのがRubyよりもPythonがいい部分だよなあ）</p>
-<p>あと、実行の部分。ここはCなら関数テーブルかswitch(コンパイラによるけど大差ないと思う）になるんだけど、あいにくPythonにはswitchがないので関数テーブル的なものか <code>if opecode == 0x01: ... elif opecode == <span class="pre">0x02:...</span> <span class="pre">elif...</span></code> かになる。</p>
+  self.passed_clocks -= clocks
+</code></pre>
+
+<p>javascriptで <code>.</code> (ドット)演算が遅いとかいうのは最近（？）よく言われていることで、それはPythonにも当然当てはまる。なのでループ前にだせるものはローカルに出しておく。（これが簡単にできるのがRubyよりもPythonがいい部分だよなあ）</p>
+
+<p>あと、実行の部分。ここはCなら関数テーブルかswitch(コンパイラによるけど大差ないと思う）になるんだけど、あいにくPythonにはswitchがないので関数テーブル的なものか <code>if opecode == 0x01: ... elif opecode == 0x02:... elif...</code> かになる。</p>
+
 <p>関数テーブル的なものは</p>
-<pre class="prettyprint ">def ope_0x01(self):
+
+<pre class="prettyprint"><code>def ope_0x01(self):
   #code
 def ope_0x02(self):
   #code
 
-self.__getattribute__("ope_"+hex(opecode))()</pre><p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
-</section>
-<section>
-<h2>結局</h2>
+self.__getattribute__(&quot;ope_&quot;+hex(opecode))()
+</code></pre>
+
+<p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
+
+<h1>結局</h1>
+
 <p>そんな感じでいじってみてかつpsycoを入れて1Frame:0.15程度（PPUやAPUは中身がないので、最後までつくったらもっと遅くなる）。ほかにもいじれそうなところはあって、そこをいじれば0.1は切れそうな感じがしてます。</p>
-<p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに <code>A &amp; 0xff</code> みたいなことをやっていて、どーもめんどくさい。</p>
+
+<p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに A &amp; 0xff みたいなことをやっていて、どーもめんどくさい。</p>
+
 <p>じゃぁLLでエミュレーターを書く意味ってなんだ、というと・・・うーん（笑　自己満足以外なにもないでしょうねえ。というわけで自己満足のために、今後もヒマができれば、ちょっとづつ書き進めてみようかなあ。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules">Python標準モジュールでRakeもどき</a></li>
 <li><a href="/articles/2008/02/19/tasktools-committed-to-the-coderepos">Python版Rake「tasktools」をCodeReposにコミットした</a></li>
+<li><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules">Python標準モジュールでRakeもどき</a></li>
 <li><a href="/articles/2007/03/02/nes-emulator-development-with-python-5">PythonによるNESエミュレータ開発5</a></li>
 <li><a href="/articles/2007/02/04/nes-emulator-development-with-python-4">PythonによるNESエミュレータ開発4</a></li>
 <li><a href="/articles/2007/01/31/nes-emulator-development-with-python-3">PythonによるNESエミュレータ開発3</a></li>

@@ -71,77 +71,100 @@
 </header>
   <div itemprop="articleBody">
     <p>たまには実用的なものをつくろうと思って、Go+Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。</p>
-<div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script><p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
+
+<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
+
+<p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
+
 <p>特徴は以下です。</p>
-<ul class="simple">
+
+<ul>
 <li>Goなので置けば動く</li>
 <li>それでいてLuaでスクリプトを書ける</li>
 <li>最初からマルチスレッド(複数goroutine)を考慮している</li>
 <li>HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる</li>
 <li>定期ジョブも流せる</li>
 </ul>
-<pre class="prettyprint lang-lua">function main()
-  local bot = golbot.newbot("Slack", { token = "xxxxx" })
+
+<pre class="prettyprint"><code class="language-lua">function main()
+  local bot = golbot.newbot(&quot;Slack&quot;, { token = &quot;xxxxx&quot; })
 
   bot:respond([[\s*(\d+)\s*\+\s*(\d+)\s*]], function(m, e) -- 3
     bot:say(e.target, tostring(tonumber(m[2]) + tonumber(m[3])))
   end)
 
   bot:serve(function(msg)
-    if msg.type == "say" then
+    if msg.type == &quot;say&quot; then
       bot:say(msg.channel, msg.message)
       respond(msg, true)
     end
   end)
-end</pre><p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
-<pre class="prettyprint lang-lua">function main()
+end
+</code></pre>
+
+<p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
+
+<pre class="prettyprint"><code class="language-lua">function main()
   bot:respond([[deploy]], function(m, e)
-    bot:say(e.target, "accepted")
-    goworker({target=e.target, type="deploy"})
+    bot:say(e.target, &quot;accepted&quot;)
+    goworker({target=e.target, type=&quot;deploy&quot;})
   end)
 
   bot:serve(function(msg)
-    if msg.type == "say" then
+    if msg.type == &quot;say&quot; then
       bot:say(msg.target, msg.message)
     end
   end)
 end
 
 function worker(msg)
-  if msg.type == "deploy" then
+  if msg.type == &quot;deploy&quot; then
     do_deploy()
-    notifymain({type="say", target=msg.target, message="your deployment has been completed"})
+    notifymain({type=&quot;say&quot;, target=msg.target, message=&quot;your deployment has been completed&quot;})
   end
-end</pre><p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
+end
+</code></pre>
+
+<p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
+
 <p>HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。</p>
-<pre class="prettyprint lang-lua"> function http(r)
-   if r.method == "POST" and r.URL.path == "/webhook" then
-     local data = assert(json.decode(r:readbody()))
-     local message = data.item.message.message
-     local user = data.item.message.from.name
-     local room = data.item.room.name
 
-     local ret = {
-       message = "hello! from webhook",
-       message_format = "html"
-     }
+<pre class="prettyprint"><code class="language-lua">function http(r)
+  if r.method == &quot;POST&quot; and r.URL.path == &quot;/webhook&quot; then
+    local data = assert(json.decode(r:readbody()))
+    local message = data.item.message.message
+    local user = data.item.message.from.name
+    local room = data.item.room.name
 
-     return 200, headers, json.encode(ret)
-   end
-   return 400, headers, json.encode({result="not found"})
- end</pre><p>定期ジョブは以下のような感じ。</p>
-<pre class="prettyprint lang-lua"> function main()
-   golbot.newbot("Null", {
-     http = "0.0.0.0:6669" ,
-     crons = {
-       { "0 * * * * * ", "job1"}
-     }
-   }):serve(function() end)
- end
+    local ret = {
+      message = &quot;hello! from webhook&quot;,
+      message_format = &quot;html&quot;
+    }
 
- function job1()
-   print "hello!"
- end</pre><p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
+    return 200, headers, json.encode(ret)
+  end
+  return 400, headers, json.encode({result=&quot;not found&quot;})
+end
+</code></pre>
+
+<p>定期ジョブは以下のような感じ。</p>
+
+<pre class="prettyprint"><code class="language-lua">function main()
+  golbot.newbot(&quot;Null&quot;, { 
+    http = &quot;0.0.0.0:6669&quot; ,
+    crons = {
+      { &quot;0 * * * * * &quot;, &quot;job1&quot;}
+    }
+  }):serve(function() end)
+end
+
+function job1()
+  print &quot;hello!&quot;
+end
+</code></pre>
+
+<p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

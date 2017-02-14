@@ -76,41 +76,50 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
+    <p><a href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
+
 <p>ということで早速ハックしてみました。</p>
-<p><a class="reference external" href="http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation">前のエントリーで書いた</a> Javascriptテンプレートと組み合わせてめちゃくちゃ簡単にRSSを表示できます。</p>
-<p><a class="reference external" href="/statics/files/xml2json.zip">サンプルはこちら</a></p>
+
+<p><a href="http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation">前のエントリーで書いた</a> Javascriptテンプレートと組み合わせてめちゃくちゃ簡単にRSSを表示できます。</p>
+
+<p><a href="/statics/files/xml2json.zip">サンプルはこちら</a></p>
+
 <p>使い方ですが、多分ソースをみてもらったほうが速いです。</p>
+
 <p>サンプルHTMLから抜粋</p>
-<pre class="prettyprint ">Event.observe(window, "load", function(){
-        new XML2JSON("&lt;a href="http://feeds.feedburner.com/Inforno"&gt;http://feeds.feedburner.com/Inforno&lt;/a&gt;", {container: "test", template : {element:"template"}});
-});</pre><p>初期化コードはｺﾚだけです。
-containerでinnerHTMLに結果を流し込みたいElementを指定します。
-templateは <a class="reference external" href="/articles/2006/02/15/the-embed-javascript-implementation">Lyase.View.render</a> の引数と同じです。
-例ではtextareaエレメントのid:&quot;tempalte&quot;のinnerHTMLをテンプレートとして扱います。</p>
-<pre class="prettyprint ">//テンプレート
-  &lt;textarea id="template" style="display:none;"&gt;
+
+<pre class="prettyprint"><code>Event.observe(window, &quot;load&quot;, function(){
+        new XML2JSON(&quot;&lt;a href=&quot;http://feeds.feedburner.com/Inforno&quot;&gt;http://feeds.feedburner.com/Inforno&lt;/a&gt;&quot;, {container: &quot;test&quot;, template : {element:&quot;template&quot;}});
+});
+</code></pre>
+
+<p>初期化コードはｺﾚだけです。 containerでinnerHTMLに結果を流し込みたいElementを指定します。 templateは <a href="/articles/2006/02/15/the-embed-javascript-implementation">Lyase.View.render</a> の引数と同じです。 例ではtextareaエレメントのid:&ldquo;tempalte&rdquo;のinnerHTMLをテンプレートとして扱います。</p>
+
+<pre class="prettyprint"><code>//テンプレート
+  &lt;textarea id=&quot;template&quot; style=&quot;display:none;&quot;&gt;
 
 &lt;h3&gt;&lt; %= context.channel.title %&gt;&lt;/h3&gt;
 
-&lt;ul class="items"&gt;
+&lt;ul class=&quot;items&quot;&gt;
       &lt; % context.channel.item.each(function(item,index){%&gt;
 
-    &lt;li&gt;&lt;a href="&lt;%= item.link%&gt;" target="_blank"&gt;&lt; %= item.title%&gt;&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;&lt;%= item.link%&gt;&quot; target=&quot;_blank&quot;&gt;&lt; %= item.title%&gt;&lt;/a&gt;&lt;/li&gt;
         &lt; % if(index &gt; 5){throw $break;}%&gt;
       &lt; %})%&gt;
    &lt;/ul&gt;
-  &lt;/textarea&gt;</pre><p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。
-またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで
-おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
+  &lt;/textarea&gt;
+</code></pre>
+
+<p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。 またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
-<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 </ul>
     </div>
   </div>

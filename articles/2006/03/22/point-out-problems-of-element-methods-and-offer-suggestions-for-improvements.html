@@ -72,24 +72,28 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://inforno.net/articles/2006/03/12/element-methods-in-prototype">以前のエントリー</a> でprototype.js1.5のElement.Methodsについて書きました。
-前回はいいところをプッシュして書いたんですが、皆さんご存じの通り問題児でもあります。</p>
+    <p><a href="http://inforno.net/articles/2006/03/12/element-methods-in-prototype">以前のエントリー</a> でprototype.js1.5のElement.Methodsについて書きました。 前回はいいところをプッシュして書いたんですが、皆さんご存じの通り問題児でもあります。</p>
+
 <p>Element.Methodsの問題点</p>
-<ul class="simple">
+
+<ul>
 <li>elementを拡張するかしないかが選択できない。</li>
 <li>プロトタイプチェーンがつながっていない。</li>
 <li>document.createElementが考慮されていない。</li>
 </ul>
+
 <p>■elementを拡張するかしないかが選択できない。</p>
+
 <p>まずわかりやすくこれから。elementは取得された時に拡張されるわけですが、当然パフォーマンスに影響があります。使いたくない人もいるでしょう。しかし、Element.extendによる拡張は$にも$$にも組み込まれていて選択できません。メソッドを置き換えて回避は可能ですが、組み込まれている、ということを考慮すると当然extendされている、ということを前提としたライブラリも出てくるでしょう。となった場合にやっかいです。別名のメソッドを定義してもいいですが・・・やっぱり$って名前がいいよね！（何</p>
+
 <p>■プロトタイプチェーンがつながっていない。</p>
-<p>これは当然の問題。Element.extendは文字通りelementにElement.Methodsのメソッドをコピーしているだけ。しかも一回取得すると、_extendedというフラグが立って次回からはもうextendされない（パフォーマンスを考慮してのこと）。つまり Element.Methodsへのメソッド追加が反映されない、メソッドの内容変更も反映されない。
-　つまり、恐らく$か$$されるだろう、window.onloadイベント前にElement.Methodsへのメソッド追加を完了させ、それ以降変化させない、という事に注意しないといけない。</p>
-<p>ではなぜプロトタイプチェーンがつながっていないのだろうか。Elementは拡張できないんだろうか。これはYesでありNoです。
-まず、このElement.Methodsによる害をある程度押さえ込むことのできるソースを示します。
-これはFirefoxなどMozilla系、safari、Operaで有効です。</p>
-<pre class="prettyprint ">(function() {
-if(!window.HTMLElement) window.HTMLElement = document.createElement("xxx").constructor;
+
+<p>これは当然の問題。Element.extendは文字通りelementにElement.Methodsのメソッドをコピーしているだけ。しかも一回取得すると、_extendedというフラグが立って次回からはもうextendされない（パフォーマンスを考慮してのこと）。つまり Element.Methodsへのメソッド追加が反映されない、メソッドの内容変更も反映されない。 　つまり、恐らく$か$$されるだろう、window.onloadイベント前にElement.Methodsへのメソッド追加を完了させ、それ以降変化させない、という事に注意しないといけない。</p>
+
+<p>ではなぜプロトタイプチェーンがつながっていないのだろうか。Elementは拡張できないんだろうか。これはYesでありNoです。 まず、このElement.Methodsによる害をある程度押さえ込むことのできるソースを示します。 これはFirefoxなどMozilla系、safari、Operaで有効です。</p>
+
+<pre class="prettyprint"><code>(function() {
+if(!window.HTMLElement) window.HTMLElement = document.createElement(&quot;xxx&quot;).constructor;
 if(window.HTMLElement) {
     var methods = Element.Methods, property;
     var bind = function(name, method) {
@@ -105,14 +109,19 @@ if(window.HTMLElement) {
     HTMLElement.prototype._extended = true;
 }
 
-})();</pre><p>このコードを <strong>最後に(window.onloadの直前で)実行すれば</strong> OKです（scriptaculousとかもElement.Methodsを拡張するので、その拡張が終わった後）。
-これでelementがプロトタイプチェーンでつながっているブラウザでは$による負荷を軽減できます。$(&quot;test&quot;).show()とかも実行できますし、引数操作によるパフォーマンス低下がいやならElement.show(&quot;test&quot;)と実行すれば良いだけです。しかも地味にreturn method.apply(null, arguments) || this;とすることによって$(&quot;test&quot;).update(&quot;hogehoge&quot;).show()とか書けるようにもしてみました（笑</p>
-<p>しかしIEはどうしようもありません。 <strong>そもそもIEはelementがプロトタイプチェーンをもっていません。</strong>
-document.createElement (&quot;div&quot;).constructorとやってもprototypeとやってもundefinedと抜かす強敵です。これは昔から対策が考えられていますが、つまるところElement.Methodsと同様にコピーするだけです。それをhtcをつかってみたり、コンストラクタを擬似的に作ってみたり、とかっていう方法で実装しているだけです。なのでElement prototypingしようと思うとIEでは現状これが限界です。</p>
+})();
+</code></pre>
+
+<p>このコードを <strong>最後に(window.onloadの直前で)実行すれば</strong> OKです（scriptaculousとかもElement.Methodsを拡張するので、その拡張が終わった後）。 これでelementがプロトタイプチェーンでつながっているブラウザでは$による負荷を軽減できます。$(&ldquo;test&rdquo;).show()とかも実行できますし、引数操作によるパフォーマンス低下がいやならElement.show(&ldquo;test&rdquo;)と実行すれば良いだけです。しかも地味にreturn method.apply(null, arguments) || this;とすることによって$(&ldquo;test&rdquo;).update(&ldquo;hogehoge&rdquo;).show()とか書けるようにもしてみました（笑</p>
+
+<p>しかしIEはどうしようもありません。 <strong>そもそもIEはelementがプロトタイプチェーンをもっていません。</strong> document.createElement (&ldquo;div&rdquo;).constructorとやってもprototypeとやってもundefinedと抜かす強敵です。これは昔から対策が考えられていますが、つまるところElement.Methodsと同様にコピーするだけです。それをhtcをつかってみたり、コンストラクタを擬似的に作ってみたり、とかっていう方法で実装しているだけです。なのでElement prototypingしようと思うとIEでは現状これが限界です。</p>
+
 <p>■　document.createElementが考慮されていない。</p>
+
 <p>先ほど示したソースでelementがプロトタイプチェーンをもつブラウザでは当然document.createElementで作成した elementもElement.Methodsのメソッドが実行できます。しかしIEではそれができません。この document.createElementも考慮して先ほどのElement.Methods対策ソースを改良しましょう。</p>
-<pre class="prettyprint ">(function() {
-if(!window.HTMLElement) window.HTMLElement = document.createElement("xxx").constructor;
+
+<pre class="prettyprint"><code>(function() {
+if(!window.HTMLElement) window.HTMLElement = document.createElement(&quot;xxx&quot;).constructor;
 if(window.HTMLElement) {
     var methods = Element.Methods, property;
     var bind = function(name, method) {
@@ -133,16 +142,21 @@ if(window.HTMLElement) {
   }
 }
 
-})();</pre><p>赤色で示した部分が追加部分です。これでIEでもdocument.createElementした後に直接Element.Methodsのメソッドが実行できます。何度も言いますがパフォーマンス低下がいやな人はこの追加部分を省いてください。</p>
+})();
+</code></pre>
+
+<p>赤色で示した部分が追加部分です。これでIEでもdocument.createElementした後に直接Element.Methodsのメソッドが実行できます。何度も言いますがパフォーマンス低下がいやな人はこの追加部分を省いてください。</p>
+
 <p>というわけで今回はElement.Methodsの問題への対応策を示してみました。要はIEがelementがプロトタイプチェーンを持つようにしてくれれば万事解決なわけなんですよね。でも結局IE7でも実装されていないようで、なかなか・・・</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
-<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 </ul>
     </div>
   </div>

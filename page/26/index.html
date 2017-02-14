@@ -61,9 +61,9 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/03/12/element-methods-in-prototype" itemprop="url">prototype.js 1.5のElement.Methods</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/01/24/inheritance-in-prototype-with-ease" itemprop="url">prototype.jsでの継承を楽にする</a></h3>
 <div class="meta">
-<time datetime="2006-03-12T01:24:30&#43;09:00">Mar 12, 2006</time>
+<time datetime="2006-01-24T00:19:36&#43;09:00">Jan 24, 2006</time>
 
   
   <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
@@ -74,53 +74,116 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>prototype.js1.5ではみんながこうしたいなーと思っていた機能が実装されました。(via <a class="reference external" href="http://encytemedia.com/blog/articles/2006/03/07/prototype-gets-some-serious-syntactic-sugar">Encytemedia</a> )
-（SVN co <a class="reference external" href="http://dev.rubyonrails.org/svn/rails/spinoffs/prototype">http://dev.rubyonrails.org/svn/rails/spinoffs/prototype</a> して rake distしたもの ）</p>
-<p>■Element.Methods</p>
-<p>1.4まではelementに対する操作は</p>
-<pre class="prettyprint ">Element.show($("test"));
-Element.update($("test"), "hoge");</pre><p>のように書く必要がありました。</p>
-<p>これが</p>
-<pre class="prettyprint ">$("test").show();
-$("test").update("hoge");</pre><p>と書けるようになりました。</p>
-<p>これはprototype.jsで最も偉大な$メソッドの変更によるモノです。</p>
-<pre class="prettyprint ">function $() {
-  var results = [], element;
-  for (var i = 0; i &lt; arguments.length; i++) {
-    element = arguments[i];
-    if (typeof element == 'string')
-      element = document.getElementById(element);
-    results.push(Element.extend(element)); //&lt;= ココ！
-  }
-  return results.length &lt; 2 ? results[0] : results;
-}</pre><p>つまり取得したelementに対してElement.extendが適応されるようになった、と。
-んでそのElement.extendは</p>
-<pre class="prettyprint ">Element.extend = function(element) {
-  if (!element) return;
+    <p>Mochikitも好きですが、普段はRails使いということもあってprototype.jsを使っています。</p>
 
-  if (!element._extended &amp;&amp; element.tagName &amp;&amp; element != window) {
-    var methods = Element.Methods;
-    for (property in methods) {
-      var value = methods[property];
-      if (typeof value == 'function')
-        element[property] = value.bind(null, element);
+<p>そういえばjavascriptのライブラリでOOなもの、ということで初めて出会ったのは <a href="http://jsolait.net">jsolait</a> でした。 当時の印象としては「んー確かにがんばってるんだけど・・・ちょっと大げさっていうか・・・」って感じでした。</p>
+
+<p>そして去年、prototype.jsに出会うわけですが「class-style OO」とうたっている部分がかなりシンプル（すぎ）で衝撃でした。</p>
+
+<p>ただ、やっぱりjavascriptにおいて「継承」というのはやっかいな問題です。 というわけで誰か作ってると思うんですが、より簡単に継承できるライブラリを作ってみました。</p>
+
+<pre class="prettyprint"><code>Class.def = function(definition) {
+  var klass = Class.create();
+  if(definition.__extend__)
+    Class.inherit(klass, definition.__extend__);
+  if(definition.__static__)
+    Object.extend(klass, definition.__static__);
+  if(definition.__include__) {
+    if(definition.__include__.constructor != Array)
+      definition.__include__ = [definition.__include__];
+    definition.__include__.each(function(include){
+      Object.extend(klass.prototype, include);
+    });
+  }
+  [&quot;__static__&quot;,&quot;__extend__&quot;,&quot;__include__&quot;].each(function(n){delete definition[n];}
+  Object.extend(klass.prototype, definition);
+  return klass;
+}    
+
+Class.inherit = function(child, parent) {
+  Object.extend(child, parent);
+  child.__super__ = parent.prototype;
+  var dummy = function(){};
+  dummy.prototype = parent.prototype;
+  child.prototype = new dummy();
+  child.prototype.constructor = child;
+  return child;
+}
+</code></pre>
+
+<p>こんだけです。 使い方はサンプルをみるほうがわかりやすいと思うので、サンプルをどーぞ。</p>
+
+<pre class="prettyprint"><code>var IncludedClass = Class.def({
+  __static__ : {
+    includedMethod : function() {
+      return &quot;includedMethod:&quot;+this.value;
     }
   }
-  element._extended = true;
-  return element;
-}</pre><p>Element.Methodsのメソッドがelementに対して第1引数をそのelementに束縛した状態でセットされます。
-つまりElement.Methodsにメソッドを追加すれば自動的に$で取得したelementに対してそのメソッドが追加されます。</p>
-<p>ちなみにscriptaculousでも</p>
-<pre class="prettyprint ">if(Element.Methods) {
-  Element.Methods.visualEffect = function(element, effect, options) {
-    s = effect.gsub(/_/, '-').camelize();
-    effect_class = s.charAt(0).toUpperCase() + s.substring(1);
-    new Effect[effect_class](element, options);
-    return $(element);
+});    
+
+var AClass = Class.def({__include__ : IncludedClass,
+  __static__ : {
+    A : &quot;A static&quot;
+  },
+
+  initialize : function(val) {
+    if(!val) throw &quot;error&quot;;
+    this.val = val;
+    this.klass = &quot;AClass&quot;;
+  },
+
+  inspect : function() {
+    return &quot;&lt; &quot;+this.klass+&quot; : &quot;+this.val+&quot;&gt;&quot;;
   }
-}</pre><p>というコードが追加されています。
-クラス名変換のオーバーヘッドはあるものの、$(&quot;test&quot;).visualEffect('scale')と書けるようになりました。</p>
-<p>IEで$$が動くようになっていたりと1.5のリリースが待ち遠しいですね。</p>
+});
+
+var BClass = Class.def({ __extend__ : AClass,
+  __static__ : {
+    B : &quot;B static&quot;
+  },
+
+  initialize : function(val) {
+    BClass.__super__.initialize.call(this, val);
+    this.klass = &quot;BClass&quot;;
+  }
+});
+
+var CClass = Class.def({ __extend__ : BClass,
+  __static__ : {
+    C : &quot;C static&quot;
+  },
+
+    initialize : function(val) {
+      CClass.__super__.initialize.call(this, val);
+      this.klass = &quot;CClass&quot;;
+    }
+});
+
+var a = new AClass(&quot;aaaaaaa&quot;);
+var b = new BClass(&quot;bbbbbbb&quot;);
+var c = new CClass(&quot;ccccccc&quot;);
+alert(&quot;a inspect:&quot;+a.inspect()); //=&gt; a inspect:
+alert(&quot;b inspect:&quot;+b.inspect()); //=&gt; b inspect:
+alert(&quot;c inspect:&quot;+c.inspect()); //=&gt; c inspect:
+alert(&quot;includedMethod:&quot;+a.includedMethod()); //=&gt; includedMethod:included aaaaaa
+alert(&quot;CClass.A:&quot;+CClass.A); //=&gt; CClass.A:A static
+alert(&quot;CClass.B:&quot;+CClass.B); //=&gt; CClass.B:B static
+alert(&quot;CClass.C:&quot;+CClass.C); //=&gt; CClass.C:C static
+alert(&quot;b.constructor = a.constructor:&quot;+(b.constructor == a.constructor).toString()); //=&gt;b.constructor = a.constructor:false
+alert(&quot;b instanceof BClass:&quot;+(b instanceof BClass).toString()); //=&gt;b instanceof BClass:true
+alert(&quot;b instanceof AClass:&quot;+(b instanceof AClass).toString()); //=&gt;b instanceof AClass:true
+alert(&quot;c instanceof BClass:&quot;+(c instanceof BClass).toString()); //=&gt;c instanceof BClass:true
+alert(&quot;c instanceof AClass:&quot;+(c instanceof AClass).toString()); //=&gt;c instanceof AClass:true&lt;/div&gt;
+</code></pre>
+
+<p>継承の処理がかなり楽になっていると思います。 テキトーに場当たりで単純にnewを使って継承していたりすると</p>
+
+<p>「親クラスのコンストラクタに必須な引数があって、それがないとエラーでるから継承できねーよ、しゃーない適当に引数付けとくか」</p>
+
+<p>ということになったりするもんですが（俺はよくなってますｗ）このライブラリを使えば大丈夫。 また、こんな変な書き方イヤだよ！！って方でも継承の部分はClass.inheritに独立させてあるのでそこだけつかえばオッケーです。</p>
+
+<p>一応動作は確認していますがおかしいところあったら報告していただけるとありがたいです。</p>
+
   </div>
 </article>
 
@@ -132,50 +195,58 @@ $("test").update("hoge");</pre><p>と書けるようになりました。</p>
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/02/20/xml2json-with-the-javascript-template-engine" itemprop="url">XML2JSON&#43;javascriptテンプレートエンジンでRSS表示</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/01/22/fckeditor" itemprop="url">FCKEditor</a></h3>
 <div class="meta">
-<time datetime="2006-02-20T01:18:51&#43;09:00">Feb 20, 2006</time>
+<time datetime="2006-01-22T00:05:29&#43;09:00">Jan 22, 2006</time>
 
   
   <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
-  <span class="tag"><a href="/articles/tag/feed/" rel="tag" itemprop="keywords">feed</a></span>
+  <span class="tag"><a href="/articles/tag/fckeditor/" rel="tag" itemprop="keywords">fckeditor</a></span>
   
-  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  <span class="tag"><a href="/articles/tag/typo/" rel="tag" itemprop="keywords">typo</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
-<p>ということで早速ハックしてみました。</p>
-<p><a class="reference external" href="http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation">前のエントリーで書いた</a> Javascriptテンプレートと組み合わせてめちゃくちゃ簡単にRSSを表示できます。</p>
-<p><a class="reference external" href="/statics/files/xml2json.zip">サンプルはこちら</a></p>
-<p>使い方ですが、多分ソースをみてもらったほうが速いです。</p>
-<p>サンプルHTMLから抜粋</p>
-<pre class="prettyprint ">Event.observe(window, "load", function(){
-        new XML2JSON("&lt;a href="http://feeds.feedburner.com/Inforno"&gt;http://feeds.feedburner.com/Inforno&lt;/a&gt;", {container: "test", template : {element:"template"}});
-});</pre><p>初期化コードはｺﾚだけです。
-containerでinnerHTMLに結果を流し込みたいElementを指定します。
-templateは <a class="reference external" href="/articles/2006/02/15/the-embed-javascript-implementation">Lyase.View.render</a> の引数と同じです。
-例ではtextareaエレメントのid:&quot;tempalte&quot;のinnerHTMLをテンプレートとして扱います。</p>
-<pre class="prettyprint ">//テンプレート
-  &lt;textarea id="template" style="display:none;"&gt;
+    <p><a href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。 WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
 
-&lt;h3&gt;&lt; %= context.channel.title %&gt;&lt;/h3&gt;
+<p>こちらもTinyMCEと同じく</p>
 
-&lt;ul class="items"&gt;
-      &lt; % context.channel.item.each(function(item,index){%&gt;
+<ul>
+<li>JavaScript で記述された</li>
+<li>LGPL でオープンソースな</li>
+<li>クロスプラットフォームの</li>
+<li>多言語対応もしてて</li>
+<li>簡単に使える</li>
+</ul>
 
-    &lt;li&gt;&lt;a href="&lt;%= item.link%&gt;" target="_blank"&gt;&lt; %= item.title%&gt;&lt;/a&gt;&lt;/li&gt;
-        &lt; % if(index &gt; 5){throw $break;}%&gt;
-      &lt; %})%&gt;
-   &lt;/ul&gt;
-  &lt;/textarea&gt;</pre><p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。
-またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで
-おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
+<p>ライブラリなんです。かなり使いやすいですよ。</p>
+
+<p>導入も簡単です。typoの場合、</p>
+
+<pre class="prettyprint"><code>&lt;script src=&quot;http://inforno.net/FCKeditor_install_path/fckeditor.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+&lt;script language=&quot;javascript&quot;&gt;
+Event.observe(window, &quot;load&quot;, function(){
+  var list = [&quot;article_extended&quot;, &quot;article_body&quot;];
+  for(var i=0,l=list.length; i &lt; l; i++) {
+    var fck = new FCKeditor(list[i]);
+    fck.BasePath = &quot;FCKeditor_install_path&quot;;
+    fck.Config[&quot;CustomConfigurationsPath&quot;] = fck.BasePath + &quot;myconfig.js&quot;;
+    fck.Height = 400;
+    fck.ReplaceTextarea();
+  }
+});
+&lt;/script&gt;[/js]
+</code></pre>
+
+<p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
+
+<p><a href="/statics/files/fck.jpg"><img src="/statics/files/fck.thumbnail.jpg" alt="image" /></a></p>
+
+<p>海外ではAPIを使ったデスクトップクライアントが結構人気みたいですけど、日本じゃあんまり使ってる人聞かない・・・Typoもデフォルトはデスクトップクライアント使え！みたいな感じなんですけどFCKeditorで一件落着。便利便利。</p>
+
   </div>
 </article>
 

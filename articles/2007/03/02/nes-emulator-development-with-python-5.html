@@ -77,32 +77,45 @@
 </header>
   <div itemprop="articleBody">
     <p>もうすぐ引越しです。頑張って部屋を片付けないと・・・</p>
+
 <p>しばらくドタバタすると思し、これ以上作りこむモチベーションもないので、ここまで作ったものをあげておこうと思いました。</p>
+
 <p><strong>ダウンロード</strong></p>
-<p><a class="reference external" href="/statics/files/pynes-0-0-1.zip">pynes-0-0-1.zip</a></p>
-<section>
-<h2>試し方</h2>
+
+<p><a href="/statics/files/pynes-0-0-1.zip">pynes-0-0-1.zip</a></p>
+
+<h1>試し方</h1>
+
 <p>インストールはダウンロードしたzipファイルを展開するだけです。</p>
+
 <p>必要なライブラリは</p>
-<ul class="simple">
-<li><a class="reference external" href="http://psyco.sourceforge.net">psyco</a></li>
-<li><a class="reference external" href="http://www.pygame.org">pygame</a></li>
+
+<ul>
+<li><a href="http://psyco.sourceforge.net">psyco</a></li>
+<li><a href="http://www.pygame.org">pygame</a></li>
 </ul>
-<p>です。
-両方とも <code>easy_install psyco</code> 、<cite>easy_install pygame</cite> でインストールできたはずです。</p>
-<p><code>roms/</code> 以下に最低1つ以上ロムファイルを置いてください。現状、マッパーに対応してませんので、マッパー0のしか動く可能性はありません。現在動作を確認してるのは、前回あげさせていただいた <a class="reference external" href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">TkShoot</a> くらいです。市販のはほとんど動かないんじゃないでしょうか。</p>
+
+<p>です。 両方とも <code>easy_install psyco</code> 、`easy_install pygame` でインストールできたはずです。</p>
+
+<p><code>roms/</code> 以下に最低1つ以上ロムファイルを置いてください。現状、マッパーに対応してませんので、マッパー0のしか動く可能性はありません。現在動作を確認してるのは、前回あげさせていただいた <a href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">TkShoot</a> くらいです。市販のはほとんど動かないんじゃないでしょうか。</p>
+
 <p>一応参考までにあげておくと、動く可能性があるのはGolf,DonkeyKongなどです。</p>
+
 <p><code>bin/pynesi.py</code> が起動用スクリプトです。コマンドラインから起動してください。起動したら、romファイルを番号で選択してください。</p>
+
 <p>キーバーインドは</p>
-<ul class="simple">
+
+<ul>
 <li>十字キー : カーソル</li>
 <li>スタート : テンキーの0</li>
 <li>セレクト : テンキーのEnter</li>
 <li>A : テンキーの3</li>
 <li>B : テンキーの2</li>
 </ul>
+
 <p>になってます。キーバーインドを代えたい方は <code>src/pynes/pad.py</code> を適当に書き換えてください。</p>
-<pre class="prettyprint ">self.keymap1 = {
+
+<pre class="prettyprint"><code>self.keymap1 = {
   K_UP : NES_PAD_UP,
   K_DOWN : NES_PAD_DOWN,
   K_LEFT : NES_PAD_LEFT,
@@ -111,19 +124,24 @@
   K_KP_ENTER : NES_PAD_SELECT,
   K_KP2 : NES_PAD_B,
   K_KP3 : NES_PAD_A
-}</pre><p>ここです。</p>
+}
+</code></pre>
+
+<p>ここです。</p>
+
 <p>とにかく、めちゃくちゃ遅いので、固まったと思ってもしばらくすると画面がちゃんと切り替わったりします。</p>
-</section>
-<section>
-<h2>よもや話</h2>
+
+<h1>よもや話</h1>
+
 <p>かなり適当です。前回（PythonによるNESエミュレータ開発4)から変わってません。マッパーっぽいのが用意してありますが、これはダミーです。他のエミュのソースを参考に必要そうな部分に適当にいれただけです。</p>
+
 <p>一応、速度を重視しているものの、わかりやすく書いてるつもりなんで、Pythonが分かっていてかつ、エミュレータの基本的な構造が知りたい人には参考になるかもしれません。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules">Python標準モジュールでRakeもどき</a></li>
 <li><a href="/articles/2008/02/19/tasktools-committed-to-the-coderepos">Python版Rake「tasktools」をCodeReposにコミットした</a></li>
+<li><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules">Python標準モジュールでRakeもどき</a></li>
 <li><a href="/articles/2007/02/04/nes-emulator-development-with-python-4">PythonによるNESエミュレータ開発4</a></li>
 <li><a href="/articles/2007/01/31/nes-emulator-development-with-python-3">PythonによるNESエミュレータ開発3</a></li>
 <li><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">キーボード派のWindows開発環境</a></li>

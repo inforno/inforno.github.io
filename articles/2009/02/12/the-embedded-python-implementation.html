@@ -74,135 +74,133 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <section>
-<h2>更新履歴</h2>
-<ul>
-<li><dl class="first docutils">
-<dt>2009/02/20 version 1.0.0</dt>
-<dd><ul class="first last simple">
-<li><code>Renderer</code> と <code>Helper</code> を追加。詳しくはソースファイルヘッダ部分のドキュメントを参照してください。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>2009/02/17 version 0.5.0</dt>
-<dd><ul class="first last simple">
-<li><code>&lt;%= %&gt;</code> で自動的にフィルタを適応できるようになりました。また、 <code>render</code> メソッドが <code>unicode</code> オブジェクトではなく <code>unicode</code> のサブクラス <code>EmbpyString</code> オブジェクトを返すようになりました。filterは <code>EmbpyString</code> オブジェクトをスルーします。これにより2重でfilterが適応されることがなくなります。&lt;%=r %&gt;でフィルターをオフにできます。</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-<pre class="prettyprint ">Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
-# =&gt; "&amp;lt;b&amp;gt;"
-Embpy("&lt;%=r b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
-# =&gt; "&lt;b&gt;"
+    <h1>更新履歴</h1>
 
-result = Embpy("&lt;%=r b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
-# result.__class__ =&gt; EmbpyString
-Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
-# =&gt; "&lt;b&gt;"</pre><ul>
-<li><p class="first"><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</p>
-</li>
-<li><dl class="first docutils">
-<dt>2009/02/16 version 0.4.0</dt>
-<dd><ul class="first last simple">
-<li>パフォーマンス改善</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>2009/02/15 version 0.3.0</dt>
-<dd><ul class="first last simple">
-<li><a class="reference external" href="http://wids.net/lab/epy.html">epy</a> の中の人から「end.. orz」という反応をいただいたので、endの代わりに <code>&lt;% %&gt;</code> も使えるようにしました。</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-<pre class="prettyprint ">&lt;%- if True: -%&gt;
-   ok
-   &lt;% %&gt;</pre><p>と書けるようになりました。</p>
 <ul>
-<li><dl class="first docutils">
-<dt>2009/02/14 version 0.2.0</dt>
-<dd><ul class="first last simple">
-<li>&quot;{&quot; と &quot;}&quot;が辞書リテラルとかぶっていたので、&quot;{:&quot;と&quot;:}&quot;に変更しました。</li>
+<li><p>2009/02/20 version 1.0.0</p>
+
+<ul>
+<li><code>Renderer</code> と <code>Helper</code> を追加。詳しくはソースファイルヘッダ部分のドキュメントを参照してください。</li>
+</ul></li>
+
+<li><p>2009/02/17 version 0.5.0</p>
+
+<ul>
+<li><code>&lt;%= %&gt;</code> で自動的にフィルタを適応できるようになりました。また、 <code>render</code> メソッドが <code>unicode</code> オブジェクトではなく <code>unicode</code> のサブクラス <code>EmbpyString</code> オブジェクトを返すようになりました。filterは <code>EmbpyString</code> オブジェクトをスルーします。これにより2重でfilterが適応されることがなくなります。&lt;%=r %&gt;でフィルターをオフにできます。</li>
+</ul></li>
+</ul>
+
+<pre class="prettyprint"><code>Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
+# =&gt; &quot;&amp;lt;b&amp;gt;&quot;
+Embpy(&quot;&lt;%=r b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
+# =&gt; &quot;&lt;b&gt;&quot;
+
+result = Embpy(&quot;&lt;%=r b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
+# result.__class__ =&gt; EmbpyString
+Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:result})
+# =&gt; &quot;&lt;b&gt;&quot;
+</code></pre>
+
+<ul>
+<li><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</li>
+
+<li><p>2009/02/16 version 0.4.0</p>
+
+<ul>
+<li>パフォーマンス改善</li>
+</ul></li>
+
+<li><p>2009/02/15 version 0.3.0</p>
+
+<ul>
+<li><a href="http://wids.net/lab/epy.html">epy</a> の中の人から「end.. orz」という反応をいただいたので、endの代わりに <code>&lt;% %&gt;</code> も使えるようにしました。</li>
+</ul></li>
+</ul>
+
+<pre class="prettyprint"><code>&lt;%- if True: -%&gt;
+   ok
+   &lt;% %&gt;
+</code></pre>
+
+<p>と書けるようになりました。</p>
+
+<ul>
+<li>2009/02/14 version 0.2.0<br />
+
+<ul>
+<li>&rdquo;{&rdquo; と &ldquo;}&ldquo;が辞書リテラルとかぶっていたので、&rdquo;{:&ldquo;と&rdquo;:}&ldquo;に変更しました。</li>
 <li>変換後コードでなく、コンパイル済みcodeオブジェクトをキャッシュするようにしました。</li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ul>
-</section>
-<section>
-<h2>はじめに</h2>
+
+<h1>はじめに</h1>
+
 <p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
-<p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a class="reference external" href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
-<p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= <span class="pre">&quot;hoge%&gt;&quot;</span></code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
-<ul class="simple">
+
+<p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
+
+<p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= &quot;hoge%&gt;&quot;</code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
+
+<ul>
 <li>キャッシュ</li>
-<li>インラインでPythonを書くことも出来る:  <code>def format(v) {: return <span class="pre">&quot;%4d&quot;%v;</span> :}</code> みたいに。</li>
-<li>eRubyのtrim modeの&quot;&lt;%-&quot;と&quot;-%&gt;&quot; : これがあると無いではテンプレートの見易さが段違い。</li>
+<li>インラインでPythonを書くことも出来る: <code>def format(v) {: return &quot;%4d&quot;%v; :}</code> みたいに。</li>
+<li>eRubyのtrim modeの&rdquo;&lt;%-&ldquo;と&rdquo;-%&gt;&rdquo; : これがあると無いではテンプレートの見易さが段違い。</li>
 <li>自動的にフィルタを適応。しかも2重でフィルタが適応されない。</li>
 <li>もちろんマルチバイトでも大丈夫。</li>
 </ul>
+
 <p>といったところが特徴ですかね。</p>
-</section>
-<section>
-<h2>例</h2>
+
+<h1>例</h1>
+
 <p>テンプレートはこんな感じにかけます。</p>
-<pre class="prettyprint ">&lt;%-
+
+<pre class="prettyprint"><code>&lt;%-
 class Hoge(object):
   def __init__(self):
     pass
   end
 end
 hoge = Hoge()
-a = "&lt; title &gt;"
+a = &quot;&lt; title &gt;&quot;
 -%&gt;
 &lt;%=r a %&gt;
-&lt;%- def format(v) {: return "%4d"%v; :} -%&gt;
-&lt;%- def format2(v) {: return "%2d"%v; :} -%&gt;
+&lt;%- def format(v) {: return &quot;%4d&quot;%v; :} -%&gt;
+&lt;%- def format2(v) {: return &quot;%2d&quot;%v; :} -%&gt;
   &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
 &lt;%- for x in xrange(1,xx): -%&gt;
 &lt;%= format2(x) -%&gt;
   &lt;%- for y in xrange(1,xx): -%&gt;
 &lt;%= format(x*y) -%&gt;
   &lt;%- end %&gt;
-&lt;%- end -%&gt;</pre><p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
-<pre class="prettyprint ">e = embpy.Embpy(codecs.open("path_to_template", encoding="utf8"),
-          cache_path = "path_to_cache_file",
+&lt;%- end -%&gt;
+</code></pre>
+
+<p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
+
+<pre class="prettyprint"><code>e = embpy.Embpy(codecs.open(&quot;path_to_template&quot;, encoding=&quot;utf8&quot;),
+          cache_path = &quot;path_to_cache_file&quot;,
           template_globals = {}, filter=cgi.escape)
-print e.render({"xx": "10"})</pre><p>出力はこう。</p>
-<pre class="prettyprint ">    1   2   3   4   5   6   7   8   9
-1   1   2   3   4   5   6   7   8   9
-2   2   4   6   8  10  12  14  16  18
-3   3   6   9  12  15  18  21  24  27
-4   4   8  12  16  20  24  28  32  36
-5   5  10  15  20  25  30  35  40  45
-6   6  12  18  24  30  36  42  48  54
-7   7  14  21  28  35  42  49  56  63
-8   8  16  24  32  40  48  56  64  72
-9   9  18  27  36  45  54  63  72  81</pre></section>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/embpy.zip">embpy</a></p>
-</section>
-<section>
-<h2>コード</h2>
+print e.render({&quot;xx&quot;: &quot;10&quot;})
+</code></pre>
+
+<h1>ダウンロード</h1>
+
+<p><a href="/statics/files/embpy.zip">embpy</a></p>
+
+<h1>コード</h1>
+
 <p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
-<p>あと <code><span class="pre">&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</span></code> という正規表現は自分的には常套句。&quot;で囲まれていて\&quot;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
-</section>
+
+<p>あと <code>&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</code> という正規表現は自分的には常套句。&rdquo;で囲まれていて\&ldquo;は&rdquo;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2008/12/11/functional-pattern-matching-for-python">Python: パターンマッチしてみる</a></li>
 <li><a href="/articles/2008/09/19/sexp-library-for-python">Python: S式パーサライブラリを作りました</a></li>
 <li><a href="/articles/2008/05/28/yahoo-jlp-api-wrapper-for-python-2">Python版Yahooテキスト解析 APIライブラリをかな漢字変換に対応させました</a></li>
-<li><a href="/articles/2007/11/08/instant-pluggable-python-class">Python:お手軽にPluggableにする</a></li>
+<li><a href="/articles/2008/04/03/a-python-library-for-nicovideo-testing">Python版ニコニコ動画ライブラリを試しに公開してみる</a></li>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
 </ul>
     </div>

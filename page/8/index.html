@@ -61,143 +61,102 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2009/02/12/the-embedded-python-implementation" itemprop="url">埋め込みPythonを実装してみました</a></h3>
+<h3 itemprop="name"><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2" itemprop="url">XREAで好きなバージョンのPythonを使う方法2</a></h3>
 <div class="meta">
-<time datetime="2009-02-12T00:00:00&#43;09:00">Feb 12, 2009</time>
+<time datetime="2009-01-25T01:00:00&#43;09:00">Jan 25, 2009</time>
 
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
   
   <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
   
-  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
+  <span class="tag"><a href="/articles/tag/xrea/" rel="tag" itemprop="keywords">xrea</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <section>
-<h2>更新履歴</h2>
-<ul>
-<li><dl class="first docutils">
-<dt>2009/02/20 version 1.0.0</dt>
-<dd><ul class="first last simple">
-<li><code>Renderer</code> と <code>Helper</code> を追加。詳しくはソースファイルヘッダ部分のドキュメントを参照してください。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>2009/02/17 version 0.5.0</dt>
-<dd><ul class="first last simple">
-<li><code>&lt;%= %&gt;</code> で自動的にフィルタを適応できるようになりました。また、 <code>render</code> メソッドが <code>unicode</code> オブジェクトではなく <code>unicode</code> のサブクラス <code>EmbpyString</code> オブジェクトを返すようになりました。filterは <code>EmbpyString</code> オブジェクトをスルーします。これにより2重でfilterが適応されることがなくなります。&lt;%=r %&gt;でフィルターをオフにできます。</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-<pre class="prettyprint ">Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
-# =&gt; "&amp;lt;b&amp;gt;"
-Embpy("&lt;%=r b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
-# =&gt; "&lt;b&gt;"
+    <p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
 
-result = Embpy("&lt;%=r b %&gt;", filter=cgi.escape).render({"v":"&lt;b&gt;"})
-# result.__class__ =&gt; EmbpyString
-Embpy("&lt;%= b %&gt;", filter=cgi.escape).render({"v":result})
-# =&gt; "&lt;b&gt;"</pre><ul>
-<li><p class="first"><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</p>
-</li>
-<li><dl class="first docutils">
-<dt>2009/02/16 version 0.4.0</dt>
-<dd><ul class="first last simple">
-<li>パフォーマンス改善</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>2009/02/15 version 0.3.0</dt>
-<dd><ul class="first last simple">
-<li><a class="reference external" href="http://wids.net/lab/epy.html">epy</a> の中の人から「end.. orz」という反応をいただいたので、endの代わりに <code>&lt;% %&gt;</code> も使えるようにしました。</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-<pre class="prettyprint ">&lt;%- if True: -%&gt;
-   ok
-   &lt;% %&gt;</pre><p>と書けるようになりました。</p>
-<ul>
-<li><dl class="first docutils">
-<dt>2009/02/14 version 0.2.0</dt>
-<dd><ul class="first last simple">
-<li>&quot;{&quot; と &quot;}&quot;が辞書リテラルとかぶっていたので、&quot;{:&quot;と&quot;:}&quot;に変更しました。</li>
-<li>変換後コードでなく、コンパイル済みcodeオブジェクトをキャッシュするようにしました。</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</section>
-<section>
-<h2>はじめに</h2>
-<p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
-<p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a class="reference external" href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
-<p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= <span class="pre">&quot;hoge%&gt;&quot;</span></code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
-<ul class="simple">
-<li>キャッシュ</li>
-<li>インラインでPythonを書くことも出来る:  <code>def format(v) {: return <span class="pre">&quot;%4d&quot;%v;</span> :}</code> みたいに。</li>
-<li>eRubyのtrim modeの&quot;&lt;%-&quot;と&quot;-%&gt;&quot; : これがあると無いではテンプレートの見易さが段違い。</li>
-<li>自動的にフィルタを適応。しかも2重でフィルタが適応されない。</li>
-<li>もちろんマルチバイトでも大丈夫。</li>
-</ul>
-<p>といったところが特徴ですかね。</p>
-</section>
-<section>
-<h2>例</h2>
-<p>テンプレートはこんな感じにかけます。</p>
-<pre class="prettyprint ">&lt;%-
-class Hoge(object):
-  def __init__(self):
-    pass
-  end
-end
-hoge = Hoge()
-a = "&lt; title &gt;"
--%&gt;
-&lt;%=r a %&gt;
-&lt;%- def format(v) {: return "%4d"%v; :} -%&gt;
-&lt;%- def format2(v) {: return "%2d"%v; :} -%&gt;
-  &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
-&lt;%- for x in xrange(1,xx): -%&gt;
-&lt;%= format2(x) -%&gt;
-  &lt;%- for y in xrange(1,xx): -%&gt;
-&lt;%= format(x*y) -%&gt;
-  &lt;%- end %&gt;
-&lt;%- end -%&gt;</pre><p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
-<pre class="prettyprint ">e = embpy.Embpy(codecs.open("path_to_template", encoding="utf8"),
-          cache_path = "path_to_cache_file",
-          template_globals = {}, filter=cgi.escape)
-print e.render({"xx": "10"})</pre><p>出力はこう。</p>
-<pre class="prettyprint ">    1   2   3   4   5   6   7   8   9
-1   1   2   3   4   5   6   7   8   9
-2   2   4   6   8  10  12  14  16  18
-3   3   6   9  12  15  18  21  24  27
-4   4   8  12  16  20  24  28  32  36
-5   5  10  15  20  25  30  35  40  45
-6   6  12  18  24  30  36  42  48  54
-7   7  14  21  28  35  42  49  56  63
-8   8  16  24  32  40  48  56  64  72
-9   9  18  27  36  45  54  63  72  81</pre></section>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/embpy.zip">embpy</a></p>
-</section>
-<section>
-<h2>コード</h2>
-<p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
-<p>あと <code><span class="pre">&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</span></code> という正規表現は自分的には常套句。&quot;で囲まれていて\&quot;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
-</section>
+<p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
+
+<p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
+
+<h1>Pythonをインストール</h1>
+
+<p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
+
+<pre class="prettyprint"><code>mkdir -p ~/root/usr/local/src
+cd ~/root/usr/local/src
+wget http://www.python.org/ftp/python/2.5.4/Python-2.5.4.tgz
+tar zxvf Python-2.5.4.tgz
+cd Python-2.5.4
+./configure --prefix=~/root/usr/local
+make
+make install
+</code></pre>
+
+<p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
+
+<h1>hashlibをインストール</h1>
+
+<p>なんで、自前でhashlibを単体でいれます。</p>
+
+<pre class="prettyprint"><code>cd ~/root/usr/local/src
+wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
+tar zxvf hashlib-20081119.tar.gz
+cd hashlib-20081119
+vi setup.py
+</code></pre>
+
+<p>はい、 <code>setup.py</code> を編集しましょう。普通にbuildするとこれでも <code>md5</code> が入りません。</p>
+
+<pre class="prettyprint"><code>105　　 if (ssl_inc_dir and
+106　　　　 ssl_lib is not None and
+107　　　　 openssl_ver &gt;= 0x00907000):
+108
+109　　　　 print 'Using OpenSSL version 0x%08x from' % openssl_ver
+110　　　　 print ' Headers:\t', ssl_inc_dir
+111　　　　 print ' Library:\t', ssl_lib
+112
+113　　　　 # The _hashlib module wraps optimized implementations
+114　　　　 # of hash functions from the OpenSSL library.
+115　　　　 exts.append( Extension('_hashlib', ['_hashopenssl.c'],
+116　　　　　　　　　　　　　　　　include_dirs = [ ssl_inc_dir ],
+117　　　　　　　　　　　　　　　　library_dirs = [ os.path.dirname(ssl_lib) ],
+118　　　　　　　　　　　　　　　　libraries = osNameLibsMap[os.name]) )
+119　　 exts.append( Extension('_sha', ['shamodule.c']) )　　　　　　　　　
+120　　 exts.append( Extension('_md5',　　　　　　　　　　　　　　　　　　
+121　　　　　　　　　　 sources = ['md5module.c', 'md5.c'],
+122　　　　　　　　　　 depends = ['md5.h']) )
+</code></pre>
+
+<p>119-120あたり、強制的に <code>_md5</code> を入れるようにします。あとは</p>
+
+<pre class="prettyprint"><code>~/root/usr/local/bin/python setup.py build
+~/root/usr/local/bin/python setup.py install
+</code></pre>
+
+<p>で <code>hashlib</code> が入ります。</p>
+
+<h1>easy_installをインストール</h1>
+
+<p>これで <code>md5</code> が使えるようになったので</p>
+
+<pre class="prettyprint"><code>cd ~/root/usr/local/src
+wget http://peak.telecommunity.com/dist/ez_setup.py
+~/root/usr/local/bin/python ez_setup.py
+</code></pre>
+
+<p>これで無事 <code>easy_install</code> が入ります。あとは</p>
+
+<pre class="prettyprint"><code>~/root/usr/local/bin/easy_install -U -Z MySQL_Python
+</code></pre>
+
+<p>てな感じで必要なモジュールを入れていきましょう。</p>
+
+<h1>というわけで</h1>
+
+<p>わりと普通にxreaでPythonが使えています。</p>
+
   </div>
 </article>
 
@@ -223,75 +182,102 @@ print e.render({"xx": "10"})</pre><p>出力はこう。</p>
 </header>
   <div itemprop="articleBody">
     <p>なんか、趣味では最近はC言語ばっかりだったりするわけですが。</p>
+
 <p>さて、関数型言語系をカジった人なら誰しも取り付かれる、モノ、それがパターンマッチ。パターンマッチが使えると、とにかく直感的にコードをかけますよね。</p>
+
 <p>つーわけで、Pythonでパターンマッチを実装してみました。機能的には</p>
-<ul class="simple">
+
+<ul>
 <li>リスト,タプルに対するパターンマッチ</li>
 <li>パターン変数への束縛</li>
 <li>ガード条件</li>
 <li>任意のオブジェクトに対するパターンマッチ</li>
 <li>部分パターンの束縛(Ocamlのas)</li>
 </ul>
+
 <p>あたりを実装してみました。これだけあれば、かなり便利にコードをかけます。できるだけ、手軽に書けるように工夫してみました。こんな感じです。</p>
+
 <p>変数束縛とガード。 <code>getattr</code> でごにょごにょしてるので簡単にかけます。</p>
-<pre class="prettyprint ">m = Match([1,2,3])
+
+<pre class="prettyprint"><code>m = Match([1,2,3]) 
 if m.when([1,2,m.var]) and m.var &gt; 2:
   print m.var
-# &gt;&gt; 3</pre><p>こう使えば、Pythonに念願のswitchが！</p>
-<pre class="prettyprint ">m = Match(10)
+# &gt;&gt; 3
+</code></pre>
+
+<p>こう使えば、Pythonに念願のswitchが！</p>
+
+<pre class="prettyprint"><code>m = Match(10)
 if m(9):
   print 1
 elif m(10):
   print 2
 else:
   False
-# &gt;&gt; 2</pre><p>部分パターンを束縛してみます。 <code>[1,2,m.var]</code> 全体を <code>all</code> というパターン変数に束縛します。</p>
-<pre class="prettyprint ">m = Match([1,2,3])
+# &gt;&gt; 2
+</code></pre>
+
+<p>部分パターンを束縛してみます。 <code>[1,2,m.var]</code> 全体を <code>all</code> というパターン変数に束縛します。</p>
+
+<pre class="prettyprint"><code>m = Match([1,2,3]) 
 if m.when([1,2,m.var]) and m.var &gt; 5:
   False
 elif m.when(m._as_all([1,2,m.var])):
   print m.all
   print m.var
 else:
-  raise StandardError("")
+  raise StandardError(&quot;&quot;)
 # &gt;&gt; [1, 2, 3]
-# &gt;&gt; 3</pre><p>任意のオブジェクトにも使えます。いわゆるレコードに対するマッチも簡単にできるということです。</p>
-<pre class="prettyprint ">class Test(object):
+# &gt;&gt; 3
+</code></pre>
+
+<p>任意のオブジェクトにも使えます。いわゆるレコードに対するマッチも簡単にできるということです。</p>
+
+<pre class="prettyprint"><code>class Test(object):
   def __init__(self, v1, v2):
     self.v1 = v1
     self.v2 = v2
   def __repr__(self):
-    return "Test(%s, %s)"%(repr(self.v1), repr(self.v2))
+    return &quot;Test(%s, %s)&quot;%(repr(self.v1), repr(self.v2))
 m = Match([1, Test(2, 3)])
-if m.when([1, m._class(Test, {"v1":2, "v2": m.v2})]):
+if m.when([1, m._class(Test, {&quot;v1&quot;:2, &quot;v2&quot;: m.v2})]):
   print m.v2
 else:
   False
-# &gt;&gt; 3</pre><p>オブジェクトに対するパターンマッチは <code>__match__</code> メソッドを定義するとカスタマイズできます。ここらのアイデアはScalaからいただきました。</p>
-<pre class="prettyprint ">class Test2(Test):
+# &gt;&gt; 3
+</code></pre>
+
+<p>オブジェクトに対するパターンマッチは <code>__match__</code> メソッドを定義するとカスタマイズできます。ここらのアイデアはScalaからいただきました。</p>
+
+<pre class="prettyprint"><code>class Test2(Test):
   def __match__(self):
-    return {"value": self.v1 + self.v2}
+    return {&quot;value&quot;: self.v1 + self.v2}
 m = Match([1, 2, Test2(3,4)])
-if m.when([1,2, m._class(Test2, {"value": m.var})]):
+if m.when([1,2, m._class(Test2, {&quot;value&quot;: m.var})]):
   m.var
 else:
   False
-# &gt;&gt; 7</pre><p>結構いい感じな気がします。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/patternmatch.zip">patternmatch.py</a></p>
-</section>
-<section>
-<h2>実装のお話</h2>
+# &gt;&gt; 7
+</code></pre>
+
+<p>結構いい感じな気がします。</p>
+
+<h1>ダウンロード</h1>
+
+<p><a href="/statics/files/patternmatch.zip">patternmatch.py</a></p>
+
+<h1>実装のお話</h1>
+
 <p>ソースコードはこんな感じ。</p>
-<pre class="prettyprint ">class Match(object):
+
+<pre class="prettyprint"><code>class Match(object):
   class _var(str): pass
   class _class(object):
     def __init__(self, klass, attrs):
       self.klass= klass
       self.attrs= sorted(attrs.iteritems())
     def match(self, m, obj):
-      props = getattr(obj, "__match__", lambda: obj.__dict__)()
+      props = getattr(obj, &quot;__match__&quot;, lambda: obj.__dict__)()
       return issubclass(obj.__class__, self.klass) and \
             m.when(self.attrs, sorted(props.iteritems()))
   class _as(object):
@@ -308,7 +294,7 @@ else:
 
   def __getitem__(self, key):
     if not self.bind.has_key(key):
-      if key.startswith("_as_"):
+      if key.startswith(&quot;_as_&quot;):
         return self._as(self._var(key[4:]))
       return self._var(key)
     return self.bind[key]
@@ -333,14 +319,14 @@ else:
       return False
 
     if len(obj) != len(pattern):
-      if not ((pattern[-1].__class__ == self._var) and pattern[-1].startswith("__")):
+      if not ((pattern[-1].__class__ == self._var) and pattern[-1].startswith(&quot;__&quot;)):
         self.bind = {}
         return False
 
     for i, (value, pat) in enumerate(zip(obj, pattern)):
       if value == pat:
         continue
-      elif pat.__class__ == self._var and pat.startswith("__"):
+      elif pat.__class__ == self._var and pat.startswith(&quot;__&quot;): 
         self.bind[str(pat)] = obj[i:]
         return True
       elif pat.__class__ == self._var:
@@ -362,10 +348,15 @@ else:
         self.bind = {}
         return False
 
-    return True</pre><p>まぁわりかしシンプルですね。</p>
-<hr class="docutils" />
-<p>今年も終わりが近づいてまいりました。年をとると時間がすぎるのが速いナァ･･･と痛感しております。</p>
-</section>
+    return True
+</code></pre>
+
+<p>まぁわりかしシンプルですね。</p>
+
+<h2>　</h2>
+
+<p>　 今年も終わりが近づいてまいりました。年をとると時間がすぎるのが速いナァ･･･と痛感しております。</p>
+
   </div>
 </article>
 
@@ -389,7 +380,8 @@ else:
 </header>
   <div itemprop="articleBody">
     <p>Python2.6きましたね。ということで、自分用にも主な変更点メモ。なぐり書きなのでミス多いかも。個人的な注目部分は</p>
-<ul class="simple">
+
+<ul>
 <li>with文</li>
 <li>multiprocessing</li>
 <li>itertoolsへのメソッド追加</li>
@@ -397,40 +389,49 @@ else:
 <li>クラスデコレータの導入</li>
 <li>ネットワーク系ライブラリ(http,ftp,telnet..etc)でタイムアウトが設定できるようになった。</li>
 </ul>
+
 <p>あたりですかね。ではどうぞ。</p>
-<section>
-<h2>Python 3.0由来の変更点</h2>
-<ul class="simple">
+
+<h1>Python 3.0由来の変更点</h1>
+
+<ul>
 <li>複素数へオブジェクトを変換する <code>__complex__</code> メソッド。</li>
 <li>例外補足のためのもう一つ書き方： <code>except TypeError as exc</code></li>
 <li>build-inの <code>reduce()</code> に加え、 <code>functools.reduce</code> の追加。(3.0では <code>reduce</code> はfunctools経由でしか使えない)</li>
 </ul>
+
 <p>3.0では他にもbuild-in関数に変更がある。3.0互換のコードを書きたいなら必要に応じて <code>from future_builtins import hex,map</code> のようにimportすること。</p>
-<p>また、 <code><span class="pre">-3</span></code> コマンドラインスイッチにより <code>3.0</code> で削除される機能を使っている場合、警告を出せる。</p>
-</section>
-<section>
-<h2>PEP 343: 'with' statement</h2>
-<pre class="prettyprint ">with open('/etc/passwd', 'r') as f:
+
+<p>また、 <code>-3</code> コマンドラインスイッチにより <code>3.0</code> で削除される機能を使っている場合、警告を出せる。</p>
+
+<h1>PEP 343: &lsquo;with&rsquo; statement</h1>
+
+<pre class="prettyprint"><code>with open('/etc/passwd', 'r') as f:
     for line in f:
         print line
-        ... more processing code ...</pre><ul class="simple">
+        ... more processing code ...
+</code></pre>
+
+<ul>
 <li>withに入るとオブジェクトの <code>__enter__()</code> 、抜けるときに <code>__exit__(type, value, traceback)</code> が呼ばれる。例外発生しなかった場合、 <code>type, value,traceback</code> はNone。</li>
 <li><code>contextlib</code> を使うと簡単に書ける。</li>
 </ul>
-</section>
-<section>
-<h2>PEP 399: メインモジュールからの明示的相対的import</h2>
-<p>Pythonでは <code><span class="pre">-m</span></code> スイッチでモジュールをスクリプトとして動かせる。が、パッケージ内部のモジュールを動かそうとした場合、相対的importが上手く働かない。本修正で、 <code>__package__</code> 属性がモジュールに追加された。この属性がある場合、 <code>__name__</code> の代わりにこの値からの相対importを行う。</p>
-<p>PEP302スタイルのインポータは <code>__package__</code> を必要に応じてセットできる。 <code>runpy</code> モジュールの <code><span class="pre">-m</span></code> スイッチはこれを行っているので、パッケージ内からスクリプトを実行しても相対的importは正しく動く。</p>
-</section>
-<section>
-<h2>PEP 371: multiprocessing module</h2>
-<p>プロセス間通信を実装したモジュール。並列計算などを実装できる。詳しくは <a class="reference external" href="http://coreblog.org/ats/multiprocessing-package">Atsushiさんの記事</a> 参照</p>
-</section>
-<section>
-<h2>PEP3101: さらに高度な文字列フォーマット</h2>
+
+<h1>PEP 399: メインモジュールからの明示的相対的import</h1>
+
+<p>Pythonでは <code>-m</code> スイッチでモジュールをスクリプトとして動かせる。が、パッケージ内部のモジュールを動かそうとした場合、相対的importが上手く働かない。本修正で、 <code>__package__</code> 属性がモジュールに追加された。この属性がある場合、 <code>__name__</code> の代わりにこの値からの相対importを行う。</p>
+
+<p>PEP302スタイルのインポータは <code>__package__</code> を必要に応じてセットできる。 <code>runpy</code> モジュールの <code>-m</code> スイッチはこれを行っているので、パッケージ内からスクリプトを実行しても相対的importは正しく動く。</p>
+
+<h1>PEP 371: multiprocessing module</h1>
+
+<p>プロセス間通信を実装したモジュール。並列計算などを実装できる。詳しくは <a href="http://coreblog.org/ats/multiprocessing-package">Atsushiさんの記事</a> 参照</p>
+
+<h1>PEP3101: さらに高度な文字列フォーマット</h1>
+
 <p>3.0では <code>%</code> オペレータはさらに高機能になる。2.6ではこの <code>%</code> を <code>str.format</code> メソッドで実装している。</p>
-<pre class="prettyprint ">"User ID: {0}".format("root") -&gt; "User ID: root"
+
+<pre class="prettyprint"><code>&quot;User ID: {0}&quot;.format(&quot;root&quot;) -&gt; &quot;User ID: root&quot;
 
 'User ID: {uid}   Last seen: {last_login}'.format(
       uid='root',
@@ -444,52 +445,81 @@ else:
 
 fmt = '{0:15} ${1:&gt;6}'
 fmt.format('Registration', 35) -&gt;
-  'Registration    $    35'</pre><p>くわしくは <a class="reference external" href="http://www.python.org/dev/peps/pep-3101">PEP3101</a> 参照。</p>
-</section>
-<section>
-<h2>PEP3105: 関数としての <code>print</code></h2>
+  'Registration    $    35'
+</code></pre>
+
+<p>くわしくは <a href="http://www.python.org/dev/peps/pep-3101">PEP3101</a> 参照。</p>
+
+<h1>PEP3105: 関数としての <code>print</code></h1>
+
 <p>3.0で <code>print</code> 文は <code>print</code> 関数になる。2.6では <code>__future__</code> に定義されている。</p>
-<pre class="prettyprint ">from __future__ import print_function
+
+<pre class="prettyprint"><code>from __future__ import print_function
 print('# of entries', len(dictionary), file=sys.stderr)
 
-def print(*args, sep=' ', end='\n', file=None)</pre></section>
-<section>
-<h2>PEP 3112: Byte リテラル</h2>
+def print(*args, sep=' ', end='\n', file=None)
+</code></pre>
+
+<h1>PEP 3112: Byte リテラル</h1>
+
 <p>3.0` では文字列はデフォルトでUnicodeになり、8bitリテラルは別に用意される。 <code>b'string'</code> か <code>byte</code> コンストラクタだ。2.6 ではstrとおなじ <code>bytes</code> 型を定義し、 <code>b''</code> 記法をサポートする。</p>
+
 <p>また、 <code>__future__</code> で文字列リテラルを全てUnicodeにすることができる。</p>
-<pre class="prettyprint ">from __future__ import unicode_literals
+
+<pre class="prettyprint"><code>from __future__ import unicode_literals
 
 s = ('\u751f\u3080\u304e\u3000\u751f\u3054'
     '\u3081\u3000\u751f\u305f\u307e\u3054')
 
-print len(s)               # 12 Unicode characters</pre></section>
-<section>
-<h2>PEP 3116: 新しいI/Oライブラリ</h2>
+print len(s)               # 12 Unicode characters
+</code></pre>
+
+<h1>PEP 3116: 新しいI/Oライブラリ</h1>
+
 <p>Pythonではダックタイピングにより、ファイル-likeオブジェクトは <code>read()</code> , <code>write()</code> が定義されていればよかった。ただ、文字列を扱う場合 <code>readline()</code> が定義されていたほうがよい。このようなケースに応じた基底クラスがPython3.0では <code>io</code> モジュールに用意される。</p>
-<ul class="simple">
+
+<ul>
 <li>RawIOBase</li>
 <li>BufferedIOBase</li>
 <li>TextIOBase</li>
 </ul>
+
 <p>など。</p>
-<p>くわしくは <a class="reference external" href="http://www.python.org/dev/peps/pep-3116">PEP 3116</a> 参照。</p>
-</section>
-<section>
-<h2>PEP 3119: Abstract Base Classes</h2>
+
+<p>くわしくは <a href="http://www.python.org/dev/peps/pep-3116">PEP 3116</a> 参照。</p>
+
+<h1>PEP 3119: Abstract Base Classes</h1>
+
 <p>Abstract Base Class(ABC)はJAVAのインターフェースのようなもの。ABCのサポートは <code>ABCMeta</code> というメタクラスを含む <code>abc</code> モジュールで構成される。 <code>ABCMeta</code> は <code>isinstance</code> と <code>issubclass</code> のbuilt-in関数で特別に扱われる。</p>
+
 <p>ABCは通常の継承のように</p>
-<pre class="prettyprint ">import collections
+
+<pre class="prettyprint"><code>import collections
 class Storage(collections.MutableMapping):
-  ...</pre><p>ともABCの <code>register()</code> メソッドをつかって</p>
-<pre class="prettyprint ">import collections
+  ...
+</code></pre>
+
+<p>ともABCの <code>register()</code> メソッドをつかって</p>
+
+<pre class="prettyprint"><code>import collections
 class Storage:
     ...
-collections.MutableMapping.register(Storage)</pre><p>ともできる。 <code>register</code> を使えば、組み込み型や他者の書いたクラスを <code>ABC</code> とすることができる。</p>
+collections.MutableMapping.register(Storage)
+</code></pre>
+
+<p>ともできる。 <code>register</code> を使えば、組み込み型や他者の書いたクラスを <code>ABC</code> とすることができる。</p>
+
 <p>ABCはJAVAと違い、Pythonが自動でそのインターフェースをチェックしてくれるわけではない。チェックするためには</p>
-<pre class="prettyprint ">if not isinstance(d, collections.MutableMapping):
-    raise ValueError("Mapping object expected, not %r" % d)</pre><p>のように書く。</p>
+
+<pre class="prettyprint"><code>if not isinstance(d, collections.MutableMapping):
+    raise ValueError(&quot;Mapping object expected, not %r&quot; % d)
+</code></pre>
+
+<p>のように書く。</p>
+
 <p>独自のABCは以下のように定義する</p>
-<pre class="prettyprint ">from abc import ABCMeta, abstractmethod, abstractproperty
+
+<pre class="prettyprint"><code>from abc import ABCMeta, abstractmethod, abstractproperty
 
 class Drawable():
     __metaclass__ = ABCMeta
@@ -503,59 +533,60 @@ class Drawable():
       return self._x
 
     def draw_doubled(self, x, y):
-        self.draw(x, y, scale=2.0)</pre><p>これでDrawableから派生したクラスでdrawメソッド、readonlyプロパティが定義されていなければ <code>TypeError</code> が出るようになる。</p>
-</section>
-<section>
-<h2>PEP 3127: 数値リテラル及び文法</h2>
+        self.draw(x, y, scale=2.0)
+</code></pre>
+
+<p>これでDrawableから派生したクラスでdrawメソッド、readonlyプロパティが定義されていなければ <code>TypeError</code> が出るようになる。</p>
+
+<h1>PEP 3127: 数値リテラル及び文法</h1>
+
 <p>3.0では8進数は0開始でなく <code>0o or 0O</code> 開始になり、2進数リテラル <code>0b or 0B</code> がサポートされる。2.6では0開始8進数表記も使えるが <code>0o or 0O</code> 開始も使えるし、 <code>oct()</code> 関数は0開始も文字列を返す。ただし、 <code>future_builtins.oct</code> は0o開始の文字列を返す。また、 <code>int</code> , <code>long</code> 関数は <code>0o</code> と <code>0b</code> 開始文字列も扱えるようになった。</p>
-</section>
-<section>
-<h2>PEP 3129: クラスデコレータ</h2>
-<pre class="prettyprint ">@foo
+
+<h1>PEP 3129: クラスデコレータ</h1>
+
+<pre class="prettyprint"><code>@foo
 @bar
 class A:
-  pass</pre><p>が</p>
-<pre class="prettyprint ">class A:
+  pass
+</code></pre>
+
+<p>が</p>
+
+<pre class="prettyprint"><code>class A:
   pass
 
-A = foo(bar(A))</pre><p>と同義になる。</p>
-</section>
-<section>
-<h2>PEP 3141: 数値の型階層</h2>
+A = foo(bar(A))
+</code></pre>
+
+<p>と同義になる。</p>
+
+<h1>PEP 3141: 数値の型階層</h1>
+
 <p>3.0ではSchemeに習った数値の型階層が導入される。これらの型は <code>numbers</code> モジュールを通して <code>2.6</code> にバックポートされた。</p>
+
 <ul>
-<li><dl class="first docutils">
-<dt>Number</dt>
-<dd><ul class="first last">
-<li><dl class="first docutils">
-<dt>Complex</dt>
-<dd><ul class="first last">
-<li><dl class="first docutils">
-<dt>Real <span class="classifier-delimiter">:</span> <span class="classifier"><code>floor()</code> と <code>trunc()</code> を定義</span></dt>
-<dd><ul class="first last">
-<li><dl class="first docutils">
-<dt>Rational <span class="classifier-delimiter">:</span> <span class="classifier"><code>numerator</code> と <code>denominator</code> を定義。実装は <code>fractions</code> モジュールで。</span></dt>
-<dd><ul class="first last simple">
+<li>Number<br />
+
+<ul>
+<li>Complex<br />
+
+<ul>
+<li>Real : <code>floor()</code> と <code>trunc()</code> を定義<br />
+
+<ul>
+<li>Rational : <code>numerator</code> と <code>denominator</code> を定義。実装は <code>fractions</code> モジュールで。<br />
+
+<ul>
 <li>Integral</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
+
 <p>また、 <code>math.trunc()</code> も3.0からバックポートされた。fractionはこのように使う。</p>
-<pre class="prettyprint ">&gt;&gt;&gt; from fractions import Fraction
+
+<pre class="prettyprint"><code>&gt;&gt;&gt; from fractions import Fraction
 &gt;&gt;&gt; a = Fraction(2, 3)
 &gt;&gt;&gt; b = Fraction(2, 5)
 &gt;&gt;&gt; float(a), float(b)
@@ -569,17 +600,20 @@ Fraction(5, 3)
 &gt;&gt;&gt; (3.1415) .as_integer_ratio()
 (7074029114692207L, 2251799813685248L)
 &gt;&gt;&gt; (1./3) .as_integer_ratio()
-(6004799503160661L, 18014398509481984L)</pre></section>
-<section>
-<h2>その他の言語の変更</h2>
-<ul class="simple">
+(6004799503160661L, 18014398509481984L)
+</code></pre>
+
+<h1>その他の言語の変更</h1>
+
+<ul>
 <li><code>**kw</code> 引数にPythonの辞書以外の <code>UserDict</code> のようなどんなマッピングでも使えるようになった。</li>
 <li><code>next(iterator, [default])</code> メソッド追加。見ての通りiteratorの次の要素を、なければdefaultを返す。</li>
 <li>タプルに <code>index()</code> と <code>count()</code> が追加された(listと同じ)。</li>
 <li>組み込み型のsliceのサポートが向上。</li>
-<li>プロパティが <code>getter</code> ,  <code>setter</code> ,  <code>deleter</code> というデコレータをサポート。</li>
+<li>プロパティが <code>getter</code> , <code>setter</code> , <code>deleter</code> というデコレータをサポート。</li>
 </ul>
-<pre class="prettyprint ">class C(object):
+
+<pre class="prettyprint"><code>class C(object):
     @property
     def x(self):
         return self._x
@@ -599,44 +633,45 @@ class D(C):
 
     @x.setter
     def x(self, value):
-        self._x = value / 2</pre><ul class="simple">
-<li><code>set</code> の <code><span class="pre">intersection(),</span> <span class="pre">intersection_update(),</span> <span class="pre">union(),</span> <span class="pre">update(),</span> <span class="pre">difference(),</span> difference_update()</code> が引数に複数のiterableを取れるようになった。</li>
+        self._x = value / 2
+</code></pre>
+
+<ul>
+<li><code>set</code> の <code>intersection(), intersection_update(), union(), update(), difference(), difference_update()</code> が引数に複数のiterableを取れるようになった。</li>
 <li>浮動小数点に関する様々な改良が追加された。</li>
 <li>親クラスから <code>__hash__()</code> を継承したクラスで <code>__hash__ = None</code> とすることでhashableでないことを示せる。</li>
 <li><code>Exception</code> のインタフェースが変更。 <code>message</code> 属性がdeprecated。</li>
 <li><code>GeneratorExit</code> の親クラスが <code>Exception</code> から <code>BaseException</code> に変更</li>
 <li>Generatorオブジェクトに <code>gi_code</code> 属性を追加。</li>
 <li><code>compile()</code> 関数でキーワード引数が取れるようになった。</li>
-<li><code>complex</code> コンストラクタでカッコにかこわれている数値がOKになった。 <code><span class="pre">complex('(3+4j)')</span></code></li>
+<li><code>complex</code> コンストラクタでカッコにかこわれている数値がOKになった。 <code>complex('(3+4j)')</code></li>
 <li><code>string.translate()</code> に変換テーブルとして <code>None</code> を渡せるようになった。 <code>None</code> は恒等変換として扱われる。</li>
 <li><code>dir()</code> 組み込み関数が、引数に渡されたオブジェクトの <code>__dir__()</code> メソッドを見るようになった。 <code>__dir__()</code> は文字列のlistを返す必要がある。これにより <code>__getattr__()</code> や <code>__getattribute__()</code> で、擬似属性みたいなのを実現しているクラスでもそのリストが返せる。</li>
-<li>instance methodオブジェクトで <code>im_self</code> を <code>__self__</code> 、 <code>im_func</code>  を <code>__func__</code> でも参照できるようになった。</li>
+<li>instance methodオブジェクトで <code>im_self</code> を <code>__self__</code> 、 <code>im_func</code> を <code>__func__</code> でも参照できるようになった。</li>
 <li>class文内で <code>locals()</code> を使った場合、自由変数(クラスの属性でない変数)は含まれなくなった。</li>
 </ul>
-</section>
-<section>
-<h2>新規、改善、非推奨モジュール</h2>
+
+<h1>新規、改善、非推奨モジュール</h1>
+
 <ul>
-<li><dl class="first docutils">
-<dt>3.0警告モードで以下のモジュールは非推奨。</dt>
-<dd><ul class="first last simple">
+<li><p>3.0警告モードで以下のモジュールは非推奨。</p>
+
+<ul>
 <li>audiodev, bgenlocations, buildtools, bundlebuilder, Canvas, compiler, dircache, dl, fpformat, gensuitemodule, ihooks, imageop, imgfile, linuxaudiodev, mhlib, mimetools, multifile, new, pure, statvfs, sunaudiodev, test.testall, and toaiff.</li>
+</ul></li>
+
+<li><p><code>asyncore</code> , <code>asynchat</code> でメンテ再開。多くのパッチやバグフィックスが含まれた。</p></li>
+
+<li><p><code>cgi</code> でクエリ文字列付きPOSTリクエストにおいてクエリ文字列が解釈されるようになった。(/add.py?category=1へのPOSTなど)</p></li>
+
+<li><p><code>parse_qs</code> と <code>parse_qsl</code> が <code>cgi</code> モジュールから <code>urlparse</code> モジュールへ。 <code>cgi</code> でもまだ使えるが <code>PendingDeprecationWarning</code> が出る。</p></li>
+
+<li><p>cmathモジュールが改良された。</p></li>
+
+<li><p><code>collections.namedtuple</code> が新しく定義。</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first"><code>asyncore</code> , <code>asynchat</code> でメンテ再開。多くのパッチやバグフィックスが含まれた。</p>
-</li>
-<li><p class="first"><code>cgi</code> でクエリ文字列付きPOSTリクエストにおいてクエリ文字列が解釈されるようになった。(/add.py?category=1へのPOSTなど)</p>
-</li>
-<li><p class="first"><code>parse_qs</code> と <code>parse_qsl</code> が <code>cgi</code> モジュールから <code>urlparse</code> モジュールへ。 <code>cgi</code> でもまだ使えるが <code>PendingDeprecationWarning</code> が出る。</p>
-</li>
-<li><p class="first">cmathモジュールが改良された。</p>
-</li>
-<li><p class="first"><code>collections.namedtuple</code> が新しく定義。</p>
-</li>
-</ul>
-<pre class="prettyprint ">&gt;&gt;&gt; var_type = collections.namedtuple('variable',
+
+<pre class="prettyprint"><code>&gt;&gt;&gt; var_type = collections.namedtuple('variable',
 ...             'id name type size')
 # Names are separated by spaces or commas.
 # 'id, name, type, size' would also work.
@@ -652,78 +687,75 @@ int int
 {'size': 4, 'type': 'int', 'id': 1, 'name': 'frequency'}
 &gt;&gt;&gt; v2 = var._replace(name='amplitude')
 &gt;&gt;&gt; v2
-variable(id=1, name='amplitude', type='int', size=4)</pre><ul>
-<li><p class="first"><code>collections.deque</code> が <code>maxlen</code> 引数を取れるようになった。maxlenを超えて要素を追加すると自動で先頭が破棄される。</p>
-</li>
-<li><p class="first"><code>datetime</code> モジュールの <code>strftime()</code> で'%f'が扱えるようになった。</p>
-</li>
-<li><p class="first"><code>decimal</code> モジュールで <code>exp()</code> ,  <code>log10()</code> が追加、また <code>as_tuple()</code> で <code>sign,digits,exponent</code> をフィールドとするnamed tupleを得られる。</p>
-</li>
-<li><p class="first"><code>difflib.SequenceMathcer</code> クラスが <code>a,b,size</code> 属性をもったnamed tupleを返すようになった。</p>
-</li>
-<li><p class="first"><code>ftplib</code> でタイムアウトが設定できるようになった。</p>
-</li>
-<li><p class="first"><code>glob.glob()</code> がunicodeファイル名を返すようになった。</p>
-</li>
-<li><p class="first"><code>gopherlib</code> 削除。</p>
-</li>
-<li><p class="first"><code>heapq</code> モジュールに <code>merge(iter1, iter2, <span class="pre">...)</span></code> と <code>heappushpop(heap, item)</code> が追加。</p>
-</li>
-<li><p class="first"><code>httplib.HTTPConnection</code> でタイムアウトが設定できるようになった。</p>
-</li>
-<li><p class="first"><code>inspect</code> モジュールの関数の多くがnamed tupleを返すようになった。</p>
-</li>
-<li><dl class="first docutils">
-<dt><code>itertools</code> に多数の関数を追加。</dt>
-<dd><ul class="first last simple">
-<li>izip_longest(iter1, iter2, ...[, fillvalue])</li>
-<li>product(iter1, iter2, ..., [repeat=N])</li>
+variable(id=1, name='amplitude', type='int', size=4)
+</code></pre>
+
+<ul>
+<li><code>collections.deque</code> が <code>maxlen</code> 引数を取れるようになった。maxlenを超えて要素を追加すると自動で先頭が破棄される。</li>
+<li><code>datetime</code> モジュールの <code>strftime()</code> で&rsquo;%f&rsquo;が扱えるようになった。</li>
+<li><code>decimal</code> モジュールで <code>exp()</code> , <code>log10()</code> が追加、また <code>as_tuple()</code> で <code>sign,digits,exponent</code> をフィールドとするnamed tupleを得られる。</li>
+<li><code>difflib.SequenceMathcer</code> クラスが <code>a,b,size</code> 属性をもったnamed tupleを返すようになった。</li>
+<li><code>ftplib</code> でタイムアウトが設定できるようになった。</li>
+<li><code>glob.glob()</code> がunicodeファイル名を返すようになった。</li>
+<li><code>gopherlib</code> 削除。</li>
+<li><code>heapq</code> モジュールに <code>merge(iter1, iter2, ...)</code> と <code>heappushpop(heap, item)</code> が追加。</li>
+<li><code>httplib.HTTPConnection</code> でタイムアウトが設定できるようになった。</li>
+<li><code>inspect</code> モジュールの関数の多くがnamed tupleを返すようになった。</li>
+
+<li><p><code>itertools</code> に多数の関数を追加。</p>
+
+<ul>
+<li>izip_longest(iter1, iter2, &hellip;[, fillvalue])</li>
+<li>product(iter1, iter2, &hellip;, [repeat=N])</li>
 <li>combinations(iterable, r)</li>
 <li>permutations(iter[, r])</li>
-<li><code><span class="pre">chain(*iterables)</span></code> は新しく <code>itertools.chain.from_iterable(iterable)</code> とも書けるように。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt><code>math</code> モジュールに関数を追加。</dt>
-<dd><ul class="first last simple">
+<li><code>chain(*iterables)</code> は新しく <code>itertools.chain.from_iterable(iterable)</code> とも書けるように。</li>
+</ul></li>
+
+<li><p><code>math</code> モジュールに関数を追加。</p>
+
+<ul>
 <li>isinf() ,isnan(): 無限とNaNを判別。</li>
-<li>copysign() : IEEE 754のサインビットをコピー。 <code>math.copysign(1, <span class="pre">-0.0)</span></code>  が  <code><span class="pre">-1.0</span></code> 。</li>
+<li>copysign() : IEEE 754のサインビットをコピー。 <code>math.copysign(1, -0.0)</code> が <code>-1.0</code> 。</li>
 <li>factorial() :階乗を計算。</li>
 <li>fsum() : iterableの数値を足すが、出来る限り精度を失うことを避ける。</li>
 <li>acosh(), asinh() ,atanh()</li>
 <li>log1p()</li>
 <li>trunc() : 0の方向へ丸める。</li>
+</ul></li>
+
+<li><p><code>MmeWriter</code> と <code>mimify</code> モジュールが非推奨に。 <code>email</code> パッケージを使うこと。</p></li>
+
+<li><p><code>md5</code> モジュールが非推奨に。 <code>hashlib</code> を使うこと。</p></li>
+
+<li><p><code>mmap</code> オブジェクトで文字列検索を行う <code>rfind(),find()</code> メソッドを追加。</p></li>
+
+<li><p><code>operator</code> モジュールに <code>methodcaller()</code> 関数追加。</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first"><code>MmeWriter</code> と <code>mimify</code> モジュールが非推奨に。 <code>email</code> パッケージを使うこと。</p>
-</li>
-<li><p class="first"><code>md5</code> モジュールが非推奨に。 <code>hashlib</code> を使うこと。</p>
-</li>
-<li><p class="first"><code>mmap</code> オブジェクトで文字列検索を行う <code><span class="pre">rfind(),find()</span></code> メソッドを追加。</p>
-</li>
-<li><p class="first"><code>operator</code> モジュールに <code>methodcaller()</code> 関数追加。</p>
-</li>
-</ul>
-<pre class="prettyprint ">&gt;&gt;&gt; # Equivalent to lambda s: s.replace('old', 'new')
+
+<pre class="prettyprint"><code>&gt;&gt;&gt; # Equivalent to lambda s: s.replace('old', 'new')
 &gt;&gt;&gt; replacer = operator.methodcaller('replace', 'old', 'new')
 &gt;&gt;&gt; replacer('old wine in old bottles')
-'new wine in new bottles'</pre><ul class="simple">
+'new wine in new bottles'
+</code></pre>
+
+<ul>
 <li><code>operator.attrgetter</code> でドットを含む名前が取れるように。</li>
 </ul>
-<pre class="prettyprint ">&gt;&gt;&gt; inst_name = operator.attrgetter(
+
+<pre class="prettyprint"><code>&gt;&gt;&gt; inst_name = operator.attrgetter(
 ...        '__class__.__name__')
 &gt;&gt;&gt; inst_name('')
 'str'
 &gt;&gt;&gt; inst_name(help)
-'_Helper'</pre><ul class="simple">
+'_Helper'
+</code></pre>
+
+<ul>
 <li><code>os.walk()</code> で <code>followlinks=False</code> パラメータ追加。 <code>True</code> にセットされるとシンボリックリンクをたどる。無限ループ注意。</li>
-<li><code>os.path.splitext()</code> でドット始まりのファイル名の扱いが変更に。 <code><span class="pre">('.ipython',</span> '')</code> から <code><span class="pre">('',</span> '.ipython')</code></li>
-<li><code>os.path.relpath(path, <span class="pre">start='.')</span></code> が追加。 <code>start</code> からの相対パスを返す。</li>
-<li><code>pdb</code>  に新しいコマンド <code>run</code> を追加。</li>
+<li><code>os.path.splitext()</code> でドット始まりのファイル名の扱いが変更に。 <code>('.ipython', '')</code> から <code>('', '.ipython')</code></li>
+<li><code>os.path.relpath(path, start='.')</code> が追加。 <code>start</code> からの相対パスを返す。</li>
+<li><code>pdb</code> に新しいコマンド <code>run</code> を追加。</li>
 <li><code>posixfile</code> モジュールが非推奨に。 <code>fcntl.lockf()</code> を変わりに使うこと。</li>
 <li><code>pickletools</code> に <code>optimize()</code> 関数追加。</li>
 <li><code>popen2</code> モジュールが非推奨に。 <code>subprocess</code> モジュールを使うこと。</li>
@@ -736,83 +768,85 @@ variable(id=1, name='amplitude', type='int', size=4)</pre><ul>
 <li><code>sha</code> モジュール非推奨。 <code>hashlib</code> モジュールを使うこと。</li>
 <li><code>shutil.copytree()</code> に <code>ignore=callable</code> 引数追加。 <code>ignore</code> でコピーしないファイルリストを返すことが出来る。また <code>ignore_patterns</code> 関数を使い、以下のようにもできる</li>
 </ul>
-<pre class="prettyprint ">shutil.copytree('Doc/library', '/tmp/library',
-                ignore=shutil.ignore_patterns('*~', '.svn'))</pre><ul>
-<li><p class="first"><code>smtplib</code> でSMTP over SSL, LMTPをサポート。</p>
-</li>
-<li><p class="first"><code>subprocess.Popen</code> オブジェクトに <code><span class="pre">terminate(),</span> <span class="pre">kill(),</span> send_signal()</code> 追加。</p>
-</li>
-<li><dl class="first docutils">
-<dt><code>sys</code> に様々な追加。</dt>
-<dd><ul class="first last simple">
+
+<pre class="prettyprint"><code>shutil.copytree('Doc/library', '/tmp/library',
+                ignore=shutil.ignore_patterns('*~', '.svn'))
+</code></pre>
+
+<ul>
+<li><code>smtplib</code> でSMTP over SSL, LMTPをサポート。</li>
+<li><code>subprocess.Popen</code> オブジェクトに <code>terminate(), kill(), send_signal()</code> 追加。</li>
+
+<li><p><code>sys</code> に様々な追加。</p>
+
+<ul>
 <li><code>float.h</code> 由来の情報を持った <code>float_info</code> オブジェクト。</li>
 <li><code>.pyc</code> や <code>.pyo</code> を作るか制御する <code>dont_write_bytecode</code></li>
 <li>オブジェクトの使用メモリを取得する <code>sys.getsizeof()</code> 。組み込みオブジェクトは正しい数値を返す。</li>
 <li><code>sys.getprofile()</code> , <code>sys.gettrace()</code></li>
+</ul></li>
+
+<li><p><code>telnetlib</code> でタイムアウトが設定できるようになった。</p></li>
+
+<li><p><code>tempfile.NamedTemporaryFile</code> で <code>delete=False</code> を指定することで自動削除しなくできる。</p></li>
+
+<li><p><code>tempfile.SpooledTemporaryFile</code> を追加。メモリ上に確保し、メモリにのらなくなるとファイルに書き出す。</p></li>
+
+<li><p><code>test.test_support</code> が <code>with</code> 文を使った関数を提供する。</p></li>
+
+<li><p><code>textwrap</code> モジュールで空白文字を保持するため <code>drop_whitespace=False</code> を指定できるようになった。</p></li>
+
+<li><p><code>timeit</code> モジュールで文字列だけでなくcallableも受け取れるようになった。</p></li>
+
+<li><p>タートルグラフィックを扱う <code>turtle</code> モジュールにかなりの改良。</p></li>
+
+<li><p><code>urllib</code> でタイムアウトを設定できるようになった。</p></li>
+
+<li><p><code>zipfile.ZipFile</code> に <code>extract()</code> と <code>extractall(), open(), read()</code> を追加。</p></li>
+
+<li><p>ASTを扱う <code>ast</code> モジュール追加</p></li>
+
+<li><p>JSONを扱う <code>json</code> モジュール追加</p></li>
+
+<li><p>Property Listを扱う <code>plistlib</code> モジュール追加。</p></li>
+
+<li><p><code>OpenSSL</code> の上に構築された、 <code>ssl</code> モジュール追加。 <code>socket</code> モジュールのSSLサポートはまだ使えるが、3.0では削除される予定。このモジュールを使うためには、通常通りTCPコネクションを張り、 <code>ssl.wrap_socket()</code> 関数に渡す。</p></li>
+
+<li><p>3.0由来の組み込み関数を含む <code>future_builtins</code> モジュールを追加。</p>
+
+<ul>
+<li><code>ascii</code> : <code>repr()</code> と同義。3.0では <code>repr()</code> はunicode, <code>ascii()</code> はASCII byte文字列を返す。</li>
+<li><code>filter,map</code> : 2.xではリストを, 3.0ではイテレータを返す。</li>
+<li><code>hex, oct</code> : <code>__hex__()</code> と <code>__oct__()</code> ではなく、 <code>__index__()</code> をよびその結果を変換する。</li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first"><code>telnetlib</code> でタイムアウトが設定できるようになった。</p>
-</li>
-<li><p class="first"><code>tempfile.NamedTemporaryFile</code> で <code>delete=False</code> を指定することで自動削除しなくできる。</p>
-</li>
-<li><p class="first"><code>tempfile.SpooledTemporaryFile</code> を追加。メモリ上に確保し、メモリにのらなくなるとファイルに書き出す。</p>
-</li>
-<li><p class="first"><code>test.test_support</code> が <code>with</code> 文を使った関数を提供する。</p>
-</li>
-<li><p class="first"><code>textwrap</code> モジュールで空白文字を保持するため <code>drop_whitespace=False</code> を指定できるようになった。</p>
-</li>
-<li><p class="first"><code>timeit</code> モジュールで文字列だけでなくcallableも受け取れるようになった。</p>
-</li>
-<li><p class="first">タートルグラフィックを扱う <code>turtle</code> モジュールにかなりの改良。</p>
-</li>
-<li><p class="first"><code>urllib</code> でタイムアウトを設定できるようになった。</p>
-</li>
-<li><p class="first"><code>zipfile.ZipFile</code>  に <code>extract()</code> と <code><span class="pre">extractall(),</span> <span class="pre">open(),</span> read()</code> を追加。</p>
-</li>
-<li><p class="first">ASTを扱う <code>ast</code> モジュール追加</p>
-</li>
-<li><p class="first">JSONを扱う <code>json</code> モジュール追加</p>
-</li>
-<li><p class="first">Property Listを扱う <code>plistlib</code> モジュール追加。</p>
-</li>
-<li><p class="first"><code>OpenSSL</code> の上に構築された、 <code>ssl</code> モジュール追加。 <code>socket</code> モジュールのSSLサポートはまだ使えるが、3.0では削除される予定。このモジュールを使うためには、通常通りTCPコネクションを張り、 <code>ssl.wrap_socket()</code> 関数に渡す。</p>
-</li>
-<li><dl class="first docutils">
-<dt>3.0由来の組み込み関数を含む <code>future_builtins</code> モジュールを追加。</dt>
-<dd><ul class="first last simple">
-<li><code>ascii</code>  :  <code>repr()</code> と同義。3.0では <code>repr()</code> はunicode, <code>ascii()</code> はASCII byte文字列を返す。</li>
-<li><code>filter,map</code>  : 2.xではリストを, 3.0ではイテレータを返す。</li>
-<li><code>hex, oct</code> :  <code>__hex__()</code> と <code>__oct__()</code> ではなく、 <code>__index__()</code> をよびその結果を変換する。</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</section>
-<section>
-<h2>Python2.6への移行</h2>
-<ul class="simple">
+
+<h1>Python2.6への移行</h1>
+
+<ul>
 <li>ハッシュできないクラスは <code>__hash__=None</code> を行うべき。</li>
 <li><code>collection.deque.__init__()</code> は、iterableの要素を追加する前に自身の内容をクリアする。これは <code>list.__init__()</code> と同じ。</li>
 </ul>
-<pre class="prettyprint ">&gt;&gt;&gt; from collections.deque
+
+<pre class="prettyprint"><code>&gt;&gt;&gt; from collections.deque
 &gt;&gt;&gt; a = deque([1,2,3])
 &gt;&gt;&gt; deque.__init__(a, [4,5,6])
 &gt;&gt;&gt; a
 # python2.6 =&gt; deque([4,5,6])
-# python2.5 =&gt; deque([1,2,3,4,5,6])</pre><ul class="simple">
+# python2.5 =&gt; deque([1,2,3,4,5,6])
+</code></pre>
+
+<ul>
 <li><code>object.__init__()</code> はこれまで任意の引数を渡すことができ、これらの引数は無視していた。2.6では余計な引数を渡すと <code>TypeError</code> がでる。</li>
 <li><code>Decimal</code> コンストラクタは前後に空白があっても大丈夫に。以前はInvalidOperation例外がでていた。一方、 <code>Context.create_decimal()</code> は余分な空白があると <code>ConversionSyntax</code> 例外が出るようになった。</li>
 <li><code>__import__</code> で間違ってファイルパスを渡すと、指定したファイルをimportしていたが、これは決してそのように意図したわけではない。今はこのようなケースをチェックし、 <code>ImportError</code> を出すようになった。</li>
-<li>C API:  <code>PyImport_Import</code> と <code>PyImport_ImportModule</code> のデフォルトが相対importでなく完全importになった。これは他のモジュールをimportするC拡張に影響する。</li>
+<li>C API: <code>PyImport_Import</code> と <code>PyImport_ImportModule</code> のデフォルトが相対importでなく完全importになった。これは他のモジュールをimportするC拡張に影響する。</li>
 <li><code>socket.error</code> 例外は <code>IOError</code> を継承するようになったので、 <code>StandardError</code> のサブクラスになった。</li>
 <li><code>xmlrpclib</code> は <code>datetime.date</code> と <code>datetime.time</code> を自動的に <code>xmlrpclib.DateTime</code> に変換しなくなった。なぜならこの挙動は全てのアプリケーションにとって必ずしも有用とは限らないからだ。 <code>xmlrpclib</code> を使っているコードは <code>date</code> と <code>time</code> インスタンスを変換すべきである。</li>
-<li>3.0警告モード:  <code>Exception</code> クラスにスライシングおよびインデックスアクセスすると警告。</li>
+<li>3.0警告モード: <code>Exception</code> クラスにスライシングおよびインデックスアクセスすると警告。</li>
 <li>3.0警告モード: 2つの辞書や、比較メソッドを実装していないオブジェクト間で比較演算子を適応すると警告。ただし、 <code>dict1 == dict2</code> は動く。</li>
 </ul>
-</section>
+
   </div>
 </article>
 

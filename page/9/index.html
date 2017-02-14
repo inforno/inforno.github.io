@@ -80,13 +80,17 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
+    <p><a href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
+
 <p>実装には引き続き <code>re.Scanner</code> を活用しています。おかげで短い行数でキレイにかけているのではないかと。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/simplesexp.zip">simplesexp.py</a></p>
+
+<h1>ダウンロード</h1>
+
+<p><a href="/statics/files/simplesexp.zip">simplesexp.py</a></p>
+
 <p>ソースはこんな感じ（テストのぞく）。</p>
-<pre class="prettyprint ">import re, sys
+
+<pre class="prettyprint"><code>import re, sys
 from unicodedata import east_asian_width
 
 try:
@@ -98,15 +102,15 @@ class ParseError(StandardError): pass
 
 class Ident(unicode):
   def __repr__(self):
-    return "Ident(%s)"%unicode.__repr__(self)
+    return &quot;Ident(%s)&quot;%unicode.__repr__(self)
 
 class Symbol(unicode):
   def __repr__(self):
-    return "Symbol(%s)"%unicode.__repr__(self)
+    return &quot;Symbol(%s)&quot;%unicode.__repr__(self)
 
-class Pair(list):
+class Pair(list): 
   def __repr__(self):
-    return "Pair(%s)"%list.__repr__(self)
+    return &quot;Pair(%s)&quot;%list.__repr__(self)
 
 class Token(object):
   def __init__(self, value, pos):
@@ -121,11 +125,11 @@ class Binding(object):
   __contains__ = lambda self, key: (key, key.__class__) in self.dct
   __getitem__  = lambda self,key:  self.dct[(key, key.__class__)]
 
-default_binding = {"#t":True, "true":True, "#f":False, "false":False, "nil":None, "dict":Ident(u'alist-&gt;hash-table')}
+default_binding = {&quot;#t&quot;:True, &quot;true&quot;:True, &quot;#f&quot;:False, &quot;false&quot;:False, &quot;nil&quot;:None, &quot;dict&quot;:Ident(u'alist-&gt;hash-table')}
 
 class Reader(object):
-  PAREN = {"]":"[", ")":"("}
-  def __init__(self, binding=None, symbol_marker="'", use_dict=True):
+  PAREN = {&quot;]&quot;:&quot;[&quot;, &quot;)&quot;:&quot;(&quot;}
+  def __init__(self, binding=None, symbol_marker=&quot;'&quot;, use_dict=True):
     self.binding = binding or default_binding
     self.symbol_marker = symbol_marker
     self.use_dict = use_dict
@@ -136,21 +140,21 @@ class Reader(object):
     self.source = value
     self.pos = 0
     self.scanner = Scanner([
-      (r"\s+", self("skip")),
-      (r";[^\n]*\n", self("skip")),
-      (r""""(((?&lt;=\\)")|[^"])*((?&lt;!\\)")""", self("str")),
-      (r"(\(|\[)", self("open")),
-      (r"(\)|\])", self("close")),
-      (r"(([\d]+|(((\d+)?\.[\d]+)|([\d]+\.)))e[\+\-]?[\d]+)|(((\d+)?\.[\d]+)|([\d]+\.))", self("number")),
-      (r"\-?((0x[\da-f]+)|(0[0-7]+)|([1-9][\d]*)|0)[l]?", self("number")),
-      (r"""%s([^\(\[\)\]\s"]+)"""%self.symbol_marker, self("symbol")),
-      (r"""([^\(\[\)\]\s"]+)""", self("ident")),
-      (r"""".*""", self("unterm_str")),
-      (r".*", self("unknown_token"))
+      (r&quot;\s+&quot;, self(&quot;skip&quot;)),
+      (r&quot;;[^\n]*\n&quot;, self(&quot;skip&quot;)),
+      (r&quot;&quot;&quot;&quot;(((?&lt;=\\)&quot;)|[^&quot;])*((?&lt;!\\)&quot;)&quot;&quot;&quot;, self(&quot;str&quot;)),
+      (r&quot;(\(|\[)&quot;, self(&quot;open&quot;)),
+      (r&quot;(\)|\])&quot;, self(&quot;close&quot;)),
+      (r&quot;(([\d]+|(((\d+)?\.[\d]+)|([\d]+\.)))e[\+\-]?[\d]+)|(((\d+)?\.[\d]+)|([\d]+\.))&quot;, self(&quot;number&quot;)),
+      (r&quot;\-?((0x[\da-f]+)|(0[0-7]+)|([1-9][\d]*)|0)[l]?&quot;, self(&quot;number&quot;)),
+      (r&quot;&quot;&quot;%s([^\(\[\)\]\s&quot;]+)&quot;&quot;&quot;%self.symbol_marker, self(&quot;symbol&quot;)),
+      (r&quot;&quot;&quot;([^\(\[\)\]\s&quot;]+)&quot;&quot;&quot;, self(&quot;ident&quot;)),
+      (r&quot;&quot;&quot;&quot;.*&quot;&quot;&quot;, self(&quot;unterm_str&quot;)),
+      (r&quot;.*&quot;, self(&quot;unknown_token&quot;))
     ], re.M|re.S|re.I)
     self.scanner.scan(self.source)
     if self.paren_stack:
-      self.raise_error("missing closing parenthesis.")
+      self.raise_error(&quot;missing closing parenthesis.&quot;)
     return self.parse(self.result)
 
   def append(self, v):
@@ -162,7 +166,7 @@ class Reader(object):
       return getattr(self, name)(s)
     return _
 
-  def unknown_token(self,s): self.raise_error("unknown token: %s"%s)
+  def unknown_token(self,s): self.raise_error(&quot;unknown token: %s&quot;%s)
   def skip(self, _): pass
   def open(self, s):
       new_lst = []
@@ -170,14 +174,14 @@ class Reader(object):
       self.paren_stack.append([s, new_lst])
   def close(self, s):
       if not self.paren_stack:
-        self.raise_error("missing opening parenthesis.")
+        self.raise_error(&quot;missing opening parenthesis.&quot;)
       if self.PAREN[s] != self.paren_stack.pop()[0]:
-        self.raise_error("missing closing parenthesis.")
-  def str(self, s): self.append(eval('u""'+s+'""'))
-  def unterm_str(self, s): self.raise_error("unterminated string literal.")
+        self.raise_error(&quot;missing closing parenthesis.&quot;)
+  def str(self, s): self.append(eval('u&quot;&quot;'+s+'&quot;&quot;'))
+  def unterm_str(self, s): self.raise_error(&quot;unterminated string literal.&quot;)
   def number(self, s): self.append(eval(s))
   def symbol(self, s): self.append(Symbol(s[1:]))
-  def ident(self, s):
+  def ident(self, s): 
     if s in self.binding:
       self.append(self.binding[s])
     else:
@@ -191,21 +195,21 @@ class Reader(object):
 
   def parse(self, rs):
     def is_ident(value, expected):
-      return getattr(value,"value", None) == Ident(expected)
+      return getattr(value,&quot;value&quot;, None) == Ident(expected)
     def is_pair(rs):
-      return getattr(rs, "__len__", lambda :0)()==3 and is_ident(rs[1], u".")
+      return getattr(rs, &quot;__len__&quot;, lambda :0)()==3 and is_ident(rs[1], u&quot;.&quot;)
 
     if isinstance(rs, list):
       if not len(rs):
         return []
-      elif self.use_dict and is_ident(rs[0], u"alist-&gt;hash-table"):
+      elif self.use_dict and is_ident(rs[0], u&quot;alist-&gt;hash-table&quot;):
         if len(rs) != 2:
-          self.raise_error("alist-&gt;hash-table: expected 1 arguments, got %d."%(len(rs)-1), rs[0].pos)
+          self.raise_error(&quot;alist-&gt;hash-table: expected 1 arguments, got %d.&quot;%(len(rs)-1), rs[0].pos)
         if not all(is_pair(a) for a in rs[1]):
-          self.raise_error("alist-&gt;hash-table: aruguments must be alist", rs[0].pos)
+          self.raise_error(&quot;alist-&gt;hash-table: aruguments must be alist&quot;, rs[0].pos)
         return dict((self.parse(i[0]), self.parse(i[2])) for i in rs[1])
-      elif len(rs)!=3 and any(is_ident(t, u".") for t in rs):
-        self.raise_error('illegal use of "."', rs[0].pos)
+      elif len(rs)!=3 and any(is_ident(t, u&quot;.&quot;) for t in rs):
+        self.raise_error('illegal use of &quot;.&quot;', rs[0].pos)
       elif is_pair(rs):
         parsed = self.parse(rs[2])
         if not isinstance(rs[2], list):
@@ -221,110 +225,126 @@ class Reader(object):
     else:
       return rs.value
 
-  def raise_error(self, msg="parse error", pos=None, range=3):
+  def raise_error(self, msg=&quot;parse error&quot;, pos=None, range=3):
     pos = pos or self.pos
-    lines = self.source.split("\n")
-    curline = self.source[:pos].count("\n")
-    linepos = pos - len("\n".join(lines[:curline]))
-    buf = ["\n"]
+    lines = self.source.split(&quot;\n&quot;)
+    curline = self.source[:pos].count(&quot;\n&quot;)
+    linepos = pos - len(&quot;\n&quot;.join(lines[:curline]))
+    buf = [&quot;\n&quot;]
     for i in xrange(max(0, curline-range), curline+1):
-      buf.append("% 5d: %s"%(i+1, lines[i]))
+      buf.append(&quot;% 5d: %s&quot;%(i+1, lines[i]))
     width = 7 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in unicode(lines[i]))
-    buf.append("%s~"%(" "*width))
-    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
-    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
+    buf.append(&quot;%s~&quot;%(&quot; &quot;*width))
+    buf.append(&quot;line %d, %d: %s&quot;%(curline+1,linepos, msg))
+    raise ParseError((&quot;\n&quot;.join(buf)).encode(sys.stderr.encoding))
 
 class Dumper(object):
-  def __init__(self, binding=None ,symbol_marker="'"):
+  def __init__(self, binding=None ,symbol_marker=&quot;'&quot;):
     binding = binding or default_binding
     self.binding = Binding(dict(zip(binding.values(), binding)))
     self.symbol_marker = symbol_marker
 
   def dump(self, obj):
     result = self.to_sexp(obj, [])
-    if isinstance(result, list) and len(result) and result[0]=="(":
+    if isinstance(result, list) and len(result) and result[0]==&quot;(&quot;:
       result = result[1:-1]
-    return u" ".join(result)
+    return u&quot; &quot;.join(result)
 
   def to_sexp(self, obj, result):
     ap = result.append
     tos = lambda v: self.to_sexp(v, result)
     if isinstance(obj, Pair):
-      ap("(")
+      ap(&quot;(&quot;)
       tos(obj[0])
-      ap(" . ")
+      ap(&quot; . &quot;)
       tos(obj[1])
-      ap(")")
+      ap(&quot;)&quot;)
     elif isinstance(obj, (tuple, list)):
-      ap("(")
+      ap(&quot;(&quot;)
       map(tos, obj)
-      ap(")")
+      ap(&quot;)&quot;)
     else:
       if isinstance(obj, dict):
-        ap("( alist-&gt;hash-table ")
-        tos([(k, Ident(u"."), v) for k,v in obj.items()])
-        ap(" ) ")
+        ap(&quot;( alist-&gt;hash-table &quot;)
+        tos([(k, Ident(u&quot;.&quot;), v) for k,v in obj.items()])
+        ap(&quot; ) &quot;)
       elif obj in self.binding:
         ap(unicode(Ident(self.binding[obj])))
       elif isinstance(obj, Symbol):
-        ap(u"'%s"%unicode(obj))
+        ap(u&quot;'%s&quot;%unicode(obj))
       elif isinstance(obj, (Ident,int, float, long)):
         ap(unicode(obj))
       else:
-        s = unicode(repr(obj)).decode("unicode_escape")
-        m = re.match(r"""^[u|r]?["|'](.*)["|']$""", s, re.M|re.S)
+        s = unicode(repr(obj)).decode(&quot;unicode_escape&quot;)
+        m = re.match(r&quot;&quot;&quot;^[u|r]?[&quot;|'](.*)[&quot;|']$&quot;&quot;&quot;, s, re.M|re.S)
         if m:
           s = m.group(1)
-        ap("\"%s\""%s.replace('"','\\"').replace("\\'","'"))
+        ap(&quot;\&quot;%s\&quot;&quot;%s.replace('&quot;','\\&quot;').replace(&quot;\\'&quot;,&quot;'&quot;))
     return result
 
 dumper = Dumper()
 read = Reader().read
-dump = dumper.dump</pre></section>
-<section>
-<h2>概要</h2>
+dump = dumper.dump
+</code></pre>
+
+<h1>概要</h1>
+
 <p>特徴は</p>
-<ul class="simple">
+
+<ul>
 <li>辞書を定義できる</li>
 <li>ドット対に対応</li>
 <li>識別子に対して、任意のバインディングを指定できる</li>
 <li>わりとちゃんとエラー表示される</li>
 <li>シンボル表記、数値表記(python表記)に対応</li>
 </ul>
+
 <p>といった当たりでしょうか。具体的にはテストコードを見てもらうと分かるかと。</p>
-<pre class="prettyprint ">(あああ hoge-&gt;fuga123 (1 . (2 . 3)) "hoge\\"hoge" ;comment2
-foo "aaa" #t &lt;= 'foo
-"hogehoge
+
+<pre class="prettyprint"><code>(あああ hoge-&gt;fuga123 (1 . (2 . 3)) &quot;hoge\\&quot;hoge&quot; ;comment2 
+foo &quot;aaa&quot; #t &lt;= 'foo 
+&quot;hogehoge
 foo
-" (5 . (6 .()))
+&quot; (5 . (6 .()))
 )
 (dict (
-  ("いいい" .
+  (&quot;いいい&quot; .
     (alist-&gt;hash-table (
-      ("a-1" . "vvv")
-      ("a-2" . (
-        hoge foo bar
+      (&quot;a-1&quot; . &quot;vvv&quot;)
+      (&quot;a-2&quot; . (
+        hoge foo bar 
       ))
     )))
 ))
 (10 1L -45 010 0x10 -10 -0x10 3.14 10. .001 1e100 3.14e-10 0e0)
 ; comment3 ()(
 
-""")</pre><p>という感じのS式が</p>
-<pre class="prettyprint ">[
-  [Ident(u'あああ'), Ident(u'hoge-&gt;fuga123'), Pair([1, Pair([2, 3])]), u'hoge"hoge',
+&quot;&quot;&quot;)
+</code></pre>
+
+<p>という感じのS式が</p>
+
+<pre class="prettyprint"><code>[
+  [Ident(u'あああ'), Ident(u'hoge-&gt;fuga123'), Pair([1, Pair([2, 3])]), u'hoge&quot;hoge',
   Ident(u'foo'), u'aaa', True, Ident(u'&lt;='), Symbol(u'foo'),
   u'hogehoge\nfoo\n', [5,6]],
-  {u'いいい':
-    {u'a-1': u'vvv',
+  {u'いいい': 
+    {u'a-1': u'vvv', 
     u'a-2': [Ident(u'hoge'), Ident(u'foo'), Ident(u'bar')]}},
   [10, 1L, -45, 010, 0x10, -10, -0x10, 3.14, 10., .001, 1e100, 3.14e-10, 0e0]
-]</pre><p>となります。 <code>Ident</code> や <code>Symbol</code> はunicodeのサブクラス、 <code>Pair</code> はリストのサブクラスになっているので、違和感なく使えると思います。</p>
-<p>また、 <code><span class="pre">alist-&gt;hash-table</span></code> で辞書が作れます。デフォルトで <code>dict</code> に <code><span class="pre">alist-&gt;hash-table</span></code> をバインドしてますので、 <code>dict</code> でも辞書が作れます。この機能はオンオフ切り替えも可能です。</p>
+]
+</code></pre>
+
+<p>となります。 <code>Ident</code> や <code>Symbol</code> はunicodeのサブクラス、 <code>Pair</code> はリストのサブクラスになっているので、違和感なく使えると思います。</p>
+
+<p>また、 <code>alist-&gt;hash-table</code> で辞書が作れます。デフォルトで <code>dict</code> に <code>alist-&gt;hash-table</code> をバインドしてますので、 <code>dict</code> でも辞書が作れます。この機能はオンオフ切り替えも可能です。</p>
+
 <p>その他、 <code>#t</code> を <code>True</code> などSchemeっぽくデフォルトバインディングが用意してあります。もちろん、バインディングは変更可能ですのでCLっぽくもできます。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>と、こんな感じです。一番便利なのはやっぱり辞書ですかねえ。なので、YAML,JSONで書いてる設定ファイルをS式で置き換え･･･なんてことができるかもしれません。</p>
-</section>
+
   </div>
 </article>
 
@@ -350,36 +370,41 @@ foo
 </header>
   <div itemprop="articleBody">
     <p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
+
 <p>一方、Pythonにはexperimentalながら <code>re.Scanner</code> というクラスがあります( <code>&gt;= 2.4</code> )。experimentalなのでマニュアルにはのっていませんが。この <code>re.Scanner</code> はかなりシンプルなんですが典型的な <code>StringScanner</code> の使い方の範疇では、こちらのほうがキレイに書けるような気がします。</p>
-<section>
-<h2><code>re.Scanner</code> の使い方</h2>
+
+<h1><code>re.Scanner</code> の使い方</h1>
+
 <p>使い方は非常に簡単で</p>
+
 <ul>
-<li><dl class="first docutils">
-<dt><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</dt>
-<dd><ul class="first last simple">
+<li><p><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</p>
+
+<ul>
 <li><code>action</code> は(scanner, string_matched) =&gt; stringな関数、Noneを返せば結果は無視される。</li>
+</ul></li>
+
+<li><p>scanメソッドでスキャン。結果が配列で返ってくる</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">scanメソッドでスキャン。結果が配列で返ってくる</p>
-</li>
-</ul>
+
 <p>といった感じ。関数を渡すので、 <code>StringScanner</code> のようなwhileループを作る必要がなく、キレイにまとまります。</p>
-</section>
-<section>
-<h2>例：S式パーサ</h2>
+
+<h1>例：S式パーサ</h1>
+
 <p><code>re.Scanner</code> は簡単、ということでS式パーサでも。トークナイズ+αな処理をするので、 <code>action</code> をインスタンスメソッドにして状態を保存することにします。</p>
+
 <p>目標は</p>
-<ul class="simple">
+
+<ul>
 <li>数値(っぽいもの)、文字列、シンボルが使える</li>
 <li>シンボルのみ、新たにクラスを定義して(unicodeのサブクラス)それにマップ。それ以外は組み込み型に。</li>
 <li>パースエラーも分かりやすく</li>
 <li>結果はPythonのリストorオブジェクトとして返る</li>
 </ul>
+
 <p>で</p>
-<pre class="prettyprint ">import re, sys
+
+<pre class="prettyprint"><code>import re, sys
 from unicodedata import east_asian_width
 
 try:
@@ -391,10 +416,10 @@ class ParseError(StandardError): pass
 
 class Symbol(unicode):
   def __repr__(self):
-    return "Symbol(%s)"%unicode.__repr__(self)
+    return &quot;Symbol(%s)&quot;%unicode.__repr__(self)
 
 class TokenProcessor(object):
-  PAREN = {"]":"[", ")":"("}
+  PAREN = {&quot;]&quot;:&quot;[&quot;, &quot;)&quot;:&quot;(&quot;}
   def __init__(self, value):
     self.result = []
     self.append = self.result.append
@@ -412,85 +437,104 @@ class TokenProcessor(object):
     self.pos += len(s)
     self.skip(scanner, s)
 
-  def error(self, scanner, s): self.raise_error("unknown token: %s"%s)
+  def error(self, scanner, s): self.raise_error(&quot;unknown token: %s&quot;%s)
 
-  def skip_whitespaces(self, scanner, s): self.append(",")
+  def skip_whitespaces(self, scanner, s): self.append(&quot;,&quot;)
 
   def skip(self, scanner, s):
-    last = "".join(self.result[-2:])
-    if last in ["[,", ",,", ",]"]:
+    last = &quot;&quot;.join(self.result[-2:])
+    if last in [&quot;[,&quot;, &quot;,,&quot;, &quot;,]&quot;]: 
       self.result[-2:] = sorted(last, key=ord)[1]
 
   def atom(self, scanner, s):
-    if s in ["(", "["]:
-      self.append("[")
+    if s in [&quot;(&quot;, &quot;[&quot;]:
+      self.append(&quot;[&quot;)
       self.paren_stack.append(s)
-    elif s in [")", "]"]:
+    elif s in [&quot;)&quot;, &quot;]&quot;]:
       if not self.paren_stack:
-        self.raise_error("missing opening parenthesis.")
+        self.raise_error(&quot;missing opening parenthesis.&quot;)
       if self.PAREN[s] != self.paren_stack.pop():
-        self.raise_error("missing closing parenthesis.")
-      self.append("]")
-    elif re.match(r"""^(".*)$""", s or ""):
-      self.append("u"+s)
-    elif re.match(r"""^((\-?\d[\de\.]+)|(\s*)|(.*"))$""", s or ""):
+        self.raise_error(&quot;missing closing parenthesis.&quot;)
+      self.append(&quot;]&quot;)
+    elif re.match(r&quot;&quot;&quot;^(&quot;.*)$&quot;&quot;&quot;, s or &quot;&quot;):
+      self.append(&quot;u&quot;+s)
+    elif re.match(r&quot;&quot;&quot;^((\-?\d[\de\.]+)|(\s*)|(.*&quot;))$&quot;&quot;&quot;, s or &quot;&quot;):
       self.append(s)
     else:
-      self.append("Symbol(u\"%s\")"%s)
+      self.append(&quot;Symbol(u\&quot;%s\&quot;)&quot;%s)
 
-  def raise_error(self, msg="parse error", range=3):
-    lines = self.string.split("\n")
-    curline = self.string[:self.pos].count("\n")
-    linepos = self.pos - len("\n".join(lines[:curline]))
-    buf = ["\n"]
+  def raise_error(self, msg=&quot;parse error&quot;, range=3):
+    lines = self.string.split(&quot;\n&quot;)
+    curline = self.string[:self.pos].count(&quot;\n&quot;)
+    linepos = self.pos - len(&quot;\n&quot;.join(lines[:curline]))
+    buf = [&quot;\n&quot;] 
     for i in xrange(max(0, curline-range), curline+1):
-      buf.append("% 5d: %s"%(i+1, lines[i]))
+      buf.append(&quot;% 5d: %s&quot;%(i+1, lines[i]))
     width = 6 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in lines[i])
-    buf.append("%s~"%(" "*width))
-    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
-    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
+    buf.append(&quot;%s~&quot;%(&quot; &quot;*width))
+    buf.append(&quot;line %d, %d: %s&quot;%(curline+1,linepos, msg))
+    raise ParseError((&quot;\n&quot;.join(buf)).encode(sys.stderr.encoding))
 
 def read_sexp(sexp):
   processor = TokenProcessor(sexp)
   scanner = Scanner([
-    (r"\s+", processor("skip_whitespaces")),
-    (r";[^\n]*\n", processor("skip")),
-    (r""""(?:[^"])*"|(\]|\[|\)|\(|[^\(\)\s]+)""", processor("atom")),
-    (r".*", processor("error"))
+    (r&quot;\s+&quot;, processor(&quot;skip_whitespaces&quot;)),
+    (r&quot;;[^\n]*\n&quot;, processor(&quot;skip&quot;)),
+    (r&quot;&quot;&quot;&quot;(?:[^&quot;])*&quot;|(\]|\[|\)|\(|[^\(\)\s]+)&quot;&quot;&quot;, processor(&quot;atom&quot;)),
+    (r&quot;.*&quot;, processor(&quot;error&quot;))
   ], re.M)
   scanner.scan(processor.string)
   if processor.paren_stack:
-    processor.raise_error("missing closing parenthesis.")
-  result = eval("".join(processor.result).lstrip(","))
-  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]</pre><p>こんな感じ。非常にシンプルな気がします。</p>
-<pre class="prettyprint ">print read_sexp(u"""("ほげほげ"
+    processor.raise_error(&quot;missing closing parenthesis.&quot;)
+  result = eval(&quot;&quot;.join(processor.result).lstrip(&quot;,&quot;))
+  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]
+</code></pre>
+
+<p>こんな感じ。非常にシンプルな気がします。</p>
+
+<pre class="prettyprint"><code>print read_sexp(u&quot;&quot;&quot;(&quot;ほげほげ&quot;
 ;comment
   ;comment
   (hogehoge 123) ;aaaaaaa
-  "hoge\\"aaaa"
+  &quot;hoge\\&quot;aaaa&quot;
 ;comment
 ;comment
 
-aaaa          b)""")</pre><p>output:</p>
-<pre class="prettyprint ">[u'\u307b\u3052\u307b\u3052', [Symbol(u'hogehoge'), 123], u'hoge"aaaa', Symbol(u'aaaa'), Symbol(u'b')]</pre><p>エラーも一応。</p>
-<pre class="prettyprint ">print read_sexp(u"""(
+aaaa          b)&quot;&quot;&quot;)
+</code></pre>
+
+<p>output:</p>
+
+<pre class="prettyprint"><code>[u'\u307b\u3052\u307b\u3052', [Symbol(u'hogehoge'), 123], u'hoge&quot;aaaa', Symbol(u'aaaa'), Symbol(u'b')]
+</code></pre>
+
+<p>エラーも一応。</p>
+
+<pre class="prettyprint"><code>print read_sexp(u&quot;&quot;&quot;(
 aaaa
 bbbb (ccc ddd) )
-(eee
-ああああああ""")</pre><p>output:</p>
-<pre class="prettyprint ">__main__.ParseError:
+(eee 
+ああああああ&quot;&quot;&quot;)
+</code></pre>
+
+<p>output:</p>
+
+<pre class="prettyprint"><code>__main__.ParseError:
 
     2: aaaa
     3: bbbb (ccc ddd) )
     4: (eee
     5: ああああああ
                   ~
-line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
-</section>
-<section>
-<h2>というわけで</h2>
+line 5, 7: missing closing parenthesis.
+</code></pre>
+
+<p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
+
+<h1>というわけで</h1>
+
 <p>Pythonでトークナイズするときにはかなり便利なんじゃないかと思いました。</p>
-</section>
+
   </div>
 </article>
 
@@ -517,54 +561,71 @@ line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ�
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://inforno.net/articles/2008/07/04/strong-arm-approach-toward-gae-transactions">前のエントリー</a> でGAEにおけるトランザクションの問題は一応解決をみた。</p>
+    <p><a href="http://inforno.net/articles/2008/07/04/strong-arm-approach-toward-gae-transactions">前のエントリー</a> でGAEにおけるトランザクションの問題は一応解決をみた。</p>
+
 <p>その後、GAEで開発を続けた結果、やはりGAEにブログを移行するのは断念した。理由としては</p>
-<ul class="simple">
+
+<ul>
 <li><code>os.listdir</code> などで不審な挙動が見られた</li>
 <li>スキーマを変更したときが非常に面倒</li>
 <li>インポート、エクスポートの難しさ</li>
 </ul>
+
 <p>が主なところ。</p>
-<p><code>os.listdir</code> については、web.pyでテンプレートを検索するときに <code>os.listdir</code> を使っているのだけど、どうも動きが怪しい。正しくファイルリストが帰ってきたり帰ってこなかったりするのだ。何回も本番にアップして試したところ、 <code><span class="pre">os.listdir(&quot;hoge&quot;);os.listdir(&quot;hoge&quot;)</span></code> というように同じ内容で2回連続で呼び出すとなぜか確実にファイルリストが帰ってくる、という･･･これはちょっと･･･</p>
+
+<p><code>os.listdir</code> については、web.pyでテンプレートを検索するときに <code>os.listdir</code> を使っているのだけど、どうも動きが怪しい。正しくファイルリストが帰ってきたり帰ってこなかったりするのだ。何回も本番にアップして試したところ、 <code>os.listdir(&quot;hoge&quot;);os.listdir(&quot;hoge&quot;)</code> というように同じ内容で2回連続で呼び出すとなぜか確実にファイルリストが帰ってくる、という･･･これはちょっと･･･</p>
+
 <p>スキーマの変更に関しては、まんま。変更したとき、それを本番に反映させるのがめんどくさい。</p>
+
 <p>インポートエクスポートも負荷を考えるとしんどい。現在もWEBはレンタルサーバで運用しているのでわざわざGAEにもっていく旨みもない。</p>
+
 <p>ということでせっかくブログをつくったのに移行をやめたのである。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>しかし、せっかく作ったのにもったいない。ということで今度はGAE用につくったブログを普通にMySQLを使うようにポーティングした。今回はそれに試験的に移行してみたのだ。</p>
+
 <p>なぜWordpressからわざわざ独自ブログソフトウェアに移行したのか。理由は前のエントリーにも書いたとおりだけど</p>
+
 <ul>
-<li><p class="first">Wordpressのコードが気に食わない（OSSとしてバランスをとっている、というのはあるんですが）</p>
-</li>
-<li><p class="first">使用しているテンプレートや、プラグインも含めると出力されるHTMLが汚い。</p>
-</li>
-<li><dl class="first docutils">
-<dt>ついている機能の半分以上は使っていない。ブログライトユーザの俺には機能が多すぎる。</dt>
-<dd><ul class="first last simple">
+<li>Wordpressのコードが気に食わない（OSSとしてバランスをとっている、というのはあるんですが）</li>
+<li>使用しているテンプレートや、プラグインも含めると出力されるHTMLが汚い。</li>
+
+<li><p>ついている機能の半分以上は使っていない。ブログライトユーザの俺には機能が多すぎる。</p>
+
+<ul>
 <li>自分の使う機能が固まった。それさえあれば俺には十分とわかり始めた。</li>
+</ul></li>
+
+<li><p>セキュリティ的にもWordpressはターゲットになっていて微妙。</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">セキュリティ的にもWordpressはターゲットになっていて微妙。</p>
-</li>
-</ul>
+
 <p>以上のようなところをふまえ</p>
-<ul class="simple">
+
+<ul>
 <li>明快なコード。</li>
 <li>キレイなXHTML。</li>
 <li>自分が使う機能だけ実装。</li>
 <li>堅牢なコード。</li>
 </ul>
+
 <p>ということを心がけた。またレンタルサーバで動かすということで</p>
-<ul class="simple">
+
+<ul>
 <li>なるべく静的HTMLとしてキャッシュしてmod_rewriteで飛ばす</li>
 <li>見た目や外部連携に関する動的な部分はなるべくクライアントサイドで</li>
 </ul>
+
 <p>ということにも気を配った。</p>
+
 <p>このブログは3年目に入るのだけど、やはりWEBの世界というのは流れが速いもので大分変化があった。その中で、外部連携はほぼJSONPで行えるようになったのでサーバサイドでやらなくても良くなった。今回実装したブログでは各SBMのブクマ数を表示しているけど、これも全てJSONPでクライアントサイドで実現している。それに対し、旧ブログ(Wordpress)ではサーバサイドで定期的に取得していた。</p>
+
 <p>という感じで出来上がったのがこのブログだ。もうひとつ、実はこのブログ、XREAでしかもPython2.5で動かしている。あれ、XREAでPython2.5使えたっけ、というあなた。実は簡単に使えちゃうワザがあるんですよ。それについては、また。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>あまりテストもせず試験的に移行してみたのでおかしい部分もあるかと思いますが、そこはおいおい。パーマリンクはそのままになっていると思います。基本的にURLは変更していません。また、CGIで動かしていますので、負荷が高ければ前のに戻す予定です。</p>
+
   </div>
 </article>
 

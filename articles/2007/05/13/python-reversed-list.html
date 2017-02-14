@@ -71,26 +71,34 @@
 </header>
   <div itemprop="articleBody">
     <p>ネットをただよってたらこんなの見つけた。古いのに突っ込んで申し訳ない。</p>
-<p><a class="reference external" href="http://sh1.2-d.jp/b/2006/Jun/2">sorted関数とreversed関数</a></p>
+
+<p><a href="http://sh1.2-d.jp/b/2006/Jun/2">sorted関数とreversed関数</a></p>
+
 <blockquote>
-元のリストに副作用を起こさずに得ようと思ったら、
-[x for x in reversed(l)]
-か、・・・</blockquote>
+<p>元のリストに副作用を起こさずに得ようと思ったら、 [x for x in reversed(l)] か、・・・</p>
+</blockquote>
+
 <p>これPython結構やってても知らない人が多い気がする。というかなかなか必要にならない気がする。</p>
-<pre class="prettyprint ">lst = [1,2,3,4,5]
+
+<pre class="prettyprint"><code>lst = [1,2,3,4,5]
 reversed(lst)
 # =&gt; &lt;listreverseiterator object at 0x00B90630&gt;
 lst[::-1]
-#=&gt; [5, 4, 3, 2, 1]</pre><p>リストを非破壊的に逆順にするときってreversed使うんだけど、返ってくるのはイテレータ。</p>
-<p>んじゃリストを得るときは、ってなるんだけど <code><span class="pre">lst[::-1]</span></code> ってする方法があったりする。リストスライスの3つめの値って忘れ去られがちな気がする・・・。</p>
+#=&gt; [5, 4, 3, 2, 1]
+</code></pre>
+
+<p>リストを非破壊的に逆順にするときってreversed使うんだけど、返ってくるのはイテレータ。</p>
+
+<p>んじゃリストを得るときは、ってなるんだけど <code>lst[::-1]</code> ってする方法があったりする。リストスライスの3つめの値って忘れ去られがちな気がする・・・。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

@@ -77,68 +77,80 @@
 </header>
   <div itemprop="articleBody">
     <p>Scalaにはご存知のとおり <code>scala.util.parsing.combinator</code> というパーサコンビネータライブラリがある。さらには <code>scala.util.parsing.ast</code> というのもあるわけだけど、これは激しく開発中な感じ。Scalaはバージョンがあがるとこういう開発中ライブラリはごそっと変わったりするので今はおいておく。ちなみに、2.7.1では前のパーサコンビネータは <code>scala.util.parsing.combinatorold</code> といういかにも使いたくない名前にされてしまった。</p>
+
 <p>パーサコンビネータといえば言語処理系だ（そうか？）。というわけで <code>scala.util.parsing.ast</code> は置いておいて、とりあえずASTについてほとんど考える必要がない、簡単なスタック指向言語を実装してみることにする。実行はScala 2.7.1.finalで。</p>
-<section>
-<h2>スタック指向言語とは</h2>
-<p>こんなブログを見ている人は、だいたいスタック指向言語を知っているだろうから俺みたいな素人が書いてもなんだけど、一応。
-スタック指向言語にはForthやPostScriptやFactorがある。素晴らしく簡単にいうと、 <strong>「とりあえずスタックがあればなんとかなるよね」</strong> という言語だ。</p>
+
+<h1>スタック指向言語とは</h1>
+
+<p>こんなブログを見ている人は、だいたいスタック指向言語を知っているだろうから俺みたいな素人が書いてもなんだけど、一応。 スタック指向言語にはForthやPostScriptやFactorがある。素晴らしく簡単にいうと、 <strong>「とりあえずスタックがあればなんとかなるよね」</strong> という言語だ。</p>
+
 <p>んでスタック使うなら逆ポーランドで書いてあったら、処理も楽だしいいんじゃね、読みにくい？Lispだって慣れてる人は無問題なんだし、慣れの問題じゃね、という感じである。</p>
+
 <p>関数（スタック指向言語ではwordという）もスタックに値をつんで実行すればいい。wordから値を返すときも返したい分だけスタックにつめばいい。というわけで、非常に単純なのである。</p>
+
 <p>今回は <code>Factor</code> ライクなスタック指向言語処理系（インタプリタ）「SimpleFactor」を作ってみることに。文法とかはだいたいFactorと一緒なのでさきにFactorの文法を学んでおくと分かりやすい。</p>
-</section>
-<section>
-<h2>まずはレクサ</h2>
+
+<h1>まずはレクサ</h1>
+
 <p>まずはレクサを作る。サポートするリテラルは文字列、整数値、真偽値で以下のような感じ。</p>
-<ul class="simple">
+
+<ul>
 <li>文字列： <code>&quot;hoge&quot;</code></li>
-<li>整数値： <code>10, <span class="pre">-10</span></code></li>
+<li>整数値： <code>10, -10</code></li>
 <li>真偽値： <code>t,f</code></li>
 </ul>
+
 <p>あと、コメントは <code>!</code> から行末までとする。ソースはこんな感じで、ScalaのDSL構築能力を生かしてかなり定義どおりに書ける。</p>
-<pre class="prettyprint ">import scala.util.parsing.combinator._
+
+<pre class="prettyprint"><code>import scala.util.parsing.combinator._
 import scala.util.parsing.combinator.syntactical._
 import scala.util.parsing.combinator.lexical._
 import scala.util.parsing.input.CharArrayReader.EofCh
 class Lexer extends StdLexical with ImplicitConversions {
-  override def token: Parser[Token] =
+  override def token: Parser[Token] = 
     ( string ^^ StringLit
-    | '-' ~&gt; number ^^ { case num =&gt; NumericLit("-" + num) }
+    | '-' ~&gt; number ^^ { case num =&gt; NumericLit(&quot;-&quot; + num) }
     | number ^^ NumericLit
     | EofCh ^^^ EOF
     | delim
-    | '\"' ~&gt; failure("Unterminated string")
+    | '\&quot;' ~&gt; failure(&quot;Unterminated string&quot;)
     | rep(chrAny) ^^ checkKeyword
-    | failure("Illegal character")
+    | failure(&quot;Illegal character&quot;)
     )
 
 
   def number  = zero | (nonzero ~ rep(digit) ^^ {case x ~ y =&gt; mkS(x::y)})
-  def string = '\"' ~&gt; rep(charSeq | chrExcept('\"', '\n', EofCh)) &lt;~ '\"' ^^ {case x =&gt; mkS(x)}
+  def string = '\&quot;' ~&gt; rep(charSeq | chrExcept('\&quot;', '\n', EofCh)) &lt;~ '\&quot;' ^^ {case x =&gt; mkS(x)}
   def checkKeyword(xs : List[Any]) = {
     val strRep = mkS(xs)
     if (reserved contains strRep){ Keyword(strRep) }
     else if(identiferRe.findFirstIn(strRep) != None  ) { Identifier(strRep) }
-    else {ErrorToken("Not a Identifier: " + strRep)}
+    else {ErrorToken(&quot;Not a Identifier: &quot; + strRep)}
   }
 
   override def whitespace: Parser[Any] =
     rep( whitespaceChar | '!' ~ rep( chrExcept(EofCh, '\n') ))
-  def nonzero = elem("nonzero digit", d =&gt; d.isDigit &amp;&amp; d != '0')
-  def zero: Parser[String] = '0' ^^^ "0"
+  def nonzero = elem(&quot;nonzero digit&quot;, d =&gt; d.isDigit &amp;&amp; d != '0')
+  def zero: Parser[String] = '0' ^^^ &quot;0&quot;
   def charSeq: Parser[String] =
-    ('\\' ~ '\"' ^^^ "\"" |'\\' ~ '\\' ^^^ "\\" |'\\' ~ '/'  ^^^ "/" |'\\' ~ 'b'  ^^^ "\b" | '\\' ~ '0' ^^^ ""
-    |'\\' ~ 'f'  ^^^ "\f" |'\\' ~ 'n'  ^^^ "\n" |'\\' ~ 'r'  ^^^ "\r" |'\\' ~ 't'  ^^^ "\t")
-  def identiferRe = """^(\w|[^"])+$""".r
-  def chrAny = chrExcept(EofCh, ' ', '\n', '\t', '\r', '\"', '!')
+    ('\\' ~ '\&quot;' ^^^ &quot;\&quot;&quot; |'\\' ~ '\\' ^^^ &quot;\\&quot; |'\\' ~ '/'  ^^^ &quot;/&quot; |'\\' ~ 'b'  ^^^ &quot;\b&quot; | '\\' ~ '0' ^^^ &quot;&quot;
+    |'\\' ~ 'f'  ^^^ &quot;\f&quot; |'\\' ~ 'n'  ^^^ &quot;\n&quot; |'\\' ~ 'r'  ^^^ &quot;\r&quot; |'\\' ~ 't'  ^^^ &quot;\t&quot;)
+  def identiferRe = &quot;&quot;&quot;^(\w|[^&quot;])+$&quot;&quot;&quot;.r
+  def chrAny = chrExcept(EofCh, ' ', '\n', '\t', '\r', '\&quot;', '!')
 
-  def mkS[A](seq: Seq[A]) = seq mkString ""
-}</pre><p>Scalaで処理系を作る場合はとりあえず <code>StdLexical</code> を継承して拡張すれば、だいたいOK。ここでは <code>Token</code> を返すパーサを定義する。 <code>Keyword</code> や <code>StringLit</code> といった <code>Token</code> を継承したケースクラスは <code>scala.util.parsing.sytax.StdTokens</code> で定義されていて、 <code>StdLexical</code> は <code>StdTokens</code> をMix-inしている。</p>
-</section>
-<section>
-<h2>抽象構文木をつくる</h2>
+  def mkS[A](seq: Seq[A]) = seq mkString &quot;&quot;
+}
+</code></pre>
+
+<p>Scalaで処理系を作る場合はとりあえず <code>StdLexical</code> を継承して拡張すれば、だいたいOK。ここでは <code>Token</code> を返すレクサを定義する。 <code>Keyword</code> や <code>StringLit</code> といった <code>Token</code> を継承したケースクラスは <code>scala.util.parsing.sytax.StdTokens</code> で定義されていて、 <code>StdLexical</code> は <code>StdTokens</code> をMix-inしている。</p>
+
+<h1>抽象構文木をつくる</h1>
+
 <p>次に、このトークンの並びから文法を定義して、それに従って抽象構文木を作るわけだけど、スタック指向言語の場合、ここで難しいことはあまりない。</p>
+
 <p>とりあえず、処理(といっても4種類、しかもうち2種類は意味なし）と、抽象構文木をあらわすケースクラスを作る。インタプリタなのでオペコードとかする意味はないけど、こうしとくとVMにしようと思ったとき楽なのでそうした。というよりエミュとかを作ることが好きなので、こういう数値を見ると安心するのである。</p>
-<pre class="prettyprint ">import scala.util.logging.ConsoleLogger
+
+<pre class="prettyprint"><code>import scala.util.logging.ConsoleLogger
 import scala.collection.mutable.{Stack, ArrayBuffer, HashMap}
 trait Opecode {
   final val OP_NOP  : byte = 0x00
@@ -163,16 +175,16 @@ case class NodeNamed(v:Named) extends NodeValue with Opecode{ type Value = Named
 case class NodeProgram(v:List[Node]) extends Node with Opecode{
   type Value = List[Node]
   var quotIndex = 0
-  def nextQuotSym = { quotIndex += 1; "quot"+quotIndex }
+  def nextQuotSym = { quotIndex += 1; &quot;quot&quot;+quotIndex }
 
   def toplevel = {
     val nullsf = List[NodeSymbol]()
     val words = new ArrayBuffer[Node]
     def visitNode(n:Node):List[Node] = n match {
-      case NodeNamed(NamedWord(name, sin, sout, body)) =&gt;
+      case NodeNamed(NamedWord(name, sin, sout, body)) =&gt; 
          words += NodeNamed(NamedWord(name, sin, sout, body.flatMap(visitNode)))
          List[Node]()
-      case NodeQuotation(nodes) =&gt;
+      case NodeQuotation(nodes) =&gt; 
         val name = nextQuotSym
         words += NodeNamed(NamedWord(name, nullsf, nullsf, nodes.flatMap(visitNode)))
         List(NodeOpe(OP_PUSH, List(NodeSymbol(name))))
@@ -185,102 +197,109 @@ case class NodeProgram(v:List[Node]) extends Node with Opecode{
 
 abstract class Named(name:String)
 case class NamedWord(name:String, stackin:List[NodeSymbol], stackout:List[NodeSymbol], body:List[Node]) extends Named(name)
-case class NamedNativeWord[T](name:String, stackin:List[NodeSymbol],
+case class NamedNativeWord[T](name:String, stackin:List[NodeSymbol], 
   stackout:List[NodeSymbol], body:()=&gt;T) extends Named(name)
 class NamedTable extends HashMap[String, Named] {
-}</pre><p><code>Node</code> という抽象クラスを継承して、いろんなノードを定義する。だいたい名前をみてのとおりだけど、わかりにくいところだとこんな感じ。</p>
-<ul class="simple">
+}
+</code></pre>
+
+<p><code>Node</code> という抽象クラスを継承して、いろんなノードを定義する。だいたい名前をみてのとおりだけど、わかりにくいところだとこんな感じ。</p>
+
+<ul>
 <li>NodeNamed：名前付けされた値への参照</li>
 <li>NodeSymbol：word名</li>
 <li>NodeQuotation：無名関数(quotationという)</li>
 <li>NodeProgram：プログラム全体</li>
 </ul>
+
 <p><code>Named</code> は名前付けされた値なわけだけど、今回変数にあたるものはないので、wordのみがコレにあたる。 <code>NamedWord</code> がSimpleFactorで書かれたふつーのword、 <code>NamedNativeWord</code> はいわゆる組み込みwordでScalaで書いたものをあらわす。 <code>NamedTable</code> はその対応を保存する単なるハッシュマップ。</p>
+
 <p>さて、ではこいつらを使って構文木を作って実行する。</p>
-<pre class="prettyprint ">class SimpleFactorInterp extends StdTokenParsers with ImplicitConversions with Opecode{
+
+<pre class="prettyprint"><code>class SimpleFactorInterp extends StdTokenParsers with ImplicitConversions with Opecode{
   type Tokens = Lexer
   val lexical = new Tokens
-  lexical.reserved ++= List("t", "f", "(", ")", "[", "]", ":", ";", "--")
-  lexical.delimiters ++= List("\n", " ", "\t")
+  lexical.reserved ++= List(&quot;t&quot;, &quot;f&quot;, &quot;(&quot;, &quot;)&quot;, &quot;[&quot;, &quot;]&quot;, &quot;:&quot;, &quot;;&quot;, &quot;--&quot;)
+  lexical.delimiters ++= List(&quot;\n&quot;, &quot; &quot;, &quot;\t&quot;)
   import lexical.{NumericLit, StringLit, Keyword, Identifier}
 
   def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }
-  def lWord       = ":" ~ lSymbol ~ "(" ~ rep(lSymbol) ~ "--" ~ rep(lSymbol) ~ ")" ~ rep(lExpr) ~ ";" ^^
-                        { case ":" ~ name ~ "(" ~ sin ~ "--" ~ sout ~ ")" ~ body ~ ";" =&gt;
+  def lWord       = &quot;:&quot; ~ lSymbol ~ &quot;(&quot; ~ rep(lSymbol) ~ &quot;--&quot; ~ rep(lSymbol) ~ &quot;)&quot; ~ rep(lExpr) ~ &quot;;&quot; ^^ 
+                        { case &quot;:&quot; ~ name ~ &quot;(&quot; ~ sin ~ &quot;--&quot; ~ sout ~ &quot;)&quot; ~ body ~ &quot;;&quot; =&gt;
                             NodeNamed(NamedWord(name.value, sin, sout, body+NodeOpe(OP_RTN, List[Node]()))) }
   def lExpr:Parser[Node] = (lString | lNumber | lBool | lInvokeWord | lQuotation)
-  def lString     = accept("string", { case StringLit(n)  =&gt;  NodeOpe(OP_PUSH, List(NodeStr(n))) })
-  def lNumber     = accept("number", { case NumericLit(n) =&gt;  NodeOpe(OP_PUSH, List(NodeInt(n.toInt))) })
-  def lBool       = accept("boolean",{ case Keyword("t")  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(true)))
-                                       case Keyword("f")  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(false)))  })
-  def lInvokeWord    = accept("symbol", { case Identifier(n) =&gt; NodeOpe(OP_CALL, List(NodeSymbol(n))) })
-  def lQuotation      = "[" ~&gt; rep(lExpr) &lt;~ "]" ^^ { case expr =&gt; NodeQuotation(expr+NodeOpe(OP_RTN, List[Node]())) }
+  def lString     = accept(&quot;string&quot;, { case StringLit(n)  =&gt;  NodeOpe(OP_PUSH, List(NodeStr(n))) })
+  def lNumber     = accept(&quot;number&quot;, { case NumericLit(n) =&gt;  NodeOpe(OP_PUSH, List(NodeInt(n.toInt))) })
+  def lBool       = accept(&quot;boolean&quot;,{ case Keyword(&quot;t&quot;)  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(true)))
+                                       case Keyword(&quot;f&quot;)  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(false)))  })
+  def lInvokeWord    = accept(&quot;symbol&quot;, { case Identifier(n) =&gt; NodeOpe(OP_CALL, List(NodeSymbol(n))) })
+  def lQuotation      = &quot;[&quot; ~&gt; rep(lExpr) &lt;~ &quot;]&quot; ^^ { case expr =&gt; NodeQuotation(expr+NodeOpe(OP_RTN, List[Node]())) }
 
-  def lSymbol        = accept("symbol", { case Identifier(n) =&gt; NodeSymbol(n) })
+  def lSymbol        = accept(&quot;symbol&quot;, { case Identifier(n) =&gt; NodeSymbol(n) })
 
   protected val stack = new Stack[Node]
   protected var namedTable = new NamedTable
 
-  def parse(input: String) =
+  def parse(input: String) = 
     phrase(program)(new lexical.Scanner(input)) match {
       case Success(programNode, _) =&gt; initTopLevel(programNode.toplevel)
       case x                       =&gt; error(x.toString)
     }
 
   def initTopLevel(toplevelNodes:List[Node]) = {
-    def sl(v:String) = v.split(" ").map(NodeSymbol).toList
+    def sl(v:String) = v.split(&quot; &quot;).map(NodeSymbol).toList
     def nword[T](n:String, sin:String, sout:String, m:()=&gt;T) =
       (n, NamedNativeWord(n, sl(sin), sl(sout), m))
     namedTable ++= List(
-      nword("drop", "x", "", ()=&gt;{ pop }),
-      nword("dup", "x", "x x", ()=&gt;{ val v = pop; npush(v,v) }),
-      nword("rotate", "x y z", "y z x", ()=&gt; npop(3) match {
+      nword(&quot;drop&quot;, &quot;x&quot;, &quot;&quot;, ()=&gt;{ pop }),
+      nword(&quot;dup&quot;, &quot;x&quot;, &quot;x x&quot;, ()=&gt;{ val v = pop; npush(v,v) }),
+      nword(&quot;rotate&quot;, &quot;x y z&quot;, &quot;y z x&quot;, ()=&gt; npop(3) match {
         case List(x, y, z) =&gt; npush(y, z, x)
       }),
-      nword("swap", "x y", "y x", ()=&gt; npop(2) match {
+      nword(&quot;swap&quot;, &quot;x y&quot;, &quot;y x&quot;, ()=&gt; npop(2) match {
         case List(x, y) =&gt; npush(y, x)
       }),
 
-      nword("+", "x y", "z", ()=&gt;{ iArI2(_+_) }),
-      nword("-", "x y", "z", ()=&gt;{ iArI2(_-_) }),
-      nword("*", "x y", "z", ()=&gt;{ iArI2(_*_) }),
-      nword("/", "x y", "z", ()=&gt;{ iArI2(_/_) }),
+      nword(&quot;+&quot;, &quot;x y&quot;, &quot;z&quot;, ()=&gt;{ iArI2(_+_) }),
+      nword(&quot;-&quot;, &quot;x y&quot;, &quot;z&quot;, ()=&gt;{ iArI2(_-_) }),
+      nword(&quot;*&quot;, &quot;x y&quot;, &quot;z&quot;, ()=&gt;{ iArI2(_*_) }),
+      nword(&quot;/&quot;, &quot;x y&quot;, &quot;z&quot;, ()=&gt;{ iArI2(_/_) }),
 
-      nword("&gt;", "x y", "?", ()=&gt;{ ilB2(_&gt;_) }),
-      nword("&lt;", "x y", "?", ()=&gt;{ ilB2(_&lt;_) }),
-      nword("==", "x y", "?", ()=&gt;{ ilB2(_==_) }),
-      nword("&gt;=", "x y", "?", ()=&gt;{ ilB2(_&gt;=_) }),
-      nword("&lt;=", "x y", "?", ()=&gt;{ ilB2(_&lt;=_) }),
+      nword(&quot;&gt;&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_&gt;_) }),
+      nword(&quot;&lt;&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_&lt;_) }),
+      nword(&quot;==&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_==_) }),
+      nword(&quot;&gt;=&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_&gt;=_) }),
+      nword(&quot;&lt;=&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_&lt;=_) }),
 
-      nword("not", "?", "?", ()=&gt; pop match {
+      nword(&quot;not&quot;, &quot;?&quot;, &quot;?&quot;, ()=&gt; pop match {
         case NodeBool(v) =&gt; push(NodeBool(!v))
       }),
-      nword("and", "? ?", "?", ()=&gt; (pop, pop) match {
+      nword(&quot;and&quot;, &quot;? ?&quot;, &quot;?&quot;, ()=&gt; (pop, pop) match {
         case (NodeBool(true), NodeBool(true)) =&gt; push(NodeBool(true))
         case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(false))
       }),
-      nword("or", "? ?", "?", ()=&gt; (pop, pop) match {
+      nword(&quot;or&quot;, &quot;? ?&quot;, &quot;?&quot;, ()=&gt; (pop, pop) match {
         case (NodeBool(false), NodeBool(false)) =&gt; push(NodeBool(false))
         case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(true))
       }),
 
-      nword(".", "obj", "", ()=&gt;{ println(pop.value) }),
-      nword("call", "quot", "", ()=&gt; pop match {
+      nword(&quot;.&quot;, &quot;obj&quot;, &quot;&quot;, ()=&gt;{ println(pop.value) }),
+      nword(&quot;call&quot;, &quot;quot&quot;, &quot;&quot;, ()=&gt; pop match {
         case NodeSymbol(qname) =&gt; callWord(qname)
       }),
 
-      nword("if", "? quot quot", "", ()=&gt; (pop, pop, pop) match {
+      nword(&quot;if&quot;, &quot;? quot quot&quot;, &quot;&quot;, ()=&gt; (pop, pop, pop) match {
         case (_, NodeSymbol(qname), NodeBool(true))   =&gt; callWord(qname)
         case (NodeSymbol(qname),  _, NodeBool(false)) =&gt; callWord(qname)
       }),
 
-      nword("string&gt;number", "str", "x", ()=&gt; pop match {
+      nword(&quot;string&gt;number&quot;, &quot;str&quot;, &quot;x&quot;, ()=&gt; pop match {
         case NodeStr(str) =&gt; push(NodeInt(str.toInt))
       }),
-      nword("&gt;string", "obj", "str", ()=&gt; { push(NodeStr(pop.value.toString)) })
+      nword(&quot;&gt;string&quot;, &quot;obj&quot;, &quot;str&quot;, ()=&gt; { push(NodeStr(pop.value.toString)) })
 
     )
-    toplevelNodes.foreach {
+    toplevelNodes.foreach { 
       case NodeNamed(n@NamedWord(name, _, _, _)) =&gt; namedTable(name) = n
       case _ =&gt; ()
     }
@@ -289,21 +308,21 @@ class NamedTable extends HashMap[String, Named] {
   def evaluate(input:String, args:Array[String]) = {
     parse(input)
     args.map(NodeStr).foreach(push _)
-    callWord("main")
+    callWord(&quot;main&quot;)
   }
 
-  def callWord(wordName:String):unit =
-    namedTable(wordName.ensuring(namedTable.contains _, "word '"+wordName+"' is not defined.")) match {
-      case NamedNativeWord(_, sin, sout, body) =&gt; try {
+  def callWord(wordName:String):unit = 
+    namedTable(wordName.ensuring(namedTable.contains _, &quot;word '&quot;+wordName+&quot;' is not defined.&quot;)) match {
+      case NamedNativeWord(_, sin, sout, body) =&gt; try { 
           body()
         } catch {
           case e =&gt; wordError(wordName, sin, sout)
                     throw e
         }
-      case NamedWord(_, sin, sout, body) =&gt;
-        body foreach {
+      case NamedWord(_, sin, sout, body) =&gt; 
+        body foreach { 
           case NodeOpe(OP_PUSH, List(v, _*)) =&gt; push(v)
-          case NodeOpe(OP_CALL, List(NodeSymbol(name), _*)) =&gt;
+          case NodeOpe(OP_CALL, List(NodeSymbol(name), _*)) =&gt; 
             try {
               callWord(name)
             }catch {
@@ -324,36 +343,51 @@ class NamedTable extends HashMap[String, Named] {
     case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeBool(f(v2,v1)))
   }
   def wordError(name:String, sin:List[NodeSymbol], sout:List[NodeSymbol]) = {
-    printf("word '%s' ( %s -- %s ).\n", name, sin.map(_.value).mkString(" "),
-                                              sout.map(_.value).mkString(" "))
+    printf(&quot;word '%s' ( %s -- %s ).\n&quot;, name, sin.map(_.value).mkString(&quot; &quot;),
+                                              sout.map(_.value).mkString(&quot; &quot;))
   }
   def push(a:Node) = stack.push(a)
   def pop = stack.pop
 
-}</pre><p>はじめの方でプログラムの文法を定義し、 <code>Token</code> から <code>Node</code> のリストへ変換し、 <code>NodeProgram</code> にする。処理の簡単さのため、プログラムはwordから構成されていて、プログラム開始時にはmain wordから実行が開始されるとするので</p>
-<pre class="prettyprint ">def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }</pre><p>wordは</p>
-<pre class="prettyprint ">: add ( x y -- z )
+}
+</code></pre>
+
+<p>はじめの方でプログラムの文法を定義し、 <code>Token</code> から <code>Node</code> のリストへ変換し、 <code>NodeProgram</code> にする。処理の簡単さのため、プログラムはwordから構成されていて、プログラム開始時にはmain wordから実行が開始されるとするので</p>
+
+<pre class="prettyprint"><code>def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }
+</code></pre>
+
+<p>wordは</p>
+
+<pre class="prettyprint"><code>: add ( x y -- z )
  +
-;</pre><p>という感じに定義するので <code>lWord</code> の定義になっている。ほとんどそのまま書いた感じだ。 <code>( x y <span class="pre">--</span> z )</code> の部分はスタックエフェクトといって、このwordがスタックにどのような影響を与えるのかを記述している。あくまで説明であって本質的な意味はない。 <code>( x y <span class="pre">--</span> z )</code> ならスタックから2個取り出されて、結果が1個詰まれるのだな、ということがわかる。</p>
+;
+</code></pre>
+
+<p>という感じに定義するので <code>lWord</code> の定義になっている。ほとんどそのまま書いた感じだ。 <code>( x y -- z )</code> の部分はスタックエフェクトといって、このwordがスタックにどのような影響を与えるのかを記述している。あくまで説明であって本質的な意味はない。 <code>( x y -- z )</code> ならスタックから2個取り出されて、結果が1個詰まれるのだな、ということがわかる。</p>
+
 <p>あとは自明なので省略。</p>
-</section>
-<section>
-<h2>実行</h2>
+
+<h1>実行</h1>
+
 <p>そんなこんなでソースコードから <code>NodeProgram</code> が作れるようになった。次に <code>NodeProgram</code> からTOPレベル環境を作る。</p>
+
 <p>ここでは、 <code>NodeProgram</code> に含まれるquotationを(実行する際の）簡単さのためNamedWordに変換し、変換後のNamedWordの呼び出しに変換する。組み込みwordもここで定義している。これはこの部分で定義すると、クロージャになるため定義が簡単だから( <code>pop</code> や <code>push</code> といった <code>SimpleFactorInterp</code> のメソッドがそのまま書ける)である。また、パターンマッチを活用することで非常に直感的に書けていることが見て取れるかと。やっぱりパターンマッチ最高だわぁ･･･。そして出揃ったTOPレベルのwordを <code>NamedTable</code> にマッピングし、TOPレベル環境の作成が完了する。</p>
+
 <p>あとは <code>main</code> wordを呼び出すだけ。</p>
-</section>
-<section>
-<h2>サンプルコード</h2>
+
+<h1>サンプルコード</h1>
+
 <p>こんな感じ。サンプルでは10の階乗を計算している。</p>
-<pre class="prettyprint ">object SimpleFactor extends ConsoleLogger{
+
+<pre class="prettyprint"><code>object SimpleFactor extends ConsoleLogger{
   def main(args: Array[String]) = {
-    log("Starting SimpleFactor.")
-    log("-"*40)
+    log(&quot;Starting SimpleFactor.&quot;)
+    log(&quot;-&quot;*40)
     val ip = new SimpleFactorInterp
-    ip.evaluate("""
+    ip.evaluate(&quot;&quot;&quot;
 ! Performs a factorial calculation.
-: main ( str -- )
+: main ( str -- ) 
 string&gt;number fact .
 ;
 
@@ -365,25 +399,31 @@ string&gt;number fact .
     [ 1 - dup rotate * swap factit ] if
 ;
 
-    """, args)
+    &quot;&quot;&quot;, args)
   }
 }
 
-SimpleFactor.main(Array("10"))</pre><p>ここで使っているwordを簡単に説明すると</p>
-<ul class="simple">
-<li><cite>string&gt;number</cite>:スタックからpopし、文字列を数値に変換してpushする</li>
-<li><cite>*</cite>: スタックから2個popし、掛けたものをpushする</li>
-<li><cite>-</cite>: スタックから2個popし、引き算したものをpushする</li>
-<li><cite>&lt;=</cite>:スタックから2個popし、 <code>&lt;=</code> な比較をして真偽値をpushする</li>
-<li><cite>.</cite>: スタックからpopし、文字列表現を表示する</li>
-<li><cite>dup</cite>:スタックからpopし、それを2回pushする</li>
-<li><cite>drop</cite>:スタックからpopする</li>
-<li><cite>rotate</cite>:「x y z」というスタックのトップ部分を、「y z x」にローテーションする</li>
-<li><cite>swap</cite>:「x y」というスタックのトップ部分を「y x」に入れ替える</li>
-<li><cite>if</cite>:「真偽値 真のとき実行するquotation 偽のとき実行するquotation」というスタックのトップ部分から条件を判定しquotationを実行する</li>
+SimpleFactor.main(Array(&quot;10&quot;))
+</code></pre>
+
+<p>ここで使っているwordを簡単に説明すると</p>
+
+<ul>
+<li>`string&gt;number`:スタックからpopし、文字列を数値に変換してpushする</li>
+<li>`*`: スタックから2個popし、掛けたものをpushする</li>
+<li>`-`: スタックから2個popし、引き算したものをpushする</li>
+<li>`&lt;=`:スタックから2個popし、 <code>&lt;=</code> な比較をして真偽値をpushする</li>
+<li>`.`: スタックからpopし、文字列表現を表示する</li>
+<li>`dup`:スタックからpopし、それを2回pushする</li>
+<li>`drop`:スタックからpopする</li>
+<li>`rotate`:「x y z」というスタックのトップ部分を、「y z x」にローテーションする</li>
+<li>`swap`:「x y」というスタックのトップ部分を「y x」に入れ替える</li>
+<li>`if`:「真偽値 真のとき実行するquotation 偽のとき実行するquotation」というスタックのトップ部分から条件を判定しquotationを実行する</li>
 </ul>
+
 <p>てな感じ。これだけの命令でもちゃんとプログラムが書けて、条件分岐、ループが実現できるのはスタック指向言語を知らない人から見ると面白い部分かも。 <code>3 fact</code> なら</p>
-<ul class="simple">
+
+<ul>
 <li>[ 3 3 ] : fact内 <code>dup</code></li>
 <li>[ 3 3 3 ] : factit内 <code>dup</code></li>
 <li>[ 3 3 3 1 ] : <code>1</code></li>
@@ -392,28 +432,31 @@ SimpleFactor.main(Array("10"))</pre><p>ここで使っているwordを簡単に�
 <li>[ 3 3 f quot quot ] : <code>[1 - ... ]</code></li>
 <li>[ 3 3 ] : <code>if</code></li>
 <li>[ 3 3 1 ] : <code>1</code></li>
-<li>[ 3 2 ] :  <code>-</code></li>
+<li>[ 3 2 ] : <code>-</code></li>
 <li>[ 3 2 2 ] : <code>dup</code></li>
 <li>[ 2 2 3 ] : <code>rotate</code></li>
 <li>[ 2 6 ] : <code>*</code></li>
 <li>[ 6 2 ] : <code>swap</code></li>
 <li>factitに戻る</li>
 </ul>
+
 <p>こんな感じで計算される。</p>
+
 <p>またLispのS式とマクロによる拡張性は名高いと思うが、スタック指向言語も単純に空白で区切られたwordが並んでいる、という点で非常に自己拡張性が高い。こういう変態的(?)な部分も魅力の一つ。</p>
+
 <p>ForthはSUNのOpen Firmware、Firefox4で採用が予定されているJavascriptの処理系Tamarinの中など、今でもあまり表には見えてこない部分で使用されているので、これを機会にスタック指向言語を嗜んでみては。Forthは基本だけど、今なら注目され始めている(？)Factorかなあ。</p>
-</section>
-<section>
-<h2>簡単に作れます</h2>
-<p>というわけでScalaで簡単なスタック指向言語処理系を作ってみたわけだけど、非常に簡単。さくっと作れる。 <code>scala.util.parsing.ast</code> ができたら、またなんか処理系を試し書きしてみようかな。</p>
-</section>
+
+<h1>簡単に作れます</h1>
+
+<p>というわけでScalaで簡単なスタック指向言語処理系を作ってみたわけだけど、非常に簡単。さくっと作れる。 <code>scala.util.parsing.ast</code> ができたら、またなんか処理系を試し書きしてみようかな。 　 　</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2008/02/03/some-scala-tips-for-beginners">基礎を終えた人のScalaミニtips</a></li>
-<li><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell">Scalaで無限リスト：Haskellライクに</a></li>
-<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
 <li><a href="/articles/2008/03/04/japanese-language-programing-in-scala">日本語プログラミング言語Scala</a></li>
+<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
+<li><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell">Scalaで無限リスト：Haskellライクに</a></li>
+<li><a href="/articles/2008/02/03/some-scala-tips-for-beginners">基礎を終えた人のScalaミニtips</a></li>
 <li><a href="/articles/2007/07/30/parser-combinators-in-scala">Scalaでパーサコンビネータ</a></li>
 </ul>
     </div>

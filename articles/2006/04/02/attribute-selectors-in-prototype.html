@@ -72,26 +72,31 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>これはかなり嬉しい機能だなあ。
-最近Prototype.jsの$$で属性セレクタが使用できるようになりました。</p>
+    <p>これはかなり嬉しい機能だなあ。 最近Prototype.jsの$$で属性セレクタが使用できるようになりました。</p>
+
 <p>どんな風にかけるのか、コードをテストから引っ張ってきてみました。</p>
-<pre class="prettyprint ">$$('a[href="http://inforno.net/#"]')
+
+<pre class="prettyprint"><code>$$('a[href=&quot;http://inforno.net/#&quot;]')
 $$('a[class~=internal]')
-$$('*[xml:lang|="es"]')
-$$('*[xml:lang|="ES"]')
+$$('*[xml:lang|=&quot;es&quot;]')
+$$('*[xml:lang|=&quot;ES&quot;]')
 $$('a[href!=#]')
 $$('div[style] p[id] strong')
-$$('a[class~=external][href="http://inforno.net/#"]')</pre><p>こんな感じです。
-値はクオートしてもしなくても大丈夫っぽいですね。</p>
-<p>すばらすい。inputに対する操作なんかで特に便利。今までちょっとボタン操作するためだけに、そのボタンにIDふったりクラスふったりしてたんですけど$$('#hoge input[type=submit]')でいけるんだなあ。そんなにパフォーマンスに気をつかわなくて良いページでは使ってみよう。</p>
+$$('a[class~=external][href=&quot;http://inforno.net/#&quot;]')
+</code></pre>
+
+<p>こんな感じです。 値はクオートしてもしなくても大丈夫っぽいですね。</p>
+
+<p>すばらすい。inputに対する操作なんかで特に便利。今までちょっとボタン操作するためだけに、そのボタンにIDふったりクラスふったりしてたんですけど$$(&rsquo;#hoge input[type=submit]&rsquo;)でいけるんだなあ。そんなにパフォーマンスに気をつかわなくて良いページでは使ってみよう。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
-<li><a href="/articles/2006/03/31/current-development-in-element-extend">Element.extendの動向。</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 </ul>
     </div>
   </div>

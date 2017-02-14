@@ -78,23 +78,33 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <img alt="/statics/files/pynes1.jpg" src="/statics/files/pynes1.jpg" />
-<p>パッド入力部分を書いたので、動くゲームも出てきました。といってもまだほとんどのゲームが動かないんですけど。画面は <a class="reference external" href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">ブルジョアソフトウェア研究所</a> さんのTkShoot 1.00が動作している様子です。</p>
+    <p><img src="/statics/files/pynes1.jpg" alt="image" /></p>
+
+<p>パッド入力部分を書いたので、動くゲームも出てきました。といってもまだほとんどのゲームが動かないんですけど。画面は <a href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">ブルジョアソフトウェア研究所</a> さんのTkShoot 1.00が動作している様子です。</p>
+
 <p>さて、ここまできたので基本的にはこの企画も終了かなー、という感じがします。目的はPythonのパフォーマンスについて知ることだったので。</p>
+
 <p>作成の過程でかなりPythonのパフォーマンス関連について勉強ができてよかったと思います。</p>
-<section>
-<h2>速度</h2>
+
+<h1>速度</h1>
+
 <p>サウンドは作っていないので、それを除くと1frameだいたい0.4秒弱くらいで動きます(もちろんpsycoを導入して)。変にベタ書きしたりはしていません。わりとメソッドはちゃんと分割しています。ただ、LDA $ssss(absolute addressingのLDA)だけ、実行回数が多いので完全にベタ書きしました。</p>
+
 <p>んで感じたのは</p>
-<ul class="simple">
+
+<ul>
 <li>プリプロセッサでマクロを使えばそこそこ実用的な速度になりえるのではないか</li>
-<li><a class="reference external" href="http://bytecodehacks.sourceforge.net/bch-docs/bch/index.html">bytecodehacks</a> でインライン化すれば結構いけるんじゃないか。ただし、bytecodehacksがオブジェクトのメソッドには対応していないので、classを使わずに書くことになる。</li>
+<li><a href="http://bytecodehacks.sourceforge.net/bch-docs/bch/index.html">bytecodehacks</a> でインライン化すれば結構いけるんじゃないか。ただし、bytecodehacksがオブジェクトのメソッドには対応していないので、classを使わずに書くことになる。</li>
 <li>部分的にCで拡張モジュールを書けば、わりといけそう</li>
 </ul>
+
 <p>ってことでしょうか。</p>
+
 <p>まぁただ、JAVAとかC系全く分かりません＞＜っていう人以外は、素直にC系かJAVAで書いたほうがいいと思います。</p>
+
 <p>高速化のためにオブジェクトのプロパティをローカルにだしたり</p>
-<pre class="prettyprint ">read = self.memory.read
+
+<pre class="prettyprint"><code>read = self.memory.read
 write = self.memory.write
 # .
 # .
@@ -102,21 +112,31 @@ write = self.memory.write
     code = read(addr)
     # .
     # .
-    # .</pre><p>するので、無駄に行数も増えますし、ぶっちゃけ読みにくいです。それでも普段使い慣れてるLLで書けるってのは大きな利点だとは思います。</p>
+    # .
+</code></pre>
+
+<p>するので、無駄に行数も増えますし、ぶっちゃけ読みにくいです。それでも普段使い慣れてるLLで書けるってのは大きな利点だとは思います。</p>
+
 <p>10年くらいして、マシンがもっと速くなることに期待しましょう、ということで（笑</p>
-</section>
-<section>
-<h2>その他雑感</h2>
+
+<h1>その他雑感</h1>
+
 <p>現時点でも単純なゲームくらいなら、そこそこ動くのでコンピューターの仕組みの基礎を学ぶには、もしかしたらLLでエミュレータってのはいいかも。当然ですけど、デバッグの段階ではアセンブリ言語を書くことになりますし、そのアセンブリ言語の内容も完全に自分で処理するわけですから、単に本で読むよりは格段CPUやメモリについて詳しくなれると思います。ただ、CPUの仕組みを勉強しながら書くのはきついものがあるかもしれませんが・・・</p>
+
 <p>他の利点としては「俺エミュレータ書いたんだぜ」と自慢できる（笑）、自分の書いたエミュレータでゲームが動くと結構感動できる、というくらいでしょうか。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>というわけで、とりあえず動くようになりました。今のところソースをアップする気はないです。（してもほとんどのゲームは動かないし意味無い）</p>
+
 <p>確実にいないと思いますが、もし、「俺もLLでエミュレータ書いてみるんだぜ！だからお前のしょーもないソースも参考にしてやるから見せるんだぜ！ついでにエミュってどうやって作るのか教えるんだぜ！」というような方や「おめーソースがないのに信用できるか！」という方がおられましたら、この記事のコメント欄やはてブなんかのコメントに、「うｐ」とか書いてください。適当にソースまとめてうｐして、それをネタに簡単なエミュの書き方でも記事にします（笑</p>
+
 <p>まぁとにかく書いてて楽しかったです。チャレンジ精神旺盛な方、そして時間があまっている方は是非LLでエミュにチャレンジしてみてください。</p>
-<p>#追記
-アップしました。コチラの記事へドウゾ。</p>
-<p><a class="reference external" href="/articles/2007/03/02/nes-emulator-development-with-python-5">PythonによるNESエミュレータ開発5</a></p>
-</section>
+
+<p>#追記　 アップしました。コチラの記事へドウゾ。</p>
+
+<p><a href="/articles/2007/03/02/nes-emulator-development-with-python-5">PythonによるNESエミュレータ開発5</a></p>
+
   </div>
 </article>
 
@@ -146,35 +166,52 @@ write = self.memory.write
 </header>
   <div itemprop="articleBody">
     <p>時間があればちょっとずつ続けてます。</p>
+
 <p>とりあえず画面がでるようにはなりました。速度は全然追いつかないですけど。</p>
-<img alt="/statics/files/pynes0.jpg" src="/statics/files/pynes0.jpg" />
-<section>
-<h2>CPU</h2>
+
+<p><img src="/statics/files/pynes0.jpg" alt="image" /></p>
+
+<h1>CPU</h1>
+
 <p>基本的には変化なし。細かいバグが多くて大変・・・・</p>
+
 <p>わずかでも速くしたいところなので、あまり構造を壊さず速度を上げられないかな、と思ってPrefetch cueを実装してみました。Prefetch cueはCPUの非常に基本的な最適化で、基本的故に単純、実装しても負荷になることはないだろう、ってことですな。</p>
+
 <p>エミュレーターでは（とくにPythonでは)ハードウェアでいうメモリが遅いうんぬんとは別の理由で、メモリアクセスはかなり重い処理になります。</p>
-<pre class="prettyprint ">def memory(self, addr):
-  if addr &lt; "RAMの範囲":
+
+<pre class="prettyprint"><code>def memory(self, addr):
+  if addr &lt; &quot;RAMの範囲&quot;:
     self.ram[addr]
-  elif addr &lt; "メモリマップドIOの範囲":
+  elif addr &lt; &quot;メモリマップドIOの範囲&quot;:
     self.io.read(addr)
   #else:
   # .
   # .
-  # .</pre><p>さらにページングされている場合、C言語ならポインタでいけるんですけど、Pythonではそうはいかないので、いちいち長ったらしく書くか、ページング用にメソッドを書いてそれをはさむことになります。</p>
+  # .
+</code></pre>
+
+<p>さらにページングされている場合、C言語ならポインタでいけるんですけど、Pythonではそうはいかないので、いちいち長ったらしく書くか、ページング用にメソッドを書いてそれをはさむことになります。</p>
+
 <p>そう、関数の呼び出しが非常に多い部分なのです。実際、profileモジュールでデータを取ってみてもメモリ読み込み書き込みが結構なウェイトをしめてました。</p>
+
 <p>そこでPrefetch用のクラスを作って、別スレッドで現在のPC+いくらかをとるようにしてみました。これは現在のオペコードを実行している間に実行されます。これで次のオペコードを実行する前にオペコードとオペランドを取得でき、メモリ読み込み関数を呼ぶ回数が減ります。ただし、本物のPrefetch cueと同じでジャンプ命令が多いとあんまり効果がありません。</p>
+
 <p>Prefetch-cueを入れてみると、まぁコードの内容によりますが、psycoを入れて1frame 0.075くらいまではいきました。PPUをいれると全然なんですけど（笑</p>
-</section>
-<section>
-<h2>PPU</h2>
-<p>なんとか表示できるまでにきました。正直つらいです（笑　特にスクロールに関しては <a class="reference external" href="http://nesdev.parodius.com/loopyppu.zip">loopyの文書</a> の文書が重要、ということをしらなかったのではじめはサッパリでした。</p>
-<p>描画部分は <a class="reference external" href="http://www.pygame.org/">pygame</a> です。pygameで描画する場合、更新したRectだけupdateするってのが常套手段なわけですが、エミュの場合はどうも・・・。というわけで今は毎回全体を描画しています。これも結構重い処理になるなあ。</p>
+
+<h1>PPU</h1>
+
+<p>なんとか表示できるまでにきました。正直つらいです（笑　特にスクロールに関しては <a href="http://nesdev.parodius.com/loopyppu.zip">loopyの文書</a> の文書が重要、ということをしらなかったのではじめはサッパリでした。</p>
+
+<p>描画部分は <a href="http://www.pygame.org/">pygame</a> です。pygameで描画する場合、更新したRectだけupdateするってのが常套手段なわけですが、エミュの場合はどうも・・・。というわけで今は毎回全体を描画しています。これも結構重い処理になるなあ。</p>
+
 <p>ほとんどスクロールしないゲームの場合、もしかしたら32x32くらいに区切ってスプライトが動いたところだけ更新するようにしたら、結構軽いのかもなあ。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>というわけで、PPUをつめてパッド入力あたりを書けばマッパー0のゲームなら動き出しそうな感じがします。ちなみにマッパーは全然です。とりあえずPythonで書いてみることが目的なので実際に使うことは想定して無いですし。</p>
+
 <p>卒論の試問会も終わり、家探しの旅も終わり、つかの間の落ち着きが戻ってきました。なんか資格とかをとらないといけないらしいので、それをちょっとずつ勉強しつつ、こっちもちょっとずつ進めていきたいなーと思ってます。</p>
-</section>
+
   </div>
 </article>
 
@@ -186,30 +223,126 @@ write = self.memory.write
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/09/13/getframe-function-in-python" itemprop="url">Pythonで関数呼び出しもとの情報を取得</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers" itemprop="url">キーボード派のWindows開発環境</a></h3>
 <div class="meta">
-<time datetime="2006-09-13T20:24:43&#43;09:00">Sep 13, 2006</time>
+<time datetime="2007-01-17T01:50:22&#43;09:00">Jan 17, 2007</time>
 
   
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
+  
+  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/craftlaunch/" rel="tag" itemprop="keywords">craftlaunch</a></span>
+  
+  <span class="tag"><a href="/articles/tag/cltc/" rel="tag" itemprop="keywords">cltc</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>なぜか最近はpythonをいじってます。Rubyは・・・ちょっとお休み。
-個人的なメモ。Pythonで関数呼び出しもとの情報を取得(web.pyのソースから)。</p>
-<pre class="prettyprint ">import sys
-sys._getframe(1).f_locals</pre><p>ほうほう。</p>
-<pre class="prettyprint ">def test_func() :
-  print sys._getframe(1).f_locals
+    <p>そういえば、こういうサイトに定番っぽい開発環境を書いたのがないので、自己紹介？も兼ねて晒してみます。</p>
 
-a = "variable a"
-b = "variable b"
-c = 1
-test_func()
+<p>開発はだいたいWindows上のvmware(Debian)でやってます。ただし、そこは定番どころばっかりなのでパス。まぁvim+screen+zshです。puttyでつないでますよ。sambaでマウントしてますよ。ええ。それぞれ結構設定しまくっていて、グローバルなSVNサーバーにおいてあります。</p>
 
-#&gt;&gt; {'test_func': &lt;function test_func at 0x40657684&gt;, 'a': 'variable a', 'c': 1, 'b': 'variable b', .....}</pre><p>こんな感じで。</p>
+<h1>Windowsでの開発環境</h1>
+
+<p>あんまりWindowsは好きではないけど、Macよりは好きだったりする。というわけでWindows。普段使いのOSでもあるので、主に自分用の小物を書くことが多いです。怠け者なので、自動化できるものはすぐプログラムに置き換えちゃいます。でも言語は結構様々。もとから言語にこだわらず、一番適しているものを使う主義なので小物が多いにもかかわらず、言語は結構多いのかも。</p>
+
+<p>今のところ、だいたい</p>
+
+<ul>
+<li>それなりのGUIが必要なアプリ:Delphi6</li>
+<li>一枚ウインドウがあるくらいのGUIアプリ:Python(wxWidgets)</li>
+<li>GUIがなく、立ち上がりの速さや軽さが欲しいもの：C(MinGW)</li>
+<li>それ以外の小物:Python</li>
+</ul>
+
+<p>という感じで適材適所。</p>
+
+<p>Linuxではまったく定番な感じ（定番が自分にしっくりきた）だったけど、Windowsにはキーボード派の定番ってのは少ない気がするので、結構独特なのかも。方針は</p>
+
+<ul>
+<li>キーボードで操作しやすいように。</li>
+<li>なるべくlinuxと同じような感覚（←これ重要)で。</li>
+</ul>
+
+<p>感覚なので一緒じゃなくてもいいのです。</p>
+
+<h2>gvim</h2>
+
+<p>開発はほとんどこいつです。Delphi以外は。Linuxのvimと同じ設定ファイルを共有してます。俺はvimがなくちゃ生きていけない人間なので、USBメモリにいれてもち運べるようにしてあります。</p>
+
+<h2>Firefox</h2>
+
+<p>ブラウザはこいつ。ただし <a href="http://portablefirefox.mozdev.org/">PortableFirefox</a> です。これもUSBメモリにいれて持ち運べるように。学校にいってもUSBメモリをさすだけで普段の環境。拡張も結構つっこんでます。</p>
+
+<h2><a href="http://d.hatena.ne.jp/cogma">cltc</a></h2>
+
+<p>タスク切り替えが便利になるソフト。こんな感じで表示されます。インクリメンタル検索での選択や、カーソルキーでの選択ができます。</p>
+
+<p><a href="http://inforno.net/statics/files/cltc.jpg"><img src="http://inforno.net/statics/files/cltc.thumbnail.jpg" alt="image" /></a></p>
+
+<p>windowsでタスク切り替えというと`Alt+TAB`ですが、これ非常に使いづらい。そこでこのソフト。ここでキモになるのがキー設定で</p>
+
+<ul>
+<li><code>Ctrl+Shift+z</code> で起動</li>
+<li><code>Ctrl+j</code> と <code>Ctrl+k</code> でタスクを選択</li>
+</ul>
+
+<p>という風に設定しています。俺と同じLinux開発環境の人は分かるでしょう（笑</p>
+
+<p><code>Ctrl+z` がscreenのエスケープで</code>jk`` はvim。これだけでかなりLinuxと同じ感覚でタスクが選べるようになります。</p>
+
+<h2>MigemizeExplorer</h2>
+
+<p>こりゃ定番。説明不要ですよねえ。超便利。</p>
+
+<h2><a href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h2>
+
+<p>これがないと始まらない。コマンド型ランチャー。craftlanuchラブ。こいつはデスクトップ用と持ち運び用（USBメモリに入れる用）の2個も用意してます。起動用ホットキーはeclipseなんてもんは使ってないので <code>Ctrl+Space</code> です。</p>
+
+<p>俺の場合はほぼ全ての作業の起点がこのソフト。ランチャーとしてのソフト起動から簡易シェルとしてまで大活躍。中でもオススメなのはexplorer.exe(windows標準のシェル)+craftlaunchの連携。</p>
+
+<p>craftlaunchというと「<a href="http://www.h5.dion.ne.jp/~akt/">あふ</a>」との連携が有名ですが、俺はあえてexplorer.exeと連携してます。というのも、なにぶん普段使いのOSですから、マルチメディアのファイルなんかも多いわけです。重くてもプレビューが見れたりするのは便利なもんです。日本語のファイル名だし、ファイラーつかってもファイル選択するのがめんどくさいもんです。</p>
+
+<p>どうやって連携してるかというと、基本的に小物アプリ＋ショートカットキー。この使い方をはじめるきっかけになったのは「せっかくcraftlaunchからキーボードだけでフォルダ開けるんだから、ホームポジションで楽にキーボードだけで閉じたいなあ」という思い。</p>
+
+<p><code>ctrl+space</code>,<code>ctrl+[</code></p>
+
+<p>の2ステップでウインドウが閉じられます。ctrlは押しっぱなしでいいので非常に軽快に閉じられます。鉄の小指を持つemacs使いの人ならなおのことでしょう（笑</p>
+
+<h2>その他の連携</h2>
+
+<p><strong>フォルダの新規作成</strong></p>
+
+<p>windowのexplorerの不満はフォルダを作るのがめんどくさいことですよね。キーボードなら<code>Alt+F W F</code> でしょうか。というわけでfiniのような自作コマンドで対応してます。超テキトーなのですが、あげておきます。</p>
+
+<p><a href="/statics/files/amkdir.zip">amkdir.zip</a></p>
+
+<p>こいつを <code>ctrl+n</code>にショートカットとして割り当ててあります。すると・・・  craftlaunchでフォルダを開く→MigemizeExplorerで快適にフォルダをたどる→「フォルダつくりてえ」→<code>ctrl+space</code>フォルダ名入力<code>ctrl+n</code>という感じになるわけで、結構ハッピーです。</p>
+
+<p><strong>コンソール</strong></p>
+
+<p>おなじような感じで、表示されているフォルダをカレントディレクトリとしてcmd.exeを起動するものもつくってあります。ほとんどつかわないけど。</p>
+
+<hr />
+
+<p>以上のような、変なWindowsで日々暮らしています。cltcでブラウザやvim、コンソールを行き来しながらIDEはあんまり使わないでガリガリ書いています。  まぁ、だいたいvmware上のLinuxにいるんですけど（笑  まとめると</p>
+
+<ul>
+<li>cltcで<code>ctrl+z</code>に<code>ctrl+j,k</code> 。快適ですよ。</li>
+<li>MigemizeExplorerはWindows標準装備になればいいのに。</li>
+<li>craftlaunchはあふと連携してもいいけど、explorerと連携してもハッピーですよ。</li>
+</ul>
+
+<p>という感じです。</p>
+
+<hr />
+
+<p>エミュレーターのほうはあのあとCPUを若干チューニングして、1フレーム0.1はキリました。今はPPUを書いてるんですが、そろそろ就職に備えて家を探さないといけません。京都と関東を行き来するのはいろいろこたえます。移動中はシグマリオンのPocketSchemeでSchemeでも書いて暇つぶしです。</p>
+
   </div>
 </article>
 

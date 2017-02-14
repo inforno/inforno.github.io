@@ -72,17 +72,29 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>prototype.js1.5ではみんながこうしたいなーと思っていた機能が実装されました。(via <a class="reference external" href="http://encytemedia.com/blog/articles/2006/03/07/prototype-gets-some-serious-syntactic-sugar">Encytemedia</a> )
-（SVN co <a class="reference external" href="http://dev.rubyonrails.org/svn/rails/spinoffs/prototype">http://dev.rubyonrails.org/svn/rails/spinoffs/prototype</a> して rake distしたもの ）</p>
+    <p>prototype.js1.5ではみんながこうしたいなーと思っていた機能が実装されました。(via <a href="http://encytemedia.com/blog/articles/2006/03/07/prototype-gets-some-serious-syntactic-sugar">Encytemedia</a> ) （SVN co <a href="http://dev.rubyonrails.org/svn/rails/spinoffs/prototype"><a href="http://dev.rubyonrails.org/svn/rails/spinoffs/prototype">http://dev.rubyonrails.org/svn/rails/spinoffs/prototype</a></a> して rake distしたもの ）</p>
+
 <p>■Element.Methods</p>
+
 <p>1.4まではelementに対する操作は</p>
-<pre class="prettyprint ">Element.show($("test"));
-Element.update($("test"), "hoge");</pre><p>のように書く必要がありました。</p>
+
+<pre class="prettyprint"><code>Element.show($(&quot;test&quot;));
+Element.update($(&quot;test&quot;), &quot;hoge&quot;);
+</code></pre>
+
+<p>のように書く必要がありました。</p>
+
 <p>これが</p>
-<pre class="prettyprint ">$("test").show();
-$("test").update("hoge");</pre><p>と書けるようになりました。</p>
+
+<pre class="prettyprint"><code>$(&quot;test&quot;).show();
+$(&quot;test&quot;).update(&quot;hoge&quot;);
+</code></pre>
+
+<p>と書けるようになりました。</p>
+
 <p>これはprototype.jsで最も偉大な$メソッドの変更によるモノです。</p>
-<pre class="prettyprint ">function $() {
+
+<pre class="prettyprint"><code>function $() {
   var results = [], element;
   for (var i = 0; i &lt; arguments.length; i++) {
     element = arguments[i];
@@ -91,9 +103,12 @@ $("test").update("hoge");</pre><p>と書けるようになりました。</p>
     results.push(Element.extend(element)); //&lt;= ココ！
   }
   return results.length &lt; 2 ? results[0] : results;
-}</pre><p>つまり取得したelementに対してElement.extendが適応されるようになった、と。
-んでそのElement.extendは</p>
-<pre class="prettyprint ">Element.extend = function(element) {
+}
+</code></pre>
+
+<p>つまり取得したelementに対してElement.extendが適応されるようになった、と。 んでそのElement.extendは</p>
+
+<pre class="prettyprint"><code>Element.extend = function(element) {
   if (!element) return;
 
   if (!element._extended &amp;&amp; element.tagName &amp;&amp; element != window) {
@@ -106,27 +121,35 @@ $("test").update("hoge");</pre><p>と書けるようになりました。</p>
   }
   element._extended = true;
   return element;
-}</pre><p>Element.Methodsのメソッドがelementに対して第1引数をそのelementに束縛した状態でセットされます。
-つまりElement.Methodsにメソッドを追加すれば自動的に$で取得したelementに対してそのメソッドが追加されます。</p>
+}
+</code></pre>
+
+<p>Element.Methodsのメソッドがelementに対して第1引数をそのelementに束縛した状態でセットされます。 つまりElement.Methodsにメソッドを追加すれば自動的に$で取得したelementに対してそのメソッドが追加されます。</p>
+
 <p>ちなみにscriptaculousでも</p>
-<pre class="prettyprint ">if(Element.Methods) {
+
+<pre class="prettyprint"><code>if(Element.Methods) {
   Element.Methods.visualEffect = function(element, effect, options) {
     s = effect.gsub(/_/, '-').camelize();
     effect_class = s.charAt(0).toUpperCase() + s.substring(1);
     new Effect[effect_class](element, options);
     return $(element);
   }
-}</pre><p>というコードが追加されています。
-クラス名変換のオーバーヘッドはあるものの、$(&quot;test&quot;).visualEffect('scale')と書けるようになりました。</p>
+}
+</code></pre>
+
+<p>というコードが追加されています。 クラス名変換のオーバーヘッドはあるものの、$(&ldquo;test&rdquo;).visualEffect(&lsquo;scale&rsquo;)と書けるようになりました。</p>
+
 <p>IEで$$が動くようになっていたりと1.5のリリースが待ち遠しいですね。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
-<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 </ul>
     </div>
   </div>

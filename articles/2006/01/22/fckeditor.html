@@ -74,41 +74,51 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a class="reference external" href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。
-WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
+    <p><a href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。 WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
+
 <p>こちらもTinyMCEと同じく</p>
-<ul class="simple">
+
+<ul>
 <li>JavaScript で記述された</li>
 <li>LGPL でオープンソースな</li>
 <li>クロスプラットフォームの</li>
 <li>多言語対応もしてて</li>
 <li>簡単に使える</li>
 </ul>
+
 <p>ライブラリなんです。かなり使いやすいですよ。</p>
+
 <p>導入も簡単です。typoの場合、</p>
-<pre class="prettyprint ">&lt;script src="http://inforno.net/FCKeditor_install_path/fckeditor.js" type="text/javascript"&gt;&lt;/script&gt;
-&lt;script language="javascript"&gt;
-Event.observe(window, "load", function(){
-  var list = ["article_extended", "article_body"];
+
+<pre class="prettyprint"><code>&lt;script src=&quot;http://inforno.net/FCKeditor_install_path/fckeditor.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+&lt;script language=&quot;javascript&quot;&gt;
+Event.observe(window, &quot;load&quot;, function(){
+  var list = [&quot;article_extended&quot;, &quot;article_body&quot;];
   for(var i=0,l=list.length; i &lt; l; i++) {
     var fck = new FCKeditor(list[i]);
-    fck.BasePath = "FCKeditor_install_path";
-    fck.Config["CustomConfigurationsPath"] = fck.BasePath + "myconfig.js";
+    fck.BasePath = &quot;FCKeditor_install_path&quot;;
+    fck.Config[&quot;CustomConfigurationsPath&quot;] = fck.BasePath + &quot;myconfig.js&quot;;
     fck.Height = 400;
     fck.ReplaceTextarea();
   }
 });
-&lt;/script&gt;[/js]</pre><p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
-<a class="reference external image-reference" href="/statics/files/fck.jpg"><img alt="/statics/files/fck.thumbnail.jpg" src="/statics/files/fck.thumbnail.jpg" /></a>
+&lt;/script&gt;[/js]
+</code></pre>
+
+<p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
+
+<p><a href="/statics/files/fck.jpg"><img src="/statics/files/fck.thumbnail.jpg" alt="image" /></a></p>
+
 <p>海外ではAPIを使ったデスクトップクライアントが結構人気みたいですけど、日本じゃあんまり使ってる人聞かない・・・Typoもデフォルトはデスクトップクライアント使え！みたいな感じなんですけどFCKeditorで一件落着。便利便利。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
-<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 </ul>
     </div>
   </div>

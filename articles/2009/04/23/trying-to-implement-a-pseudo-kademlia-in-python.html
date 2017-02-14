@@ -77,81 +77,89 @@
 </header>
   <div itemprop="articleBody">
     <p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
-<p>Kademliaはいろいろ実装があるので、ソースを読んじゃうと答えみちゃった感じになるかなーと思って、元論文と <a class="reference external" href="http://www.shudo.net/article/Kademlia-20040727/shudo-Kademlia.pdf">首藤様の資料</a> くらいしか見ずに実装してみました。ので、いろいろ間違ってるかも知れませんが･･･。</p>
+
+<p>Kademliaはいろいろ実装があるので、ソースを読んじゃうと答えみちゃった感じになるかなーと思って、元論文と <a href="http://www.shudo.net/article/Kademlia-20040727/shudo-Kademlia.pdf">首藤様の資料</a> くらいしか見ずに実装してみました。ので、いろいろ間違ってるかも知れませんが･･･。</p>
+
 <p>本家Kademliaとの主な違いは</p>
+
 <ul>
-<li><dl class="first docutils">
-<dt>UDPではなくTCPを使っている</dt>
-<dd><ul class="first last simple">
+<li><p>UDPではなくTCPを使っている</p>
+
+<ul>
 <li>ローカル環境しかもっていないので、UDPパケットがロスしやすい場合(WAN)を想定して実装するのがめんどくさい。</li>
 <li>よってRPC-IDをつけていない。</li>
 <li>パケットの分割や再送もTCPにおまかせ。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>original publisherから一定時間publishを受けなくてもインデックス情報をexpireしていない</dt>
-<dd><ul class="first last simple">
+</ul></li>
+
+<li><p>original publisherから一定時間publishを受けなくてもインデックス情報をexpireしていない</p>
+
+<ul>
 <li>実装するのは簡単です。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>ノードがネットワークに参加したとき、Index情報を移動させていません</dt>
-<dd><ul class="first last simple">
+</ul></li>
+
+<li><p>ノードがネットワークに参加したとき、Index情報を移動させていません</p>
+
+<ul>
 <li>これも実装は簡単です。</li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ul>
-<section>
-<h2>ダウンロード</h2>
+
+<h1>ダウンロード</h1>
+
 <p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
-<ul class="simple">
-<li><a class="reference external" href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
+
+<ul>
+<li><a href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
 </ul>
-</section>
-<section>
-<h2>実装について</h2>
+
+<h1>実装について</h1>
+
 <p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
+
 <p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
+
 <p>通信にはjsonを使いました。</p>
-</section>
-<section>
-<h2>基本的な動かし方</h2>
-<pre class="prettyprint ">import kademlia_tcp
+
+<h1>基本的な動かし方</h1>
+
+<pre class="prettyprint"><code>import kademlia_tcp
 kademlia_tcp.DEBUG = True
-n = kademlia_tcp.KademliaNode("ip address", port)
+n = kademlia_tcp.KademliaNode(&quot;ip address&quot;, port)
 n.join(n)
-remote = kademlia_tcp.ContactNode("ip address", port)
-n.join(remote)</pre><p>という感じでネットワークを作れます。DEBUGをセットすると、通信情報など、様々な情報が出力されます。あとは</p>
-<pre class="prettyprint ">key = n.hash("key")
-n.publish(key, "value")
+remote = kademlia_tcp.ContactNode(&quot;ip address&quot;, port)
+n.join(remote)
+</code></pre>
+
+<p>という感じでネットワークを作れます。DEBUGをセットすると、通信情報など、様々な情報が出力されます。あとは</p>
+
+<pre class="prettyprint"><code>key = n.hash(&quot;key&quot;)
+n.publish(key, &quot;value&quot;)
 n.find_value(key)
 n.ping(other_node)
 n.store(other_node, key, value)
-n.find_node(other_node)</pre><p>というようなメソッドが使えます。</p>
-</section>
-<section>
-<h2>動かしてみて</h2>
+n.find_node(other_node)
+</code></pre>
+
+<p>というようなメソッドが使えます。</p>
+
+<h1>動かしてみて</h1>
+
 <p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
+
 <p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
-</section>
-<section>
-<h2>というわけで</h2>
+
+<h1>というわけで</h1>
+
 <p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
+<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 </ul>
     </div>
   </div>

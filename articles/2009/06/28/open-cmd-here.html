@@ -71,42 +71,45 @@
 </header>
   <div itemprop="articleBody">
     <p>Windows XPを使用していると、とにかく開いているフォルダでcmd.exeを起動したい、となることは多いです。</p>
+
 <p>よくあるのは右クリックから開く、というやつ。まぁ当然、キーボード派の私にはありえない選択です。</p>
+
 <p>んで、昔からCのプログラムとWSHをくみあわせてキーボードから開けるようにしていたのですが、やっぱWSHが絡むので遅い。</p>
+
 <p>というわけでCだけで作ってみました。せっかくなのでおいておきます。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/explorexe.zip">explorexe.zip</a></p>
-</section>
-<section>
-<h2>使い方</h2>
+
+<h1>ダウンロード</h1>
+
+<p><a href="/statics/files/explorexe.zip">explorexe.zip</a></p>
+
+<h1>使い方</h1>
+
 <p>解凍してできたexplorexe.exeのショートカットをデスクトップにつくります。</p>
+
 <p>んで、ショートカットを右クリックして、</p>
+
 <ul>
-<li><dl class="first docutils">
-<dt>「リンク先」で <code>cmd.exe /k cd /d %s</code> を後ろに追加します。</dt>
-<dd><ul class="first last simple">
-<li>例: <code><span class="pre">C:\Documents</span> and Settings\yourname\デスクトップ\explorexe.exe cmd.exe /k cd /d %s</code></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>「ショートカットキー」を適当に設定します。</dt>
-<dd><ul class="first last simple">
+<li><p>「リンク先」で <code>cmd.exe /k cd /d %s</code> を後ろに追加します。</p>
+
+<ul>
+<li>例: <code>C:\Documents and Settings\yourname\デスクトップ\explorexe.exe cmd.exe /k cd /d %s</code></li>
+</ul></li>
+
+<li><p>「ショートカットキー」を適当に設定します。</p>
+
+<ul>
 <li>例:Ctrl + Alt + C</li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ul>
+
 <p>これでOK。あとはエクスプローラを表示して、 <code>Ctrl + Alt + C</code> を押せばそのエクスプローラに表示されているフォルダをカレントにしてcmd.exeが開きます。</p>
+
 <p>あとは、コマンドライン型ランチャーなんかに同様に登録するとめっさ快適です。</p>
-</section>
-<section>
-<h2>応用？</h2>
-<p>えー、見てのとおり引数の文字列に <code>printf</code> しているだけなので、cmd.exe以外にも使えます。 <code>%s</code> にあたるカレントフォルダのパスは空白が含まれている場合は自動的に「&quot;」で囲まれます。</p>
-</section>
+
+<h1>応用？</h1>
+
+<p>えー、見てのとおり引数の文字列に <code>printf</code> しているだけなので、cmd.exe以外にも使えます。 <code>%s</code> にあたるカレントフォルダのパスは空白が含まれている場合は自動的に「&rdquo;」で囲まれます。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

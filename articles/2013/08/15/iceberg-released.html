@@ -75,82 +75,77 @@
 </header>
   <div itemprop="articleBody">
     <p>なんとなく思い立って、Windows用コマンドラインランチャー「iceberg」をリリースしました。設定はLuaな設定ファイルのみという硬派なソフトなのでエンジニア向けです。</p>
+
 <p>ダウンロードとドキュメントは以下から。とりあえずWindows64bit版しか今はないです。</p>
-<ul class="simple">
-<li>ダウンロード:  <a class="reference external" href="https://github.com/yuin/iceberg/releases">https://github.com/yuin/iceberg/releases</a></li>
-<li>ドキュメント:  <a class="reference external" href="http://yuin.github.com/iceberg/index.html">http://yuin.github.com/iceberg/index.html</a></li>
+
+<ul>
+<li>ダウンロード: <a href="https://github.com/yuin/iceberg/releases"><a href="https://github.com/yuin/iceberg/releases">https://github.com/yuin/iceberg/releases</a></a></li>
+<li>ドキュメント: <a href="http://yuin.github.com/iceberg/index.html"><a href="http://yuin.github.com/iceberg/index.html">http://yuin.github.com/iceberg/index.html</a></a></li>
 </ul>
-<img alt="http://inforno.net/statics/files/screenshot_01.jpg" src="http://inforno.net/statics/files/screenshot_01.jpg" />
-<section>
-<h2>これはなに？</h2>
+
+<p><img src="http://inforno.net/statics/files/screenshot_01.jpg" alt="image" /></p>
+
+<h1>これはなに？</h1>
+
 <p>シンプルなコマンドライン型ランチャーです。かなり昔から自分用につくって細々使い続けてきたものなので、ソースは割と悲惨です。何回か頑張って書き直しましたが気力が持ちません。使い続けているだけあってそこそこ安定しているはずです。一方あんまり使っていない機能はしらないうちに動かなくなっているかも知れません。というか動かなくなっていたので公開にあたってちょこちょこ直しました。</p>
+
 <p>開発に至った思想は以下のような感じです。</p>
+
 <ul>
-<li><dl class="first docutils">
-<dt>旧craftlaunchを使っていたのだが以下の不満があった。</dt>
-<dd><ul class="first last">
-<li><p class="first">アイコンくらいほしい。</p>
-</li>
-<li><p class="first">引数を渡すために <code>;</code> と書かなくてはならないのが嫌だった。</p>
-</li>
-<li><dl class="first docutils">
-<dt>拡張言語がなにかしらほしかった。</dt>
-<dd><ul class="first last simple">
-<li>そうこうしているうちにPythonで拡張できるcraftlaunchが出てきたが
-なんとなく自分の思ってたのと違った</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>設定をバージョン管理システムで管理したかった</dt>
-<dd><ul class="first last simple">
+<li><p>旧craftlaunchを使っていたのだが以下の不満があった。</p>
+
+<ul>
+<li>アイコンくらいほしい。</li>
+<li>引数を渡すために <code>;</code> と書かなくてはならないのが嫌だった。</li>
+
+<li><p>拡張言語がなにかしらほしかった。</p>
+
+<ul>
+<li>そうこうしているうちにPythonで拡張できるcraftlaunchが出てきたが なんとなく自分の思ってたのと違った</li>
+</ul></li>
+
+<li><p>設定をバージョン管理システムで管理したかった</p>
+
+<ul>
 <li>そうこうしているうちに(ry なcraftlaunchがでてきたんですが…</li>
+</ul></li>
+
+<li><p>見た目がもう少し派手でもいいんじゃないかと…</p></li>
+
+<li><p>曖昧マッチ(firefoxにffでマッチするような）がほしかった</p></li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">見た目がもう少し派手でもいいんじゃないかと…</p>
-</li>
-<li><p class="first">曖昧マッチ(firefoxにffでマッチするような）がほしかった</p>
-</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
+
 <p>特徴としては以下かなと。</p>
+
 <ul>
-<li><p class="first">Luaで拡張できる</p>
-</li>
-<li><p class="first">「普通に」引数が渡せる。ダブルクオーテーションで囲えば空白もOK</p>
-</li>
-<li><p class="first">前方一致、部分一致、あいまい検索ができる</p>
-</li>
-<li><p class="first">migemo対応</p>
-</li>
-<li><p class="first">簡易ファイラとしても動作</p>
-</li>
-<li><dl class="first docutils">
-<dt>外部プログラムとの連携機能あり</dt>
-<dd><ul class="first last simple">
+<li>Luaで拡張できる</li>
+<li>「普通に」引数が渡せる。ダブルクオーテーションで囲えば空白もOK</li>
+<li>前方一致、部分一致、あいまい検索ができる</li>
+<li>migemo対応</li>
+<li>簡易ファイラとしても動作</li>
+
+<li><p>外部プログラムとの連携機能あり</p>
+
+<ul>
 <li>外部プログラムからicebergの入力欄に文字を入れるとか</li>
+</ul></li>
+
+<li><p>空白にもコマンドを割り当てられる</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">空白にもコマンドを割り当てられる</p>
-</li>
-</ul>
-</section>
-<section>
-<h2>技術的な話</h2>
+
+<h1>技術的な話</h1>
+
 <p>実装言語はC++ &amp; Luaです。なぜLuaかというとやはり組み込みやすさが段違いで、拡張言語としての扱いやすさはPythonより高いと思っているからです。そろそろC#に移行しないといけませんかねえ…。</p>
+
 <p>工夫した点というかハマったのは使用しているGUIライブラリであるfltkの挙動ですね。マルチバイトフォントのレンダリングがとてつもなく遅いのです。なのでリスト表示部分は自前でwin32のAPIを呼んでいます。コマンドラインランチャはサクサク感がウリですから、もたるのはちょっと。ただ入力欄はfltkのままなのでここに長い日本語を一気にぶち込むと少し固まります。とはいえ、こうしてハマってもすぐソースがよめるのがfltkの良いところだと思います。</p>
+
 <p>あと、内部的にutf8で処理してます。はっきりいって無駄が多いんですけど、utf8はいろんなライブラリ混ぜるなら楽ですね。fltkもutf8なら日本語通るし、Luaもutf8なら日本語OK。PCの性能もあがっているので文字コード変換が増えてもつくりが楽だしこれでいいかなあ、と。</p>
-<p>結構前から64bit Windowsの環境しかもってないのですが、もちろん昔は32bitで動かしていたのでたぶん、MinGWで  <code>git clone</code> ,  <code>./tool/install_requires.sh</code> ,  <code>make dist</code> ,  <code>make package</code> とやればコンパイルできる…はず。</p>
+
+<p>結構前から64bit Windowsの環境しかもってないのですが、もちろん昔は32bitで動かしていたのでたぶん、MinGWで <code>git clone</code> , <code>./tool/install_requires.sh</code> , <code>make dist</code> , <code>make package</code> とやればコンパイルできる…はず。</p>
+
 <p>一応OS依存部分は分岐させてあるので、その気になればMacとかLinuxにも移植できる…はず。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

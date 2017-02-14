@@ -73,8 +73,10 @@
 </header>
   <div itemprop="articleBody">
     <p>Scala 2.6.0-RC1 でscala.util.parsing.combinatorが標準パッケージになりました。というわけでリファレンスとちょっとしたサンプルくらしかなかったのだけど、とりあえず書いてみた。</p>
-<p><a class="reference external" href="http://ja.doukaku.org/33/">どう書く?org</a> に投稿した、ExcelライクCSVのパーサ。</p>
-<pre class="prettyprint ">import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
+
+<p><a href="http://ja.doukaku.org/33/">どう書く?org</a> に投稿した、ExcelライクCSVのパーサ。</p>
+
+<pre class="prettyprint"><code>import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
 import scala.util.parsing.input.CharArrayReader
 import Character.isISOControl
 
@@ -86,44 +88,49 @@ object CSVParser {
  case class Record(fields: List[Field]) extends Base
  case class File(records :List[Record]) extends Base
 
- def mkString(cs :List[Any]) = cs.mkString("")
+ def mkString(cs :List[Any]) = cs.mkString(&quot;&quot;)
  class CSVParser extends Parsers {
    type Elem = Char
-   def notMeta(c:Elem) = c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='"' &amp;&amp; !isISOControl(c)
+   def notMeta(c:Elem) = c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='&quot;' &amp;&amp; !isISOControl(c)
 
    lazy val file   = record.*('\n') ^^ File
    lazy val record = (field|quotedField|nullableField).*(',') ^^ Record
    lazy val field = chars.+ ^^ {cs =&gt; Field(mkString(cs))}
-   lazy val nullableField = chars.* ^^ {cs =&gt; Field("")}
-   lazy val quotedField = '"' ~ (charsInQuote|quoteInQuote).* ~ '"' ^^ {cs =&gt; Field(mkString(cs))}
-   lazy val charsInQuote = elem("chars in field", _!='"')
-   lazy val quoteInQuote = repN(2, quote) ^^ {cs =&gt; '"'}
-   lazy val quote  = '"' ^^ success
-   lazy val chars  = elem("chars", notMeta)
+   lazy val nullableField = chars.* ^^ {cs =&gt; Field(&quot;&quot;)}
+   lazy val quotedField = '&quot;' ~ (charsInQuote|quoteInQuote).* ~ '&quot;' ^^ {cs =&gt; Field(mkString(cs))}
+   lazy val charsInQuote = elem(&quot;chars in field&quot;, _!='&quot;')
+   lazy val quoteInQuote = repN(2, quote) ^^ {cs =&gt; '&quot;'}
+   lazy val quote  = '&quot;' ^^ success
+   lazy val chars  = elem(&quot;chars&quot;, notMeta)
  }
 }
 
-val data = """
-"aaa","b
-bb","ccc",zzz,"y""Y""y",xxx
-""".trim
+val data = &quot;&quot;&quot;
+&quot;aaa&quot;,&quot;b
+bb&quot;,&quot;ccc&quot;,zzz,&quot;y&quot;&quot;Y&quot;&quot;y&quot;,xxx
+&quot;&quot;&quot;.trim
 
 (new CSVParser.CSVParser).file(new
 CharArrayReader(data.toCharArray)).map(file =&gt; {
  file.records.map({record =&gt;
    val fields = record.fields
-   (1 to fields.length).foreach(i =&gt; println(i +" =&gt; " + fields(i-1)))
+   (1 to fields.length).foreach(i =&gt; println(i +&quot; =&gt; &quot; + fields(i-1)))
  })
-})</pre><p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
+})
+</code></pre>
+
+<p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
+
 <p>時間が出来たらもうちょっといじってみよう。よさげな解説してるサイトがあったら是非教えてください。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2008/02/03/some-scala-tips-for-beginners">基礎を終えた人のScalaミニtips</a></li>
-<li><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell">Scalaで無限リスト：Haskellライクに</a></li>
-<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
-<li><a href="/articles/2008/03/04/japanese-language-programing-in-scala">日本語プログラミング言語Scala</a></li>
 <li><a href="/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala">Scalaでスタック指向言語をサクッと実装する</a></li>
+<li><a href="/articles/2008/03/04/japanese-language-programing-in-scala">日本語プログラミング言語Scala</a></li>
+<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
+<li><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell">Scalaで無限リスト：Haskellライクに</a></li>
+<li><a href="/articles/2008/02/03/some-scala-tips-for-beginners">基礎を終えた人のScalaミニtips</a></li>
 </ul>
     </div>
   </div>

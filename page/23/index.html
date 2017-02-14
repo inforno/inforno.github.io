@@ -61,9 +61,9 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/10/24/python-generating-accessors-using-property" itemprop="url">Python:続・アクセサの生成</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/09/13/getframe-function-in-python" itemprop="url">Pythonで関数呼び出しもとの情報を取得</a></h3>
 <div class="meta">
-<time datetime="2006-10-24T18:32:02&#43;09:00">Oct 24, 2006</time>
+<time datetime="2006-09-13T20:24:43&#43;09:00">Sep 13, 2006</time>
 
   
   <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
@@ -72,137 +72,27 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="/articles/2006/09/30/python-generating-accessors">以前書いてみたアクセサ</a> をpropertyを使って改良してみる。</p>
-<p>propertyというのはnew-styleクラスに対してのみ使える、メソッドで</p>
-<pre class="prettyprint ">class C(object):
-    def __init__(self): self.__x = None
-    def getx(self): return self.__x
-    def setx(self, value): self.__x = value
-    def delx(self): del self.__x
-    x = property(getx, setx, delx, "I'm the 'x' property.")</pre><p>こんな感じで使う。</p>
-<p>Rubyを使った人なら分かると思うけど、プロパティ名でのアクセス＝アクセサ呼び出しになるのは結構便利。
-ActiveRecordなんかでは、特に便利だと感じる。あ、このプロパティ、もういっそエンコードされた値を返したい、と思ったときにそのクラスにプロパティ名と同じメソッドを定義するだけでいいし。</p>
-<p>前につくったアクセサは「get_hoge()」や「set_hoge()」といった感じで呼び出されたけど、これにpropertyを使うことによってRubyと同じような属性アクセスが可能になる。</p>
-<p>とりあえずこんな感じ。</p>
-<pre class="prettyprint ">#!/usr/bin/python
-# vim: fileencoding=utf-8
-from itertools import *
+    <p>なぜか最近はpythonをいじってます。Rubyは・・・ちょっとお休み。 個人的なメモ。Pythonで関数呼び出しもとの情報を取得(web.pyのソースから)。</p>
 
-def property_accessor(cls, *names):
-  _property(cls, names)
+<pre class="prettyprint"><code>import sys
+sys._getframe(1).f_locals
+</code></pre>
 
-def property_reader(cls, *names):
-  _property(cls, names, True)
+<p>ほうほう。</p>
 
-def property_writer(cls, *names):
-  _property(cls, names, False, True)
+<pre class="prettyprint"><code>def test_func() :
+  print sys._getframe(1).f_locals
 
-def _property(cls, names, error_setter = False, error_getter = False):
-  for attr_name, doc in _name_and_docs(names):
-    real_name = _real_name(cls, attr_name)
-    setter  = _add_setter(cls, attr_name, real_name, error_setter)
-    getter  = _add_getter(cls, attr_name, real_name, error_getter)
-    deleter = _add_deleter(cls, attr_name, real_name)
-    setattr(cls, attr_name, property(getter, setter, deleter, doc))
+a = &quot;variable a&quot;
+b = &quot;variable b&quot;
+c = 1
+test_func()
 
-def _name_and_docs(name_or_tuples):
-  return imap(_name_and_doc ,name_or_tuples)
+#&gt;&gt; {'test_func': &lt;function test_func at 0x40657684&gt;, 'a': 'variable a', 'c': 1, 'b': 'variable b', .....}
+</code></pre>
 
-def _name_and_doc(name_or_tupple):
-  if isinstance(name_or_tupple, ("".__class__, u"".__class__)) :
-    return (name_or_tupple, "")
-  else:
-    return name_or_tupple
+<p>こんな感じで。</p>
 
-def _real_name(cls, name) :
-  return "_%s__%s"%(cls.__name__, name)
-
-def _add_method(cls, verb, name, method_to_add):
-  method_name = "%s_%s" % (verb, name)
-  method = cls.__dict__.get(method_name)
-  if not method :
-    method = method_to_add
-    setattr(cls, method_name, method)
-  return method
-
-def _add_setter(cls, name, real_name, error = False) :
-  if error:
-    def setter(self, v):
-      raise AttributeError, "class %s: %s is a read-only attribute." % (cls.__name__, name)
-  else:
-    setter = lambda self, v : setattr(self, real_name, v)
-  return _add_method(cls, "set", name, setter)
-
-def _add_getter(cls, name, real_name, error = False) :
-  if error:
-    def getter(self):
-      raise AttributeError, "class %s: %s is a write-only attribute." % (cls.__name__, name)
-  else:
-    getter = lambda self : getattr(self, real_name)
-  return _add_method(cls, "get", name, getter)
-
-def _add_deleter(cls, name, real_name) :
-  deleter = lambda self : delattr(self, real_name)
-  return _add_method(cls, "delete", name, deleter)
-
-class AccessorType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    cls = type.__new__(cls, class_name, class_bases, classdict)
-    list = ["__accessor__", "__reader__", "__writer__"]
-    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
-    for accessor_type, method in izip(list, methods):
-        if classdict.has_key(accessor_type):
-          method(cls, *classdict[accessor_type])
-    return cls
-
-class Accessor(object):
-  __metaclass__ = AccessorType
-  def __init__(self, *args) :
-    list = ["__accessor__", "__reader__", "__writer__"]
-    for accessor_type in list:
-      if not self.__class__.__dict__.has_key(accessor_type) : continue
-      for name in self.__class__.__dict__.get(accessor_type):
-        attr_name, doc = _name_and_doc(name)
-        if not self.__dict__.get(attr_name):
-          exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>使い方は</p>
-<pre class="prettyprint ">#!/usr/bin/python
-# vim: fenc=utf-8
-import accessor
-
-class Test(accessor.Accessor) :
-  __accessor__ = [("x", "This is x value"), "y", "z"]
-  __reader__    = ["r"]
-
-  def __init__(self):
-    accessor.Accessor.__init__(self)
-
-  def get_y(self) :
-    return "new y value"
-
-obj = Test()
-obj.x = "hoge"
-
-print obj.x
-# =&gt; hoge
-
-print Test.x.__doc__
-# =&gt; This is x value
-
-print obj.y
-# =&gt; new y value
-
-obj.r = "value"
-# =&gt; AttributeError: class Test: r is a read-only attribute.</pre><p>こんな感じ。</p>
-<p><code>get_*` とか ``set_*</code> を定義すれば、独自のアクセサを定義できる。
-属性は全て <code>private(__*)</code> として保存されているので、 <code>self.__x</code> みたいな感じでクラス内ではアクセスできる。</p>
-<p>これやっててはまったのはココ。</p>
-<pre class="prettyprint ">exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
-<!-- sou
-
-exec("self.__%s = None" % (attr_name)) -->
-<p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code><span class="pre">self.__dict__[&quot;_classname__x&quot;]</span> = &quot;hoge&quot;</code> に変換される。</p>
-<p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
-<p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
   </div>
 </article>
 
@@ -214,63 +104,37 @@ exec("self.__%s = None" % (attr_name)) -->
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/10/05/hide-the-console-window-with-python" itemprop="url">Python:バイナリでコンソールを表示しないようにするには？</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/06/05/object-with_options" itemprop="url">ActiveSupportのObject#with_optionsの使いどころ</a></h3>
 <div class="meta">
-<time datetime="2006-10-05T14:59:11&#43;09:00">Oct  5, 2006</time>
+<time datetime="2006-06-05T17:45:51&#43;09:00">Jun  5, 2006</time>
 
   
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  <span class="tag"><a href="/articles/tag/rubyonrails/" rel="tag" itemprop="keywords">rubyonrails</a></span>
   
-  <span class="tag"><a href="/articles/tag/gui/" rel="tag" itemprop="keywords">gui</a></span>
+  <span class="tag"><a href="/articles/tag/ruby/" rel="tag" itemprop="keywords">ruby</a></span>
   
-  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
+  <span class="tag"><a href="/articles/tag/activesupport/" rel="tag" itemprop="keywords">activesupport</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>Pythonのコードをwindows用exeにするには当然、 <a class="reference external" href="http://www.py2exe.org/">py2exe</a> を使います。</p>
-<p>で、そのとき、</p>
-<pre class="prettyprint ">python setup.py py2exe --windows</pre><p>とすれば、コンソールを表示しないようにできます。</p>
-<div class="note">
-<p class="first">Note</p>
-<p class="last">これはもう古いやり方で、現在のバージョンのpy2exeでは動きません・・・。現在はターゲットファイルの拡張子を.pywにする、もしくは <code>windows = <span class="pre">[{'script'</span> : 'script.py', &quot;icon_resources&quot;: <span class="pre">[(1,&quot;script.ico&quot;)]}]</span></code> というオプションをsetupに渡す、という方法になっています。</p>
-</div>
-<p>今日、昔py2exeで作ったファイルが出てきたんですが、困ったことにpythonのソースファイルはない。いや、別に改良とかもうしないしいいんだけど。
-ふと起動してみるとGUI with console。かっちょわりい。</p>
-<p>コンソールが表示される、というのは単純にPEファイルのオプションなわけで。</p>
-<img alt="/statics/files/pe.jpg" src="/statics/files/pe.jpg" />
-<p>この部分を変更してやればとりあえずは直る。ちなみに、</p>
-<ul class="simple">
-<li>00 00:未知のサブシステム</li>
-<li>01 00:デバイス ライバおよびWindowsNTネイティブプロセス用</li>
-<li>02 00:GUIで実行されるファイル</li>
-<li>03 00:コンソールで実行されるファイル</li>
-<li>07 00:Posixコンソールで実行されるファイル</li>
-<li>09 00:WindowsCEで実行されるファイル</li>
-</ul>
-<p>なので02h 00hにしてやればオッケー。</p>
-<p>Pythonでバイナリファイルの読み書きとかしたことないので練習もかねて。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
-import sys
-from struct import *
-target_file = len(sys.argv) &gt; 1 and sys.argv[1] or sys.exit("Target file is not specified.")
-target_file = unicode(target_file, "mbcs")
-out_file    = open(target_file + "_gui", "wb")
+    <p>個人的にActiveSupportが大好きなわけですが。</p>
 
-io = open(target_file, "rb")
-while 1 :
-  if io.read(1) == "P" and io.read(1) == "E" : break
-subsystem_pos = io.tell() +90
-io.seek(0)
-out_file.write(io.read(subsystem_pos))
-io.seek(4, 1)
-out_file.write(pack('hh', 2, 0))
-out_file.write(io.read())
+<p>1.1で追加されたwith_optionsがRouting以外でどーもカッコいい使いどころがなーとおもっていたんですが</p>
 
-io.close()
-out_file.close()</pre><p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ
-pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
+<pre class="prettyprint"><code>with_options(:if =&gt; :validate_password?) do |me|
+me.validates_format_of :password #...
+me.validates_length_of :password # ...
+me.validates_confirmation_of :password #...
+me.validates_presence_of :password#...
+end
+</code></pre>
+
+<p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
+
+<p>まぁ、やっぱり一番カッコいいのはto_procなんですけど。</p>
+
   </div>
 </article>
 
@@ -282,101 +146,36 @@ pythonではバイナリを扱うときはstructモジュールを使う、と�
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/10/01/python-console-on-tk" itemprop="url">Python:Tkを使って気軽にコンソールアプリ?</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/04/02/attribute-selectors-in-prototype" itemprop="url">$$で属性セレクタ</a></h3>
 <div class="meta">
-<time datetime="2006-10-01T19:24:15&#43;09:00">Oct  1, 2006</time>
+<time datetime="2006-04-02T01:37:07&#43;09:00">Apr  2, 2006</time>
 
   
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
-  <span class="tag"><a href="/articles/tag/tk/" rel="tag" itemprop="keywords">tk</a></span>
-  
-  <span class="tag"><a href="/articles/tag/cui/" rel="tag" itemprop="keywords">cui</a></span>
-  
-  <span class="tag"><a href="/articles/tag/gui/" rel="tag" itemprop="keywords">gui</a></span>
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>Windowsの小物はほぼPythonで作っているわけですが。</p>
-<p>WindowsにPythonをインストーラーを使ってインストールすると*.pyにデフォルトだとpython.exeを関連付けしてくれます。
-これは非ﾌﾟﾛｸﾞﾗﾏな人にプログラムを渡すとき非常に便利で、とりあえずPythonをインストールして、このファイルをダブルクリックしろ、というだけでオッケー。exe化して無駄な容量を食わなくても大丈夫なのです。</p>
-<p>んで、作るのはだいたいコンソールで実行するもの。
-これがダブルクリックで実行できるのはいいんですが、当然、プログラムが終了するとウインドウ（DOSプロンプト）が閉じちゃうから結果が見れない。
-いちいちDOSプロンプトから実行するのもめんどくさい。しかも見た目的に非ﾌﾟﾛｸﾞﾗﾏにはいかつい。</p>
-<p>なんとかならないかなー、と思ってTkを使ってコンソールアプリを作るためのライブラリを作ってみた。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
-from Tkinter import *
-from ScrolledText import ScrolledText
-import sys
-import thread
-import time
+    <p>これはかなり嬉しい機能だなあ。 最近Prototype.jsの$$で属性セレクタが使用できるようになりました。</p>
 
-class GUIConsole(Frame):
-  def init(self):
-    self.init_input()
-    self.init_output()
+<p>どんな風にかけるのか、コードをテストから引っ張ってきてみました。</p>
 
-  def init_input(self):
-    self.input_var = StringVar()
-    self.input = Entry(self, width=100, textvariable=self.input_var)
-    self.input.pack(side=TOP)
-    self.input.bind('&lt;Return&gt;', self.input_enter)
+<pre class="prettyprint"><code>$$('a[href=&quot;http://inforno.net/#&quot;]')
+$$('a[class~=internal]')
+$$('*[xml:lang|=&quot;es&quot;]')
+$$('*[xml:lang|=&quot;ES&quot;]')
+$$('a[href!=#]')
+$$('div[style] p[id] strong')
+$$('a[class~=external][href=&quot;http://inforno.net/#&quot;]')
+</code></pre>
 
-    self.input_var.readline = self.readline
-    sys.stdin = self.input_var
+<p>こんな感じです。 値はクオートしてもしなくても大丈夫っぽいですね。</p>
 
-  def init_output(self):
-    self.out = ScrolledText(self, width=100, height=30)
-    self.out.pack(side=TOP)
-    self.out.write = self.write
-    sys.stdout = self.out
+<p>すばらすい。inputに対する操作なんかで特に便利。今までちょっとボタン操作するためだけに、そのボタンにIDふったりクラスふったりしてたんですけど$$(&rsquo;#hoge input[type=submit]&rsquo;)でいけるんだなあ。そんなにパフォーマンスに気をつかわなくて良いページでは使ってみよう。</p>
 
-  def write(self, str):
-    self.out.insert(END, str)
-    time.sleep(0.0001)
-    self.out.yview_scroll(str.count("\n") + 1, "units")
-
-  def readline(self, size=None):
-    self.input.focus()
-    self.input_entered = False
-    while True:
-      time.sleep(0.5)
-      if self.input_entered == True:
-        break
-    result = self.input_var.get()
-    self.input_var.set("")
-    return result
-
-  def input_enter(self, event):
-    self.input_entered = True
-
-  def __init__(self, title, master=None):
-    self.input_entered = False
-    Frame.__init__(self, master)
-    self.pack()
-    self.master.title(title)
-    self.init()
-
-def start(main_func, title="Python") :
-  app = GUIConsole(title)
-  thread.start_new_thread(main_func, ())
-  app.mainloop()</pre><p>使い方はこんなかんじ。</p>
-<pre class="prettyprint ">import guiconsole
-
-def main():
-  while True:
-    var = raw_input()
-    print var
-
-guiconsole.start(main, "GUIコンソールのテスト")</pre><p>でこんな風にみえる。</p>
-<a class="reference external image-reference" href="/statics/files/python_tk_cui.jpg"><img alt="/statics/files/python_tk_cui.thumbnail.jpg" src="/statics/files/python_tk_cui.thumbnail.jpg" /></a>
-<p>一番上に入力欄があって、その下に結果表示エリア。</p>
-<p>Pythonの場合、stdoutはwriteというメソッド、stdinはreadlineというメソッドさえもっていればどんなオブジェクトでもオッケー。
-なので単純にstdoutとstdinをTkのウィジットに置き換えてメインループに入り、別スレッドでメインの処理を実行してやっているだけ。</p>
-<p>見栄えも生のDOSプロンプトよりはいいし、処理が終わってもウィンドウを閉じない限り結果を見ることができる。
-プチ便利なので、はやくも自分で使いまくりです（笑</p>
   </div>
 </article>
 

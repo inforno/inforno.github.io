@@ -71,12 +71,15 @@
 </header>
   <div itemprop="articleBody">
     <p>via</p>
-<ul class="simple">
-<li><a class="reference external" href="http://wiredvision.jp/blog/masui/200803/200803030100.htm">第20回 日本語でおk</a></li>
-<li><a class="reference external" href="http://d.hatena.ne.jp/sumim/20080303/p">Ruby もいいけど Smalltalk でも、おｋ。</a></li>
+
+<ul>
+<li><a href="http://wiredvision.jp/blog/masui/200803/200803030100.htm">第20回 日本語でおk</a></li>
+<li><a href="http://d.hatena.ne.jp/sumim/20080303/p">Ruby もいいけど Smalltalk でも、おｋ。</a></li>
 </ul>
+
 <p>Scalaはメソッド名に日本語使えるよ。Scalaは日本語プログラミング言語だよ(言いすぎ)。</p>
-<pre class="prettyprint ">object JapaneseLanguage {
+
+<pre class="prettyprint"><code>object JapaneseLanguage {
   class Standard[A](self:A) {
     def の[B](f:(A) =&gt; B) = f(self)
     def を[B](f:(A) =&gt; B) = f(self)
@@ -93,26 +96,40 @@
 
 def 平方根(v:int) = Math.sqrt(v.asInstanceOf[double])
 def 逆数(v:double) = 1/v
-def 表示(v:Any) = { println(v); v }</pre><p>とりあえず標準語とエセ関西弁を用意しておきました。</p>
+def 表示(v:Any) = { println(v); v }
+</code></pre>
+
+<p>とりあえず標準語とエセ関西弁を用意しておきました。</p>
+
 <p>標準語を使いたい方は</p>
-<pre class="prettyprint ">import JapaneseLanguage.{Standard =&gt; Japanese}
+
+<pre class="prettyprint"><code>import JapaneseLanguage.{Standard =&gt; Japanese}
 implicit def any2japanese[A](v:A) = new Japanese(v)
 
 100 の 平方根 の 逆数 を 表示 する
-// =&gt; 0.1</pre><p>とでも、エセ関西弁が使いたい方は</p>
-<pre class="prettyprint ">import JapaneseLanguage.{PseudoKansai =&gt; Japanese}
+// =&gt; 0.1
+</code></pre>
+
+<p>とでも、エセ関西弁が使いたい方は</p>
+
+<pre class="prettyprint"><code>import JapaneseLanguage.{PseudoKansai =&gt; Japanese}
 implicit def any2japanese[A](v:A) = new Japanese(v)
 
 100 のな 平方根 のな 逆数 をな 表示 すんねん
-// =&gt; 0.1</pre><p>とでもしてください。</p>
+// =&gt; 0.1
+</code></pre>
+
+<p>とでもしてください。</p>
+
 <p>いやー日本人にやさしいプログラミング言語ですね、Scalaは！最近日本の人たちに注目されてきている理由もわかります！</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2008/02/03/some-scala-tips-for-beginners">基礎を終えた人のScalaミニtips</a></li>
-<li><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell">Scalaで無限リスト：Haskellライクに</a></li>
-<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
 <li><a href="/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala">Scalaでスタック指向言語をサクッと実装する</a></li>
+<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
+<li><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell">Scalaで無限リスト：Haskellライクに</a></li>
+<li><a href="/articles/2008/02/03/some-scala-tips-for-beginners">基礎を終えた人のScalaミニtips</a></li>
 <li><a href="/articles/2007/07/30/parser-combinators-in-scala">Scalaでパーサコンビネータ</a></li>
 </ul>
     </div>

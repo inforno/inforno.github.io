@@ -7,107 +7,187 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>16 Dec 16 12:10 UTC</lastBuildDate>
+    <lastBuildDate>14 Feb 17 16:25 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
     
     <item>
+      <title>batの中にbashスクリフﾟトを埋め込む方法 </title>
+      <link>http://inforno.net/articles/2017/02/15/bash-script-in-bat</link>
+      <description>&lt;p&gt;相変わらずメインのマシンはWindowsなのですが、batファイルのもろもろがいつまでも覚えられず、bashスクリプトで書きたいなあ、ということでbatファイルにbashスクリプトを埋め込むことにしました。 Cでつくった自作用ツールがあるため、Windowsにはかならずmsys2をいれているのでbashは絶対あるんですよね。&lt;/p&gt;
+
+&lt;p&gt;その他の言語を埋め込む方法は&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://qiita.com/snipsnipsnip/items/50e4ca88e3ce3f8cffda&#34;&gt;Windowsでshebangもどき、またはバッチにスクリプトを埋め込む方法&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;が詳しいです。&lt;/p&gt;
+
+&lt;h1&gt;シェルスクリプトをバッチファイルに埋め込む&lt;/h1&gt;
+
+&lt;p&gt;以下のようにすると、バッチファイルにシェルスクリプト(bashスクリプト)を埋め込むことにできます。拡張子 &lt;code&gt;.bat&lt;/code&gt; で保存すると &lt;code&gt;cmd.exe&lt;/code&gt; からもmsys2の &lt;code&gt;bash.exe&lt;/code&gt; からも起動できます。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code&gt;:rem () { &amp;lt;&amp;lt;&#39;#__CO__&#39;
+@bash  &amp;quot;%~f0&amp;quot; %* &amp;amp; exit /b
+#__CO__
+}
+
+echo 以下普通にシェルスクリプト
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、&lt;code&gt;:&lt;/code&gt; コマンドやらをうまく利用して埋め込んでいます。&lt;/p&gt;
+</description>
+      
+      <category>bash</category>
+      
+      <category>bat</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2017/02/15/bash-script-in-bat</guid>
+      <pubDate>14 Feb 17 16:25 UTC</pubDate>
+    </item>
+    
+    <item>
       <title>Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた </title>
       <link>http://inforno.net/articles/2016/12/16/gopher-lua-plugins-in-go18</link>
-      <description>&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/advent-calendar/2016/go&#34;&gt;Go Advent Calendar 2016&lt;/a&gt; 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。&lt;/p&gt;
-&lt;p&gt;さて、Go1.8では待望？のShared Libraryのロードが可能になります。 &lt;a class=&#34;reference external&#34; href=&#34;https://tip.golang.org/pkg/plugin/&#34;&gt;pluginパッケージ&lt;/a&gt; を使います。&lt;/p&gt;
+      <description>&lt;p&gt;&lt;a href=&#34;http://qiita.com/advent-calendar/2016/go&#34;&gt;Go Advent Calendar 2016&lt;/a&gt; 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。&lt;/p&gt;
+
+&lt;p&gt;さて、Go1.8では待望？のShared Libraryのロードが可能になります。 &lt;a href=&#34;https://tip.golang.org/pkg/plugin/&#34;&gt;pluginパッケージ&lt;/a&gt; を使います。&lt;/p&gt;
+
 &lt;p&gt;Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。&lt;/p&gt;
-&lt;p&gt;Advent Calendar 2の &lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/qt-luigi/items/47a7913145fc747da0c7&#34;&gt;qt-luigiさんのネタ&lt;/a&gt; と被ってしまったのですが実戦的に使ってみました、ということで許してください。&lt;/p&gt;
-&lt;section&gt;
-&lt;h2&gt;プラグインの作成とコンパイル&lt;/h2&gt;
+
+&lt;p&gt;Advent Calendar 2の &lt;a href=&#34;http://qiita.com/qt-luigi/items/47a7913145fc747da0c7&#34;&gt;qt-luigiさんのネタ&lt;/a&gt; と被ってしまったのですが実戦的に使ってみました、ということで許してください。&lt;/p&gt;
+
+&lt;h1&gt;プラグインの作成とコンパイル&lt;/h1&gt;
+
 &lt;p&gt;マニュアルページにあるとおり、以下のようになります。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; package main
 
- // // No C code needed.
- import &#34;C&#34;
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;package main
 
- import &#34;fmt&#34;
+// // No C code needed.
+import &amp;quot;C&amp;quot;
 
- var V int
+import &amp;quot;fmt&amp;quot;
 
- func F() { fmt.Printf(&#34;Hello, number %d\n&#34;, V) }&lt;/pre&gt;&lt;p&gt;ポイントは&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
+var V int
+
+func F() { fmt.Printf(&amp;quot;Hello, number %d\n&amp;quot;, V) }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ポイントは&lt;/p&gt;
+
+&lt;ul&gt;
 &lt;li&gt;Cのコードはないが、 &lt;code&gt;import &amp;quot;C&amp;quot;&lt;/code&gt; が必要&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;package&lt;/code&gt; は &lt;code&gt;main&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
+
 &lt;p&gt;という２点です。コンパイルは&lt;/p&gt;
-&lt;pre class=&#34;prettyprint bash&#34;&gt; $ go build -buildmode=plugin -o plugin.so plugin.go&lt;/pre&gt;&lt;p&gt;でOK。簡単ですね。これで &lt;code&gt;plugin.so&lt;/code&gt; が生成されます。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;プラグインのロード&lt;/h2&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;$ go build -buildmode=plugin -o plugin.so plugin.go
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;でOK。簡単ですね。これで &lt;code&gt;plugin.so&lt;/code&gt; が生成されます。&lt;/p&gt;
+
+&lt;h1&gt;プラグインのロード&lt;/h1&gt;
+
 &lt;p&gt;これまたマニュアルページどおりですが&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; p, err := plugin.Open(&#34;plugin.so&#34;)
- if err != nil {
-     panic(err)
- }
- v, err := p.Lookup(&#34;V&#34;)
- if err != nil {
-     panic(err)
- }
- f, err := p.Lookup(&#34;F&#34;)
- if err != nil {
-     panic(err)
- }
- *v.(*int) = 7
- f.(func())() // prints &#34;Hello, number 7&#34;&lt;/pre&gt;&lt;p&gt;のように非常に直感的に使えます。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;GopherLuaで使ってみた&lt;/h2&gt;
-&lt;p&gt;拙作のPure GoによるLua実装 &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;p, err := plugin.Open(&amp;quot;plugin.so&amp;quot;)
+if err != nil {
+    panic(err)
+}
+v, err := p.Lookup(&amp;quot;V&amp;quot;)
+if err != nil {
+    panic(err)
+}
+f, err := p.Lookup(&amp;quot;F&amp;quot;)
+if err != nil {
+    panic(err)
+}
+*v.(*int) = 7
+f.(func())() // prints &amp;quot;Hello, number 7&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;のように非常に直感的に使えます。&lt;/p&gt;
+
+&lt;h1&gt;GopherLuaで使ってみた&lt;/h1&gt;
+
+&lt;p&gt;拙作のPure GoによるLua実装 &lt;a href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。&lt;/p&gt;
+
 &lt;p&gt;そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。&lt;/p&gt;
-&lt;p&gt;こちらは &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins&#34;&gt;feature-exp-go1.8pluginsブランチ&lt;/a&gt; で実際に動かせます。プラグイン部分のコミットは &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b&#34;&gt;571b031&lt;/a&gt; です。&lt;/p&gt;
+
+&lt;p&gt;こちらは &lt;a href=&#34;https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins&#34;&gt;feature-exp-go1.8pluginsブランチ&lt;/a&gt; で実際に動かせます。プラグイン部分のコミットは &lt;a href=&#34;https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b&#34;&gt;571b031&lt;/a&gt; です。&lt;/p&gt;
+
 &lt;p&gt;まずプラグイン側から。Luaのお作法通りです。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; package main
 
- import (
-     &#34;C&#34;
-     &#34;github.com/yuin/gopher-lua&#34;
- )
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;package main
 
- func Add(L *lua.LState) int {
-     v1 := L.CheckInt(1)
-     v2 := L.CheckInt(2)
-     L.Push(lua.LNumber(v1 &#43; v2))
-     return 1
- }
+import (
+    &amp;quot;C&amp;quot;
+    &amp;quot;github.com/yuin/gopher-lua&amp;quot;
+)
 
- func LuaOpenPlugin(L *lua.LState) int {
-     L.Push(
-             L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
-                     &#34;add&#34;: Add,
-             }))
-     return 1
- }&lt;/pre&gt;&lt;p&gt;C実装のLuaでは &lt;code&gt;luaopen_共有ライブラリファイル名&lt;/code&gt; が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。&lt;/p&gt;
+func Add(L *lua.LState) int {
+    v1 := L.CheckInt(1)
+    v2 := L.CheckInt(2)
+    L.Push(lua.LNumber(v1 &#43; v2))
+    return 1
+}
+
+func LuaOpenPlugin(L *lua.LState) int {
+    L.Push(
+        L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+            &amp;quot;add&amp;quot;: Add,
+        }))
+    return 1
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;C実装のLuaでは &lt;code&gt;luaopen_共有ライブラリファイル名&lt;/code&gt; が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。&lt;/p&gt;
+
 &lt;p&gt;こいつをコンパイルして・・・&lt;/p&gt;
-&lt;pre class=&#34;prettyprint bash&#34;&gt; $ cd /home/yuin/tmp/plugin
- $ go build -buildmode=plugin -o plugin.so plugin.go&lt;/pre&gt;&lt;p&gt;こうじゃ&lt;/p&gt;
-&lt;pre class=&#34;prettyprint &#34;&gt;$ glua
-&amp;gt; package.cpath = package.cpath .. &#34;;&#34; .. &#34;/home/yuin/tmp/plugin/?.so&#34;
-&amp;gt; adder = require(&#34;plugin&#34;)
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd /home/yuin/tmp/plugin
+$ go build -buildmode=plugin -o plugin.so plugin.go
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こうじゃ&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code&gt;$ glua
+&amp;gt; package.cpath = package.cpath .. &amp;quot;;&amp;quot; .. &amp;quot;/home/yuin/tmp/plugin/?.so&amp;quot;
+&amp;gt; adder = require(&amp;quot;plugin&amp;quot;)
 &amp;gt; print(adder.add(1, 2))
-3&lt;/pre&gt;&lt;p&gt;おおおおおおおおおおおおお&lt;/p&gt;
+3
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;おおおおおおおおおおおおお&lt;/p&gt;
+
 &lt;p&gt;普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint &#34;&gt;&amp;lt;string&amp;gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua&lt;/pre&gt;&lt;p&gt;&lt;code&gt;package.loadlib&lt;/code&gt; も実装しました。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint &#34;&gt;$ glua
-&amp;gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/notfound&#34;, &#34;foo&#34;))
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code&gt;&amp;lt;string&amp;gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;package.loadlib&lt;/code&gt; も実装しました。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code&gt;$ glua
+&amp;gt; print(package.loadlib(&amp;quot;/home/yuin/tmp/plugin/notfound&amp;quot;, &amp;quot;foo&amp;quot;))
 nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
-&amp;gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/plugin.so&#34;, &#34;foo&#34;))
+&amp;gt; print(package.loadlib(&amp;quot;/home/yuin/tmp/plugin/plugin.so&amp;quot;, &amp;quot;foo&amp;quot;))
 nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
-&amp;gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/plugin.so&#34;, &#34;LuaOpenPlugin&#34;))
+&amp;gt; print(package.loadlib(&amp;quot;/home/yuin/tmp/plugin/plugin.so&amp;quot;, &amp;quot;LuaOpenPlugin&amp;quot;))
 function: 0xc4200c9840
-&amp;gt;&lt;/pre&gt;&lt;p&gt;完璧ですね。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;pluginパッケージ、使えそうですが・・・&lt;/h2&gt;
+&amp;gt; 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;完璧ですね。&lt;/p&gt;
+
+&lt;h1&gt;pluginパッケージ、使えそうですが・・・&lt;/h1&gt;
+
 &lt;p&gt;少なくとも、Linuxでは &lt;code&gt;plugin&lt;/code&gt; パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。&lt;/p&gt;
+
 &lt;p&gt;Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。&lt;/p&gt;
-&lt;/section&gt;</description>
+</description>
       
       <category>golang</category>
       
@@ -121,77 +201,100 @@ function: 0xc4200c9840
       <title>Go&#43;Luaのチャットボットフレームワークを作った </title>
       <link>http://inforno.net/articles/2016/07/28/golbot</link>
       <description>&lt;p&gt;たまには実用的なものをつくろうと思って、Go&#43;Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。&lt;/p&gt;
-&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/golbot&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;p&gt;チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。&lt;/p&gt;
+
+&lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/golbot&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。&lt;/p&gt;
+
 &lt;p&gt;特徴は以下です。&lt;/p&gt;
-&lt;ul class=&#34;simple&#34;&gt;
+
+&lt;ul&gt;
 &lt;li&gt;Goなので置けば動く&lt;/li&gt;
 &lt;li&gt;それでいてLuaでスクリプトを書ける&lt;/li&gt;
 &lt;li&gt;最初からマルチスレッド(複数goroutine)を考慮している&lt;/li&gt;
 &lt;li&gt;HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる&lt;/li&gt;
 &lt;li&gt;定期ジョブも流せる&lt;/li&gt;
 &lt;/ul&gt;
-&lt;pre class=&#34;prettyprint lang-lua&#34;&gt;function main()
-  local bot = golbot.newbot(&#34;Slack&#34;, { token = &#34;xxxxx&#34; })
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-lua&#34;&gt;function main()
+  local bot = golbot.newbot(&amp;quot;Slack&amp;quot;, { token = &amp;quot;xxxxx&amp;quot; })
 
   bot:respond([[\s*(\d&#43;)\s*\&#43;\s*(\d&#43;)\s*]], function(m, e) -- 3
     bot:say(e.target, tostring(tonumber(m[2]) &#43; tonumber(m[3])))
   end)
 
   bot:serve(function(msg)
-    if msg.type == &#34;say&#34; then
+    if msg.type == &amp;quot;say&amp;quot; then
       bot:say(msg.channel, msg.message)
       respond(msg, true)
     end
   end)
-end&lt;/pre&gt;&lt;p&gt;こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-lua&#34;&gt;function main()
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-lua&#34;&gt;function main()
   bot:respond([[deploy]], function(m, e)
-    bot:say(e.target, &#34;accepted&#34;)
-    goworker({target=e.target, type=&#34;deploy&#34;})
+    bot:say(e.target, &amp;quot;accepted&amp;quot;)
+    goworker({target=e.target, type=&amp;quot;deploy&amp;quot;})
   end)
 
   bot:serve(function(msg)
-    if msg.type == &#34;say&#34; then
+    if msg.type == &amp;quot;say&amp;quot; then
       bot:say(msg.target, msg.message)
     end
   end)
 end
 
 function worker(msg)
-  if msg.type == &#34;deploy&#34; then
+  if msg.type == &amp;quot;deploy&amp;quot; then
     do_deploy()
-    notifymain({type=&#34;say&#34;, target=msg.target, message=&#34;your deployment has been completed&#34;})
+    notifymain({type=&amp;quot;say&amp;quot;, target=msg.target, message=&amp;quot;your deployment has been completed&amp;quot;})
   end
-end&lt;/pre&gt;&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは &lt;code&gt;notifymain&lt;/code&gt; でメインGroutineにメッセージをおくることができます。&lt;/p&gt;
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは &lt;code&gt;notifymain&lt;/code&gt; でメインGroutineにメッセージをおくることができます。&lt;/p&gt;
+
 &lt;p&gt;HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-lua&#34;&gt; function http(r)
-   if r.method == &#34;POST&#34; and r.URL.path == &#34;/webhook&#34; then
-     local data = assert(json.decode(r:readbody()))
-     local message = data.item.message.message
-     local user = data.item.message.from.name
-     local room = data.item.room.name
 
-     local ret = {
-       message = &#34;hello! from webhook&#34;,
-       message_format = &#34;html&#34;
-     }
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-lua&#34;&gt;function http(r)
+  if r.method == &amp;quot;POST&amp;quot; and r.URL.path == &amp;quot;/webhook&amp;quot; then
+    local data = assert(json.decode(r:readbody()))
+    local message = data.item.message.message
+    local user = data.item.message.from.name
+    local room = data.item.room.name
 
-     return 200, headers, json.encode(ret)
-   end
-   return 400, headers, json.encode({result=&#34;not found&#34;})
- end&lt;/pre&gt;&lt;p&gt;定期ジョブは以下のような感じ。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-lua&#34;&gt; function main()
-   golbot.newbot(&#34;Null&#34;, {
-     http = &#34;0.0.0.0:6669&#34; ,
-     crons = {
-       { &#34;0 * * * * * &#34;, &#34;job1&#34;}
-     }
-   }):serve(function() end)
- end
+    local ret = {
+      message = &amp;quot;hello! from webhook&amp;quot;,
+      message_format = &amp;quot;html&amp;quot;
+    }
 
- function job1()
-   print &#34;hello!&#34;
- end&lt;/pre&gt;&lt;p&gt;チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。&lt;/p&gt;</description>
+    return 200, headers, json.encode(ret)
+  end
+  return 400, headers, json.encode({result=&amp;quot;not found&amp;quot;})
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;定期ジョブは以下のような感じ。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-lua&#34;&gt;function main()
+  golbot.newbot(&amp;quot;Null&amp;quot;, { 
+    http = &amp;quot;0.0.0.0:6669&amp;quot; ,
+    crons = {
+      { &amp;quot;0 * * * * * &amp;quot;, &amp;quot;job1&amp;quot;}
+    }
+  }):serve(function() end)
+end
+
+function job1()
+  print &amp;quot;hello!&amp;quot;
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。&lt;/p&gt;
+</description>
       
       <category>golang</category>
       
@@ -203,25 +306,32 @@ end&lt;/pre&gt;&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLua
       <title>Goで文字コードを手軽に変換するライブラリ作った </title>
       <link>http://inforno.net/articles/2016/07/14/go-charsetutil</link>
       <description>&lt;p&gt;日本人である以上、いくらUTF-8が主権を得てきたといっても文字コード変換というカルマからは逃れられません。Pure Goでの文字コード変換はLLに比べるといろいろめんどくさい。&lt;/p&gt;
-&lt;p&gt;それに、そのままだと任意の文字コードを指定させるのが難しい。特定の文字コード決め打ちならいいんですけど、全世界の利用者に向けて任意の文字コード設定できるようにする場合とかはさらにめんどくさいし、かといって &lt;code&gt;iconv&lt;/code&gt; に依存するのも嫌なのライブラリにしました。&lt;/p&gt;
-&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/charsetutil&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;p&gt;以下のような感じで簡単に文字コードを変換できます。Pythonと同じで &lt;code&gt;encode&lt;/code&gt; がUTF-8からUTF-8以外へ、 &lt;code&gt;decode&lt;/code&gt; がUTF-8以外からUTF-8へ、です。内部では &lt;code&gt;golang.org/x/net/html/charset&lt;/code&gt; を使っているので文字コードの指定もそれに習います。(WHATWGで定義されている名前になります) 。なので &lt;code&gt;cp932&lt;/code&gt; などではなく &lt;code&gt;&lt;span class=&#34;pre&#34;&gt;Windows-31J&lt;/span&gt;&lt;/code&gt; です。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; b, err = EncodeString(&#34;こんにちわ&#34;, &#34;Windows-31J&#34;)
- b, err = Encode(&#34;こんにちわ&#34;, &#34;Windows-31J&#34;)
- b, err = EncodeBytes([]byte(&#34;こんにちわ&#34;), &#34;Windows-31J&#34;)
- b, err = EncodeReader(strings.NewReader(&#34;こんにちわ&#34;), &#34;Windows-31J&#34;)
- b = MustEncodeString(&#34;こんにちわ&#34;, &#34;Windows-31J&#34;)
- b = MustEncode(&#34;こんにちわ&#34;, &#34;Windows-31J&#34;)
- b = MustEncodeBytes([]byte(&#34;こんにちわ&#34;), &#34;Windows-31J&#34;)
- b = MustEncodeReader(strings.NewReader(&#34;こんにちわ&#34;), &#34;Windows-31J&#34;)
 
- s, err = DecodeString(string(source), &#34;Windows-31J&#34;)
- s, err = Decode(source, &#34;Windows-31J&#34;)
- s, err = DecodeBytes(source, &#34;Windows-31J&#34;)
- s, err = DecodeReader(bytes.NewReader(source), &#34;Windows-31J&#34;)
- s = MustDecodeString(string(source), &#34;Windows-31J&#34;)
- s = MustDecode(source, &#34;Windows-31J&#34;)
- s = MustDecodeBytes(source, &#34;Windows-31J&#34;)
- s = MustDecodeReader(bytes.NewReader(source), &#34;Windows-31J&#34;)&lt;/pre&gt;</description>
+&lt;p&gt;それに、そのままだと任意の文字コードを指定させるのが難しい。特定の文字コード決め打ちならいいんですけど、全世界の利用者に向けて任意の文字コード設定できるようにする場合とかはさらにめんどくさいし、かといって &lt;code&gt;iconv&lt;/code&gt; に依存するのも嫌なのライブラリにしました。&lt;/p&gt;
+
+&lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/charsetutil&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;以下のような感じで簡単に文字コードを変換できます。Pythonと同じで &lt;code&gt;encode&lt;/code&gt; がUTF-8からUTF-8以外へ、 &lt;code&gt;decode&lt;/code&gt; がUTF-8以外からUTF-8へ、です。内部では &lt;code&gt;golang.org/x/net/html/charset&lt;/code&gt; を使っているので文字コードの指定もそれに習います。(WHATWGで定義されている名前になります) 。なので &lt;code&gt;cp932&lt;/code&gt; などではなく &lt;code&gt;Windows-31J&lt;/code&gt; です。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;b, err = EncodeString(&amp;quot;こんにちわ&amp;quot;, &amp;quot;Windows-31J&amp;quot;)
+b, err = Encode(&amp;quot;こんにちわ&amp;quot;, &amp;quot;Windows-31J&amp;quot;)
+b, err = EncodeBytes([]byte(&amp;quot;こんにちわ&amp;quot;), &amp;quot;Windows-31J&amp;quot;)
+b, err = EncodeReader(strings.NewReader(&amp;quot;こんにちわ&amp;quot;), &amp;quot;Windows-31J&amp;quot;)
+b = MustEncodeString(&amp;quot;こんにちわ&amp;quot;, &amp;quot;Windows-31J&amp;quot;)
+b = MustEncode(&amp;quot;こんにちわ&amp;quot;, &amp;quot;Windows-31J&amp;quot;)
+b = MustEncodeBytes([]byte(&amp;quot;こんにちわ&amp;quot;), &amp;quot;Windows-31J&amp;quot;)
+b = MustEncodeReader(strings.NewReader(&amp;quot;こんにちわ&amp;quot;), &amp;quot;Windows-31J&amp;quot;)
+
+s, err = DecodeString(string(source), &amp;quot;Windows-31J&amp;quot;)
+s, err = Decode(source, &amp;quot;Windows-31J&amp;quot;)
+s, err = DecodeBytes(source, &amp;quot;Windows-31J&amp;quot;)
+s, err = DecodeReader(bytes.NewReader(source), &amp;quot;Windows-31J&amp;quot;)
+s = MustDecodeString(string(source), &amp;quot;Windows-31J&amp;quot;)
+s = MustDecode(source, &amp;quot;Windows-31J&amp;quot;)
+s = MustDecodeBytes(source, &amp;quot;Windows-31J&amp;quot;)
+s = MustDecodeReader(bytes.NewReader(source), &amp;quot;Windows-31J&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+</description>
       
       <category>golang</category>
       
@@ -230,355 +340,375 @@ end&lt;/pre&gt;&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLua
     </item>
     
     <item>
-      <title>30歳の一年だった。今後について考える。 </title>
-      <link>http://inforno.net/articles/2015/12/30/30-years-old-this-year</link>
-      <description>&lt;p&gt;もう2015年も終わろうとしています。今31歳ですが私は誕生日が後半なのでこの1年はほぼ30歳として過ごしたことになります。&lt;/p&gt;
-&lt;section&gt;
-&lt;h2&gt;GopherLua&lt;/h2&gt;
-&lt;p&gt;さて、今年は2月に公開した &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; がGithubで1000スター以上もいただき、バンバンIssueやPRが来て新しい体験ができた年でした。&lt;/p&gt;
-&lt;p&gt;自分としてはGoは現状速い言語を書くには向いていないし、これは設定ファイルの拡張用、くらいに思っていたのですが意外とサーバサイドに使おうという人がいて驚きましたね。それでもやはり圧倒的にコマンドラインツールの拡張用が多くてシングルバイナリ＋拡張言語がマッチする分野だと思います。&lt;/p&gt;
-&lt;p&gt;私はあくまで趣味プログラマなのでこういった機会はOSS活動をしていなければできない経験だったのでとても有益でしたね。英語にとても苦手意識があるのですが、案外適当な英語で通じるものです。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;なんで趣味でOSSを書いているか&lt;/h2&gt;
-&lt;p&gt;なんで趣味でOSSを書いているか…まぁ好きだからですよね。とにかくプログラミングが好きです。&lt;/p&gt;
-&lt;p&gt;あとは…どこかに「自分はまだ最低これくらい書ける」というのを確認したいという思いがあるのだと思います。そしてその裏には「やっぱり仕事でコード書きたいなあ」という思いがあるのでしょう。&lt;/p&gt;
-&lt;p&gt;この業界は実務経験がすべてですから、もはや実務から離れて久しい私がWEBやモバイル業界に行くことはないでしょうけど、万が一の時に自分の技術力を示す手段としてGithubという場を借りているのかな、と。&lt;/p&gt;
-&lt;p&gt;意外と？成果物経由で仕事しませんかというメールをもらえたりとGithubは見られてるんだな、と思いましたね。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;今後は…&lt;/h2&gt;
-&lt;p&gt;転職は35が限界、などという話もありますし今後をどうするか考える時期ですね。正直なところ今の勤め先が定年まで現状維持できる気がまったくしないので&lt;/p&gt;
-&lt;ol class=&#34;arabic simple&#34;&gt;
-&lt;li&gt;もっと安定している職業へ転職する&lt;/li&gt;
-&lt;li&gt;いっそWEB、モバイル業界にチャレンジする&lt;/li&gt;
-&lt;li&gt;(深く考えず今の勤め先で頑張る)&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;くらいでしょうか。安定している…というと公務員系ですかね。&lt;/p&gt;
-&lt;p&gt;いざという時に支えてくれる人がいればリスクを取りやすいのでしょうが、あいにく実家は離婚の上極貧、親戚づきあいなし、兄弟なし、独身(そして結婚も子供も予定なし)とある意味頼れるのは自分と会社だけ、という人間です。&lt;/p&gt;
-&lt;p&gt;さらに健康上の理由で海外は絶対行きたくない、となると1しかない気がしてきています。&lt;/p&gt;
-&lt;p&gt;その場合は、もうOSSでコード書いてもしかたないかなあ、とかこのブログも消そうかなあ、とか思うところはあります。&lt;/p&gt;
-&lt;p&gt;実際には惰性で3.でしょうが(まぁ20年くらいはつぶれないし待遇もそこまで落ちないでしょ…)。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;2016年&lt;/h2&gt;
-&lt;p&gt;とはいえ、2016年もなにかまとまったものが書ければな…とは思っているんです。やっぱり独自言語書きたいですね、普通にCで。 Goで実用的なものもなにか書きたいんですけど、ほんと趣味レベルではなかなかいいモノが思いつきません。いやー、実践でGo書いてみたいので副業できるなら喜んでGoで何か書ける仕事探すんですがねえ…。&lt;/p&gt;
-&lt;/section&gt;</description>
-      
-      <category>life</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2015/12/30/30-years-old-this-year</guid>
-      <pubDate>30 Dec 15 08:44 UTC</pubDate>
-    </item>
-    
-    <item>
       <title>Goのインタフェースがパフォーマンスに及ぼす影響 </title>
       <link>http://inforno.net/articles/2015/12/11/go-interface-performance-penalty</link>
-      <description>&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 11日目です。その3まであるなんてGo大人気ですね。&lt;/p&gt;
+      <description>&lt;p&gt;&lt;a href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 11日目です。その3まであるなんてGo大人気ですね。&lt;/p&gt;
+
 &lt;p&gt;Gopherというのはいろいろな人がいてLLからGoへ、という方も多いかと思います。&lt;/p&gt;
-LLではそもそも全てがオブジェクトだったりで話題になりませんが、よりマシンに近く&lt;s&gt;変態的に&lt;/s&gt;速度を重視される方が多いC&#43;&#43;では例えば仮想関数や実行時キャストのコストが議論になります。&lt;p&gt;Goにおいてこういう多態性はインタフェースで表現されます。結論からいうと、 &lt;strong&gt;Goのインタフェースにもそれなりのコストがあります。&lt;/strong&gt; なので極限までパフォーマンスを要求される場合には &lt;strong&gt;例えばインターフェースを使わない&lt;/strong&gt; というも選択肢に入ってくるのではないかと思います。&lt;/p&gt;
-&lt;section&gt;
-&lt;h2&gt;Go言語におけるインタフェースの内部表現&lt;/h2&gt;
+
+&lt;p&gt;LLではそもそも全てがオブジェクトだったりで話題になりませんが、よりマシンに近く&lt;s&gt;変態的に&lt;/s&gt;速度を重視される方が多いC&#43;&#43;では例えば仮想関数や実行時キャストのコストが議論になります。
+Goにおいてこういう多態性はインタフェースで表現されます。結論からいうと、 &lt;strong&gt;Goのインタフェースにもそれなりのコストがあります。&lt;/strong&gt; なので極限までパフォーマンスを要求される場合には &lt;strong&gt;例えばインターフェースを使わない&lt;/strong&gt; というも選択肢に入ってくるのではないかと思います。&lt;/p&gt;
+
+&lt;h1&gt;Go言語におけるインタフェースの内部表現&lt;/h1&gt;
+
 &lt;p&gt;さて、Goはブートストラップ化(言語処理系をその言語自身で実装する)を進めており、1.5ではGoのコンパイラ、ランタイムはほぼほぼGoで実装されています。ということはインターフェースもGoで実装されているはずですね。&lt;/p&gt;
+
 &lt;p&gt;Goのインタフェースは２個のポインタを持った &lt;code&gt;struct&lt;/code&gt; です。例えば、 &lt;code&gt;reflect/value.go&lt;/code&gt; では以下のようなコードがあります。&lt;/p&gt;
-&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;https://raw.githubusercontent.com/golang/go/master/src/reflect/value.go&#34;&gt;reflect/value.go&lt;/a&gt; :&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; // emptyInterface is the header for an interface{} value.
- type emptyInterface struct {
-     typ  *rtype
-     word unsafe.Pointer
- }
 
- // nonEmptyInterface is the header for a interface value with methods.
- type nonEmptyInterface struct {
-     // see ../runtime/iface.go:/Itab
-     itab *struct {
-         ityp   *rtype // static interface type
-         typ    *rtype // dynamic concrete type
-         link   unsafe.Pointer
-         bad    int32
-         unused int32
-         fun    [100000]unsafe.Pointer // method table
-     }
-     word unsafe.Pointer
- }&lt;/pre&gt;&lt;p&gt;コメントに書かれているように実態は &lt;code&gt;runtime/iface.go&lt;/code&gt; ですがこちらのほうが簡略化されていてわかりやすいでしょう。1個目のポインタは 「空のインタフェース( &lt;code&gt;iterface{}&lt;/code&gt; )」(これを &lt;code&gt;eface&lt;/code&gt; という)の場合、型情報、そうでない場合(これを &lt;code&gt;iface&lt;/code&gt; という)の場合 &lt;code&gt;itab&lt;/code&gt; と呼ばれるC&#43;&#43;における仮想テーブルのようなものです。2個目に値が格納されます。2個目はどちらもポインタであることに注意してください。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;インターフェース経由のメソッド呼び出し&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://raw.githubusercontent.com/golang/go/master/src/reflect/value.go&#34;&gt;reflect/value.go&lt;/a&gt; :&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;// emptyInterface is the header for an interface{} value.
+type emptyInterface struct {
+    typ  *rtype
+    word unsafe.Pointer
+}
+
+// nonEmptyInterface is the header for a interface value with methods.
+type nonEmptyInterface struct {
+    // see ../runtime/iface.go:/Itab
+    itab *struct {
+        ityp   *rtype // static interface type
+        typ    *rtype // dynamic concrete type
+        link   unsafe.Pointer
+        bad    int32
+        unused int32
+        fun    [100000]unsafe.Pointer // method table
+    }
+    word unsafe.Pointer
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;コメントに書かれているように実態は &lt;code&gt;runtime/iface.go&lt;/code&gt; ですがこちらのほうが簡略化されていてわかりやすいでしょう。1個目のポインタは 「空のインタフェース( &lt;code&gt;iterface{}&lt;/code&gt; )」(これを &lt;code&gt;eface&lt;/code&gt; という)の場合、型情報、そうでない場合(これを &lt;code&gt;iface&lt;/code&gt; という)の場合 &lt;code&gt;itab&lt;/code&gt; と呼ばれるC&#43;&#43;における仮想テーブルのようなものです。2個目に値が格納されます。2個目はどちらもポインタであることに注意してください。&lt;/p&gt;
+
+&lt;h1&gt;インターフェース経由のメソッド呼び出し&lt;/h1&gt;
+
 &lt;p&gt;ここで、インターフェースを使用するとどの程度パフォーマンスペナルティがあるのか、様々なケースで見てみます。&lt;/p&gt;
+
 &lt;p&gt;まずは、直接メソッドを呼び出すのと、インタフェース経由で呼び出す場合の違いを見てみましょう。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; type MyError struct{}
- func (e *MyError) Error() string { return &#34;error&#34; }
 
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         err := &amp;amp;MyError{}
-         err.Error()
-     }
- }
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;type MyError struct{}
+func (e *MyError) Error() string { return &amp;quot;error&amp;quot; }
 
- func BenchmarkInterface(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         var err error = &amp;amp;MyError{}
-         err.Error()
-     }
- }&lt;/pre&gt;&lt;p&gt;結果は以下のようになります。10倍程度遅くなります。単位が単位なので微々たる違いですが極限までパフォーマンスを追求したい場合は考慮しておいたほうがいいかもしれませんね。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface    2000000000               0.73 ns/op
- BenchmarkInterface      200000000                9.56 ns/op&lt;/pre&gt;&lt;p&gt;しかし実はこの中には &lt;code&gt;*MyError&lt;/code&gt; を &lt;code&gt;error&lt;/code&gt; インタフェースに変換するコストも含まれていて、そのコストを除くと5倍くらいの遅さです。次はそのインタフェースへの変換コストを詳しく見ていこうと思います。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;インターフェースへの変換コスト(非ポインタ型)&lt;/h2&gt;
+func BenchmarkNoInterface(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        err := &amp;amp;MyError{}
+        err.Error()
+    }
+}
+
+func BenchmarkInterface(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        var err error = &amp;amp;MyError{}
+        err.Error()     
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;結果は以下のようになります。10倍程度遅くなります。単位が単位なので微々たる違いですが極限までパフォーマンスを追求したい場合は考慮しておいたほうがいいかもしれませんね。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface    2000000000               0.73 ns/op
+BenchmarkInterface      200000000                9.56 ns/op
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;しかし実はこの中には &lt;code&gt;*MyError&lt;/code&gt; を &lt;code&gt;error&lt;/code&gt; インタフェースに変換するコストも含まれていて、そのコストを除くと5倍くらいの遅さです。次はそのインタフェースへの変換コストを詳しく見ていこうと思います。&lt;/p&gt;
+
+&lt;h1&gt;インターフェースへの変換コスト(非ポインタ型)&lt;/h1&gt;
+
 &lt;p&gt;Goにおけるインタフェースの変換時はC&#43;&#43;におけるキャストよりも複雑なことが発生します。&lt;/p&gt;
+
 &lt;p&gt;Goでは「なんでも」を表すために &lt;code&gt;interface{}&lt;/code&gt; を使いますね。 &lt;code&gt;int&lt;/code&gt; などの組み込み型かつ非ポインタ型を &lt;code&gt;interface{}&lt;/code&gt; として処理するとなにが起こるでしょうか？以下のようにフィボナッチを計算させてみます。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; func IntFibNoInterface(n int) int {
-     if n &amp;lt; 2 {
-         return n
-     }
-     return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
- }
 
- func IntFibInterface(o interface{}) interface{} {
-     n := o.(int)
-     if n &amp;lt; 2 {
-         return o
-     }
-     return IntFibInterface(n-1).(int) &#43; IntFibInterface(n-2).(int)
- }
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;func IntFibNoInterface(n int) int {
+    if n &amp;lt; 2 {
+        return n
+    }
+    return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
+}
 
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         IntFibNoInterface(20)
-     }
- }
+func IntFibInterface(o interface{}) interface{} {
+    n := o.(int)
+    if n &amp;lt; 2 {
+        return o
+    }
+    return IntFibInterface(n-1).(int) &#43; IntFibInterface(n-2).(int)
+}
 
- func BenchmarkInterface(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         IntFibInterface(20)
-     }
- }&lt;/pre&gt;&lt;p&gt;結果は以下。40 - 50倍くらいおそくなりますね。これを見ると気軽にインタフェースを使いたくなくなるかもしれません。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface       30000             57938 ns/op               0 B/op          0 allocs/op
- BenchmarkInterface           500           2448250 ns/op          525376 B/op      32836 allocs/op&lt;/pre&gt;&lt;p&gt;はじめに書いたように、インタフェースは &lt;strong&gt;ポインタとして値を保持します&lt;/strong&gt; 。 そのためコード上アロケートしていなくても、内部的に &lt;code&gt;int&lt;/code&gt; をアロケートしそこに値をコピーせねばなりません。&lt;/p&gt;
+func BenchmarkNoInterface(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        IntFibNoInterface(20)
+    }
+}
+
+func BenchmarkInterface(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        IntFibInterface(20)
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;結果は以下。40 - 50倍くらいおそくなりますね。これを見ると気軽にインタフェースを使いたくなくなるかもしれません。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface       30000             57938 ns/op               0 B/op          0 allocs/op
+BenchmarkInterface           500           2448250 ns/op          525376 B/op      32836 allocs/op
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;はじめに書いたように、インタフェースは &lt;strong&gt;ポインタとして値を保持します&lt;/strong&gt; 。 そのためコード上アロケートしていなくても、内部的に &lt;code&gt;int&lt;/code&gt; をアロケートしそこに値をコピーせねばなりません。&lt;/p&gt;
+
 &lt;p&gt;どのような処理が実行されたか、プロファイルを見てみましょう。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; 1.46s of 1.46s total (  100%)
- Showing top 20 nodes out of 35 (cum &amp;gt;= 0.01s)
-       flat  flat%   sum%        cum   cum%
-      0.37s 25.34% 25.34%      0.68s 46.58%  runtime.mallocgc
-      0.26s 17.81% 43.15%      1.44s 98.63%  12.IntFibInterface
-      0.20s 13.70% 56.85%      0.20s 13.70%  runtime.memmove
-      0.16s 10.96% 67.81%      0.16s 10.96%  runtime.mSpan_Sweep.func1
-      0.12s  8.22% 76.03%      0.96s 65.75%  runtime.convT2E
-      0.11s  7.53% 83.56%      0.31s 21.23%  runtime.typedmemmove
-      0.10s  6.85% 90.41%      0.26s 17.81%  runtime.heapBitsSweepSpan
-      0.05s  3.42% 93.84%      0.22s 15.07%  runtime.assertE2T
-      0.02s  1.37% 95.21%      0.70s 47.95%  runtime.newobject
-      0.02s  1.37% 96.58%      0.02s  1.37%  runtime.prefetchnta
-      0.01s  0.68% 97.26%      0.01s  0.68%  runtime.(*gcControllerState).findRunnableGCWorker
-      0.01s  0.68% 97.95%      0.01s  0.68%  runtime.lock
-      0.01s  0.68% 98.63%      0.01s  0.68%  runtime.mSpanList_InsertBack
-      0.01s  0.68% 99.32%      0.01s  0.68%  runtime.xadd64
-      0.01s  0.68%   100%      0.01s  0.68%  runtime.xchg
-          0     0%   100%      1.44s 98.63%  12.BenchmarkInterface
-          0     0%   100%      0.01s  0.68%  runtime.GC
-          0     0%   100%      0.01s  0.68%  runtime.deductSweepCredit
-          0     0%   100%      0.01s  0.68%  runtime.gc
-          0     0%   100%      0.01s  0.68%  runtime.gc.func4&lt;/pre&gt;&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;非ポインタ型のインターフェースへの変換コスト&lt;/h2&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;1.46s of 1.46s total (  100%)
+Showing top 20 nodes out of 35 (cum &amp;gt;= 0.01s)
+      flat  flat%   sum%        cum   cum%
+     0.37s 25.34% 25.34%      0.68s 46.58%  runtime.mallocgc
+     0.26s 17.81% 43.15%      1.44s 98.63%  12.IntFibInterface
+     0.20s 13.70% 56.85%      0.20s 13.70%  runtime.memmove
+     0.16s 10.96% 67.81%      0.16s 10.96%  runtime.mSpan_Sweep.func1
+     0.12s  8.22% 76.03%      0.96s 65.75%  runtime.convT2E
+     0.11s  7.53% 83.56%      0.31s 21.23%  runtime.typedmemmove
+     0.10s  6.85% 90.41%      0.26s 17.81%  runtime.heapBitsSweepSpan
+     0.05s  3.42% 93.84%      0.22s 15.07%  runtime.assertE2T
+     0.02s  1.37% 95.21%      0.70s 47.95%  runtime.newobject
+     0.02s  1.37% 96.58%      0.02s  1.37%  runtime.prefetchnta
+     0.01s  0.68% 97.26%      0.01s  0.68%  runtime.(*gcControllerState).findRunnableGCWorker
+     0.01s  0.68% 97.95%      0.01s  0.68%  runtime.lock
+     0.01s  0.68% 98.63%      0.01s  0.68%  runtime.mSpanList_InsertBack
+     0.01s  0.68% 99.32%      0.01s  0.68%  runtime.xadd64
+     0.01s  0.68%   100%      0.01s  0.68%  runtime.xchg
+         0     0%   100%      1.44s 98.63%  12.BenchmarkInterface
+         0     0%   100%      0.01s  0.68%  runtime.GC
+         0     0%   100%      0.01s  0.68%  runtime.deductSweepCredit
+         0     0%   100%      0.01s  0.68%  runtime.gc
+         0     0%   100%      0.01s  0.68%  runtime.gc.func4
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1&gt;非ポインタ型のインターフェースへの変換コスト&lt;/h1&gt;
+
 &lt;p&gt;では、ということで自分でアロケーションしてみましょう。 &lt;code&gt;int&lt;/code&gt; ではなく &lt;code&gt;*int&lt;/code&gt; を使ってみます。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; func IntFibNoInterface(n int) int {
-     if n &amp;lt; 2 {
-         return n
-     }
-     return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
- }
 
- func IntFibPointer(i *int) *int {
-     n := *i
-     if n &amp;lt; 2 {
-         return i
-     }
-     a1 := new(int)
-     *a1 = n - 1
-     a2 := new(int)
-     *a2 = n - 2
-     v1 := IntFibPointer(a1)
-     v2 := IntFibPointer(a2)
-     ret := new(int)
-     *ret = *v1 &#43; *v2
-     return ret
- }
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;func IntFibNoInterface(n int) int {
+    if n &amp;lt; 2 {
+        return n
+    }
+    return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
+}
 
- func IntFibInterface(o interface{}) interface{} {
-     n := *(o.(*int))
-     if n &amp;lt; 2 {
-         return o
-     }
-     a1 := new(int)
-     *a1 = n - 1
-     a2 := new(int)
-     *a2 = n - 2
-     v1 := IntFibInterface(a1).(*int)
-     v2 := IntFibInterface(a2).(*int)
-     ret := new(int)
-     *ret = *v1 &#43; *v2
-     return ret
- }
+func IntFibPointer(i *int) *int {
+    n := *i
+    if n &amp;lt; 2 {
+        return i
+    }
+    a1 := new(int)
+    *a1 = n - 1
+    a2 := new(int)
+    *a2 = n - 2
+    v1 := IntFibPointer(a1)
+    v2 := IntFibPointer(a2)
+    ret := new(int)
+    *ret = *v1 &#43; *v2
+    return ret
+}
 
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         IntFibNoInterface(20)
-     }
- }
+func IntFibInterface(o interface{}) interface{} {
+    n := *(o.(*int))
+    if n &amp;lt; 2 {
+        return o
+    }
+    a1 := new(int)
+    *a1 = n - 1
+    a2 := new(int)
+    *a2 = n - 2
+    v1 := IntFibInterface(a1).(*int)
+    v2 := IntFibInterface(a2).(*int)
+    ret := new(int)
+    *ret = *v1 &#43; *v2
+    return ret
+}
 
- func BenchmarkPointer(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         a := new(int)
-         *a = 20
-         IntFibPointer(a)
-     }
- }
+func BenchmarkNoInterface(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        IntFibNoInterface(20)
+    }
+}
 
- func BenchmarkInterface(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         a := new(int)
-         *a = 20
-         IntFibInterface(a)
-     }
- }&lt;/pre&gt;&lt;p&gt;結果は以下のようになります。20-30倍というところでしょうか。こちらのほうがコードだけ見ると遅そうですが、なんと &lt;code&gt;int&lt;/code&gt; を使った場合より速いのです。そして、インタフェースへの変換コストは少ない、ということがわかります。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface       30000             55558 ns/op               0 B/op          0 allocs/op
- BenchmarkPointer            1000           1297598 ns/op          525376 B/op      32836 allocs/op
- BenchmarkInterface          1000           1357172 ns/op          525376 B/op      32836 allocs/op&lt;/pre&gt;&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; 1.54s of 1.54s total (  100%)
- Showing top 20 nodes out of 37 (cum &amp;gt;= 0.01s)
-       flat  flat%   sum%        cum   cum%
-      0.75s 48.70% 48.70%      1.24s 80.52%  runtime.mallocgc
-      0.22s 14.29% 62.99%      0.22s 14.29%  runtime.mSpan_Sweep.func1
-      0.16s 10.39% 73.38%      0.38s 24.68%  runtime.heapBitsSweepSpan
-      0.14s  9.09% 82.47%      1.38s 89.61%  runtime.newobject
-      0.11s  7.14% 89.61%      1.49s 96.75%  12.IntFibInterface
-      0.08s  5.19% 94.81%      0.08s  5.19%  runtime.prefetchnta
-      0.02s  1.30% 96.10%      0.02s  1.30%  runtime.heapBitsForObject
-      0.01s  0.65% 96.75%      0.01s  0.65%  runtime.(*bucket).mp
-      0.01s  0.65% 97.40%      0.01s  0.65%  runtime.atomicload64
-      0.01s  0.65% 98.05%      0.41s 26.62%  runtime.mCentral_CacheSpan
-      0.01s  0.65% 98.70%      0.03s  1.95%  runtime.scanblock
-      0.01s  0.65% 99.35%      0.01s  0.65%  runtime.schedule
-      0.01s  0.65%   100%      0.01s  0.65%  runtime.xchg
-          0     0%   100%      1.49s 96.75%  12.BenchmarkInterface
-          0     0%   100%      0.04s  2.60%  runtime.backgroundgc
-          0     0%   100%      0.01s  0.65%  runtime.deductSweepCredit
-          0     0%   100%      0.04s  2.60%  runtime.gc
-          0     0%   100%      0.02s  1.30%  runtime.gc.func1
-          0     0%   100%      0.01s  0.65%  runtime.gc.func3
-          0     0%   100%      0.01s  0.65%  runtime.gc.func4&lt;/pre&gt;&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;非ポインタ型とポインタ型の違いは？&lt;/h2&gt;
-&lt;p&gt;プロファイルをみるとわかりますが、 &lt;code&gt;runtime.convT2E&lt;/code&gt; , &lt;code&gt;runtime.assertE2T&lt;/code&gt; が非ポインタ型の場合重荷になっています。ここまで「ポインタ型」「非ポインタ型」という曖昧な表現をしていましたが、正確には
-これは &lt;code&gt;isdirectiface&lt;/code&gt; という関数の結果が &lt;code&gt;true&lt;/code&gt; かどうかです。これによりインターフェス変換の処理が変わります。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; // Can this type be stored directly in an interface word?
- // Yes, if the representation is a single pointer.
- func isdirectiface(t *Type) bool {
-     switch t.Etype {
-     case TPTR32,
-         TPTR64,
-         TCHAN,
-         TMAP,
-         TFUNC,
-         TUNSAFEPTR:
-         return true
+func BenchmarkPointer(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        a := new(int)
+        *a = 20
+        IntFibPointer(a)
+    }
+}
 
-         // Array of 1 direct iface type can be direct.
-     case TARRAY:
-         return t.Bound == 1 &amp;amp;&amp;amp; isdirectiface(t.Type)
+func BenchmarkInterface(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        a := new(int)
+        *a = 20
+        IntFibInterface(a)
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
 
-         // Struct with 1 field of direct iface type can be direct.
-     case TSTRUCT:
-         return t.Type != nil &amp;amp;&amp;amp; t.Type.Down == nil &amp;amp;&amp;amp; isdirectiface(t.Type.Type)
-     }
+&lt;p&gt;結果は以下のようになります。20-30倍というところでしょうか。こちらのほうがコードだけ見ると遅そうですが、なんと &lt;code&gt;int&lt;/code&gt; を使った場合より速いのです。そして、インタフェースへの変換コストは少ない、ということがわかります。&lt;/p&gt;
 
-     return false
- }&lt;/pre&gt;&lt;p&gt;これが &lt;code&gt;false&lt;/code&gt; になるオブジェクトをインタフェースとして利用する際は注意です。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;時にはインタフェースを使わない、という選択も&lt;/h2&gt;
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface       30000             55558 ns/op               0 B/op          0 allocs/op
+BenchmarkPointer            1000           1297598 ns/op          525376 B/op      32836 allocs/op
+BenchmarkInterface          1000           1357172 ns/op          525376 B/op      32836 allocs/op
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;1.54s of 1.54s total (  100%)
+Showing top 20 nodes out of 37 (cum &amp;gt;= 0.01s)
+      flat  flat%   sum%        cum   cum%
+     0.75s 48.70% 48.70%      1.24s 80.52%  runtime.mallocgc
+     0.22s 14.29% 62.99%      0.22s 14.29%  runtime.mSpan_Sweep.func1
+     0.16s 10.39% 73.38%      0.38s 24.68%  runtime.heapBitsSweepSpan
+     0.14s  9.09% 82.47%      1.38s 89.61%  runtime.newobject
+     0.11s  7.14% 89.61%      1.49s 96.75%  12.IntFibInterface
+     0.08s  5.19% 94.81%      0.08s  5.19%  runtime.prefetchnta
+     0.02s  1.30% 96.10%      0.02s  1.30%  runtime.heapBitsForObject
+     0.01s  0.65% 96.75%      0.01s  0.65%  runtime.(*bucket).mp
+     0.01s  0.65% 97.40%      0.01s  0.65%  runtime.atomicload64
+     0.01s  0.65% 98.05%      0.41s 26.62%  runtime.mCentral_CacheSpan
+     0.01s  0.65% 98.70%      0.03s  1.95%  runtime.scanblock
+     0.01s  0.65% 99.35%      0.01s  0.65%  runtime.schedule
+     0.01s  0.65%   100%      0.01s  0.65%  runtime.xchg
+         0     0%   100%      1.49s 96.75%  12.BenchmarkInterface
+         0     0%   100%      0.04s  2.60%  runtime.backgroundgc
+         0     0%   100%      0.01s  0.65%  runtime.deductSweepCredit
+         0     0%   100%      0.04s  2.60%  runtime.gc
+         0     0%   100%      0.02s  1.30%  runtime.gc.func1
+         0     0%   100%      0.01s  0.65%  runtime.gc.func3
+         0     0%   100%      0.01s  0.65%  runtime.gc.func4
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1&gt;非ポインタ型とポインタ型の違いは？&lt;/h1&gt;
+
+&lt;p&gt;プロファイルをみるとわかりますが、 &lt;code&gt;runtime.convT2E&lt;/code&gt; , &lt;code&gt;runtime.assertE2T&lt;/code&gt; が非ポインタ型の場合重荷になっています。ここまで「ポインタ型」「非ポインタ型」という曖昧な表現をしていましたが、正確には これは &lt;code&gt;isdirectiface&lt;/code&gt; という関数の結果が &lt;code&gt;true&lt;/code&gt; かどうかです。これによりインターフェス変換の処理が変わります。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;// Can this type be stored directly in an interface word?
+// Yes, if the representation is a single pointer.
+func isdirectiface(t *Type) bool {
+    switch t.Etype {
+    case TPTR32,
+        TPTR64,
+        TCHAN,
+        TMAP,
+        TFUNC,
+        TUNSAFEPTR:
+        return true
+
+        // Array of 1 direct iface type can be direct.
+    case TARRAY:
+        return t.Bound == 1 &amp;amp;&amp;amp; isdirectiface(t.Type)
+
+        // Struct with 1 field of direct iface type can be direct.
+    case TSTRUCT:
+        return t.Type != nil &amp;amp;&amp;amp; t.Type.Down == nil &amp;amp;&amp;amp; isdirectiface(t.Type.Type)
+    }
+
+    return false
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これが &lt;code&gt;false&lt;/code&gt; になるオブジェクトをインタフェースとして利用する際は注意です。&lt;/p&gt;
+
+&lt;h1&gt;時にはインタフェースを使わない、という選択も&lt;/h1&gt;
+
 &lt;p&gt;以上のことから、特に性能が必要な場合、インタフェースを使わず擬似共用体(Goに共用体はないので)のような実装をしたほうがよい場合が出てきます。フィボナッチの例を &lt;code&gt;struct&lt;/code&gt; で書いてみましょう。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; const (
-     TypeInt int = iota
-     TypeBool
- )
 
- type Object struct {
-     Type      int
-     IntValue  int
-     BoolValue bool
- }
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;const (
+    TypeInt int = iota
+    TypeBool
+)
 
- func IntFibNoInterface(n int) int {
-     if n &amp;lt; 2 {
-         return n
-     }
-     return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
- }
+type Object struct {
+    Type      int
+    IntValue  int
+    BoolValue bool
+}
 
- func IntFibStruct(o Object) Object {
-     if o.IntValue &amp;lt; 2 {
-         return o
-     }
-     return Object{TypeInt,
-         IntFibStruct(Object{TypeInt, o.IntValue - 1, false}).IntValue &#43;
-             IntFibStruct(Object{TypeInt, o.IntValue - 2, false}).IntValue,
-         false}
- }
+func IntFibNoInterface(n int) int {
+    if n &amp;lt; 2 {
+        return n
+    }
+    return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
+}
 
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         IntFibNoInterface(20)
-     }
- }
+func IntFibStruct(o Object) Object {
+    if o.IntValue &amp;lt; 2 {
+        return o
+    }
+    return Object{TypeInt,
+        IntFibStruct(Object{TypeInt, o.IntValue - 1, false}).IntValue &#43;
+            IntFibStruct(Object{TypeInt, o.IntValue - 2, false}).IntValue,
+        false}
+}                                                               
 
- func BenchmarkStruct(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         IntFibStruct(Object{TypeInt, 20, false})
-     }
- }&lt;/pre&gt;&lt;p&gt;速度ですが、インタフェースを使うより断然早く、2-3倍程度しか遅くなりません。当たり前ですが、暗黙的なメモリアロケーションも発生しません。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface       30000             58491 ns/op               0 B/op          0 allocs/op
- BenchmarkStruct            10000            139924 ns/op               0 B/op          0 allocs/op&lt;/pre&gt;&lt;p&gt;&lt;code&gt;reflect&lt;/code&gt; を使えば・・・というのもありますが、結局 &lt;code&gt;reflect.ValueOf&lt;/code&gt; の引数が &lt;code&gt;interface{}&lt;/code&gt; なので素直に使うと &lt;code&gt;interface{}&lt;/code&gt; の場合と同様の遅さです。&lt;/p&gt;
-&lt;pre class=&#34;prettyprint lang-go&#34;&gt; func IntFibNoInterface(n int) int {
-     if n &amp;lt; 2 {
-         return n
-     }
-     return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
- }
+func BenchmarkNoInterface(b *testing.B) {                       
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        IntFibNoInterface(20)
+    }
+}
 
- func IntFibReflect(r reflect.Value) reflect.Value {
-     n := r.Int()
-     if n &amp;lt; 2 {
-         return r
-     }
-     return reflect.ValueOf(IntFibReflect(reflect.ValueOf(n-1)).Int() &#43; IntFibReflect(reflect.ValueOf(n-2)).Int())
- }
+func BenchmarkStruct(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        IntFibStruct(Object{TypeInt, 20, false})
+    }  
+}
+&lt;/code&gt;&lt;/pre&gt;
 
- func BenchmarkNoInterface(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         IntFibNoInterface(20)
-     }
- }
+&lt;p&gt;速度ですが、インタフェースを使うより断然早く、2-3倍程度しか遅くなりません。当たり前ですが、暗黙的なメモリアロケーションも発生しません。&lt;/p&gt;
 
- func BenchmarkReflect(b *testing.B) {
-     for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-         IntFibReflect(reflect.ValueOf(20))
-     }
- }&lt;/pre&gt;&lt;pre class=&#34;prettyprint lang-bash&#34;&gt; BenchmarkNoInterface       30000             56238 ns/op               0 B/op          0 allocs/op
- BenchmarkReflect            1000           2271026 ns/op          525376 B/op      32836 allocs/op&lt;/pre&gt;&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;ちなみにGopherLuaでは&lt;/h2&gt;
-&lt;p&gt;拙作のGo言語によるLua実装 &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; では一番おそい、非ポインタ型をインタフェースとして使う実装になっています。なのでGopherLuaはおそらく現在でもGo上で動くスクリプト言語としては最速の部類ですがさらに速くしようと思えばできたのかもなあと思っています(まぁこの例ほど言語実装は単純ではないし、擬似共用体にするにしてもサイズが大きくなるので、速くなるかどうかはやってみないとなんともいえないのですが。あとサイズがおおきくなるのでスタック型のAPIにするよりないでしょうね)。&lt;/p&gt;
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface       30000             58491 ns/op               0 B/op          0 allocs/op
+BenchmarkStruct            10000            139924 ns/op               0 B/op          0 allocs/op
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;reflect&lt;/code&gt; を使えば・・・というのもありますが、結局 &lt;code&gt;reflect.ValueOf&lt;/code&gt; の引数が &lt;code&gt;interface{}&lt;/code&gt; なので素直に使うと &lt;code&gt;interface{}&lt;/code&gt; の場合と同様の遅さです。&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;func IntFibNoInterface(n int) int {
+    if n &amp;lt; 2 {
+        return n
+    }
+    return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
+}
+
+func IntFibReflect(r reflect.Value) reflect.Value {
+    n := r.Int()
+    if n &amp;lt; 2 {
+        return r
+    }     
+    return reflect.ValueOf(IntFibReflect(reflect.ValueOf(n-1)).Int() &#43; IntFibReflect(reflect.ValueOf(n-2)).Int())
+}                         
+
+func BenchmarkNoInterface(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        IntFibNoInterface(20)
+    }     
+}         
+
+func BenchmarkReflect(b *testing.B) {
+    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
+        IntFibReflect(reflect.ValueOf(20))
+    }                        
+}         
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface       30000             56238 ns/op               0 B/op          0 allocs/op
+BenchmarkReflect            1000           2271026 ns/op          525376 B/op      32836 allocs/op
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1&gt;ちなみにGopherLuaでは&lt;/h1&gt;
+
+&lt;p&gt;拙作のGo言語によるLua実装 &lt;a href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; では一番おそい、非ポインタ型をインタフェースとして使う実装になっています。なのでGopherLuaはおそらく現在でもGo上で動くスクリプト言語としては最速の部類ですがさらに速くしようと思えばできたのかもなあと思っています(まぁこの例ほど言語実装は単純ではないし、擬似共用体にするにしてもサイズが大きくなるので、速くなるかどうかはやってみないとなんともいえないのですが。あとサイズがおおきくなるのでスタック型のAPIにするよりないでしょうね)。&lt;/p&gt;
+
 &lt;p&gt;これは使い易さや実装のし易さやメモリ効率、そして「Goらしさ」とのトレードオフだと思っています。私は、とにかく使い易いものがほしかったので一番使い易く、そして実装が楽なものを選びました。&lt;/p&gt;
-&lt;p&gt;とはいえ、特に数値型をインタフェースに変換する負荷を軽減するために、独自のアロケータを実装しています。これは一定数の &lt;code&gt;float64&lt;/code&gt; をまとめてアロケートすることでインタフェース変換コストを減らしています。かなり強引なのですが興味のある方は &lt;a class=&#34;reference external&#34; href=&#34;https://github.com/yuin/gopher-lua/blob/master/alloc.go&#34;&gt;gopher-lua/alloc.go&lt;/a&gt; をご参照ください。&lt;/p&gt;
-&lt;/section&gt;
-&lt;section&gt;
-&lt;h2&gt;最後に&lt;/h2&gt;
+
+&lt;p&gt;とはいえ、特に数値型をインタフェースに変換する負荷を軽減するために、独自のアロケータを実装しています。これは一定数の &lt;code&gt;float64&lt;/code&gt; をまとめてアロケートすることでインタフェース変換コストを減らしています。かなり強引なのですが興味のある方は &lt;a href=&#34;https://github.com/yuin/gopher-lua/blob/master/alloc.go&#34;&gt;gopher-lua/alloc.go&lt;/a&gt; をご参照ください。&lt;/p&gt;
+
+&lt;h1&gt;最後に&lt;/h1&gt;
+
 &lt;p&gt;インタフェースはGoで中心的な役割を果たしていますが、時に大幅なパフォーマンス劣化を起こす可能性があります。 特に、非ポインタ型を &lt;code&gt;interface{}&lt;/code&gt; などとして引数に渡す場合が要注意です。&lt;/p&gt;
-&lt;p&gt;&lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 12日目は &lt;a class=&#34;reference external&#34; href=&#34;http://qiita.com/Ladicle&#34;&gt;Ladicle&lt;/a&gt; さんです。&lt;/p&gt;
-&lt;/section&gt;</description>
+
+&lt;p&gt;&lt;a href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 12日目は &lt;a href=&#34;http://qiita.com/Ladicle&#34;&gt;Ladicle&lt;/a&gt; さんです。&lt;/p&gt;
+</description>
       
       <category>golang</category>
       

@@ -74,69 +74,76 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>先日公開した <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが。</p>
+    <p>先日公開した <a href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが。</p>
+
 <p>GopherLuaはLuaなので、ホスト言語との親和性を重視しております。GolangなのにGoroutine関係のサポートがないとだめでしょ！ということで、とりあえずですが、channelを扱えるようにしました。</p>
-<p>これもまたReadmeに書いてありますが、以下のように使います。
-selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ通信できます。</p>
-<pre class="prettyprint lang-go"> func receiver(ch, quit chan lua.LValue) {
-     L := lua.NewState()
-     defer L.Close()
-     L.SetGlobal("ch", lua.LChannel(ch))
-     L.SetGlobal("quit", lua.LChannel(quit))
-     if err := L.DoString(`
-     local exit = false
-     while not exit do
-       channel.select(
-         {"|&lt;-", ch, function(ok, v)
-           if not ok then
-             print("channel closed")
-             exit = true
-           else
-             print("received:", v)
-           end
-         end},
-         {"|&lt;-", quit, function(ok, v)
-             print("quit")
-             exit = true
-         end}
-       )
-     end
-   `); err != nil {
-         panic(err)
-     }
- }
 
- func sender(ch, quit chan lua.LValue) {
-     L := lua.NewState()
-     defer L.Close()
-     L.SetGlobal("ch", lua.LChannel(ch))
-     L.SetGlobal("quit", lua.LChannel(quit))
-     if err := L.DoString(`
-     ch:send("1")
-     ch:send("2")
-   `); err != nil {
-         panic(err)
-     }
-     ch &lt;- lua.LString("3")
-     quit &lt;- lua.LTrue
- }
+<p>これもまたReadmeに書いてありますが、以下のように使います。 selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ通信できます。</p>
 
- func main() {
-     ch := make(chan lua.LValue)
-     quit := make(chan lua.LValue)
-     go receiver(ch, quit)
-     go sender(ch, quit)
-     time.Sleep(3 * time.Second)
- }</pre><p>こんな感じですね。Luaと同じくState自体はスレッドセーフではないので、goroutineごとにStateをもってChannelで通信します。</p>
-<section>
-<h2>実装について</h2>
+<pre class="prettyprint"><code class="language-go">func receiver(ch, quit chan lua.LValue) {
+    L := lua.NewState()
+    defer L.Close()
+    L.SetGlobal(&quot;ch&quot;, lua.LChannel(ch))
+    L.SetGlobal(&quot;quit&quot;, lua.LChannel(quit))
+    if err := L.DoString(`
+    local exit = false
+    while not exit do
+      channel.select(
+        {&quot;|&lt;-&quot;, ch, function(ok, v)
+          if not ok then
+            print(&quot;channel closed&quot;)
+            exit = true
+          else
+            print(&quot;received:&quot;, v)
+          end
+        end},
+        {&quot;|&lt;-&quot;, quit, function(ok, v)
+            print(&quot;quit&quot;)
+            exit = true
+        end}
+      )
+    end
+  `); err != nil {
+        panic(err)
+    }
+}
+
+func sender(ch, quit chan lua.LValue) {
+    L := lua.NewState()
+    defer L.Close()
+    L.SetGlobal(&quot;ch&quot;, lua.LChannel(ch))
+    L.SetGlobal(&quot;quit&quot;, lua.LChannel(quit))
+    if err := L.DoString(`
+    ch:send(&quot;1&quot;)
+    ch:send(&quot;2&quot;)
+  `); err != nil {
+        panic(err)
+    }
+    ch &lt;- lua.LString(&quot;3&quot;)
+    quit &lt;- lua.LTrue
+}
+
+func main() {
+    ch := make(chan lua.LValue)
+    quit := make(chan lua.LValue)
+    go receiver(ch, quit)
+    go sender(ch, quit)
+    time.Sleep(3 * time.Second)
+}
+</code></pre>
+
+<p>こんな感じですね。Luaと同じくState自体はスレッドセーフではないので、goroutineごとにStateをもってChannelで通信します。</p>
+
+<h1>実装について</h1>
+
 <p>迷ったんですが、channelは <strong>基本型</strong> として実装しています。 ユーザーデータ型でもよかったんですが、channelはGolangの特徴の一つですし、基本型にしたほうが親和性がよいので。</p>
+
 <p>あと、内部的にはリフレクションなのでそんなに性能はよくないかもしれません。</p>
-</section>
-<section>
-<h2>よければ使ってみてください</h2>
+
+<h1>よければ使ってみてください</h1>
+
 <p>実装してみたものの、正直私は職業プログラマでなく趣味プログラマなのであんまり使うシーンがないです。なんかいい使いどころがあれば使ってみてください。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

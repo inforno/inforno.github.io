@@ -61,6 +61,54 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2017/02/15/bash-script-in-bat" itemprop="url">batの中にbashスクリフﾟトを埋め込む方法</a></h3>
+<div class="meta">
+<time datetime="2017-02-15T01:25:04&#43;09:00">Feb 15, 2017</time>
+
+  
+  <span class="tag"><a href="/articles/tag/bash/" rel="tag" itemprop="keywords">bash</a></span>
+  
+  <span class="tag"><a href="/articles/tag/bat/" rel="tag" itemprop="keywords">bat</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>相変わらずメインのマシンはWindowsなのですが、batファイルのもろもろがいつまでも覚えられず、bashスクリプトで書きたいなあ、ということでbatファイルにbashスクリプトを埋め込むことにしました。 Cでつくった自作用ツールがあるため、Windowsにはかならずmsys2をいれているのでbashは絶対あるんですよね。</p>
+
+<p>その他の言語を埋め込む方法は</p>
+
+<ul>
+<li><a href="http://qiita.com/snipsnipsnip/items/50e4ca88e3ce3f8cffda">Windowsでshebangもどき、またはバッチにスクリプトを埋め込む方法</a></li>
+</ul>
+
+<p>が詳しいです。</p>
+
+<h1>シェルスクリプトをバッチファイルに埋め込む</h1>
+
+<p>以下のようにすると、バッチファイルにシェルスクリプト(bashスクリプト)を埋め込むことにできます。拡張子 <code>.bat</code> で保存すると <code>cmd.exe</code> からもmsys2の <code>bash.exe</code> からも起動できます。</p>
+
+<pre class="prettyprint"><code>:rem () { &lt;&lt;'#__CO__'
+@bash  &quot;%~f0&quot; %* &amp; exit /b
+#__CO__
+}
+
+echo 以下普通にシェルスクリプト
+</code></pre>
+
+<p>仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、<code>:</code> コマンドやらをうまく利用して埋め込んでいます。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2016/12/16/gopher-lua-plugins-in-go18" itemprop="url">Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた</a></h3>
 <div class="meta">
 <time datetime="2016-12-16T21:10:26&#43;09:00">Dec 16, 2016</time>
@@ -74,99 +122,143 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://qiita.com/advent-calendar/2016/go">Go Advent Calendar 2016</a> 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。</p>
-<p>さて、Go1.8では待望？のShared Libraryのロードが可能になります。 <a class="reference external" href="https://tip.golang.org/pkg/plugin/">pluginパッケージ</a> を使います。</p>
+    <p><a href="http://qiita.com/advent-calendar/2016/go">Go Advent Calendar 2016</a> 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。</p>
+
+<p>さて、Go1.8では待望？のShared Libraryのロードが可能になります。 <a href="https://tip.golang.org/pkg/plugin/">pluginパッケージ</a> を使います。</p>
+
 <p>Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。</p>
-<p>Advent Calendar 2の <a class="reference external" href="http://qiita.com/qt-luigi/items/47a7913145fc747da0c7">qt-luigiさんのネタ</a> と被ってしまったのですが実戦的に使ってみました、ということで許してください。</p>
-<section>
-<h2>プラグインの作成とコンパイル</h2>
+
+<p>Advent Calendar 2の <a href="http://qiita.com/qt-luigi/items/47a7913145fc747da0c7">qt-luigiさんのネタ</a> と被ってしまったのですが実戦的に使ってみました、ということで許してください。</p>
+
+<h1>プラグインの作成とコンパイル</h1>
+
 <p>マニュアルページにあるとおり、以下のようになります。</p>
-<pre class="prettyprint lang-go"> package main
 
- // // No C code needed.
- import "C"
+<pre class="prettyprint"><code class="language-go">package main
 
- import "fmt"
+// // No C code needed.
+import &quot;C&quot;
 
- var V int
+import &quot;fmt&quot;
 
- func F() { fmt.Printf("Hello, number %d\n", V) }</pre><p>ポイントは</p>
-<ul class="simple">
+var V int
+
+func F() { fmt.Printf(&quot;Hello, number %d\n&quot;, V) }
+</code></pre>
+
+<p>ポイントは</p>
+
+<ul>
 <li>Cのコードはないが、 <code>import &quot;C&quot;</code> が必要</li>
 <li><code>package</code> は <code>main</code></li>
 </ul>
+
 <p>という２点です。コンパイルは</p>
-<pre class="prettyprint bash"> $ go build -buildmode=plugin -o plugin.so plugin.go</pre><p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
-</section>
-<section>
-<h2>プラグインのロード</h2>
+
+<pre class="prettyprint"><code class="language-bash">$ go build -buildmode=plugin -o plugin.so plugin.go
+</code></pre>
+
+<p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
+
+<h1>プラグインのロード</h1>
+
 <p>これまたマニュアルページどおりですが</p>
-<pre class="prettyprint lang-go"> p, err := plugin.Open("plugin.so")
- if err != nil {
-     panic(err)
- }
- v, err := p.Lookup("V")
- if err != nil {
-     panic(err)
- }
- f, err := p.Lookup("F")
- if err != nil {
-     panic(err)
- }
- *v.(*int) = 7
- f.(func())() // prints "Hello, number 7"</pre><p>のように非常に直感的に使えます。</p>
-</section>
-<section>
-<h2>GopherLuaで使ってみた</h2>
-<p>拙作のPure GoによるLua実装 <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。</p>
+
+<pre class="prettyprint"><code class="language-go">p, err := plugin.Open(&quot;plugin.so&quot;)
+if err != nil {
+    panic(err)
+}
+v, err := p.Lookup(&quot;V&quot;)
+if err != nil {
+    panic(err)
+}
+f, err := p.Lookup(&quot;F&quot;)
+if err != nil {
+    panic(err)
+}
+*v.(*int) = 7
+f.(func())() // prints &quot;Hello, number 7&quot;
+</code></pre>
+
+<p>のように非常に直感的に使えます。</p>
+
+<h1>GopherLuaで使ってみた</h1>
+
+<p>拙作のPure GoによるLua実装 <a href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。</p>
+
 <p>そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。</p>
-<p>こちらは <a class="reference external" href="https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins">feature-exp-go1.8pluginsブランチ</a> で実際に動かせます。プラグイン部分のコミットは <a class="reference external" href="https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b">571b031</a> です。</p>
+
+<p>こちらは <a href="https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins">feature-exp-go1.8pluginsブランチ</a> で実際に動かせます。プラグイン部分のコミットは <a href="https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b">571b031</a> です。</p>
+
 <p>まずプラグイン側から。Luaのお作法通りです。</p>
-<pre class="prettyprint lang-go"> package main
 
- import (
-     "C"
-     "github.com/yuin/gopher-lua"
- )
+<pre class="prettyprint"><code class="language-go">package main
 
- func Add(L *lua.LState) int {
-     v1 := L.CheckInt(1)
-     v2 := L.CheckInt(2)
-     L.Push(lua.LNumber(v1 + v2))
-     return 1
- }
+import (
+    &quot;C&quot;
+    &quot;github.com/yuin/gopher-lua&quot;
+)
 
- func LuaOpenPlugin(L *lua.LState) int {
-     L.Push(
-             L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
-                     "add": Add,
-             }))
-     return 1
- }</pre><p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
+func Add(L *lua.LState) int {
+    v1 := L.CheckInt(1)
+    v2 := L.CheckInt(2)
+    L.Push(lua.LNumber(v1 + v2))
+    return 1
+}
+
+func LuaOpenPlugin(L *lua.LState) int {
+    L.Push(
+        L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+            &quot;add&quot;: Add,
+        }))
+    return 1
+}
+</code></pre>
+
+<p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
+
 <p>こいつをコンパイルして・・・</p>
-<pre class="prettyprint bash"> $ cd /home/yuin/tmp/plugin
- $ go build -buildmode=plugin -o plugin.so plugin.go</pre><p>こうじゃ</p>
-<pre class="prettyprint ">$ glua
-&gt; package.cpath = package.cpath .. ";" .. "/home/yuin/tmp/plugin/?.so"
-&gt; adder = require("plugin")
+
+<pre class="prettyprint"><code class="language-bash">$ cd /home/yuin/tmp/plugin
+$ go build -buildmode=plugin -o plugin.so plugin.go
+</code></pre>
+
+<p>こうじゃ</p>
+
+<pre class="prettyprint"><code>$ glua
+&gt; package.cpath = package.cpath .. &quot;;&quot; .. &quot;/home/yuin/tmp/plugin/?.so&quot;
+&gt; adder = require(&quot;plugin&quot;)
 &gt; print(adder.add(1, 2))
-3</pre><p>おおおおおおおおおおおおお</p>
+3
+</code></pre>
+
+<p>おおおおおおおおおおおおお</p>
+
 <p>普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。</p>
-<pre class="prettyprint ">&lt;string&gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua</pre><p><code>package.loadlib</code> も実装しました。</p>
-<pre class="prettyprint ">$ glua
-&gt; print(package.loadlib("/home/yuin/tmp/plugin/notfound", "foo"))
+
+<pre class="prettyprint"><code>&lt;string&gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua
+</code></pre>
+
+<p><code>package.loadlib</code> も実装しました。</p>
+
+<pre class="prettyprint"><code>$ glua
+&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/notfound&quot;, &quot;foo&quot;))
 nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
-&gt; print(package.loadlib("/home/yuin/tmp/plugin/plugin.so", "foo"))
+&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/plugin.so&quot;, &quot;foo&quot;))
 nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
-&gt; print(package.loadlib("/home/yuin/tmp/plugin/plugin.so", "LuaOpenPlugin"))
+&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/plugin.so&quot;, &quot;LuaOpenPlugin&quot;))
 function: 0xc4200c9840
-&gt;</pre><p>完璧ですね。</p>
-</section>
-<section>
-<h2>pluginパッケージ、使えそうですが・・・</h2>
+&gt; 
+</code></pre>
+
+<p>完璧ですね。</p>
+
+<h1>pluginパッケージ、使えそうですが・・・</h1>
+
 <p>少なくとも、Linuxでは <code>plugin</code> パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。</p>
+
 <p>Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。</p>
-</section>
+
   </div>
 </article>
 
@@ -190,119 +282,100 @@ function: 0xc4200c9840
 </header>
   <div itemprop="articleBody">
     <p>たまには実用的なものをつくろうと思って、Go+Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。</p>
-<div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script><p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
+
+<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
+
+<p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
+
 <p>特徴は以下です。</p>
-<ul class="simple">
+
+<ul>
 <li>Goなので置けば動く</li>
 <li>それでいてLuaでスクリプトを書ける</li>
 <li>最初からマルチスレッド(複数goroutine)を考慮している</li>
 <li>HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる</li>
 <li>定期ジョブも流せる</li>
 </ul>
-<pre class="prettyprint lang-lua">function main()
-  local bot = golbot.newbot("Slack", { token = "xxxxx" })
+
+<pre class="prettyprint"><code class="language-lua">function main()
+  local bot = golbot.newbot(&quot;Slack&quot;, { token = &quot;xxxxx&quot; })
 
   bot:respond([[\s*(\d+)\s*\+\s*(\d+)\s*]], function(m, e) -- 3
     bot:say(e.target, tostring(tonumber(m[2]) + tonumber(m[3])))
   end)
 
   bot:serve(function(msg)
-    if msg.type == "say" then
+    if msg.type == &quot;say&quot; then
       bot:say(msg.channel, msg.message)
       respond(msg, true)
     end
   end)
-end</pre><p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
-<pre class="prettyprint lang-lua">function main()
+end
+</code></pre>
+
+<p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
+
+<pre class="prettyprint"><code class="language-lua">function main()
   bot:respond([[deploy]], function(m, e)
-    bot:say(e.target, "accepted")
-    goworker({target=e.target, type="deploy"})
+    bot:say(e.target, &quot;accepted&quot;)
+    goworker({target=e.target, type=&quot;deploy&quot;})
   end)
 
   bot:serve(function(msg)
-    if msg.type == "say" then
+    if msg.type == &quot;say&quot; then
       bot:say(msg.target, msg.message)
     end
   end)
 end
 
 function worker(msg)
-  if msg.type == "deploy" then
+  if msg.type == &quot;deploy&quot; then
     do_deploy()
-    notifymain({type="say", target=msg.target, message="your deployment has been completed"})
+    notifymain({type=&quot;say&quot;, target=msg.target, message=&quot;your deployment has been completed&quot;})
   end
-end</pre><p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
+end
+</code></pre>
+
+<p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
+
 <p>HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。</p>
-<pre class="prettyprint lang-lua"> function http(r)
-   if r.method == "POST" and r.URL.path == "/webhook" then
-     local data = assert(json.decode(r:readbody()))
-     local message = data.item.message.message
-     local user = data.item.message.from.name
-     local room = data.item.room.name
 
-     local ret = {
-       message = "hello! from webhook",
-       message_format = "html"
-     }
+<pre class="prettyprint"><code class="language-lua">function http(r)
+  if r.method == &quot;POST&quot; and r.URL.path == &quot;/webhook&quot; then
+    local data = assert(json.decode(r:readbody()))
+    local message = data.item.message.message
+    local user = data.item.message.from.name
+    local room = data.item.room.name
 
-     return 200, headers, json.encode(ret)
-   end
-   return 400, headers, json.encode({result="not found"})
- end</pre><p>定期ジョブは以下のような感じ。</p>
-<pre class="prettyprint lang-lua"> function main()
-   golbot.newbot("Null", {
-     http = "0.0.0.0:6669" ,
-     crons = {
-       { "0 * * * * * ", "job1"}
-     }
-   }):serve(function() end)
- end
+    local ret = {
+      message = &quot;hello! from webhook&quot;,
+      message_format = &quot;html&quot;
+    }
 
- function job1()
-   print "hello!"
- end</pre><p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
-  </div>
-</article>
+    return 200, headers, json.encode(ret)
+  end
+  return 400, headers, json.encode({result=&quot;not found&quot;})
+end
+</code></pre>
 
+<p>定期ジョブは以下のような感じ。</p>
 
-  <hr class="list1sep" />
+<pre class="prettyprint"><code class="language-lua">function main()
+  golbot.newbot(&quot;Null&quot;, { 
+    http = &quot;0.0.0.0:6669&quot; ,
+    crons = {
+      { &quot;0 * * * * * &quot;, &quot;job1&quot;}
+    }
+  }):serve(function() end)
+end
 
+function job1()
+  print &quot;hello!&quot;
+end
+</code></pre>
 
+<p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2016/07/14/go-charsetutil" itemprop="url">Goで文字コードを手軽に変換するライブラリ作った</a></h3>
-<div class="meta">
-<time datetime="2016-07-14T00:23:19&#43;09:00">Jul 14, 2016</time>
-
-  
-  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>日本人である以上、いくらUTF-8が主権を得てきたといっても文字コード変換というカルマからは逃れられません。Pure Goでの文字コード変換はLLに比べるといろいろめんどくさい。</p>
-<p>それに、そのままだと任意の文字コードを指定させるのが難しい。特定の文字コード決め打ちならいいんですけど、全世界の利用者に向けて任意の文字コード設定できるようにする場合とかはさらにめんどくさいし、かといって <code>iconv</code> に依存するのも嫌なのライブラリにしました。</p>
-<div data-theme="default" data-height="150" data-width="400" data-github="yuin/charsetutil" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script><p>以下のような感じで簡単に文字コードを変換できます。Pythonと同じで <code>encode</code> がUTF-8からUTF-8以外へ、 <code>decode</code> がUTF-8以外からUTF-8へ、です。内部では <code>golang.org/x/net/html/charset</code> を使っているので文字コードの指定もそれに習います。(WHATWGで定義されている名前になります) 。なので <code>cp932</code> などではなく <code><span class="pre">Windows-31J</span></code> です。</p>
-<pre class="prettyprint lang-go"> b, err = EncodeString("こんにちわ", "Windows-31J")
- b, err = Encode("こんにちわ", "Windows-31J")
- b, err = EncodeBytes([]byte("こんにちわ"), "Windows-31J")
- b, err = EncodeReader(strings.NewReader("こんにちわ"), "Windows-31J")
- b = MustEncodeString("こんにちわ", "Windows-31J")
- b = MustEncode("こんにちわ", "Windows-31J")
- b = MustEncodeBytes([]byte("こんにちわ"), "Windows-31J")
- b = MustEncodeReader(strings.NewReader("こんにちわ"), "Windows-31J")
-
- s, err = DecodeString(string(source), "Windows-31J")
- s, err = Decode(source, "Windows-31J")
- s, err = DecodeBytes(source, "Windows-31J")
- s, err = DecodeReader(bytes.NewReader(source), "Windows-31J")
- s = MustDecodeString(string(source), "Windows-31J")
- s = MustDecode(source, "Windows-31J")
- s = MustDecodeBytes(source, "Windows-31J")
- s = MustDecodeReader(bytes.NewReader(source), "Windows-31J")</pre>
   </div>
 </article>
 

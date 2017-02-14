@@ -71,11 +71,16 @@
 </header>
   <div itemprop="articleBody">
     <p>ScalaにはStreamという無限リストがあるんだけど、微妙に使いづらい、というか分かりづらい。Haskellでいうcycleはどうだ、とかよく忘れるのでメモ。</p>
-<pre class="prettyprint ">def repeat[T](a:T) = Stream.const(a)
+
+<pre class="prettyprint"><code>def repeat[T](a:T) = Stream.const(a)
 def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
 def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
-def replicate[T](n:int, elem:T) = Stream.make(n, elem)</pre><p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
-<pre class="prettyprint ">repeat(1) take 10 print
+def replicate[T](n:int, elem:T) = Stream.make(n, elem)
+</code></pre>
+
+<p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
+
+<pre class="prettyprint"><code>repeat(1) take 10 print
 // =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
 
 cycle(1 to 4) take 10 print
@@ -85,14 +90,18 @@ iterate((x:int)=&gt;x+1, 0) take 10 print
 // =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
 
 replicate(3, 1) take 10 print
-// =&gt; 1, 1, 1, Stream.empty</pre><p>うんうん。</p>
+// =&gt; 1, 1, 1, Stream.empty
+</code></pre>
+
+<p>うんうん。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2008/02/03/some-scala-tips-for-beginners">基礎を終えた人のScalaミニtips</a></li>
-<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
-<li><a href="/articles/2008/03/04/japanese-language-programing-in-scala">日本語プログラミング言語Scala</a></li>
 <li><a href="/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala">Scalaでスタック指向言語をサクッと実装する</a></li>
+<li><a href="/articles/2008/03/04/japanese-language-programing-in-scala">日本語プログラミング言語Scala</a></li>
+<li><a href="/articles/2008/02/21/dsl-in-python-and-ruby">Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に</a></li>
+<li><a href="/articles/2008/02/03/some-scala-tips-for-beginners">基礎を終えた人のScalaミニtips</a></li>
 <li><a href="/articles/2007/07/30/parser-combinators-in-scala">Scalaでパーサコンビネータ</a></li>
 </ul>
     </div>

@@ -79,87 +79,114 @@
 </header>
   <div itemprop="articleBody">
     <p>そういえば、こういうサイトに定番っぽい開発環境を書いたのがないので、自己紹介？も兼ねて晒してみます。</p>
+
 <p>開発はだいたいWindows上のvmware(Debian)でやってます。ただし、そこは定番どころばっかりなのでパス。まぁvim+screen+zshです。puttyでつないでますよ。sambaでマウントしてますよ。ええ。それぞれ結構設定しまくっていて、グローバルなSVNサーバーにおいてあります。</p>
-<section>
-<h2>Windowsでの開発環境</h2>
+
+<h1>Windowsでの開発環境</h1>
+
 <p>あんまりWindowsは好きではないけど、Macよりは好きだったりする。というわけでWindows。普段使いのOSでもあるので、主に自分用の小物を書くことが多いです。怠け者なので、自動化できるものはすぐプログラムに置き換えちゃいます。でも言語は結構様々。もとから言語にこだわらず、一番適しているものを使う主義なので小物が多いにもかかわらず、言語は結構多いのかも。</p>
+
 <p>今のところ、だいたい</p>
-<ul class="simple">
+
+<ul>
 <li>それなりのGUIが必要なアプリ:Delphi6</li>
 <li>一枚ウインドウがあるくらいのGUIアプリ:Python(wxWidgets)</li>
 <li>GUIがなく、立ち上がりの速さや軽さが欲しいもの：C(MinGW)</li>
 <li>それ以外の小物:Python</li>
 </ul>
+
 <p>という感じで適材適所。</p>
+
 <p>Linuxではまったく定番な感じ（定番が自分にしっくりきた）だったけど、Windowsにはキーボード派の定番ってのは少ない気がするので、結構独特なのかも。方針は</p>
-<ul class="simple">
+
+<ul>
 <li>キーボードで操作しやすいように。</li>
 <li>なるべくlinuxと同じような感覚（←これ重要)で。</li>
 </ul>
+
 <p>感覚なので一緒じゃなくてもいいのです。</p>
-<section>
-<h3>gvim</h3>
+
+<h2>gvim</h2>
+
 <p>開発はほとんどこいつです。Delphi以外は。Linuxのvimと同じ設定ファイルを共有してます。俺はvimがなくちゃ生きていけない人間なので、USBメモリにいれてもち運べるようにしてあります。</p>
-</section>
-<section>
-<h3>Firefox</h3>
-<p>ブラウザはこいつ。ただし <a class="reference external" href="http://portablefirefox.mozdev.org/">PortableFirefox</a> です。これもUSBメモリにいれて持ち運べるように。学校にいってもUSBメモリをさすだけで普段の環境。拡張も結構つっこんでます。</p>
-</section>
-<section>
-<h3><a class="reference external" href="http://d.hatena.ne.jp/cogma">cltc</a></h3>
+
+<h2>Firefox</h2>
+
+<p>ブラウザはこいつ。ただし <a href="http://portablefirefox.mozdev.org/">PortableFirefox</a> です。これもUSBメモリにいれて持ち運べるように。学校にいってもUSBメモリをさすだけで普段の環境。拡張も結構つっこんでます。</p>
+
+<h2><a href="http://d.hatena.ne.jp/cogma">cltc</a></h2>
+
 <p>タスク切り替えが便利になるソフト。こんな感じで表示されます。インクリメンタル検索での選択や、カーソルキーでの選択ができます。</p>
-<a class="reference external image-reference" href="http://inforno.net/statics/files/cltc.jpg"><img alt="http://inforno.net/statics/files/cltc.thumbnail.jpg" src="http://inforno.net/statics/files/cltc.thumbnail.jpg" /></a>
+
+<p><a href="http://inforno.net/statics/files/cltc.jpg"><img src="http://inforno.net/statics/files/cltc.thumbnail.jpg" alt="image" /></a></p>
+
 <p>windowsでタスク切り替えというと`Alt+TAB`ですが、これ非常に使いづらい。そこでこのソフト。ここでキモになるのがキー設定で</p>
-<ul class="simple">
+
+<ul>
 <li><code>Ctrl+Shift+z</code> で起動</li>
 <li><code>Ctrl+j</code> と <code>Ctrl+k</code> でタスクを選択</li>
 </ul>
+
 <p>という風に設定しています。俺と同じLinux開発環境の人は分かるでしょう（笑</p>
-<p><code>Ctrl+z` がscreenのエスケープで ``jk</code> はvim。これだけでかなりLinuxと同じ感覚でタスクが選べるようになります。</p>
-</section>
-<section>
-<h3>MigemizeExplorer</h3>
+
+<p><code>Ctrl+z` がscreenのエスケープで</code>jk`` はvim。これだけでかなりLinuxと同じ感覚でタスクが選べるようになります。</p>
+
+<h2>MigemizeExplorer</h2>
+
 <p>こりゃ定番。説明不要ですよねえ。超便利。</p>
-</section>
-<section>
-<h3><a class="reference external" href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h3>
+
+<h2><a href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h2>
+
 <p>これがないと始まらない。コマンド型ランチャー。craftlanuchラブ。こいつはデスクトップ用と持ち運び用（USBメモリに入れる用）の2個も用意してます。起動用ホットキーはeclipseなんてもんは使ってないので <code>Ctrl+Space</code> です。</p>
+
 <p>俺の場合はほぼ全ての作業の起点がこのソフト。ランチャーとしてのソフト起動から簡易シェルとしてまで大活躍。中でもオススメなのはexplorer.exe(windows標準のシェル)+craftlaunchの連携。</p>
-<p>craftlaunchというと「 <a class="reference external" href="http://www.h5.dion.ne.jp/~akt/">あふ</a> 」との連携が有名ですが、俺はあえてexplorer.exeと連携してます。というのも、なにぶん普段使いのOSですから、マルチメディアのファイルなんかも多いわけです。重くてもプレビューが見れたりするのは便利なもんです。日本語のファイル名だし、ファイラーつかってもファイル選択するのがめんどくさいもんです。</p>
+
+<p>craftlaunchというと「<a href="http://www.h5.dion.ne.jp/~akt/">あふ</a>」との連携が有名ですが、俺はあえてexplorer.exeと連携してます。というのも、なにぶん普段使いのOSですから、マルチメディアのファイルなんかも多いわけです。重くてもプレビューが見れたりするのは便利なもんです。日本語のファイル名だし、ファイラーつかってもファイル選択するのがめんどくさいもんです。</p>
+
 <p>どうやって連携してるかというと、基本的に小物アプリ＋ショートカットキー。この使い方をはじめるきっかけになったのは「せっかくcraftlaunchからキーボードだけでフォルダ開けるんだから、ホームポジションで楽にキーボードだけで閉じたいなあ」という思い。</p>
-<p><code>ctrl+space</code>, <code>ctrl+[</code></p>
+
+<p><code>ctrl+space</code>,<code>ctrl+[</code></p>
+
 <p>の2ステップでウインドウが閉じられます。ctrlは押しっぱなしでいいので非常に軽快に閉じられます。鉄の小指を持つemacs使いの人ならなおのことでしょう（笑</p>
-</section>
-</section>
-<section>
+
 <h2>その他の連携</h2>
+
 <p><strong>フォルダの新規作成</strong></p>
-<p>windowのexplorerの不満はフォルダを作るのがめんどくさいことですよね。キーボードなら <code>Alt+F W F</code> でしょうか。というわけでfiniのような自作コマンドで対応してます。超テキトーなのですが、あげておきます。</p>
-<p><a class="reference external" href="/statics/files/amkdir.zi">amkdir.zip</a></p>
-<p>こいつを <code>ctrl+n</code> にショートカットとして割り当ててあります。すると・・・</p>
-<p>craftlaunchでフォルダを開く→MigemizeExplorerで快適にフォルダをたどる→「フォルダつくりてえ」→ <code>ctrl+space</code> フォルダ名入力 <code>ctrl+n</code></p>
-<p>という感じになるわけで、結構ハッピーです。</p>
+
+<p>windowのexplorerの不満はフォルダを作るのがめんどくさいことですよね。キーボードなら<code>Alt+F W F</code> でしょうか。というわけでfiniのような自作コマンドで対応してます。超テキトーなのですが、あげておきます。</p>
+
+<p><a href="/statics/files/amkdir.zip">amkdir.zip</a></p>
+
+<p>こいつを <code>ctrl+n</code>にショートカットとして割り当ててあります。すると・・・  craftlaunchでフォルダを開く→MigemizeExplorerで快適にフォルダをたどる→「フォルダつくりてえ」→<code>ctrl+space</code>フォルダ名入力<code>ctrl+n</code>という感じになるわけで、結構ハッピーです。</p>
+
 <p><strong>コンソール</strong></p>
+
 <p>おなじような感じで、表示されているフォルダをカレントディレクトリとしてcmd.exeを起動するものもつくってあります。ほとんどつかわないけど。</p>
-<p>以上のような、変なWindowsで日々暮らしています。cltcでブラウザやvim、コンソールを行き来しながらIDEはあんまり使わないでガリガリ書いています。</p>
-<p>まぁ、だいたいvmware上のLinuxにいるんですけど（笑</p>
-<p>まとめると</p>
-<ul class="simple">
-<li>cltcで <code>ctrl+z</code> に <code>ctrl+j,k</code> 。快適ですよ。</li>
+
+<hr />
+
+<p>以上のような、変なWindowsで日々暮らしています。cltcでブラウザやvim、コンソールを行き来しながらIDEはあんまり使わないでガリガリ書いています。  まぁ、だいたいvmware上のLinuxにいるんですけど（笑  まとめると</p>
+
+<ul>
+<li>cltcで<code>ctrl+z</code>に<code>ctrl+j,k</code> 。快適ですよ。</li>
 <li>MigemizeExplorerはWindows標準装備になればいいのに。</li>
 <li>craftlaunchはあふと連携してもいいけど、explorerと連携してもハッピーですよ。</li>
 </ul>
+
 <p>という感じです。</p>
+
+<hr />
+
 <p>エミュレーターのほうはあのあとCPUを若干チューニングして、1フレーム0.1はキリました。今はPPUを書いてるんですが、そろそろ就職に備えて家を探さないといけません。京都と関東を行き来するのはいろいろこたえます。移動中はシグマリオンのPocketSchemeでSchemeでも書いて暇つぶしです。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2009/06/28/open-cmd-here">一瞬で今いるフォルダでcmd.exeを開く</a></li>
 <li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
 <li><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware">vimでvmwareとWindowsのクリップボードを同期する</a></li>
-<li><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules">Python標準モジュールでRakeもどき</a></li>
 <li><a href="/articles/2008/02/19/tasktools-committed-to-the-coderepos">Python版Rake「tasktools」をCodeReposにコミットした</a></li>
+<li><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules">Python標準モジュールでRakeもどき</a></li>
 </ul>
     </div>
   </div>

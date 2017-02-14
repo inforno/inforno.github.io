@@ -72,52 +72,45 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>最近prototype.jsではSelectorとDOMがよく動きます。
-仕事でも使っているし、重要な部分なのでここのところウォッチしています。</p>
-<p>最近、実は書こうと思ってたElement.extendの問題が解決されました。
-問題：<a class="reference external" href="http://dev.rubyonrails.org/ticket/4465">Incredible memory leak in IE</a></p>
-<p>これは見る人が見ればパッと見で「これはヤバいんじゃね？」と思ったんじゃないでしょうか。
-わからなかった人は上記のURLにも載っている
-<a class="reference external" href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp">http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp</a>
-を見ておくと今後悩むことが減るかもしれません。</p>
+    <p>最近prototype.jsではSelectorとDOMがよく動きます。 仕事でも使っているし、重要な部分なのでここのところウォッチしています。</p>
+
+<p>最近、実は書こうと思ってたElement.extendの問題が解決されました。 問題：<a href="http://dev.rubyonrails.org/ticket/4465">Incredible memory leak in IE</a></p>
+
+<p>これは見る人が見ればパッと見で「これはヤバいんじゃね？」と思ったんじゃないでしょうか。 わからなかった人は上記のURLにも載っている <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp"><a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp">http://msdn.microsoft.com/library/default.asp?url=/library/en-us/ietechcol/dnwebgen/ie_leak_patterns.asp</a></a> を見ておくと今後悩むことが減るかもしれません。</p>
+
 <p>リンク先をみたらなにが問題かわかるのであえては書きません。</p>
-<p>もう一個、興味深いのは <a class="reference external" href="http://dev.rubyonrails.org/ticket/4477">Element.extend cripples $() performance</a> での議論です。
-<a class="reference external" href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements">前に書いた記事</a> と似た主張や議論がなされています。うちの会社にも英語苦手な人がいるので簡単に要旨を。</p>
+
+<p>もう一個、興味深いのは <a href="http://dev.rubyonrails.org/ticket/4477">Element.extend cripples $() performance</a> での議論です。 <a href="/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements">前に書いた記事</a> と似た主張や議論がなされています。うちの会社にも英語苦手な人がいるので簡単に要旨を。</p>
+
 <ul>
-<li><dl class="first docutils">
-<dt>Element.extendはパフォーマンスに問題がある。前のままにしてほしい。</dt>
-<dd><ul class="first last">
-<li><p class="first"><a class="reference external" href="http://dev.rubyonrails.org/changeset/4094">http://dev.rubyonrails.org/changeset/4094</a> でだいぶマシになっているよ？</p>
-</li>
-<li><p class="first">解説：以前はそれぞれのElementについてElement.Methodsのメソッドにelementをbindしてコピーしていた。つまりElementの数に比例してメモリを使用する。しかし4094でキャッシュを導入したので一定数のメソッドしか生成しない。</p>
-</li>
-<li><p class="first">とりあえずElement.extendのパフォーマンスをあげることにフォーカスしよう。</p>
-</li>
-<li><dl class="first docutils">
-<dt>Element.extend = Prototype.Kってかけばとりあえず大丈夫じゃね？</dt>
-<dd><ul class="first last simple">
+<li><p>Element.extendはパフォーマンスに問題がある。前のままにしてほしい。</p>
+
+<ul>
+<li><a href="http://dev.rubyonrails.org/changeset/4094"><a href="http://dev.rubyonrails.org/changeset/4094">http://dev.rubyonrails.org/changeset/4094</a></a> でだいぶマシになっているよ？</li>
+<li>解説：以前はそれぞれのElementについてElement.Methodsのメソッドにelementをbindしてコピーしていた。つまりElementの数に比例してメモリを使用する。しかし4094でキャッシュを導入したので一定数のメソッドしか生成しない。</li>
+<li>とりあえずElement.extendのパフォーマンスをあげることにフォーカスしよう。</li>
+
+<li><p>Element.extend = Prototype.Kってかけばとりあえず大丈夫じゃね？</p>
+
+<ul>
 <li>でもscriptaculousが完全にextendされてる前提でコードかいてるから動かなくなるじゃん。</li>
-<li>解説：scriptaculousは3月28日にprototype.js 1.5_pre1をバンドルしてバージョン1.6をリリースした。このバージョンではelement.setStyle({top: ''})とかelement.show();みたいにガンガンElement.extendを活用している。まぁとりあえずElement.extendが必要ないときはPrototype.Kにしとけばいい。</li>
+<li>解説：scriptaculousは3月28日にprototype.js 1.5_pre1をバンドルしてバージョン1.6をリリースした。このバージョンではelement.setStyle({top: &ldquo;})とかelement.show();みたいにガンガンElement.extendを活用している。まぁとりあえずElement.extendが必要ないときはPrototype.Kにしとけばいい。</li>
+</ul></li>
+
+<li><p>FirefoxやSafariは高速化できる（前のエントリーとほぼ同じ）。しかしprototype.jsに組み込むとscriptaculousのElement.Methods拡張が反映されない。</p></li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">FirefoxやSafariは高速化できる（前のエントリーとほぼ同じ）。しかしprototype.jsに組み込むとscriptaculousのElement.Methods拡張が反映されない。</p>
-</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
+
 <p>というわけでElement.extendはこれでちょっと落ち着いた感じ。個人的にはElement.extend無効化して使っていきたいなーって思ってたりしてたんですけどscriptaculousがやっぱりガンガン使ってきたので、まぁ様子見てみます。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
-<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 </ul>
     </div>
   </div>

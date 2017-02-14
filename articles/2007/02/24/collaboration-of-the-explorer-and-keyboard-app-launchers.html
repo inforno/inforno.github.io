@@ -74,55 +74,63 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">こちら</a> にも書いたとおり、Windowsではコマンドライン型ランチャーのcraftlaunchとexplorer.exeを連携させて使ってます。</p>
+    <p><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">こちら</a> にも書いたとおり、Windowsではコマンドライン型ランチャーのcraftlaunchとexplorer.exeを連携させて使ってます。</p>
+
 <p>最前面のディレクトリ（アクティブなディレクトリ）に対して、キーボードで、Linuxと同じ感覚でmkdirとかrmとかしたいなー、ってのを実現してみました。</p>
+
 <p>今まではC言語で作った自前のライブラリで処理していたんですが、COMを使ったものに書き直しました。同様の目的にはAHKが使えるんですが、やっぱり使い慣れた言語でいろいろコマンドを作りたかったのでCOM＋Javascriptにしてみました。もちろん、COMなのでRubyでもPerlでもPythonでも同様の実装が作れます。</p>
+
 <p>craftlaunchを前提にしてますが、コマンドライン型のランチャーならなんでも適応できる方法だと思います。explorerを使っていてもキーボードだけでmkdir,rm,mvなんかが実行できちゃって、非常に便利です。</p>
-<ul class="simple">
-<li><a class="reference external" href="/statics/files/explorehelper.zip">ダウンロード</a></li>
+
+<ul>
+<li><a href="/statics/files/explorehelper.zip">ダウンロード</a></li>
 </ul>
+
 <p>簡単なコマンドラインランチャーもどきも同梱してますので、現在コマンドライン型ランチャーをいれていない人でも試せます。</p>
+
 <p>以下readmeからの転載です。</p>
-<section>
-<h2>利用方法</h2>
-<p>explorehelper.wsf,explorehelper.js,getadir.exeは同じフォルダになければ
-なりません。</p>
-<pre class="prettyprint ">explorehelper.wsf [command] [args]</pre><p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、
-ctrl-eなどにショートカット登録しておくと良いでしょう。すると、
-mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
-</section>
-<section>
-<h2>それぞれのファイルについて</h2>
-<section>
-<h3>simple_launcher.exe</h3>
-<p>コマンドライン型ランチャーを導入していない方でも試せるように、AHKで作った
-簡単なランチャーを同梱してあります。ただしこのランチャーは</p>
-<ul class="simple">
+
+<h1>利用方法</h1>
+
+<p>explorehelper.wsf,explorehelper.js,getadir.exeは同じフォルダになければ なりません。</p>
+
+<pre class="prettyprint"><code>explorehelper.wsf [command] [args]
+</code></pre>
+
+<p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、 ctrl-eなどにショートカット登録しておくと良いでしょう。すると、 mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
+
+<h1>それぞれのファイルについて</h1>
+
+<h2>simple_launcher.exe</h2>
+
+<p>コマンドライン型ランチャーを導入していない方でも試せるように、AHKで作った 簡単なランチャーを同梱してあります。ただしこのランチャーは</p>
+
+<ul>
 <li>ホットキー（有効化）はalt+space</li>
 <li>コマンド実行はctrl+e</li>
 </ul>
+
 <p>に固定されています。つまり</p>
+
 <p>「起動」→(「alt+space」でアクティブに)→「command入力」→「ctrl+e」で実行</p>
-<p>という操作になります。気にいった人はちゃんとしたコマンドライン型ランチャー
-の導入をオススメします。</p>
-</section>
-<section>
-<h3>getahwnd.exe</h3>
+
+<p>という操作になります。気にいった人はちゃんとしたコマンドライン型ランチャー の導入をオススメします。</p>
+
+<h2>getahwnd.exe</h2>
+
 <p>最前面のExplorer.exeのウインドウハンドルを出力するだけのプログラムです。</p>
-</section>
-<section>
-<h3>explorehelper.js</h3>
+
+<h2>explorehelper.js</h2>
+
 <p>JscriptによるCOMに対するヘルパーです。</p>
-</section>
-<section>
-<h3>explorehelper.wsf</h3>
-<p>Jscriptによるカスタムコマンドが定義されたファイルです。このファイルを編集
-することによってcommandが自由に追加できます。</p>
-</section>
-</section>
-<section>
-<h2>ビルトインコマンド</h2>
-<ul class="simple">
+
+<h2>explorehelper.wsf</h2>
+
+<p>Jscriptによるカスタムコマンドが定義されたファイルです。このファイルを編集 することによってcommandが自由に追加できます。</p>
+
+<h1>ビルトインコマンド</h1>
+
+<ul>
 <li>mv</li>
 <li>mkdir</li>
 <li>cmd</li>
@@ -132,33 +140,36 @@ mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成で
 <li>ls : -x, -s, -tオプションのみ受け付けます。つまりフォルダ内をソートします。</li>
 <li>verbs : 右クリックメニューを出します。shift+F10と同じ効果です。</li>
 </ul>
+
 <p>説明の無いものはUnixのそれから類推してください。</p>
-</section>
-<section>
-<h2>カスタムコマンドの追加について</h2>
+
+<h1>カスタムコマンドの追加について</h1>
+
 <p>explorehelper.wsfを編集することによってcommandが自由に追加できます。</p>
-<pre class="prettyprint ">var procs = {
+
+<pre class="prettyprint"><code>var procs = {
   mv : function() {
     var path = get_dir_and_focused_item_path();
-    var name = InputBox("新しい名前を入力してください。", path.item._base_name());
+    var name = InputBox(&quot;新しい名前を入力してください。&quot;, path.item._base_name());
     if(name) get_dir_and_focused_item().item.Name = name;
   }._item_proc()._auto_win_activate(),
 
   mkdir : function() {
     var path = get_dir_and_focused_item_path();
-    var name = InputBox("フォルダ名を入力してください。");
+    var name = InputBox(&quot;フォルダ名を入力してください。&quot;);
     if(name) fs().GetFolder(path.win).SubFolders.Add(name);
   }._auto_win_activate(),
   .
   .
   .
-  .</pre><p>commandは上記のように、procオブジェクトのプロパティとして定義されます。その際、
-command名がキー、値は引数なしの関数になります。キーに大文字は使用できません。</p>
-<p>commandを定義する際にはexplorehelper.jsで定義されたヘルパを使用することができます。
-カスタムcommandを定義しようとする人は当然、JScript(Javascript)が理解できる人
-だと思いますので、ヘルパの詳細はexplorehelper.jsを見てください。ここではリスト
-のみ紹介します。</p>
-<ul class="simple">
+  .
+</code></pre>
+
+<p>commandは上記のように、procオブジェクトのプロパティとして定義されます。その際、 command名がキー、値は引数なしの関数になります。キーに大文字は使用できません。</p>
+
+<p>commandを定義する際にはexplorehelper.jsで定義されたヘルパを使用することができます。 カスタムcommandを定義しようとする人は当然、JScript(Javascript)が理解できる人 だと思いますので、ヘルパの詳細はexplorehelper.jsを見てください。ここではリスト のみ紹介します。</p>
+
+<ul>
 <li>InputBox : 入力フォームを表示します。</li>
 <li>MessageBox : メッセージを表示します。</li>
 <li>Confirm : 確認フォームを表示します。</li>
@@ -171,13 +182,18 @@ command名がキー、値は引数なしの関数になります。キーに大�
 <li>get_dir_and_focused_item_path : アクティブなディレクトリと選択されているアイテムのパスを返します。</li>
 <li>get_dir_and_focused_item_path_lst : アクティブなディレクトリと選択されているアイテムのパスのリストを返します。</li>
 <li>$wsh_args : argsを格納した配列です。</li>
-<li>Function.prototype._item_proc : アイテムに対する手続きであることを宣言します。アイテムを選択していない場合、処理が実行されなくなります。</li>
-<li>Function.prototype._auto_win_activate : 手続きを終了後、ウインドウをアクティブにします。</li>
+
+<li><p>Function.prototype._item_proc : アイテムに対する手続きであることを宣言します。アイテムを選択していない場合、処理が実行されなくなります。</p></li>
+
+<li><p>Function.prototype._auto_win_activate : 手続きを終了後、ウインドウをアクティブにします。 　 　 　</p></li>
 </ul>
-<hr class="docutils" />
+
+<hr />
+
 <p>こんな感じです。COMなら大概なんでもできるので、便利です。しかもJScriptとexeなのでUSBメモリなどにいれて持ち運べますので、俺ポータビリティもそこそこあります。</p>
+
 <p>また、いかにAHKスクリプトが簡単でも、普段使い慣れた言語でかけるほうが落ち着きます。AHKなんかをみてると、完全なDSLというのは俺的に扱うのがめんどくさくて（覚える熱意があればいいんだろうけど、趣味で使うものにそれほどの情熱がでるかというと・・・）なじみにくいようだ。Rakeみたいな言語内DSLがいいよね、やっぱ。ああ、2007年はRubyの年になるんでしょうかねえ。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
@@ -185,7 +201,7 @@ command名がキー、値は引数なしの関数になります。キーに大�
 <li><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">キーボード派のWindows開発環境</a></li>
 <li><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware">vimでvmwareとWindowsのクリップボードを同期する</a></li>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
 </ul>
     </div>
   </div>

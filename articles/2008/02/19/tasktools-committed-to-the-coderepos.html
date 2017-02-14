@@ -74,71 +74,81 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules">以前紹介したPython版Rakeもどき</a> を改良してCodeReposに突っ込みました。まだ100行くらいです。自分では一番使っている自作モジュールなのでそろそろまとめようと思っていたのです。</p>
-<p><a class="reference external" href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.p">http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py</a></p>
-<section>
-<h2>改良点</h2>
-<ul class="simple">
+    <p><a href="http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules">以前紹介したPython版Rakeもどき</a> を改良してCodeReposに突っ込みました。まだ100行くらいです。自分では一番使っている自作モジュールなのでそろそろまとめようと思っていたのです。</p>
+
+<p><a href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.p"><a href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py">http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py</a></a></p>
+
+<h1>改良点</h1>
+
+<ul>
 <li><code>setuptools</code> があるときはそっちを使うようにした。</li>
-<li><code>use_without_standard</code> メソッドによって <code>distutils</code> 標準タスクを消すことができる。これによって <code><span class="pre">--help-commands</span></code> の画面がすっきりする。また、この場合名前空間のセパレータに <code>:</code> を用いるようになった。</li>
+<li><code>use_without_standard</code> メソッドによって <code>distutils</code> 標準タスクを消すことができる。これによって <code>--help-commands</code> の画面がすっきりする。また、この場合名前空間のセパレータに <code>:</code> を用いるようになった。</li>
 <li><code>global_description</code> によってタスクファイル自体に説明がつけられるようになった。</li>
 <li><code>load_path</code> メソッドで指定したディレクトリ以下を再帰的に検索し「 <code>tasks.py</code> 」という名前のファイルを読み込むことができるようになった。</li>
-<li><code><span class="pre">--help-commands</span></code> で表示されるコマンドの並び順をソートするようにした。</li>
-<li><code><span class="pre">--help-commands</span></code> でサブコマンドを一覧表示するようにした。</li>
+<li><code>--help-commands</code> で表示されるコマンドの並び順をソートするようにした。</li>
+<li><code>--help-commands</code> でサブコマンドを一覧表示するようにした。</li>
 </ul>
-</section>
-<section>
-<h2>使用方法</h2>
+
+<h1>使用方法</h1>
+
 <p>以前書いたのとほとんど同じなんですが、まとめなおしておきます。</p>
-<section>
-<h3>tasktoolsとは？</h3>
+
+<h2>tasktoolsとは？</h2>
+
 <p><code>distutils</code> および <code>setuptools</code> を拡張してextra commandを簡単に作成するためのユーティリティです。RubyにおけるRakeのようなものです。ビルド機能がほしい場合は <code>distutils</code> , <code>setuptools</code> の標準ビルド機能、もしくは <code>SCons</code> と組み合わせるとハッピーになれます。</p>
+
 <p>ちなみに、 <code>tasktools</code> というのは同じく <code>distutils</code> の拡張である <code>setuptools</code> の命名規則に習っています。 <code>task</code> 機能を強化するから <code>tasktools</code> です。</p>
-</section>
-<section>
-<h3>チュートリアル</h3>
+
+<h2>チュートリアル</h2>
+
 <p>典型的な <code>tasktools</code> の使い方です。</p>
+
 <p>まず <code>tasks.py</code> というファイルを作成します。典型的には以下の様になります。</p>
-<pre class="prettyprint ">from __future__ import with_statement
+
+<pre class="prettyprint"><code>from __future__ import with_statement
 from tasktools import *
 
-global_description(u"""
+global_description(u&quot;&quot;&quot;
 サンプルタスクファイルです。
-""")
+&quot;&quot;&quot;)
 
 use_without_standard() # distutilsの標準コマンドを使用しないことを宣言します。
-load_path("./tasks") # "./tasks"以下のtasks.pyを再帰的に読み込みます
+load_path(&quot;./tasks&quot;) # &quot;./tasks&quot;以下のtasks.pyを再帰的に読み込みます
 
 
-with namespace("file") as ns:
+with namespace(&quot;file&quot;) as ns:
   class mktmpfile(Task):
-    u"""一時ファイルを作成します。
-    """
-    user_options = [("path=", "p", u"作成するパスです")]
+    u&quot;&quot;&quot;一時ファイルを作成します。
+    &quot;&quot;&quot;
+    user_options = [(&quot;path=&quot;, &quot;p&quot;, u&quot;作成するパスです&quot;)]
     def run(self):
-      print "create %s"%self.path
+      print &quot;create %s&quot;%self.path
 
     def finalize_options(self):
-      if not self.path: self.path = "/tmp/tmp.txt"
+      if not self.path: self.path = &quot;/tmp/tmp.txt&quot;
 
   class mklogfile(Task):
-    u"""ログファイルを作成します。
-    """
+    u&quot;&quot;&quot;ログファイルを作成します。
+    &quot;&quot;&quot;
     def run(self):
-      print "create log file"
+      print &quot;create log file&quot;
 
   class init(Task):
-    u"""ファイルを初期化します。
-    """
+    u&quot;&quot;&quot;ファイルを初期化します。
+    &quot;&quot;&quot;
     def run(self):
       pass
 
-    sub_commands = [("file:mktmpfile", None),
-                    ("file:mklogfile", None)]
+    sub_commands = [(&quot;file:mktmpfile&quot;, None),
+                    (&quot;file:mklogfile&quot;, None)]
 
-if __name__ == "__main__":
-  run()</pre><p>では <code>python tasks.py <span class="pre">--help-commands</span></code> と実行してみましょう</p>
-<pre class="prettyprint ">############################################################
+if __name__ == &quot;__main__&quot;:
+  run()
+</code></pre>
+
+<p>では <code>python tasks.py --help-commands</code> と実行してみましょう</p>
+
+<pre class="prettyprint"><code>############################################################
 
 サンプルタスクファイルです。
 
@@ -155,23 +165,31 @@ Commands:
 usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
   or: tasks.py --help [cmd1 cmd2 ...]
   or: tasks.py --help-commands
-  or: tasks.py cmd --help</pre><p>この様に <code>global_description</code> で設定した説明と、定義したタスクの一覧が表示されます。</p>
+  or: tasks.py cmd --help
+</code></pre>
+
+<p>この様に <code>global_description</code> で設定した説明と、定義したタスクの一覧が表示されます。</p>
+
 <p>次に <code>./tasks/tasks.py</code> を作成してみます。</p>
-<pre class="prettyprint ">from __future__ import with_statement
+
+<pre class="prettyprint"><code>from __future__ import with_statement
 from tasktools import *
 
 use_without_standard()
-with namespace("subs") as ns:
+with namespace(&quot;subs&quot;) as ns:
   class test1(Task):
-    u"""サブディレクトリで定義されたタスクです
-    """
+    u&quot;&quot;&quot;サブディレクトリで定義されたタスクです
+    &quot;&quot;&quot;
     def run(self):
-      print "sub test"
+      print &quot;sub test&quot;
 
-if __name__ == "__main__":
-  run()</pre><p>このファイルは <code>./tasks.py</code> で <code><span class="pre">load_path(&quot;./tasks&quot;)</span></code> と宣言しているので <code>./tasks.py</code> を実行すると自動的に読み込まれます。
-もう一度 <code>python tasks.py <span class="pre">--help-commands</span></code> と実行してみましょう</p>
-<pre class="prettyprint ">############################################################
+if __name__ == &quot;__main__&quot;:
+  run()
+</code></pre>
+
+<p>このファイルは <code>./tasks.py</code> で <code>load_path(&quot;./tasks&quot;)</code> と宣言しているので <code>./tasks.py</code> を実行すると自動的に読み込まれます。 もう一度 <code>python tasks.py --help-commands</code> と実行してみましょう</p>
+
+<pre class="prettyprint"><code>############################################################
 
 サンプルタスクファイルです。
 
@@ -189,29 +207,44 @@ Commands:
 usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
   or: tasks.py --help [cmd1 cmd2 ...]
   or: tasks.py --help-commands
-  or: tasks.py cmd --help</pre><p>確かに <code>subs:test1</code> コマンドが追加されています。</p>
+  or: tasks.py cmd --help
+</code></pre>
+
+<p>確かに <code>subs:test1</code> コマンドが追加されています。</p>
+
 <p>ではタスクを実行してみましょう。 <code>python tasks.py file:init</code> を実行してみます。</p>
-<pre class="prettyprint ">running file:init
+
+<pre class="prettyprint"><code>running file:init
 running file:mktmpfile
 create /tmp/tmp.txt
 running file:mklogfile
-create log file</pre><p>おお、実行されましたね。</p>
-<p>user_optionsを定義しているタスクではオプションも渡せます。 <code>python tasks.py file:mktmpfile <span class="pre">--path=/tmp/change.txt</span></code> を実行してみましょう。</p>
-<pre class="prettyprint ">running file:mktmpfile
-create /tmp/change.txt</pre><p>ちゃんとオプションが渡されていますね。</p>
-<hr class="docutils" />
-<p>こんな感じです。distutilsの独自コマンドに関する説明は <a class="reference external" href="http://www.python.jp/doc/2.4/dist/node79.html">46 新しいDistutilsコマンドの作成</a> を参照してください。正直使えないページですが･･･。一応説明しておくとinitialize_optionsはuser_optionsの定義から自動生成するようになっています。また <code>distutils.core.Command</code> を継承しているのでこのクラスの機能も使えます。</p>
+create log file
+</code></pre>
+
+<p>おお、実行されましたね。</p>
+
+<p>user_optionsを定義しているタスクではオプションも渡せます。 <code>python tasks.py file:mktmpfile --path=/tmp/change.txt</code> を実行してみましょう。</p>
+
+<pre class="prettyprint"><code>running file:mktmpfile
+create /tmp/change.txt
+</code></pre>
+
+<p>ちゃんとオプションが渡されていますね。</p>
+
+<hr />
+
+<p>こんな感じです。distutilsの独自コマンドに関する説明は <a href="http://www.python.jp/doc/2.4/dist/node79.html">46 新しいDistutilsコマンドの作成</a> を参照してください。正直使えないページですが･･･。一応説明しておくとinitialize_optionsはuser_optionsの定義から自動生成するようになっています。また <code>distutils.core.Command</code> を継承しているのでこのクラスの機能も使えます。</p>
+
 <p>せっかくCodereposに突っ込んだのでバグなんかが見つかったらガンガン直しちゃってください。</p>
-</section>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

@@ -72,15 +72,19 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://inforno.net/articles/2008/06/30/gae-model-improvements">前のエントリー</a> で書いたように、GoogleAppEngineのトランザクションは使い勝手が悪い。しかし、GAEにブログを移行しようと思うとこれは乗り越えなければならない。</p>
+    <p><a href="http://inforno.net/articles/2008/06/30/gae-model-improvements">前のエントリー</a> で書いたように、GoogleAppEngineのトランザクションは使い勝手が悪い。しかし、GAEにブログを移行しようと思うとこれは乗り越えなければならない。</p>
+
 <p>GAEでトランザクションを行う条件を簡単にまとめると</p>
-<ul class="simple">
+
+<ul>
 <li>db.run_in_transactionにトランザクションとして実行したい関数を渡すがその関数内では</li>
 <li>同じエンティティグループに属しているモデルで</li>
 <li>get, put, deleteのみ</li>
 </ul>
+
 <p>しか実行できない。なのでトランザクションのページに紹介されているような</p>
-<pre class="prettyprint ">from google.appengine.ext import db
+
+<pre class="prettyprint"><code>from google.appengine.ext import db
 
 class Accumulator(db.Model):
   counter = db.IntegerProperty()
@@ -90,29 +94,45 @@ def increment_counter(key, amount):
   obj.counter += amount
   obj.put()
 
-q = db.GqlQuery("SELECT * FROM Accumulator")
+q = db.GqlQuery(&quot;SELECT * FROM Accumulator&quot;)
 acc = q.get()
 
-db.run_in_transaction(increment_counter, acc.key(), 5)</pre><p>先にGQLを発行しておいて、 <code>run_in_transaction</code> に渡す関数ではGQLの結果として取得した <code>key</code> を引数にとる、という回りくどいコードになる。コレは書きづらい。</p>
+db.run_in_transaction(increment_counter, acc.key(), 5)
+</code></pre>
+
+<p>先にGQLを発行しておいて、 <code>run_in_transaction</code> に渡す関数ではGQLの結果として取得した <code>key</code> を引数にとる、という回りくどいコードになる。コレは書きづらい。</p>
+
 <p>これも前のエントリーに書いたように、今回作ったブログアプリでは月別アーカイブやタグアーカイブの記事数をエントリのCRUD時に操作している。</p>
+
 <p>エントリ作成時なら</p>
-<pre class="prettyprint ">@classmethod
+
+<pre class="prettyprint"><code>@classmethod
 def create(cls, *a, **k):
   obj = super(Entry, cls).create(*a, **k)
   TagCount.inc(obj.status, *obj.tags)
   MonthCount.inc(obj.status, obj.created_month)
-  return obj</pre><p>というような感じだ( <code>status</code> は公開、とか非公開とかが入る)。当然、この <code>create</code> メソッドでは <code>TagCount</code> , <code>MonthCount</code> と <code>obj</code> について一貫性が保たれなければならない。しかし、 <code>TagCount.inc</code> では対象のタグを検索して、なければ作成し <code>put</code> する、という操作を行う。「対象のタグを検索して」というトランザクション内で許可されていない操作が入っているのだ。</p>
+  return obj
+</code></pre>
+
+<p>というような感じだ( <code>status</code> は公開、とか非公開とかが入る)。当然、この <code>create</code> メソッドでは <code>TagCount</code> , <code>MonthCount</code> と <code>obj</code> について一貫性が保たれなければならない。しかし、 <code>TagCount.inc</code> では対象のタグを検索して、なければ作成し <code>put</code> する、という操作を行う。「対象のタグを検索して」というトランザクション内で許可されていない操作が入っているのだ。</p>
+
 <p>さて、こういうときはとりあえず？力技で乗り切ろう。かなり強引だが、下のようなコードで乗り切ってみた。一応、サーバにアップロードして動作することは確認している。</p>
-<pre class="prettyprint ">class RootModel(db.Model):
+
+<pre class="prettyprint"><code>class RootModel(db.Model):
   id = db.IntegerProperty(default=1)
   def __call__(self, k):
     v = k or {}
     v.update(parent=with_parent)
     return v
-with_parent = RootModel.get_or_insert("id", id=1)</pre><p>まず、全てのエンティティを同一エンティティグループに所属させることにする。そのため、全てのエンティティの親となるエンティティを作成する。</p>
+with_parent = RootModel.get_or_insert(&quot;id&quot;, id=1)
+</code></pre>
+
+<p>まず、全てのエンティティを同一エンティティグループに所属させることにする。そのため、全てのエンティティの親となるエンティティを作成する。</p>
+
 <p>次は強引さの根源のようなクラスだ。</p>
-<pre class="prettyprint ">class Transaction(object):
-  MAGIC_NAME = "__magic__lst__"
+
+<pre class="prettyprint"><code>class Transaction(object):
+  MAGIC_NAME = &quot;__magic__lst__&quot;
   SEARCH_MAX = 12
   def __init__(self, f):
     self.f = f
@@ -127,9 +147,14 @@ with_parent = RootModel.get_or_insert("id", id=1)</pre><p>まず、全てのエ�
     committed = db.run_in_transaction(commit)
     if committed is None:
       raise db.Rollback()
-    return result</pre><p>これだけでは分からないと思うが、 <code>execute</code> 内で <code>run_in_transaction</code> が実行されている。その引数には <code>commit</code> 。 <code>commit</code> の中では <code>__magic__lst__</code> というリスト内の関数を実行しているようだが、 <code>__magic__lst__</code> に要素が追加されている形跡がない。</p>
+    return result
+</code></pre>
+
+<p>これだけでは分からないと思うが、 <code>execute</code> 内で <code>run_in_transaction</code> が実行されている。その引数には <code>commit</code> 。 <code>commit</code> の中では <code>__magic__lst__</code> というリスト内の関数を実行しているようだが、 <code>__magic__lst__</code> に要素が追加されている形跡がない。</p>
+
 <p>そして、全てのモデルの親となる基本モデルを定義する。</p>
-<pre class="prettyprint ">class BaseModel(db.Model):
+
+<pre class="prettyprint"><code>class BaseModel(db.Model):
   @classmethod
   def create(cls, *a, **k):
     obj = cls(*a, **with_parent(k))
@@ -149,10 +174,10 @@ with_parent = RootModel.get_or_insert("id", id=1)</pre><p>まず、全てのエ�
     return getattr(super(BaseModel, self),name)()
 
   def put(self):
-    return self._with_transaction("put")
+    return self._with_transaction(&quot;put&quot;)
 
   def delete(self):
-    return self._with_transaction("delete")
+    return self._with_transaction(&quot;delete&quot;)
 
   def update(self, **k):
     for prop in self.properties().values():
@@ -162,36 +187,49 @@ with_parent = RootModel.get_or_insert("id", id=1)</pre><p>まず、全てのエ�
 
   @classmethod
   def get_by_id(cls, id):
-    return super(BaseModel, cls).get_by_id(id, parent=with_parent)</pre><p>この基本クラスではまず、 <code>create</code> というメソッドを定義し、エンティティはすべてこのメソッドを通して作成するようにしている。 <code>create</code> では必ず親エンティティとして <code>with_parent</code> を指定する。これにより全てのエンティティは同一エンティティグループに属することになる。</p>
-<ul class="simple">
+    return super(BaseModel, cls).get_by_id(id, parent=with_parent)
+</code></pre>
+
+<p>この基本クラスではまず、 <code>create</code> というメソッドを定義し、エンティティはすべてこのメソッドを通して作成するようにしている。 <code>create</code> では必ず親エンティティとして <code>with_parent</code> を指定する。これにより全てのエンティティは同一エンティティグループに属することになる。</p>
+
+<ul>
 <li>同じエンティティグループに属しているモデルで</li>
 </ul>
+
 <p>という条件はクリアしたことになる。次は</p>
-<ul class="simple">
+
+<ul>
 <li>get, put, deleteのみ</li>
 </ul>
-<p>という条件だ。これは <code>_with_transaction</code> というメソッドでクリアしている。 <code>put</code> と <code>delete</code> をオーバーライドして <code>_with_transaction</code> を呼び出すようにしている。さて、この <code>_with_transaction</code> ではフレームをさかのぼって、 <code>__magic__lst__</code> という名前のローカル変数が存在するフレームがないか探索する。そのフレームが存在した場合、一連のトランザクション内での実行とみなし、 <code>__magic__lst__</code> に <code>put</code> , <code>delete</code> を行うthunkを登録し、終了する。存在しない場合は通常の実行ということで、その場で <code>put</code> ,  <code>delete</code> を行う。つまり、トランザクション内で実行されたことを検出して <code>put</code> , <code>delete</code> の評価を遅延させるのだ。</p>
+
+<p>という条件だ。これは <code>_with_transaction</code> というメソッドでクリアしている。 <code>put</code> と <code>delete</code> をオーバーライドして <code>_with_transaction</code> を呼び出すようにしている。さて、この <code>_with_transaction</code> ではフレームをさかのぼって、 <code>__magic__lst__</code> という名前のローカル変数が存在するフレームがないか探索する。そのフレームが存在した場合、一連のトランザクション内での実行とみなし、 <code>__magic__lst__</code> に <code>put</code> , <code>delete</code> を行うthunkを登録し、終了する。存在しない場合は通常の実行ということで、その場で <code>put</code> , <code>delete</code> を行う。つまり、トランザクション内で実行されたことを検出して <code>put</code> , <code>delete</code> の評価を遅延させるのだ。</p>
+
 <p>さきほどの <code>create</code> は</p>
-<pre class="prettyprint ">@classmethod
+
+<pre class="prettyprint"><code>@classmethod
 def create(cls, *a, **k):
   def _():
     obj = super(Entry, cls).create(*a, **k)
     TagCount.inc(obj.status, *obj.tags)
     MonthCount.inc(obj.status, obj.created_month)
     return obj
-  return Transaction(_).execute()</pre><p>と若干のコード挿入のみできちんと一貫性が保証されるようになる。</p>
-<hr class="docutils" />
-<p>というわけで、かなり強引な気がするけどトランザクションの問題は一応クリアされた。めんどくさければHTTPリクエストを受けてから、レスポンスを返すまでを関数でラップし、 <code>Transaction.execute</code> すれば大丈夫だ。</p>
+  return Transaction(_).execute()
+</code></pre>
+
+<p>と若干のコード挿入のみできちんと一貫性が保証されるようになる。 　 　 ****************<strong><em>*</em></strong>*************<strong><em>*</em></strong>*<em>*</em> 　 というわけで、かなり強引な気がするけどトランザクションの問題は一応クリアされた。めんどくさければHTTPリクエストを受けてから、レスポンスを返すまでを関数でラップし、 <code>Transaction.execute</code> すれば大丈夫だ。</p>
+
 <p>ここまでやってしまったので、やっぱり今のブログはGAEに移行しようかなあ、と思い始めたり。デザインも今と似ているけどやっぱ一から自分でマークアップしたから好みだし、なによりXHTMLとしてValidだ。機能的にはあと、スパム対策さえあれば大丈夫。</p>
+
 <p>実はOpenIDも自分でサーバ立ててたりするので、それもGAEで実装しなおしたいなあとか色々やりたいことは尽きない。GAEでの開発はこのモデルの問題さえつぶしてしまえばかなり楽だし、夢がひろがるなあ。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

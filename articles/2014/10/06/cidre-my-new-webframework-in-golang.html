@@ -73,106 +73,122 @@
 </header>
   <div itemprop="articleBody">
     <p>Go言語は標準の <code>net/http</code> が結構よくできてるので、WEBフレームワークはなくてもいいだとかそういう話がありますし、 <code>net/http</code> をラップした俺俺フレームワークが大量に作られています。</p>
+
 <p>というわけで、俺も遅ればせながら俺俺フレームワークを作りました。</p>
-<ul class="simple">
-<li><a class="reference external" href="http://yuin.github.io/cidre/">cidre</a></li>
+
+<ul>
+<li><a href="http://yuin.github.io/cidre/">cidre</a></li>
 </ul>
+
 <p>読み方は「シードル」。お酒の名前つけるのが慣習ですからね。よくあるこんな感じ。</p>
-<pre class="prettyprint ">package main
+
+<pre class="prettyprint"><code>package main
 
 import (
-  "github.com/yuin/cidre"
-  "net/http"
+  &quot;github.com/yuin/cidre&quot;
+  &quot;net/http&quot;
 )
 
 func main() {
     app := cidre.NewApp(cidre.DefaultAppConfig())
-    root := app.MountPoint("/")
+    root := app.MountPoint(&quot;/&quot;)
 
-    root.Get("show_welcome", "welcome", func(w http.ResponseWriter, r *http.Request) {
-        app.Renderer.Text(w, "Welcome!")
+    root.Get(&quot;show_welcome&quot;, &quot;welcome&quot;, func(w http.ResponseWriter, r *http.Request) {
+        app.Renderer.Text(w, &quot;Welcome!&quot;)
     })
 
     app.Run()
-}</pre><section>
-<h2>特徴</h2>
+}
+</code></pre>
+
+<h1>特徴</h1>
+
 <ul>
-<li><p class="first">よくあるSinatraチックなAPI</p>
-</li>
-<li><p class="first">できるだけ標準インタフェースを使用。いろんな既存ライブラリとの相性が良い。</p>
-</li>
-<li><dl class="first docutils">
-<dt>他の薄いフレームワークではオプションな機能も一部内包。</dt>
-<dd><ul class="first last simple">
+<li>よくあるSinatraチックなAPI</li>
+<li>できるだけ標準インタフェースを使用。いろんな既存ライブラリとの相性が良い。</li>
+
+<li><p>他の薄いフレームワークではオプションな機能も一部内包。</p>
+
+<ul>
 <li>セッション、フラッシュメッセージ</li>
 <li>レイアウト機能をサポートした <code>html/template</code> のラッパー</li>
+</ul></li>
+
+<li><p>フック機能を提供していて、より柔軟に外部から拡張可能。</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">フック機能を提供していて、より柔軟に外部から拡張可能。</p>
-</li>
-</ul>
-</section>
-<section>
-<h2>開発経緯</h2>
+
+<h1>開発経緯</h1>
+
 <p>そもそもPythonistaの御多聞にもれず、2と3のはざまでもだえる中でGo言語書くことが多くなってたんですね。んでWEBもGo言語でさらっと書きたい、と。</p>
+
 <p>Go言語のWEBフレームワークはいっぱいあって、軽量だとMartiniだとかGinだとかnegroniだとか、重量級だとbeegoだとかrevelだとか。俺の好みとしてやっぱりシンプルなものが好きなので軽量フレームワークを使いたいところだけど、Martiniはtoo magicだし、Ginは40 times fasterってのが詐欺っぽいし、negroniはツールであってフレームワークじゃないと言っているしで、あんまりしっくりくるのがありませんでした。</p>
+
 <p>なので自分が最低限必要と思う機能を組み込んだフレームワークを作ったわけです。ミドルウェアで対応できるけど組み込まれてたほうが楽だし。SPAが流行ってるって言ってもさらっと作るときはフラッシュメッセージが楽だし、設定は外出ししときたいし、とか。</p>
+
 <p>基本的に <code>http.Handler</code> (もしくは <code>http.HandlerFunc</code> )で構成されるので他のいわゆる「ミドルウェア」と呼ばれているものもすんなり組み込めます。せっかく組み込みライブラリがよくできてるんだから、なるべくフレームワーク特有のことは覚えたくないのもある。</p>
+
 <p>テンプレートエンジンやSessionストアやロガーはInterfaceなので差し替え可能です。</p>
+
 <p>あと、適当に今風のプロジェクトページ作りました。</p>
-</section>
-<section>
-<h2>開発中に思ったこと</h2>
+
+<h1>開発中に思ったこと</h1>
+
 <p>俺俺フレームワークを書きたい方のために、cidreを書いてる時に思ったこと、検討したことを書いておきます。</p>
-<section>
-<h3>Contextの持ち方</h3>
+
+<h2>Contextの持ち方</h2>
+
 <p>どのフレームワークも <code>Context</code> という構造体がだいたいある。これは入れ子になってる <code>http.Handler</code> 間でデータを受け渡すのが主目的だ。</p>
+
 <p>でContextの考え方は3種類ある。</p>
-<ul class="simple">
-<li><ol class="first arabic">
-<li><code>http.Handler</code> インタフェースを使わず独自インタフェースをつくって引数として渡す。</li>
-</ol>
-</li>
-<li><ol class="first arabic" start="2">
-<li><a class="reference external" href="https://github.com/gorilla/context">Gorilla context</a> のようなスレッドローカル変数を使う。</li>
-</ol>
-</li>
-<li><ol class="first arabic" start="3">
-<li><code>http.Handler#ServeHTTP</code> の引数である <code>http.ResponseWriter</code> か <code>http.Request</code> のどこかに埋め込む。</li>
-</ol>
-</li>
+
+<ul>
+<li>1. <code>http.Handler</code> インタフェースを使わず独自インタフェースをつくって引数として渡す。</li>
+<li>2. <a href="https://github.com/gorilla/context">Gorilla context</a> のようなスレッドローカル変数を使う。</li>
+<li>1.  <code>http.Handler#ServeHTTP</code> の引数である <code>http.ResponseWriter</code> か <code>http.Request</code> のどこかに埋め込む。</li>
 </ul>
+
 <p>1はGinやnegroniなど大半のフレームワークが採用している方法。これはこれでシンプルでよい。ただし独自インタフェースになる。</p>
+
 <p>2はスレッドローカルにするためにgoなのにLock, Unlockが走りまくるのが難点だが見た目すごくクリーン。</p>
+
 <p>3は生成時にトリックが必要だけど標準インタフェースを使えて、ロックも発生しない。というわけでcidreは3の方式をとっている。Goで外部からオブジェクトを埋め込むためには</p>
-<ul class="simple">
+
+<ul>
 <li>それがインタフェースで</li>
 <li>Public</li>
 </ul>
+
 <p>じゃないといけない。というわけで <code>http.Request#Body</code> に埋め込んでいる。</p>
-</section>
-<section>
-<h3>拡張性</h3>
-<p><a class="reference external" href="http://justinas.org/writing-http-middleware-in-go/">Writing HTTP Middleware in Go</a> という記事があるように、 <code>http.Handler</code> をPythonのWSGIミドルウェアのように扱う、というのは標準的な考え方だろう。</p>
+
+<h2>拡張性</h2>
+
+<p><a href="http://justinas.org/writing-http-middleware-in-go/">Writing HTTP Middleware in Go</a> という記事があるように、 <code>http.Handler</code> をPythonのWSGIミドルウェアのように扱う、というのは標準的な考え方だろう。</p>
+
 <p>ただ、結局この方式はただのフィルタであって柔軟性がない。HTTPボディを書く前に処理を差し込みたい、とかできない。正確にはできないことないけどめんどくさい(独自ResponseWriterを作って次のミドルウェアに渡すことになる)。Martiniでは独自ResponseWriterにコールバックが設定できるようになっていてHTTPボディ書く前にヘッダ書くというのができる。</p>
+
 <p>でも結局そういうポイントって随所にあって、統一的に扱える仕組みがあったほうがよいと思う。のでHookの仕組みをつくってサーバ起動時、とかいろんなところをフックできるようにしてある。</p>
-</section>
-<section>
-<h3>設定オブジェクト</h3>
+
+<h2>設定オブジェクト</h2>
+
 <p>これは何を今さら、な話で設定を表すオブジェクトをどう扱うか、ということ。例えば以下のようなstructがあるとして</p>
-<pre class="prettyprint ">type Config struct {
+
+<pre class="prettyprint"><code>type Config struct {
     Host string
     Port int
     Timeout time.Duration
-}</pre><p>これにどうデフォルト値を適応するかっていうこと。</p>
+}
+</code></pre>
+
+<p>これにどうデフォルト値を適応するかっていうこと。</p>
+
 <p>スクリプト言語ならundefinedなりnullなりnilなり未初期化を表す共通の値があるので、よいのだがCやGoではintは初期値0だし、0と設定したのか未設定なのかわからない。</p>
+
 <p>なので以下のようなデフォルト設定を返す関数をつくってそれに設定を追加していく形がよいと思う。</p>
-<pre class="prettyprint ">func DefaultConfig(init ...func(*Config)) *Config {
+
+<pre class="prettyprint"><code>func DefaultConfig(init ...func(*Config)) *Config {
     self := &amp;Config {
-        Host: "localhost",
-        Port: "8080",
+        Host: &quot;localhost&quot;,
+        Port: &quot;8080&quot;,
         Timeout: 180 * time.Second,
     }
     if len(init) &gt; 0 {
@@ -182,16 +198,22 @@ func main() {
 }
 
 config := DefaultConfig()
-config.Timeout = 0</pre><p>あと利便性のためこういう書き方もできるようにしてある。</p>
-<pre class="prettyprint ">app := NewApp(DefaultConfig(func (config *Config){
+config.Timeout = 0
+</code></pre>
+
+<p>あと利便性のためこういう書き方もできるようにしてある。</p>
+
+<pre class="prettyprint"><code>app := NewApp(DefaultConfig(func (config *Config){
     config.Timeout = 0
-})</pre><p>といろいろあるけどこんなところで。</p>
-</section>
-</section>
-<section>
-<h2>今後について</h2>
+})
+</code></pre>
+
+<p>といろいろあるけどこんなところで。</p>
+
+<h1>今後について</h1>
+
 <p>今後も細々メンテしていくつもりですし、ミドルウェアなんかも追加していきたいなあと思っています。やっぱGo言語はさらっと書けるそれなりに速いし、いいっす。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

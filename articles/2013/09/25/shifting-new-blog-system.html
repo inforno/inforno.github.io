@@ -75,35 +75,44 @@
 </header>
   <div itemprop="articleBody">
     <p>放置して久しいこのブログ、やっと重い腰をあげていろいろ手をいれた。</p>
-<ul class="simple">
+
+<ul>
 <li>HTML5化</li>
 <li>ブログシステムを入れ替え</li>
 </ul>
-<section>
-<h2>silkylog</h2>
+
+<h1>silkylog</h1>
+
 <p>このブログはxreaのレンタルサーバで動かしているのだけど、しばらく見ないうちにxreaもサーバがすごく増えて、新しいサーバではpython2.7.5が使えるようになっていた。</p>
-<p>なので自作のwebフレームワーク <a class="reference external" href="https://github.com/yuin/rays">rays</a> を使った新しいブログシステム <a class="reference external" href="https://github.com/yuin/silkylog">silkylog</a> に移行した。silkylogはpython3.3でも動くのでしばらくは安心。これまで使っていたのはpython2系でしか動かないし、かといってpython3対応させる気力も起きないしでどーしたものかと思っていた。</p>
+
+<p>なので自作のwebフレームワーク <a href="https://github.com/yuin/rays">rays</a> を使った新しいブログシステム <a href="https://github.com/yuin/silkylog">silkylog</a> に移行した。silkylogはpython3.3でも動くのでしばらくは安心。これまで使っていたのはpython2系でしか動かないし、かといってpython3対応させる気力も起きないしでどーしたものかと思っていた。</p>
+
 <p>流行に乗ってOctpressとかにしようかなあ、と思いつつせっかく作ったのだしと思って。ただなんとなく悔しかったのでsilkylogにOctpressと同等の完全に静的なサイトを出力できる機能も付けた。</p>
+
 <p>さらにこれまでのDBベースからファイルベースに変更した。Blosxomみたいにファイルを直接検索してもいいんだけどタギングを考慮するとそれはそれでめんどくさいので、インデックス情報のみsqliteで保持するような中途半端なカタチに。</p>
+
 <p>手前味噌ながらraysの機能を余すところなくつかって、シンプルに作れたと思う。</p>
-</section>
-<section>
-<h2>html5化(デザイン)</h2>
-<p>ようやくhtml5に。デザインも見直し。シンプルでよいデザインにできた･･･と思う。cssはscssでまとめた。
-レスポンシブルデザインにも対応。コメントはDisqus、シンタックスハイライトはgoogle code prettifyと外部だよりに。</p>
+
+<h1>html5化(デザイン)</h1>
+
+<p>ようやくhtml5に。デザインも見直し。シンプルでよいデザインにできた･･･と思う。cssはscssでまとめた。 レスポンシブルデザインにも対応。コメントはDisqus、シンタックスハイライトはgoogle code prettifyと外部だよりに。</p>
+
 <p>マークアップはreStructuredTextに統一した。普及度を考えるとmarkdownなのだけどやはりmarkdownは表現力が低くて。いろんな方言が乱立してるし、独自に拡張をするしくみに乏しいので使いづらかった。</p>
+
 <p>ここのところ、Pythonかどうかに関わらずドキュメントはsphinxで書いているので、日常的に書いているのはreStructuredTextが圧倒的だし、ディレクティブが簡単に作れるのもよい。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>ともかく、これでしばらくは手をいれなくてすむ・・・はず。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2007/11/03/maintenance-is-difficult-than-development">やっぱり新規開発より保守が難しい</a></li>
 <li><a href="/articles/2007/12/18/i-dont-know-the-doukaku-org-will-be-a-multilingual-cookbook">どう書く？orgは多言語クックブックになれるか</a></li>
+<li><a href="/articles/2007/11/03/maintenance-is-difficult-than-development">やっぱり新規開発より保守が難しい</a></li>
+<li><a href="/articles/2007/09/12/machine-language">マシン語とか</a></li>
 <li><a href="/articles/2007/06/24/creating-what-im-interested-in-anyway-or-else-about-that-a-jack-of-all-trades-is-master-of-none">とにかく好きなものを作るということ、あるいは器用貧乏について</a></li>
 <li><a href="/articles/2007/05/29/programmers-and-musicians">プログラマの給与未来自給はそんなもんかも：プログラマとミュージシャン</a></li>
-<li><a href="/articles/2007/09/12/machine-language">マシン語とか</a></li>
 </ul>
     </div>
   </div>

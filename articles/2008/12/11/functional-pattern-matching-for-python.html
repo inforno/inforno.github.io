@@ -73,75 +73,102 @@
 </header>
   <div itemprop="articleBody">
     <p>なんか、趣味では最近はC言語ばっかりだったりするわけですが。</p>
+
 <p>さて、関数型言語系をカジった人なら誰しも取り付かれる、モノ、それがパターンマッチ。パターンマッチが使えると、とにかく直感的にコードをかけますよね。</p>
+
 <p>つーわけで、Pythonでパターンマッチを実装してみました。機能的には</p>
-<ul class="simple">
+
+<ul>
 <li>リスト,タプルに対するパターンマッチ</li>
 <li>パターン変数への束縛</li>
 <li>ガード条件</li>
 <li>任意のオブジェクトに対するパターンマッチ</li>
 <li>部分パターンの束縛(Ocamlのas)</li>
 </ul>
+
 <p>あたりを実装してみました。これだけあれば、かなり便利にコードをかけます。できるだけ、手軽に書けるように工夫してみました。こんな感じです。</p>
+
 <p>変数束縛とガード。 <code>getattr</code> でごにょごにょしてるので簡単にかけます。</p>
-<pre class="prettyprint ">m = Match([1,2,3])
+
+<pre class="prettyprint"><code>m = Match([1,2,3]) 
 if m.when([1,2,m.var]) and m.var &gt; 2:
   print m.var
-# &gt;&gt; 3</pre><p>こう使えば、Pythonに念願のswitchが！</p>
-<pre class="prettyprint ">m = Match(10)
+# &gt;&gt; 3
+</code></pre>
+
+<p>こう使えば、Pythonに念願のswitchが！</p>
+
+<pre class="prettyprint"><code>m = Match(10)
 if m(9):
   print 1
 elif m(10):
   print 2
 else:
   False
-# &gt;&gt; 2</pre><p>部分パターンを束縛してみます。 <code>[1,2,m.var]</code> 全体を <code>all</code> というパターン変数に束縛します。</p>
-<pre class="prettyprint ">m = Match([1,2,3])
+# &gt;&gt; 2
+</code></pre>
+
+<p>部分パターンを束縛してみます。 <code>[1,2,m.var]</code> 全体を <code>all</code> というパターン変数に束縛します。</p>
+
+<pre class="prettyprint"><code>m = Match([1,2,3]) 
 if m.when([1,2,m.var]) and m.var &gt; 5:
   False
 elif m.when(m._as_all([1,2,m.var])):
   print m.all
   print m.var
 else:
-  raise StandardError("")
+  raise StandardError(&quot;&quot;)
 # &gt;&gt; [1, 2, 3]
-# &gt;&gt; 3</pre><p>任意のオブジェクトにも使えます。いわゆるレコードに対するマッチも簡単にできるということです。</p>
-<pre class="prettyprint ">class Test(object):
+# &gt;&gt; 3
+</code></pre>
+
+<p>任意のオブジェクトにも使えます。いわゆるレコードに対するマッチも簡単にできるということです。</p>
+
+<pre class="prettyprint"><code>class Test(object):
   def __init__(self, v1, v2):
     self.v1 = v1
     self.v2 = v2
   def __repr__(self):
-    return "Test(%s, %s)"%(repr(self.v1), repr(self.v2))
+    return &quot;Test(%s, %s)&quot;%(repr(self.v1), repr(self.v2))
 m = Match([1, Test(2, 3)])
-if m.when([1, m._class(Test, {"v1":2, "v2": m.v2})]):
+if m.when([1, m._class(Test, {&quot;v1&quot;:2, &quot;v2&quot;: m.v2})]):
   print m.v2
 else:
   False
-# &gt;&gt; 3</pre><p>オブジェクトに対するパターンマッチは <code>__match__</code> メソッドを定義するとカスタマイズできます。ここらのアイデアはScalaからいただきました。</p>
-<pre class="prettyprint ">class Test2(Test):
+# &gt;&gt; 3
+</code></pre>
+
+<p>オブジェクトに対するパターンマッチは <code>__match__</code> メソッドを定義するとカスタマイズできます。ここらのアイデアはScalaからいただきました。</p>
+
+<pre class="prettyprint"><code>class Test2(Test):
   def __match__(self):
-    return {"value": self.v1 + self.v2}
+    return {&quot;value&quot;: self.v1 + self.v2}
 m = Match([1, 2, Test2(3,4)])
-if m.when([1,2, m._class(Test2, {"value": m.var})]):
+if m.when([1,2, m._class(Test2, {&quot;value&quot;: m.var})]):
   m.var
 else:
   False
-# &gt;&gt; 7</pre><p>結構いい感じな気がします。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/patternmatch.zip">patternmatch.py</a></p>
-</section>
-<section>
-<h2>実装のお話</h2>
+# &gt;&gt; 7
+</code></pre>
+
+<p>結構いい感じな気がします。</p>
+
+<h1>ダウンロード</h1>
+
+<p><a href="/statics/files/patternmatch.zip">patternmatch.py</a></p>
+
+<h1>実装のお話</h1>
+
 <p>ソースコードはこんな感じ。</p>
-<pre class="prettyprint ">class Match(object):
+
+<pre class="prettyprint"><code>class Match(object):
   class _var(str): pass
   class _class(object):
     def __init__(self, klass, attrs):
       self.klass= klass
       self.attrs= sorted(attrs.iteritems())
     def match(self, m, obj):
-      props = getattr(obj, "__match__", lambda: obj.__dict__)()
+      props = getattr(obj, &quot;__match__&quot;, lambda: obj.__dict__)()
       return issubclass(obj.__class__, self.klass) and \
             m.when(self.attrs, sorted(props.iteritems()))
   class _as(object):
@@ -158,7 +185,7 @@ else:
 
   def __getitem__(self, key):
     if not self.bind.has_key(key):
-      if key.startswith("_as_"):
+      if key.startswith(&quot;_as_&quot;):
         return self._as(self._var(key[4:]))
       return self._var(key)
     return self.bind[key]
@@ -183,14 +210,14 @@ else:
       return False
 
     if len(obj) != len(pattern):
-      if not ((pattern[-1].__class__ == self._var) and pattern[-1].startswith("__")):
+      if not ((pattern[-1].__class__ == self._var) and pattern[-1].startswith(&quot;__&quot;)):
         self.bind = {}
         return False
 
     for i, (value, pat) in enumerate(zip(obj, pattern)):
       if value == pat:
         continue
-      elif pat.__class__ == self._var and pat.startswith("__"):
+      elif pat.__class__ == self._var and pat.startswith(&quot;__&quot;): 
         self.bind[str(pat)] = obj[i:]
         return True
       elif pat.__class__ == self._var:
@@ -212,18 +239,23 @@ else:
         self.bind = {}
         return False
 
-    return True</pre><p>まぁわりかしシンプルですね。</p>
-<hr class="docutils" />
-<p>今年も終わりが近づいてまいりました。年をとると時間がすぎるのが速いナァ･･･と痛感しております。</p>
-</section>
+    return True
+</code></pre>
+
+<p>まぁわりかしシンプルですね。</p>
+
+<h2>　</h2>
+
+<p>　 今年も終わりが近づいてまいりました。年をとると時間がすぎるのが速いナァ･･･と痛感しております。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

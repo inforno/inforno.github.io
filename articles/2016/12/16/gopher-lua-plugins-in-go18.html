@@ -72,99 +72,143 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://qiita.com/advent-calendar/2016/go">Go Advent Calendar 2016</a> 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。</p>
-<p>さて、Go1.8では待望？のShared Libraryのロードが可能になります。 <a class="reference external" href="https://tip.golang.org/pkg/plugin/">pluginパッケージ</a> を使います。</p>
+    <p><a href="http://qiita.com/advent-calendar/2016/go">Go Advent Calendar 2016</a> 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。</p>
+
+<p>さて、Go1.8では待望？のShared Libraryのロードが可能になります。 <a href="https://tip.golang.org/pkg/plugin/">pluginパッケージ</a> を使います。</p>
+
 <p>Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。</p>
-<p>Advent Calendar 2の <a class="reference external" href="http://qiita.com/qt-luigi/items/47a7913145fc747da0c7">qt-luigiさんのネタ</a> と被ってしまったのですが実戦的に使ってみました、ということで許してください。</p>
-<section>
-<h2>プラグインの作成とコンパイル</h2>
+
+<p>Advent Calendar 2の <a href="http://qiita.com/qt-luigi/items/47a7913145fc747da0c7">qt-luigiさんのネタ</a> と被ってしまったのですが実戦的に使ってみました、ということで許してください。</p>
+
+<h1>プラグインの作成とコンパイル</h1>
+
 <p>マニュアルページにあるとおり、以下のようになります。</p>
-<pre class="prettyprint lang-go"> package main
 
- // // No C code needed.
- import "C"
+<pre class="prettyprint"><code class="language-go">package main
 
- import "fmt"
+// // No C code needed.
+import &quot;C&quot;
 
- var V int
+import &quot;fmt&quot;
 
- func F() { fmt.Printf("Hello, number %d\n", V) }</pre><p>ポイントは</p>
-<ul class="simple">
+var V int
+
+func F() { fmt.Printf(&quot;Hello, number %d\n&quot;, V) }
+</code></pre>
+
+<p>ポイントは</p>
+
+<ul>
 <li>Cのコードはないが、 <code>import &quot;C&quot;</code> が必要</li>
 <li><code>package</code> は <code>main</code></li>
 </ul>
+
 <p>という２点です。コンパイルは</p>
-<pre class="prettyprint bash"> $ go build -buildmode=plugin -o plugin.so plugin.go</pre><p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
-</section>
-<section>
-<h2>プラグインのロード</h2>
+
+<pre class="prettyprint"><code class="language-bash">$ go build -buildmode=plugin -o plugin.so plugin.go
+</code></pre>
+
+<p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
+
+<h1>プラグインのロード</h1>
+
 <p>これまたマニュアルページどおりですが</p>
-<pre class="prettyprint lang-go"> p, err := plugin.Open("plugin.so")
- if err != nil {
-     panic(err)
- }
- v, err := p.Lookup("V")
- if err != nil {
-     panic(err)
- }
- f, err := p.Lookup("F")
- if err != nil {
-     panic(err)
- }
- *v.(*int) = 7
- f.(func())() // prints "Hello, number 7"</pre><p>のように非常に直感的に使えます。</p>
-</section>
-<section>
-<h2>GopherLuaで使ってみた</h2>
-<p>拙作のPure GoによるLua実装 <a class="reference external" href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。</p>
+
+<pre class="prettyprint"><code class="language-go">p, err := plugin.Open(&quot;plugin.so&quot;)
+if err != nil {
+    panic(err)
+}
+v, err := p.Lookup(&quot;V&quot;)
+if err != nil {
+    panic(err)
+}
+f, err := p.Lookup(&quot;F&quot;)
+if err != nil {
+    panic(err)
+}
+*v.(*int) = 7
+f.(func())() // prints &quot;Hello, number 7&quot;
+</code></pre>
+
+<p>のように非常に直感的に使えます。</p>
+
+<h1>GopherLuaで使ってみた</h1>
+
+<p>拙作のPure GoによるLua実装 <a href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。</p>
+
 <p>そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。</p>
-<p>こちらは <a class="reference external" href="https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins">feature-exp-go1.8pluginsブランチ</a> で実際に動かせます。プラグイン部分のコミットは <a class="reference external" href="https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b">571b031</a> です。</p>
+
+<p>こちらは <a href="https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins">feature-exp-go1.8pluginsブランチ</a> で実際に動かせます。プラグイン部分のコミットは <a href="https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b">571b031</a> です。</p>
+
 <p>まずプラグイン側から。Luaのお作法通りです。</p>
-<pre class="prettyprint lang-go"> package main
 
- import (
-     "C"
-     "github.com/yuin/gopher-lua"
- )
+<pre class="prettyprint"><code class="language-go">package main
 
- func Add(L *lua.LState) int {
-     v1 := L.CheckInt(1)
-     v2 := L.CheckInt(2)
-     L.Push(lua.LNumber(v1 + v2))
-     return 1
- }
+import (
+    &quot;C&quot;
+    &quot;github.com/yuin/gopher-lua&quot;
+)
 
- func LuaOpenPlugin(L *lua.LState) int {
-     L.Push(
-             L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
-                     "add": Add,
-             }))
-     return 1
- }</pre><p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
+func Add(L *lua.LState) int {
+    v1 := L.CheckInt(1)
+    v2 := L.CheckInt(2)
+    L.Push(lua.LNumber(v1 + v2))
+    return 1
+}
+
+func LuaOpenPlugin(L *lua.LState) int {
+    L.Push(
+        L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+            &quot;add&quot;: Add,
+        }))
+    return 1
+}
+</code></pre>
+
+<p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
+
 <p>こいつをコンパイルして・・・</p>
-<pre class="prettyprint bash"> $ cd /home/yuin/tmp/plugin
- $ go build -buildmode=plugin -o plugin.so plugin.go</pre><p>こうじゃ</p>
-<pre class="prettyprint ">$ glua
-&gt; package.cpath = package.cpath .. ";" .. "/home/yuin/tmp/plugin/?.so"
-&gt; adder = require("plugin")
+
+<pre class="prettyprint"><code class="language-bash">$ cd /home/yuin/tmp/plugin
+$ go build -buildmode=plugin -o plugin.so plugin.go
+</code></pre>
+
+<p>こうじゃ</p>
+
+<pre class="prettyprint"><code>$ glua
+&gt; package.cpath = package.cpath .. &quot;;&quot; .. &quot;/home/yuin/tmp/plugin/?.so&quot;
+&gt; adder = require(&quot;plugin&quot;)
 &gt; print(adder.add(1, 2))
-3</pre><p>おおおおおおおおおおおおお</p>
+3
+</code></pre>
+
+<p>おおおおおおおおおおおおお</p>
+
 <p>普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。</p>
-<pre class="prettyprint ">&lt;string&gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua</pre><p><code>package.loadlib</code> も実装しました。</p>
-<pre class="prettyprint ">$ glua
-&gt; print(package.loadlib("/home/yuin/tmp/plugin/notfound", "foo"))
+
+<pre class="prettyprint"><code>&lt;string&gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua
+</code></pre>
+
+<p><code>package.loadlib</code> も実装しました。</p>
+
+<pre class="prettyprint"><code>$ glua
+&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/notfound&quot;, &quot;foo&quot;))
 nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
-&gt; print(package.loadlib("/home/yuin/tmp/plugin/plugin.so", "foo"))
+&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/plugin.so&quot;, &quot;foo&quot;))
 nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
-&gt; print(package.loadlib("/home/yuin/tmp/plugin/plugin.so", "LuaOpenPlugin"))
+&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/plugin.so&quot;, &quot;LuaOpenPlugin&quot;))
 function: 0xc4200c9840
-&gt;</pre><p>完璧ですね。</p>
-</section>
-<section>
-<h2>pluginパッケージ、使えそうですが・・・</h2>
+&gt; 
+</code></pre>
+
+<p>完璧ですね。</p>
+
+<h1>pluginパッケージ、使えそうですが・・・</h1>
+
 <p>少なくとも、Linuxでは <code>plugin</code> パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。</p>
+
 <p>Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

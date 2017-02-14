@@ -61,30 +61,112 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/01/04/nes-emulator-development-with-python-1" itemprop="url">PythonによるNESエミュレータ開発1</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/10/01/python-console-on-tk" itemprop="url">Python:Tkを使って気軽にコンソールアプリ?</a></h3>
 <div class="meta">
-<time datetime="2007-01-04T03:02:21&#43;09:00">Jan  4, 2007</time>
+<time datetime="2006-10-01T19:24:15&#43;09:00">Oct  1, 2006</time>
 
   
   <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
   
-  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
+  <span class="tag"><a href="/articles/tag/tk/" rel="tag" itemprop="keywords">tk</a></span>
   
-  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  <span class="tag"><a href="/articles/tag/cui/" rel="tag" itemprop="keywords">cui</a></span>
   
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  <span class="tag"><a href="/articles/tag/gui/" rel="tag" itemprop="keywords">gui</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>正月だというのにひたすらCPUの命令を実装・・・。ここはひたすら地道な作業が続く。やっぱりこういう単純作業は苦手だ・・・</p>
-<p>実装の際には <a class="reference external" href="http://www.geocities.co.jp/SiliconValley/5604/infones.html">InfoNES</a> や <a class="reference external" href="http://fms.komkon.org/EMUL8/">6502 Emulation Package</a> のソースコード、そして <a class="reference external" href="http://crystal.freespace.jp/pgate1/nes/nes_cpu.htm">NES on FPGAのCPUのページ</a> に大変お世話になりました。特にNES on FPGAのページは非常に分かりやすくまとめられていて助かりました。</p>
-<p>実装方針は前にも書いたとおり「できるだけPythonっぽく」。着々とエミュレーターっぽくないソースが出来上がってきています（笑　エミュレータのソースコードというとそれはもう、C言語でマクロ全開、register指定、inline(もしくはstatic)で出力されるコードを極限まで速く、なんて感じですが全く逆です。分かりやすさ優先。とりあえず書いてみて、ダメそうなら諦めるか頑張ってチューニングするか考えよう。</p>
-<p>今日までで、CPUの全命令は実装しました（したつもり）。ただ、Indexed Absolute AddressingのX,Y、そしてIndirect Indexed Addressingでページクロスしたとき1クロック余計に発生する、という件は今のところスルー。</p>
-<p>メモリ周りもIO以外はだいたい作ったので、今日の時点で単純なコードなら実行可能に。早速アセンブラを書いてNESASMで.NESファイルを作成。それを読み込んで動かしてみました。とりあえず動くことは動く・・・が全命令が正しく実装されているかはまだ分からないです（笑</p>
-<p>というわけで次はデバッグ環境を整えて、命令のテストをしないとなあ。</p>
-<p>余談。いやー卒論という重圧がないのは非常にプログラミングがはかどる。別にギリギリなわけでもないのに「卒論完全に出来上がってないのにこんなことしてていいのかなーって感じちゃう」的なものがないし。</p>
+    <p>Windowsの小物はほぼPythonで作っているわけですが。</p>
+
+<p>WindowsにPythonをインストーラーを使ってインストールすると*.pyにデフォルトだとpython.exeを関連付けしてくれます。 これは非ﾌﾟﾛｸﾞﾗﾏな人にプログラムを渡すとき非常に便利で、とりあえずPythonをインストールして、このファイルをダブルクリックしろ、というだけでオッケー。exe化して無駄な容量を食わなくても大丈夫なのです。</p>
+
+<p>んで、作るのはだいたいコンソールで実行するもの。 これがダブルクリックで実行できるのはいいんですが、当然、プログラムが終了するとウインドウ（DOSプロンプト）が閉じちゃうから結果が見れない。 いちいちDOSプロンプトから実行するのもめんどくさい。しかも見た目的に非ﾌﾟﾛｸﾞﾗﾏにはいかつい。</p>
+
+<p>なんとかならないかなー、と思ってTkを使ってコンソールアプリを作るためのライブラリを作ってみた。</p>
+
+<pre class="prettyprint"><code># vim: fileencoding=utf-8
+from Tkinter import *
+from ScrolledText import ScrolledText
+import sys
+import thread
+import time
+
+class GUIConsole(Frame):
+  def init(self):
+    self.init_input()
+    self.init_output()
+
+  def init_input(self):
+    self.input_var = StringVar()
+    self.input = Entry(self, width=100, textvariable=self.input_var)
+    self.input.pack(side=TOP)
+    self.input.bind('&lt;Return&gt;', self.input_enter)
+
+    self.input_var.readline = self.readline
+    sys.stdin = self.input_var
+
+  def init_output(self):
+    self.out = ScrolledText(self, width=100, height=30)
+    self.out.pack(side=TOP)
+    self.out.write = self.write
+    sys.stdout = self.out
+
+  def write(self, str):
+    self.out.insert(END, str)
+    time.sleep(0.0001)
+    self.out.yview_scroll(str.count(&quot;\n&quot;) + 1, &quot;units&quot;)
+
+  def readline(self, size=None):
+    self.input.focus()
+    self.input_entered = False
+    while True:
+      time.sleep(0.5)
+      if self.input_entered == True:
+        break
+    result = self.input_var.get()
+    self.input_var.set(&quot;&quot;)
+    return result
+
+  def input_enter(self, event):
+    self.input_entered = True
+
+  def __init__(self, title, master=None):
+    self.input_entered = False
+    Frame.__init__(self, master)
+    self.pack()
+    self.master.title(title)
+    self.init()
+
+def start(main_func, title=&quot;Python&quot;) : 
+  app = GUIConsole(title)
+  thread.start_new_thread(main_func, ())
+  app.mainloop()
+</code></pre>
+
+<p>使い方はこんなかんじ。</p>
+
+<pre class="prettyprint"><code>import guiconsole
+
+def main():
+  while True:
+    var = raw_input()
+    print var
+
+guiconsole.start(main, &quot;GUIコンソールのテスト&quot;)
+</code></pre>
+
+<p>でこんな風にみえる。</p>
+
+<p><a href="/statics/files/python_tk_cui.jpg"><img src="/statics/files/python_tk_cui.thumbnail.jpg" alt="image" /></a></p>
+
+<p>一番上に入力欄があって、その下に結果表示エリア。</p>
+
+<p>Pythonの場合、stdoutはwriteというメソッド、stdinはreadlineというメソッドさえもっていればどんなオブジェクトでもオッケー。 なので単純にstdoutとstdinをTkのウィジットに置き換えてメインループに入り、別スレッドでメインの処理を実行してやっているだけ。</p>
+
+<p>見栄えも生のDOSプロンプトよりはいいし、処理が終わってもウィンドウを閉じない限り結果を見ることができる。 プチ便利なので、はやくも自分で使いまくりです（笑</p>
+
   </div>
 </article>
 
@@ -96,64 +178,149 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/01/01/happy-late-new-year-and-how-i-am-doing" itemprop="url">謹賀新年＆近況</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/09/30/python-generating-accessors" itemprop="url">Python:アクセサの生成</a></h3>
 <div class="meta">
-<time datetime="2007-01-01T23:39:16&#43;09:00">Jan  1, 2007</time>
+<time datetime="2006-09-30T00:18:33&#43;09:00">Sep 30, 2006</time>
 
   
   <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/life/" rel="tag" itemprop="keywords">life</a></span>
-  
-  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>2007年になりましたね。月に1回更新するか怪しいこのブログを購読してくださってる方々、ありがとうございます（笑</p>
-<p>無事卒論も提出し、気楽な学生気分を満喫しています。ちなみに、卒論は完璧にコンピュータは関係ないもので、まぁラットと戯れていました。生物、こと脳にかかわる話も面白いですよ。まったくもって大した研究ではないのですが、教授が今年ヨーロッパの学会で発表してくださるらしいです。とりあえず書けて何より。</p>
-<p>さて、プログラミング関連ですが、卒論もようやく終わり4月までは暇な学生生活、まとまった時間がとれるようになったので、ちょろちょろ書き始めています。</p>
-<p>書いているのは・・・なんと今更NESエミュレータ。</p>
-<p>一から自分で解析してエミュレータを書くのは達人ワザですが、十分なハードウェアの情報がある場合、実はそんなに難しくなかったりします。</p>
-<p>というわけで書いているんですが、ここで普通にC言語やアセンブラで書こうというような楽？はしてません！NESエミュレータをPythonで書いてみる、これがチャレンジング。ぶっちゃけPythonで速度がシビアに求められるものを書いたことがないので、チャレンジです。</p>
-<p>書く上で、とりあえず</p>
-<ul class="simple">
-<li>ctypesは使わない（Cの流儀をそのままもっていってもおもしろくない)</li>
-<li>当然Cで拡張モジュールは書かない</li>
+    <p>Pythonの練習がてら、アクセサの生成をやってみる。どうせ探したらいっぱいコードが転がってるだろうし、練習にはうってつけかな、と。</p>
+
+<p>まず、ダメそうだけど、Rubyをやってる人からするとこうかきたい、というコード。</p>
+
+<pre class="prettyprint"><code>class Test(Accessor):
+  attr_accessor(&quot;__test&quot;, &quot;__test2&quot;, &quot;test3&quot;, &quot;_test4&quot;)
+
+  def __init__(self):
+    self.__test = &quot;test_value&quot;
+    self.__test2 = &quot;test2_value&quot;
+    self.test3 = &quot;test3_value&quot;
+    self._test4 = &quot;test4_value&quot;
+</code></pre>
+
+<p>こんな感じ。まぁ、絶対にダメそうだ（笑 でも組み込みとはいえ、classmethodやstaticmethodみたいなのもあるから無理やりにならできるのかもしれない。</p>
+
+<pre class="prettyprint"><code>def test():
+  print sys._getframe(1).f_code.co_name
+
+class Test:
+  test()
+
+#=&gt; 文字列&quot;Test&quot;を出力
+</code></pre>
+
+<p>こんな感じで呼び出しもとのクラス名は取得できる。ならevalすれば、というところなのだが予想通り</p>
+
+<pre class="prettyprint"><code>def test():
+  exec &quot;cls = %s&quot; % sys._getframe(1).f_code.co_name
+
+class Test:
+  test()
+
+#=&gt; NameError: name 'Test' is not defined
+</code></pre>
+
+<p>この時点ではクラスオブジェクトの生成が完了していないので無理なようだ。Rubyのようにはいかない。</p>
+
+<p>結局のところ__metaclass__を使うことになる。 マニュアルにもズバリ &gt; メタクラスは限りない潜在的利用価値を持っています。これまで試されてきたアイデアには、ログ記録、インタフェースのチェック、自動デリゲーション、 <strong>自動プロパティ生成</strong> 、プロキシ、フレームワーク、そして自動リソースロック／同期といったものがあります。</p>
+
+<p>と書いてあるのだ。</p>
+
+<ul>
+<li>後からもアクセサを追加したい(メソッドとしても独立させたい)</li>
+<li>当然、読み出しと書き込み、そして両方を行えるインターフェイス</li>
+<li>オーバーライドはできないとまずい</li>
 </ul>
-<p>というポリシーで書き進めています。</p>
-<p>しかしやっぱりキツイ。絶対Cの方が楽な気がするのは気のせいだろうか・・・。現在はだいたいCPU（6502）のコアが書き終わったので、メモリ周りを書き進めてます。とりあえず.NESファイルから読み込んでメモリに読み込み、PCをセットするあたりまで書きました。</p>
-<p>まず、NESのヘッダ読み込むのもめんどくさい。Cならfreadで構造体にマップしておわり、なのにPythonだとそうは行かない。そしてなんといってもポインタがない。これ。メモリのミラーリングとかめんどくさいだろうな・・・（笑</p>
-<p>そうこう書いてるうちに、Pythonでのバイナリの扱いが上手くなってきました（きたような気がします）。</p>
-<p>今のところ以下のような関数が活躍しています。エディアンは今のところ決めうちです。</p>
-<pre class="prettyprint ">from struct import *
-from array import array
 
-def unpack_byte(b):
-  return unpack("&lt;B", b)[0]
+<p>というアクセサ生成としては至極当たり前なことを考えつつ、コードを書いてみる。</p>
 
-def zero_filled(n):
-  n /= 2
-  return pack('h'*n, *([0]*n))
+<pre class="prettyprint"><code># vim: fileencoding=utf-8
+from itertools import * 
 
-def byte_array(v):
-  return array('c', v)
+def property_accessor(cls, *names): 
+  map(lambda n : _add_setter(cls, n[0], n[1]) or 
+                 _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
 
-class byte_ref(object):
-  def __init__(self, p):
-    self._value = p
-  def get_value(self):
-    return self._value
-  def set_value(self, v):
-    self.value[0:] = byte_array(v)
-  value = property(get_value, set_value)</pre><p>まず、PythonでRAMをエミュレートしようと思うと、可変なunsigned charな配列が当然必要です。</p>
-<p>Pythonで <code>data = <span class="pre">open(&quot;name&quot;,</span> <span class="pre">&quot;rb&quot;).read()</span></code> とした場合、きちんとバイナリデータがdataに入って、 <code>unpack_byte(data[0:1])</code> などとするとちゃんとデータを取り出せます。</p>
-<p>しかし、この場合、Pythonの内部では*不変な型である*文字列型として扱われているので <code>data[w_addr &amp; 0x7ff] = 0x12</code> みたいなことは出来ません。つまりROMにはなりますが、RAMになれません。じゃあどうやってunsigned charの配列を表現するか、ということで <code>array</code> モジュールの登場なわけです。 <code>data = <span class="pre">byte_array(open(&quot;name&quot;,</span> <span class="pre">&quot;rb&quot;).read())</span></code> という感じで使っています。生成方法がことなるだけで <code>data[0]</code> みたいなインデックスによるアクセスも出来るし、部分書き換えも可能です。</p>
-<p>byte_refは・・・別になくてもいいかもしれませんが、byte配列に対する参照を表現するオブジェクトです。といっても注意して使わないと意味がないクラスで気持ちの問題かもしれません。</p>
-<p>ここをctypesでポインタを使えば考えなくてもよかったんですが、あえてPythonなんだ、ということで（笑</p>
-<p>近況はこんな感じです。</p>
-<p>ついに就職が近づいてきました。仕事はプログラマではないので、プログラムを書く時間はあんまり取れないかもしれません。でもまぁ、日曜プログラマとして細々やっていけたらなあ、と思っています。</p>
+def property_reader(cls, *names):
+  map(lambda n : _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
+
+def property_writer(cls, *names):
+  map(lambda n : _add_setter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
+
+def _real_names(cls, names) :
+  cls_name = cls.__name__
+  return imap(lambda n : n.startswith(&quot;__&quot;) and &quot;_%s%s&quot;%(cls_name, n) or n, names)
+
+def _add_setter(cls, name, real_name) :
+  setter_name = &quot;set_%s&quot; % name.lstrip(&quot;_&quot;)
+  if cls.__dict__.has_key(setter_name): return 
+  setattr(cls, setter_name, lambda self, v: setattr(self, real_name, v))
+
+def _add_getter(cls, name, real_name) :
+  getter_name = &quot;get_%s&quot; % name.lstrip(&quot;_&quot;)
+  if cls.__dict__.has_key(getter_name): return 
+  setattr(cls, getter_name, lambda self: getattr(self, real_name))
+
+class AccessorType(type):
+  def __new__(cls, class_name, class_bases, classdict):
+    cls = type.__new__(cls, class_name, class_bases, classdict)
+    list = [&quot;__accessor__&quot;, &quot;__reader__&quot;, &quot;__writer__&quot;]
+    methods = imap(lambda n: eval(&quot;property_%s&quot;%n.strip(&quot;_&quot;)), list)
+    map(lambda n: 
+          classdict.has_key(n[0]) and
+            n[1](cls, *classdict[n[0]]), izip(list, methods))
+    return cls
+
+class Accessor:
+  __metaclass__ = AccessorType
+
+class Test(Accessor):
+  __accessor__ = [&quot;__test2&quot;, &quot;test3&quot;, &quot;_test4&quot;]
+  __reader__   = [&quot;__test&quot;]
+
+  def __init__(self):
+    self.__test = &quot;test_value&quot;
+    self.__test2 = &quot;test2_value&quot;
+    self.test3 = &quot;test3_value&quot;
+    self._test4 = &quot;test4_value&quot;
+
+  def get_test3(self) :
+    return &quot;changed_test3_value&quot;
+
+obj = Test()
+
+print obj.get_test2()
+# =&gt; &quot;test2_value&quot;
+print obj.get_test3()
+# =&gt; &quot;changed_test3_value&quot;
+
+property_writer(Test, &quot;__test&quot;)
+obj.set_test(&quot;new_test_value&quot;)
+print obj.get_test()
+# =&gt; &quot;new_test_value&quot;
+</code></pre>
+
+<p>テストもろくにしてないし、汚いコードだけどなんとなくそれっぽい動き。だいたい40行くらいで実装できる。パフォーマンスを考えなければitertoolsがなくても大丈夫。</p>
+
+<p>そして、回答をさがしてみる。とりあえず「python accessor __metaclass__」あたりでググるとすぐにコードが見つかる。</p>
+
+<ul>
+<li><a href="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/307969">ASPN : Python Cookbook : Generating get/set methods using a metaclass</a></li>
+</ul>
+
+<p>見事なくらい同じようなコード。ただ、自分で書いたやつのほうが、オーバーライドできる、あとからもアクセサが生成できる、という点ではいい感じ。</p>
+
+<h1>感想</h1>
+
+<p>ここらへんのメタプログラミングはやっぱりRubyのほうが柔軟性があってかつ、一貫しているので楽かな。 Pythonはやっぱり関数をオブジェクトとして扱いやすい、というのが楽。Rubyのobj.some_methodでメソッドが呼び出せるのは便利だが、その点ではやっぱキツい。ループもPythonほうが好きだな。</p>
+
+<p>ま、やっぱり個人の好み、としかいいようがないなあ。最近ではWindowsの小物はほとんどpythonで書いてるけど（インストーラーがあって関連付けまでしてくれて、楽）、Linuxのほうはそうでもないし。</p>
+
   </div>
 </article>
 
@@ -165,61 +332,104 @@ class byte_ref(object):
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware" itemprop="url">vimでvmwareとWindowsのクリップボードを同期する</a></h3>
+<h3 itemprop="name"><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields" itemprop="url">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></h3>
 <div class="meta">
-<time datetime="2006-11-28T00:19:12&#43;09:00">Nov 28, 2006</time>
+<time datetime="2006-09-23T22:41:49&#43;09:00">Sep 23, 2006</time>
 
   
-  <span class="tag"><a href="/articles/tag/linux/" rel="tag" itemprop="keywords">linux</a></span>
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
   
-  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
-  
-  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
+  <span class="tag"><a href="/articles/tag/scriptaculous/" rel="tag" itemprop="keywords">scriptaculous</a></span>
   
   <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/webpy/" rel="tag" itemprop="keywords">webpy</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a>  とか  <a class="reference external" href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a>
-から。</p>
-<p>上記のサイトのをもってきて.vimrcをちょろっと書けばいいんだけど、テキストを受信するサーバーは常時立ち上げていそうで、スクリプトだとなんとなくアレなので、exeがいいなあ。簡単にできそうなので、とりあえず探すよりは作ってみるメソッド。</p>
-<section>
-<h2>ファイル一式</h2>
-<p><a class="reference external" href="/statics/files/clsync.zip">clsync.zip</a></p>
-<p>内容は</p>
-<ul class="simple">
-<li>clipboard_server.exe：Windows側で実行するサーバー</li>
-<li>clipboard_server.ini：サーバーのポートの設定</li>
-<li>clsync.py：vmware側におくクライアントスクリプト</li>
+    <p>nil.to_sが&rdquo;nil&rdquo;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。 Rubyより関数志向での開発がしやすくて楽しいですよねえ。</p>
+
+<p>リハビリを兼ねてweb.pyで個人的なツールを作ってます。web.pyはシンプルで軽いので、個人用途（非公開でツールとして使う）だったらレンタルサーバーでCGIとして動作させても問題なさそうです。(XREAでは簡単なものなら負荷率0ptでした。Railsとかならいれるだけでダメなんで、素晴らしい)</p>
+
+<p>そこで、scriptaculousのAjax.InPlaceEditorを使っているわけですが、困ったことがひとつ。InPlace___Editor___なわけで、値を当然入力します。でその値がサーバー側でバリデーションエラーな時どうしたもんかと。</p>
+
+<p>理想的な動作としては</p>
+
+<ul>
+<li>エラーをユーザーに通知する</li>
+<li>サブミットする前の値のままtextareaを表示しておく</li>
 </ul>
-</section>
-<section>
-<h2>使い方など</h2>
-<p>Windows側ではclipboard_server.iniで適当にポートを設定して（当然外部から見えないやつを）、clipboard_server.exeを起動しておいてください。タスクトレイにアイコンが表示されてますので、そこから終了できます。</p>
-<p>vmware上のLinuxですが、まずnkfがインストールされている必要があります。すみません、クライアント側手抜きするために使っています。そしてclsync.pyをパスの通ったところにおきます。clsync.pyにはホストのWindows側で動いてるサーバーのポートとIPを設定する箇所があるので、適宜書き換えます。またポートとIPはオプションでも渡せます（詳しくはclsync.py -hで）。</p>
-<p>あとは</p>
-<pre class="prettyprint ">function! SyncClipboard()
-  let cliptext = substitute(getreg(), "'", "'\"'\"'", 'g')
-  let cmd = "echo '" . cliptext . "' | clsync.py"
-  call system(cmd)
-endfunction
-nmap ,c :call SyncClipboard()&lt;CR&gt;</pre><p>こんな感じなのを.vimrcに追加すればOK。最後にyankしたものが,cでホストのWindowsのクリップボードに送られます。</p>
-<p>追記：
-っとよく考えたらvmw copyとまったく一緒。.vimrcのclsync.pyの部分をvmw copyに置き換えれば同じように動作する。ただ、vmwの説明には</p>
-<blockquote>
-コピーするテキストに改行コード以外の非 ASCII 文字を含めることはできません。
-ゲストおよびホスト OS によっては、キャリッジリターンの付与・除去が行われ
-ます。
-コピー可能なテキストの最大長は約 65,000 バイトです。</blockquote>
-<p>ってある。
-今回作ったモノの場合はnkfをかませているのでもちろんいつでも日本語オーケー。
-それ以上は深くみてないけど、UTF-8だと日本語でもvmw copyしても問題なさそうだ。EUC-JPの「ほげほげ」とかいう内容のtest.txtをvmw copy test.txtとかするとダメだった。</p>
-<p>ま、というわけで、 cat test.txt | nkf -w | vmw copyで万事解決なんだけど。</p>
-<p>というわけでこのツールは使われないまま終わる（笑
-coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
-</section>
+
+<p>なんですが、コンストラクタの中のoptionsあたりをのぞいてもそれらしきオプションはなさげ。</p>
+
+<p>ということでとりあえず場当たり的に書いてみたものが以下。</p>
+
+<pre class="prettyprint"><code>(function(){
+Ajax.RollbackableInPlaceEditor = Class.create();
+var dummy = function(){};
+dummy.prototype = Ajax.InPlaceEditor.prototype;
+Ajax.RollbackableInPlaceEditor.prototype = new dummy;
+Ajax.RollbackableInPlaceEditor.prototype.constructor = Ajax.RollbackableInPlaceEditor;
+})();
+Object.extend(Ajax.RollbackableInPlaceEditor.prototype, {
+  initialize : function(element, url, options) {
+    var self = this;
+    options = Object.extend({
+      callback: function(form) {
+        self.oldValue = self.editField.value;
+        return Form.serialize(form);
+      },
+      onFailure : Prototype.emptyFunction
+    }, options || {});
+    Ajax.InPlaceEditor.prototype.initialize.apply(this, [element, url, options]);
+  },
+  onclickCancel: function() {
+    this.onComplete();
+    this.element.innerHTML = this._oldInnerHTML;
+    this.element.show();
+    return false;
+  },
+  onComplete: function(transport) {
+    this.leaveEditMode();
+    if(transport &amp;&amp; !Ajax.Base.prototype.responseIsSuccess.call({transport:transport})) {
+      this.options.onFailure.bind(this)(transport, this.element);
+      return this.enterEditMode();
+    }else {
+      this.oldValue = null;
+    }
+    this.options.onComplete.bind(this)(transport, this.element);
+  },
+  onFailure: function(transport) {
+    return false;
+  },
+  getText : function() {
+     if(this.oldValue != null &amp;&amp; this.oldValue != undefined){var v = this.oldValue; this.oldValue = null; return v;}
+    this._oldInnerHTML = this.element.innerHTML;
+    return this.element.innerHTML;
+  }
+});
+</code></pre>
+
+<p>サーバー側でエラーがあったときは適当に500とか406とかでレスポンスを返せばオッケーです。</p>
+
+<p>なのでサーバー側ではたとえばweb.pyなら</p>
+
+<pre class="prettyprint"><code># errors = ['データが長すぎます。']　など
+if len(errors) != 0:
+  web.header(&quot;Content-Type&quot;, &quot;text/javascript&quot;), 
+  web.ctx[&quot;status&quot;] = &quot;406 Not Acceptable&quot;
+  print &quot;&quot;.join([&quot;alert('&quot;, &quot;\n&quot;.join(errors), &quot;');&quot;])
+  return 
+</code></pre>
+
+<p>とすればエラーになって（エラーメッセージがアラートされる）、サブミットした内容のままで再度編集できます。</p>
+
+<p>豆知識ですが、以上のようにサーバー側でtext/javascriptでレスポンスを返すとprototype.jsでは自動的にjavascriptとして評価してくれます。</p>
+
+<p>うーむ、まさに場当たり的。いろいろまずそうだけど、まぁ動いてるっぽいし気にしないことにしとこう・・・・</p>
+
   </div>
 </article>
 

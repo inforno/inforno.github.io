@@ -73,12 +73,14 @@
 </header>
   <div itemprop="articleBody">
     <p>Mochikitも好きですが、普段はRails使いということもあってprototype.jsを使っています。</p>
-<p>そういえばjavascriptのライブラリでOOなもの、ということで初めて出会ったのは <a class="reference external" href="http://jsolait.net">jsolait</a> でした。
-当時の印象としては「んー確かにがんばってるんだけど・・・ちょっと大げさっていうか・・・」って感じでした。</p>
+
+<p>そういえばjavascriptのライブラリでOOなもの、ということで初めて出会ったのは <a href="http://jsolait.net">jsolait</a> でした。 当時の印象としては「んー確かにがんばってるんだけど・・・ちょっと大げさっていうか・・・」って感じでした。</p>
+
 <p>そして去年、prototype.jsに出会うわけですが「class-style OO」とうたっている部分がかなりシンプル（すぎ）で衝撃でした。</p>
-<p>ただ、やっぱりjavascriptにおいて「継承」というのはやっかいな問題です。
-というわけで誰か作ってると思うんですが、より簡単に継承できるライブラリを作ってみました。</p>
-<pre class="prettyprint ">Class.def = function(definition) {
+
+<p>ただ、やっぱりjavascriptにおいて「継承」というのはやっかいな問題です。 というわけで誰か作ってると思うんですが、より簡単に継承できるライブラリを作ってみました。</p>
+
+<pre class="prettyprint"><code>Class.def = function(definition) {
   var klass = Class.create();
   if(definition.__extend__)
     Class.inherit(klass, definition.__extend__);
@@ -91,10 +93,10 @@
       Object.extend(klass.prototype, include);
     });
   }
-  ["__static__","__extend__","__include__"].each(function(n){delete definition[n];}
+  [&quot;__static__&quot;,&quot;__extend__&quot;,&quot;__include__&quot;].each(function(n){delete definition[n];}
   Object.extend(klass.prototype, definition);
   return klass;
-}
+}    
 
 Class.inherit = function(child, parent) {
   Object.extend(child, parent);
@@ -104,82 +106,90 @@ Class.inherit = function(child, parent) {
   child.prototype = new dummy();
   child.prototype.constructor = child;
   return child;
-}</pre><p>こんだけです。
-使い方はサンプルをみるほうがわかりやすいと思うので、サンプルをどーぞ。</p>
-<pre class="prettyprint ">var IncludedClass = Class.def({
+}
+</code></pre>
+
+<p>こんだけです。 使い方はサンプルをみるほうがわかりやすいと思うので、サンプルをどーぞ。</p>
+
+<pre class="prettyprint"><code>var IncludedClass = Class.def({
   __static__ : {
     includedMethod : function() {
-      return "includedMethod:"+this.value;
+      return &quot;includedMethod:&quot;+this.value;
     }
   }
-});
+});    
 
 var AClass = Class.def({__include__ : IncludedClass,
   __static__ : {
-    A : "A static"
+    A : &quot;A static&quot;
   },
 
   initialize : function(val) {
-    if(!val) throw "error";
+    if(!val) throw &quot;error&quot;;
     this.val = val;
-    this.klass = "AClass";
+    this.klass = &quot;AClass&quot;;
   },
 
   inspect : function() {
-    return "&lt; "+this.klass+" : "+this.val+"&gt;";
+    return &quot;&lt; &quot;+this.klass+&quot; : &quot;+this.val+&quot;&gt;&quot;;
   }
 });
 
 var BClass = Class.def({ __extend__ : AClass,
   __static__ : {
-    B : "B static"
+    B : &quot;B static&quot;
   },
 
   initialize : function(val) {
     BClass.__super__.initialize.call(this, val);
-    this.klass = "BClass";
+    this.klass = &quot;BClass&quot;;
   }
 });
 
 var CClass = Class.def({ __extend__ : BClass,
   __static__ : {
-    C : "C static"
+    C : &quot;C static&quot;
   },
 
     initialize : function(val) {
       CClass.__super__.initialize.call(this, val);
-      this.klass = "CClass";
+      this.klass = &quot;CClass&quot;;
     }
 });
 
-var a = new AClass("aaaaaaa");
-var b = new BClass("bbbbbbb");
-var c = new CClass("ccccccc");
-alert("a inspect:"+a.inspect()); //=&gt; a inspect:
-alert("b inspect:"+b.inspect()); //=&gt; b inspect:
-alert("c inspect:"+c.inspect()); //=&gt; c inspect:
-alert("includedMethod:"+a.includedMethod()); //=&gt; includedMethod:included aaaaaa
-alert("CClass.A:"+CClass.A); //=&gt; CClass.A:A static
-alert("CClass.B:"+CClass.B); //=&gt; CClass.B:B static
-alert("CClass.C:"+CClass.C); //=&gt; CClass.C:C static
-alert("b.constructor = a.constructor:"+(b.constructor == a.constructor).toString()); //=&gt;b.constructor = a.constructor:false
-alert("b instanceof BClass:"+(b instanceof BClass).toString()); //=&gt;b instanceof BClass:true
-alert("b instanceof AClass:"+(b instanceof AClass).toString()); //=&gt;b instanceof AClass:true
-alert("c instanceof BClass:"+(c instanceof BClass).toString()); //=&gt;c instanceof BClass:true
-alert("c instanceof AClass:"+(c instanceof AClass).toString()); //=&gt;c instanceof AClass:true&lt;/div&gt;</pre><p>継承の処理がかなり楽になっていると思います。
-テキトーに場当たりで単純にnewを使って継承していたりすると</p>
+var a = new AClass(&quot;aaaaaaa&quot;);
+var b = new BClass(&quot;bbbbbbb&quot;);
+var c = new CClass(&quot;ccccccc&quot;);
+alert(&quot;a inspect:&quot;+a.inspect()); //=&gt; a inspect:
+alert(&quot;b inspect:&quot;+b.inspect()); //=&gt; b inspect:
+alert(&quot;c inspect:&quot;+c.inspect()); //=&gt; c inspect:
+alert(&quot;includedMethod:&quot;+a.includedMethod()); //=&gt; includedMethod:included aaaaaa
+alert(&quot;CClass.A:&quot;+CClass.A); //=&gt; CClass.A:A static
+alert(&quot;CClass.B:&quot;+CClass.B); //=&gt; CClass.B:B static
+alert(&quot;CClass.C:&quot;+CClass.C); //=&gt; CClass.C:C static
+alert(&quot;b.constructor = a.constructor:&quot;+(b.constructor == a.constructor).toString()); //=&gt;b.constructor = a.constructor:false
+alert(&quot;b instanceof BClass:&quot;+(b instanceof BClass).toString()); //=&gt;b instanceof BClass:true
+alert(&quot;b instanceof AClass:&quot;+(b instanceof AClass).toString()); //=&gt;b instanceof AClass:true
+alert(&quot;c instanceof BClass:&quot;+(c instanceof BClass).toString()); //=&gt;c instanceof BClass:true
+alert(&quot;c instanceof AClass:&quot;+(c instanceof AClass).toString()); //=&gt;c instanceof AClass:true&lt;/div&gt;
+</code></pre>
+
+<p>継承の処理がかなり楽になっていると思います。 テキトーに場当たりで単純にnewを使って継承していたりすると</p>
+
 <p>「親クラスのコンストラクタに必須な引数があって、それがないとエラーでるから継承できねーよ、しゃーない適当に引数付けとくか」</p>
-<p>ということになったりするもんですが（俺はよくなってますｗ）このライブラリを使えば大丈夫。
-また、こんな変な書き方イヤだよ！！って方でも継承の部分はClass.inheritに独立させてあるのでそこだけつかえばオッケーです。</p>
+
+<p>ということになったりするもんですが（俺はよくなってますｗ）このライブラリを使えば大丈夫。 また、こんな変な書き方イヤだよ！！って方でも継承の部分はClass.inheritに独立させてあるのでそこだけつかえばオッケーです。</p>
+
 <p>一応動作は確認していますがおかしいところあったら報告していただけるとありがたいです。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
-<li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 </ul>
     </div>
   </div>

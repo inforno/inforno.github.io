@@ -70,23 +70,31 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="/articles/2006/09/30/python-generating-accessors">以前書いてみたアクセサ</a> をpropertyを使って改良してみる。</p>
+    <p><a href="/articles/2006/09/30/python-generating-accessors">以前書いてみたアクセサ</a> をpropertyを使って改良してみる。</p>
+
 <p>propertyというのはnew-styleクラスに対してのみ使える、メソッドで</p>
-<pre class="prettyprint ">class C(object):
+
+<pre class="prettyprint"><code>class C(object):
     def __init__(self): self.__x = None
     def getx(self): return self.__x
     def setx(self, value): self.__x = value
     def delx(self): del self.__x
-    x = property(getx, setx, delx, "I'm the 'x' property.")</pre><p>こんな感じで使う。</p>
-<p>Rubyを使った人なら分かると思うけど、プロパティ名でのアクセス＝アクセサ呼び出しになるのは結構便利。
-ActiveRecordなんかでは、特に便利だと感じる。あ、このプロパティ、もういっそエンコードされた値を返したい、と思ったときにそのクラスにプロパティ名と同じメソッドを定義するだけでいいし。</p>
-<p>前につくったアクセサは「get_hoge()」や「set_hoge()」といった感じで呼び出されたけど、これにpropertyを使うことによってRubyと同じような属性アクセスが可能になる。</p>
-<p>とりあえずこんな感じ。</p>
-<pre class="prettyprint ">#!/usr/bin/python
-# vim: fileencoding=utf-8
-from itertools import *
+    x = property(getx, setx, delx, &quot;I'm the 'x' property.&quot;)
+</code></pre>
 
-def property_accessor(cls, *names):
+<p>こんな感じで使う。</p>
+
+<p>Rubyを使った人なら分かると思うけど、プロパティ名でのアクセス＝アクセサ呼び出しになるのは結構便利。 ActiveRecordなんかでは、特に便利だと感じる。あ、このプロパティ、もういっそエンコードされた値を返したい、と思ったときにそのクラスにプロパティ名と同じメソッドを定義するだけでいいし。</p>
+
+<p>前につくったアクセサは「get_hoge()」や「set_hoge()」といった感じで呼び出されたけど、これにpropertyを使うことによってRubyと同じような属性アクセスが可能になる。</p>
+
+<p>とりあえずこんな感じ。</p>
+
+<pre class="prettyprint"><code>#!/usr/bin/python
+# vim: fileencoding=utf-8
+from itertools import * 
+
+def property_accessor(cls, *names): 
   _property(cls, names)
 
 def property_reader(cls, *names):
@@ -107,16 +115,16 @@ def _name_and_docs(name_or_tuples):
   return imap(_name_and_doc ,name_or_tuples)
 
 def _name_and_doc(name_or_tupple):
-  if isinstance(name_or_tupple, ("".__class__, u"".__class__)) :
-    return (name_or_tupple, "")
+  if isinstance(name_or_tupple, (&quot;&quot;.__class__, u&quot;&quot;.__class__)) :
+    return (name_or_tupple, &quot;&quot;)
   else:
     return name_or_tupple
 
 def _real_name(cls, name) :
-  return "_%s__%s"%(cls.__name__, name)
+  return &quot;_%s__%s&quot;%(cls.__name__, name)
 
 def _add_method(cls, verb, name, method_to_add):
-  method_name = "%s_%s" % (verb, name)
+  method_name = &quot;%s_%s&quot; % (verb, name)
   method = cls.__dict__.get(method_name)
   if not method :
     method = method_to_add
@@ -126,28 +134,28 @@ def _add_method(cls, verb, name, method_to_add):
 def _add_setter(cls, name, real_name, error = False) :
   if error:
     def setter(self, v):
-      raise AttributeError, "class %s: %s is a read-only attribute." % (cls.__name__, name)
+      raise AttributeError, &quot;class %s: %s is a read-only attribute.&quot; % (cls.__name__, name)
   else:
     setter = lambda self, v : setattr(self, real_name, v)
-  return _add_method(cls, "set", name, setter)
+  return _add_method(cls, &quot;set&quot;, name, setter)
 
 def _add_getter(cls, name, real_name, error = False) :
   if error:
     def getter(self):
-      raise AttributeError, "class %s: %s is a write-only attribute." % (cls.__name__, name)
+      raise AttributeError, &quot;class %s: %s is a write-only attribute.&quot; % (cls.__name__, name)
   else:
     getter = lambda self : getattr(self, real_name)
-  return _add_method(cls, "get", name, getter)
+  return _add_method(cls, &quot;get&quot;, name, getter)
 
 def _add_deleter(cls, name, real_name) :
   deleter = lambda self : delattr(self, real_name)
-  return _add_method(cls, "delete", name, deleter)
+  return _add_method(cls, &quot;delete&quot;, name, deleter)
 
 class AccessorType(type):
   def __new__(cls, class_name, class_bases, classdict):
     cls = type.__new__(cls, class_name, class_bases, classdict)
-    list = ["__accessor__", "__reader__", "__writer__"]
-    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
+    list = [&quot;__accessor__&quot;, &quot;__reader__&quot;, &quot;__writer__&quot;]
+    methods = imap(lambda n: eval(&quot;property_%s&quot;%n.strip(&quot;_&quot;)), list)
     for accessor_type, method in izip(list, methods):
         if classdict.has_key(accessor_type):
           method(cls, *classdict[accessor_type])
@@ -156,29 +164,33 @@ class AccessorType(type):
 class Accessor(object):
   __metaclass__ = AccessorType
   def __init__(self, *args) :
-    list = ["__accessor__", "__reader__", "__writer__"]
+    list = [&quot;__accessor__&quot;, &quot;__reader__&quot;, &quot;__writer__&quot;]
     for accessor_type in list:
       if not self.__class__.__dict__.has_key(accessor_type) : continue
       for name in self.__class__.__dict__.get(accessor_type):
         attr_name, doc = _name_and_doc(name)
         if not self.__dict__.get(attr_name):
-          exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>使い方は</p>
-<pre class="prettyprint ">#!/usr/bin/python
+          exec(&quot;self._%s__%s = None&quot; % (self.__class__.__name__, attr_name))
+</code></pre>
+
+<p>使い方は</p>
+
+<pre class="prettyprint"><code>#!/usr/bin/python
 # vim: fenc=utf-8
 import accessor
 
 class Test(accessor.Accessor) :
-  __accessor__ = [("x", "This is x value"), "y", "z"]
-  __reader__    = ["r"]
+  __accessor__ = [(&quot;x&quot;, &quot;This is x value&quot;), &quot;y&quot;, &quot;z&quot;]
+  __reader__    = [&quot;r&quot;]
 
   def __init__(self):
     accessor.Accessor.__init__(self)
 
   def get_y(self) :
-    return "new y value"
+    return &quot;new y value&quot;
 
 obj = Test()
-obj.x = "hoge"
+obj.x = &quot;hoge&quot;
 
 print obj.x
 # =&gt; hoge
@@ -189,26 +201,35 @@ print Test.x.__doc__
 print obj.y
 # =&gt; new y value
 
-obj.r = "value"
-# =&gt; AttributeError: class Test: r is a read-only attribute.</pre><p>こんな感じ。</p>
-<p><code>get_*` とか ``set_*</code> を定義すれば、独自のアクセサを定義できる。
-属性は全て <code>private(__*)</code> として保存されているので、 <code>self.__x</code> みたいな感じでクラス内ではアクセスできる。</p>
-<p>これやっててはまったのはココ。</p>
-<pre class="prettyprint ">exec("self._%s__%s = None" % (self.__class__.__name__, attr_name))</pre><p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
-<!-- sou
+obj.r = &quot;value&quot;
+# =&gt; AttributeError: class Test: r is a read-only attribute.
+</code></pre>
 
-exec("self.__%s = None" % (attr_name)) -->
-<p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code><span class="pre">self.__dict__[&quot;_classname__x&quot;]</span> = &quot;hoge&quot;</code> に変換される。</p>
+<p>こんな感じ。</p>
+
+<p><code>get_*</code> とか <code>set_*</code> を定義すれば、独自のアクセサを定義できる。 属性は全て <code>private(__*)</code> として保存されているので、 <code>self.__x</code> みたいな感じでクラス内ではアクセスできる。</p>
+
+<p>これやっててはまったのはココ。</p>
+
+<pre class="prettyprint"><code>exec(&quot;self._%s__%s = None&quot; % (self.__class__.__name__, attr_name))
+</code></pre>
+
+<p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
+
+<p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code>self.__dict__[&quot;_classname__x&quot;] = &quot;hoge&quot;</code> に変換される。</p>
+
 <p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
+
 <p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

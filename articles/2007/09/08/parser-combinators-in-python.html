@@ -73,55 +73,65 @@
 </header>
   <div itemprop="articleBody">
     <p>ちょっと前にjavascriptで構文解析とかがはやった気がするので、javascriptのリハビリがてらかいてみた。</p>
+
 <p>ググってみると</p>
-<ul class="simple">
-<li><a class="reference external" href="http://t-code.org/blog/2007/06/jsparsec_javascript.htm">Jsparsec - JavaScriptパーザコンビネータライブラリ</a></li>
-<li><a class="reference external" href="http://d.hatena.ne.jp/bellbind/20060529/114884313">HaskellのMonadをJavaScriptで実装するとしたら</a></li>
+
+<ul>
+<li><a href="http://t-code.org/blog/2007/06/jsparsec_javascript.htm">Jsparsec - JavaScriptパーザコンビネータライブラリ</a></li>
+<li><a href="http://d.hatena.ne.jp/bellbind/20060529/114884313">HaskellのMonadをJavaScriptで実装するとしたら</a></li>
 </ul>
+
 <p>あたりがあるのだが、まぁ勉強ということで。javascriptらしく書いてみようかと。</p>
+
 <p>ということで、モナドがどーたらとか難しい話はまぁおいておいて、簡単に値がとりだせますよ、という見栄え重視で作ってみた。基本的な機能しかない。けど拡張するのは簡単。せめて相互再帰くらいは実装したほうがよかったかな。まぁ、こんなの真剣に使う人もいないと思うので、要望があればってことで。ちなみに依存するライブラリはありません。</p>
-<p><strong>ダウンロード</strong> ： <a class="reference external" href="/statics/files/parsec.js">Inforno.Parsec</a></p>
+
+<p><strong>ダウンロード</strong> ： <a href="/statics/files/parsec.js">Inforno.Parsec</a></p>
+
 <p>たとえばこんな感じにCSVのパーサが定義できる。withを使ってDSLっぽくしてみた。</p>
-<pre class="prettyprint ">var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
-  this.chars = chrLike(function(c){ return c != '' &amp;&amp; c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='"';});
-  this.quote = chr('"')
-  this.quoteInQuote = str('""') .ret(function(){return '"';});
-  this.charInQuote  = chrLike(function(c){ return c!='"';});
+
+<pre class="prettyprint"><code>var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
+  this.chars = chrLike(function(c){ return c != '' &amp;&amp; c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='&quot;';});
+  this.quote = chr('&quot;') 
+  this.quoteInQuote = str('&quot;&quot;') .ret(function(){return '&quot;';}); 
+  this.charInQuote  = chrLike(function(c){ return c!='&quot;';});
   this.quotedField  = quote .and (rep((quoteInQuote) .or (charInQuote))) .and (quote)
                       .ret(function(q1, cs, q2){
-                        return cs.join("");
+                        return cs.join(&quot;&quot;);
                       });
   this.field        = rep1(chars) .ret(Return.str)
-  this.record       = sep( (field) .or (quotedField), chr(","), true) .ret(function(fields) {
+  this.record       = sep( (field) .or (quotedField), chr(&quot;,&quot;), true) .ret(function(fields) {
     return {fields: fields};
   })
-  this.csv          = sep(record, chr("\n"), true) .and(eof) .ret(function(records) {
+  this.csv          = sep(record, chr(&quot;\n&quot;), true) .and(eof) .ret(function(records) {
     return {records : records};
   })
 }});
 
 var testCsv = [
-'"aaa","b',
-'bb","ccc",zzz,"y""Y""y",xxx'
-].join("\n");
+'&quot;aaa&quot;,&quot;b',
+'bb&quot;,&quot;ccc&quot;,zzz,&quot;y&quot;&quot;Y&quot;&quot;y&quot;,xxx'
+].join(&quot;\n&quot;);
 
 var parser = new CSVParser(testCsv);
 var parseResult = parser.csv.parse()
 if(parseResult.success()) {
   var records = parseResult.result[0].records;
   for(var i=0,l=records.length;i&lt;l;i++){
-    alert("row("+i+")    "+records[i].fields);
+    alert(&quot;row(&quot;+i+&quot;)    &quot;+records[i].fields);
   }
-}</pre><p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり
-、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
+}
+</code></pre>
+
+<p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり 、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
 <li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 <li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
-<li><a href="/articles/2006/03/31/current-development-in-element-extend">Element.extendの動向。</a></li>
 </ul>
     </div>
   </div>

@@ -74,63 +74,74 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>近頃、 <a class="reference external" href="http://d.hatena.ne.jp/yukoba/20071108/p1">JavascriptでOreScript</a> なんてのがちょっとはやっていたりしまして。</p>
+    <p>近頃、 <a href="http://d.hatena.ne.jp/yukoba/20071108/p1">JavascriptでOreScript</a> なんてのがちょっとはやっていたりしまして。</p>
+
 <p>OreScript書くのにある程度ちゃんと動くパーサコンビネータがあれば便利かも、とおもったので以前書いたパーサコンビネータをいじってみました。</p>
-<section>
-<h2>変更点</h2>
-<ul class="simple">
+
+<h1>変更点</h1>
+
+<ul>
 <li>メソッド名などをHaskellにあわせた</li>
 <li>よくもわるくも、記号含有率をあげた(and -&gt; $に、or -&gt; l に)</li>
 <li>相互再帰をサポートした</li>
 <li>左再帰(chainl1)をサポートした</li>
 <li>右再帰(chanr1)をサポートした</li>
 </ul>
+
 <p>ということで、そこそこの用途に耐えるものになったと思います。</p>
-</section>
-<section>
-<h2>ダウンロード</h2>
+
+<h1>ダウンロード</h1>
+
 <p>完全にアンドキュメントです。すみません。ただ、ソースは200行くらいなんで見ればわかるかと。というか、HaskellのParsecのマニュアルを読めば基本一緒なので使い方がわかると思います。</p>
-<p><a class="reference external" href="/statics/files/parsec0-1-0.js">ダウンロード</a></p>
-</section>
-<section>
-<h2>サンプル</h2>
-<p><a class="reference external" href="http://d.hatena.ne.jp/amachang/20070829/1188400850">id:amachangさんが書いていたような数式パーサ</a> を定義してみましょう。</p>
+
+<p><a href="/statics/files/parsec0-1-0.js">ダウンロード</a></p>
+
+<h1>サンプル</h1>
+
+<p><a href="http://d.hatena.ne.jp/amachang/20070829/1188400850">id:amachangさんが書いていたような数式パーサ</a> を定義してみましょう。</p>
+
 <p>残念ながらLexerはつくっていないので、空白は受け入れられません。</p>
-<pre class="prettyprint ">var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){
+
+<pre class="prettyprint"><code>var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){
   var mul = function(a,b){return a*b;};
   var div = function(a,b){return a/b;};
   var add = function(a,b){return a+b;};
   var sub = function(a,b){return a-b;};
 
   this.numbers =  many1( chrLike(function(c) { return (c &gt;= '0' &amp;&amp; c &lt;= '9'); }) ) .ret(function(ns){
-                    return parseInt(ns.join(""));
+                    return parseInt(ns.join(&quot;&quot;));
                   });
-  this.expr = chainl1(p("term"), p("addop"));
-  this.term = chainl1(p("factor"), p("mulop"));
-  this.factor = (between(chr("("), p("expr"), chr(")"))) .l (numbers)
-  this.mulop = (chr("*") .retval(mul)) .l (chr("/") .retval(div));
-  this.addop = (chr("+") .retval(add)) .l (chr("-") .retval(sub));
+  this.expr = chainl1(p(&quot;term&quot;), p(&quot;addop&quot;));
+  this.term = chainl1(p(&quot;factor&quot;), p(&quot;mulop&quot;));
+  this.factor = (between(chr(&quot;(&quot;), p(&quot;expr&quot;), chr(&quot;)&quot;))) .l (numbers)
+  this.mulop = (chr(&quot;*&quot;) .retval(mul)) .l (chr(&quot;/&quot;) .retval(div));
+  this.addop = (chr(&quot;+&quot;) .retval(add)) .l (chr(&quot;-&quot;) .retval(sub));
 }});
 
-var test = "100*(100+200)/10";
+var test = &quot;100*(100+200)/10&quot;;
 
 var parser = new ExprParser(test);
 var parseResult = parser.expr.parse();
 if(parseResult.success()) {
   alert(parseResult.result);
   // =&gt; 3000
-}</pre><p>すごく、Parsecです･･･</p>
-<hr class="docutils" />
-<p>こういうのを最近はやりの <a class="reference external" href="http://coderepos.org/share">CodeRepos</a> でやればいいのかなあ。</p>
-</section>
+}
+</code></pre>
+
+<p>すごく、Parsecです･･･</p>
+
+<hr />
+
+<p>こういうのを最近はやりの <a href="http://coderepos.org/share">CodeRepos</a> でやればいいのかなあ。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2006/09/23/validation-failed-on-inplaceeditor-fields">Ajax.InPlaceEditorでバリデーションに引っかかったら</a></li>
 <li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
-<li><a href="/articles/2006/03/31/current-development-in-element-extend">Element.extendの動向。</a></li>
 </ul>
     </div>
   </div>

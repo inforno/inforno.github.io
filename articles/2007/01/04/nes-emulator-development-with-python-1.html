@@ -77,20 +77,25 @@
 </header>
   <div itemprop="articleBody">
     <p>正月だというのにひたすらCPUの命令を実装・・・。ここはひたすら地道な作業が続く。やっぱりこういう単純作業は苦手だ・・・</p>
-<p>実装の際には <a class="reference external" href="http://www.geocities.co.jp/SiliconValley/5604/infones.html">InfoNES</a> や <a class="reference external" href="http://fms.komkon.org/EMUL8/">6502 Emulation Package</a> のソースコード、そして <a class="reference external" href="http://crystal.freespace.jp/pgate1/nes/nes_cpu.htm">NES on FPGAのCPUのページ</a> に大変お世話になりました。特にNES on FPGAのページは非常に分かりやすくまとめられていて助かりました。</p>
+
+<p>実装の際には <a href="http://www.geocities.co.jp/SiliconValley/5604/infones.html">InfoNES</a> や <a href="http://fms.komkon.org/EMUL8/">6502 Emulation Package</a> のソースコード、そして <a href="http://crystal.freespace.jp/pgate1/nes/nes_cpu.htm">NES on FPGAのCPUのページ</a> に大変お世話になりました。特にNES on FPGAのページは非常に分かりやすくまとめられていて助かりました。</p>
+
 <p>実装方針は前にも書いたとおり「できるだけPythonっぽく」。着々とエミュレーターっぽくないソースが出来上がってきています（笑　エミュレータのソースコードというとそれはもう、C言語でマクロ全開、register指定、inline(もしくはstatic)で出力されるコードを極限まで速く、なんて感じですが全く逆です。分かりやすさ優先。とりあえず書いてみて、ダメそうなら諦めるか頑張ってチューニングするか考えよう。</p>
+
 <p>今日までで、CPUの全命令は実装しました（したつもり）。ただ、Indexed Absolute AddressingのX,Y、そしてIndirect Indexed Addressingでページクロスしたとき1クロック余計に発生する、という件は今のところスルー。</p>
+
 <p>メモリ周りもIO以外はだいたい作ったので、今日の時点で単純なコードなら実行可能に。早速アセンブラを書いてNESASMで.NESファイルを作成。それを読み込んで動かしてみました。とりあえず動くことは動く・・・が全命令が正しく実装されているかはまだ分からないです（笑</p>
-<p>というわけで次はデバッグ環境を整えて、命令のテストをしないとなあ。</p>
-<p>余談。いやー卒論という重圧がないのは非常にプログラミングがはかどる。別にギリギリなわけでもないのに「卒論完全に出来上がってないのにこんなことしてていいのかなーって感じちゃう」的なものがないし。</p>
+
+<p>というわけで次はデバッグ環境を整えて、命令のテストをしないとなあ。 　 　 　 余談。いやー卒論という重圧がないのは非常にプログラミングがはかどる。別にギリギリなわけでもないのに「卒論完全に出来上がってないのにこんなことしてていいのかなーって感じちゃう」的なものがないし。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

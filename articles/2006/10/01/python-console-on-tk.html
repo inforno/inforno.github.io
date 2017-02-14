@@ -77,13 +77,14 @@
 </header>
   <div itemprop="articleBody">
     <p>Windowsの小物はほぼPythonで作っているわけですが。</p>
-<p>WindowsにPythonをインストーラーを使ってインストールすると*.pyにデフォルトだとpython.exeを関連付けしてくれます。
-これは非ﾌﾟﾛｸﾞﾗﾏな人にプログラムを渡すとき非常に便利で、とりあえずPythonをインストールして、このファイルをダブルクリックしろ、というだけでオッケー。exe化して無駄な容量を食わなくても大丈夫なのです。</p>
-<p>んで、作るのはだいたいコンソールで実行するもの。
-これがダブルクリックで実行できるのはいいんですが、当然、プログラムが終了するとウインドウ（DOSプロンプト）が閉じちゃうから結果が見れない。
-いちいちDOSプロンプトから実行するのもめんどくさい。しかも見た目的に非ﾌﾟﾛｸﾞﾗﾏにはいかつい。</p>
+
+<p>WindowsにPythonをインストーラーを使ってインストールすると*.pyにデフォルトだとpython.exeを関連付けしてくれます。 これは非ﾌﾟﾛｸﾞﾗﾏな人にプログラムを渡すとき非常に便利で、とりあえずPythonをインストールして、このファイルをダブルクリックしろ、というだけでオッケー。exe化して無駄な容量を食わなくても大丈夫なのです。</p>
+
+<p>んで、作るのはだいたいコンソールで実行するもの。 これがダブルクリックで実行できるのはいいんですが、当然、プログラムが終了するとウインドウ（DOSプロンプト）が閉じちゃうから結果が見れない。 いちいちDOSプロンプトから実行するのもめんどくさい。しかも見た目的に非ﾌﾟﾛｸﾞﾗﾏにはいかつい。</p>
+
 <p>なんとかならないかなー、と思ってTkを使ってコンソールアプリを作るためのライブラリを作ってみた。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
+
+<pre class="prettyprint"><code># vim: fileencoding=utf-8
 from Tkinter import *
 from ScrolledText import ScrolledText
 import sys
@@ -113,7 +114,7 @@ class GUIConsole(Frame):
   def write(self, str):
     self.out.insert(END, str)
     time.sleep(0.0001)
-    self.out.yview_scroll(str.count("\n") + 1, "units")
+    self.out.yview_scroll(str.count(&quot;\n&quot;) + 1, &quot;units&quot;)
 
   def readline(self, size=None):
     self.input.focus()
@@ -123,7 +124,7 @@ class GUIConsole(Frame):
       if self.input_entered == True:
         break
     result = self.input_var.get()
-    self.input_var.set("")
+    self.input_var.set(&quot;&quot;)
     return result
 
   def input_enter(self, event):
@@ -136,32 +137,42 @@ class GUIConsole(Frame):
     self.master.title(title)
     self.init()
 
-def start(main_func, title="Python") :
+def start(main_func, title=&quot;Python&quot;) : 
   app = GUIConsole(title)
   thread.start_new_thread(main_func, ())
-  app.mainloop()</pre><p>使い方はこんなかんじ。</p>
-<pre class="prettyprint ">import guiconsole
+  app.mainloop()
+</code></pre>
+
+<p>使い方はこんなかんじ。</p>
+
+<pre class="prettyprint"><code>import guiconsole
 
 def main():
   while True:
     var = raw_input()
     print var
 
-guiconsole.start(main, "GUIコンソールのテスト")</pre><p>でこんな風にみえる。</p>
-<a class="reference external image-reference" href="/statics/files/python_tk_cui.jpg"><img alt="/statics/files/python_tk_cui.thumbnail.jpg" src="/statics/files/python_tk_cui.thumbnail.jpg" /></a>
+guiconsole.start(main, &quot;GUIコンソールのテスト&quot;)
+</code></pre>
+
+<p>でこんな風にみえる。</p>
+
+<p><a href="/statics/files/python_tk_cui.jpg"><img src="/statics/files/python_tk_cui.thumbnail.jpg" alt="image" /></a></p>
+
 <p>一番上に入力欄があって、その下に結果表示エリア。</p>
-<p>Pythonの場合、stdoutはwriteというメソッド、stdinはreadlineというメソッドさえもっていればどんなオブジェクトでもオッケー。
-なので単純にstdoutとstdinをTkのウィジットに置き換えてメインループに入り、別スレッドでメインの処理を実行してやっているだけ。</p>
-<p>見栄えも生のDOSプロンプトよりはいいし、処理が終わってもウィンドウを閉じない限り結果を見ることができる。
-プチ便利なので、はやくも自分で使いまくりです（笑</p>
+
+<p>Pythonの場合、stdoutはwriteというメソッド、stdinはreadlineというメソッドさえもっていればどんなオブジェクトでもオッケー。 なので単純にstdoutとstdinをTkのウィジットに置き換えてメインループに入り、別スレッドでメインの処理を実行してやっているだけ。</p>
+
+<p>見栄えも生のDOSプロンプトよりはいいし、処理が終わってもウィンドウを閉じない限り結果を見ることができる。 プチ便利なので、はやくも自分で使いまくりです（笑</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

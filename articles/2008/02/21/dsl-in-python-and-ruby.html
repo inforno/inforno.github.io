@@ -74,63 +74,83 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/kwatch/20080220/1203520081">Python で Rake を真似るとしたら</a> という反応を頂いたので、それにまつわるお話を。</p>
-<p>まず、CodeReposにコミットしてあるtasktoolsは__distutils及びsetuptoolsを拡張する__ということを念頭に置いています。ですのである程度distutils.core.Commandの思想というか、インターフェイスを残しています。</p>
-<ul class="simple">
+    <p><a href="http://d.hatena.ne.jp/kwatch/20080220/1203520081">Python で Rake を真似るとしたら</a> という反応を頂いたので、それにまつわるお話を。</p>
+
+<p>まず、CodeReposにコミットしてあるtasktoolsは <strong>distutils及びsetuptoolsを拡張する</strong> ということを念頭に置いています。ですのである程度distutils.core.Commandの思想というか、インターフェイスを残しています。</p>
+
+<ul>
 <li>タスクをクラスで定義すること</li>
 <li>オプションの定義方法</li>
 <li><code>sub_commands</code> や <code>finalize_options</code> といったメソッド</li>
 </ul>
+
 <p>などなどは元のまんまです。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>じゃあ、 <code>distutils</code> や <code>setuptools</code> を抜いて好きにRakeをPythonで真似るとしたら、というのが今回メインのお話。最初にこんな感じでコマンドを定義しますよ、というのを出してしまいます。</p>
-<pre class="prettyprint ">from __future__ import with_statement
+
+<pre class="prettyprint"><code>from __future__ import with_statement
 from 今回作成したモジュール import *
 from subprocess import call
 
 # ここからタスク定義
 
-with namespace("test"):
+with namespace(&quot;test&quot;):
 
   @task
-  def build(t, depends = ["test:make"]):
-    """builds this modules. """
-    call(["ls"])
-    print t.name, ": build done"
+  def build(t, depends = [&quot;test:make&quot;]):
+    &quot;&quot;&quot;builds this modules. &quot;&quot;&quot;
+    call([&quot;ls&quot;])
+    print t.name, &quot;: build done&quot;
 
   @task
   def make(t):
-    print "make"
+    print &quot;make&quot;
 
 # 実行
-run()</pre><p>Rakeだとこうなる。</p>
-<pre class="prettyprint ">namespace "test" do
+run()
+</code></pre>
 
-  desc "builds this modules"
-  task "build" =&gt; "make" do |t|
-    sh("ls")
-    puts "#{t.name} done."
+<p>Rakeだとこうなる。</p>
+
+<pre class="prettyprint"><code>namespace &quot;test&quot; do
+
+  desc &quot;builds this modules&quot;
+  task &quot;build&quot; =&gt; &quot;make&quot; do |t|
+    sh(&quot;ls&quot;)
+    puts &quot;#{t.name} done.&quot;
   end
 
-  task "make" do |t|
-    puts "make"
+  task &quot;make&quot; do |t|
+    puts &quot;make&quot;
   end
 
-end</pre><p>Python版もなかなかシンプルで見やすいと思うんですがどうでしょう。あとちょっとtips。さっきの記事だと <code>os.system</code> を使ってますが、 <code>subprocess</code> モジュールの <code>call</code> や <code>check_call</code> のほうが便利じゃないかな、と思います。</p>
-<p>タスクのメタ情報は引数のデフォルト値を使います。ここで <code>&#64;task(depends = <span class="pre">[&quot;test:make&quot;])</span></code> ってしたほうがいいんじゃないの？と思う人もいるかもしれません。真っ当な意見だと思いますし、それがPythonicなやり方と思います。しかしそうするとこうなります。</p>
-<pre class="prettyprint ">with namespace("test"):
+end
+</code></pre>
 
-  @task(depends = ["test:make"])
+<p>Python版もなかなかシンプルで見やすいと思うんですがどうでしょう。あとちょっとtips。さっきの記事だと <code>os.system</code> を使ってますが、 <code>subprocess</code> モジュールの <code>call</code> や <code>check_call</code> のほうが便利じゃないかな、と思います。</p>
+
+<p>タスクのメタ情報は引数のデフォルト値を使います。ここで <code>@task(depends = [&quot;test:make&quot;])</code> ってしたほうがいいんじゃないの？と思う人もいるかもしれません。真っ当な意見だと思いますし、それがPythonicなやり方と思います。しかしそうするとこうなります。</p>
+
+<pre class="prettyprint"><code>with namespace(&quot;test&quot;):
+
+  @task(depends = [&quot;test:make&quot;])
   def build(t):
-    """builds this modules.  """
-    call(["ls"])
-    print t.name, ": build done"
+    &quot;&quot;&quot;builds this modules.  &quot;&quot;&quot;
+    call([&quot;ls&quot;])
+    print t.name, &quot;: build done&quot;
 
   @task() #&lt;= ここがキモくないですか？
   def make(t):
-    print "make"</pre><p>Pythonではproperty以外では <code>()</code> をつけないとメソッドが呼び出せません。だから引数が何もない場合は空のカッコがつくわけです(まぁDescriptorでhogehogeすればできるんですがね)。これ、イケてないですよね。というわけで引数のデフォルト値を使います。</p>
+    print &quot;make&quot;
+</code></pre>
+
+<p>Pythonではproperty以外では <code>()</code> をつけないとメソッドが呼び出せません。だから引数が何もない場合は空のカッコがつくわけです(まぁDescriptorでhogehogeすればできるんですがね)。これ、イケてないですよね。というわけで引数のデフォルト値を使います。</p>
+
 <p>ではこのタスク定義でタスクを実行するためのコードです。</p>
-<pre class="prettyprint ">from __future__ import with_statement
+
+<pre class="prettyprint"><code>from __future__ import with_statement
 import inspect,new,sys
 from contextlib import contextmanager
 from optparse import OptionParser
@@ -139,10 +159,10 @@ from itertools import *
 class _Tasks(dict):
   def __getitem__(self,key):
     if key in self: return dict.__getitem__(self, key)
-    _abort("Error: Unknown task: %s"%key)
+    _abort(&quot;Error: Unknown task: %s&quot;%key)
 
 class Task(object):
-  def __init__(self, run, name, description,
+  def __init__(self, run, name, description, 
                depends = None, options = None):
     self._run = new.instancemethod(run, self, self.__class__)
     self.name = _get_current_ns()+name
@@ -154,7 +174,7 @@ class Task(object):
   def run(self):
     for depend in self.depends:
       if tasks[depend].run() is False:
-        _abort("Error: faild %s"%depend)
+        _abort(&quot;Error: faild %s&quot;%depend)
     return self._run()
 
 _namespace = []
@@ -163,24 +183,24 @@ tasks = _Tasks()
 @contextmanager
 def namespace(name):
   _namespace.append(name)
-  yield
-  _namespace.pop()
+  yield 
+  _namespace.pop() 
 
 def task(f):
   names, _, _, values = inspect.getargspec(f)
-  Task(f, f.__name__, f.__doc__ or "no description", **dict(izip(names[1:], values or [])))
+  Task(f, f.__name__, f.__doc__ or &quot;no description&quot;, **dict(izip(names[1:], values or [])))
 
 def print_tasks():
   maxlength = max(imap(len, tasks.iterkeys()))
   for name in sorted(tasks.iterkeys()):
-    print name.ljust(maxlength), "#", tasks[name].description.strip()
+    print name.ljust(maxlength), &quot;#&quot;, tasks[name].description.strip()
 
 def run():
-  usage = "usage :%prog [options] targets"
+  usage = &quot;usage :%prog [options] targets&quot;
   parser = OptionParser(usage)
-  parser.add_option("-T", "--tasks", action="store_true",
-                    dest="print_tasks",
-    help="Display the tasks (matching optional PATTERN) with descriptions, then exit.")
+  parser.add_option(&quot;-T&quot;, &quot;--tasks&quot;, action=&quot;store_true&quot;,
+                    dest=&quot;print_tasks&quot;,
+    help=&quot;Display the tasks (matching optional PATTERN) with descriptions, then exit.&quot;)
   (options, args) = parser.parse_args()
   if options.print_tasks: _abort(print_tasks())
   if not args:            _abort(parser.get_usage())
@@ -191,31 +211,51 @@ def _abort(msg):
   if msg : print msg
   sys.exit(1)
 
-def _get_current_ns(): return _namespace and ":".join(_namespace)+":" or ""</pre><p>結構短いかな？。一応ちゃんと動きます。</p>
-<p><code>tasks.py <span class="pre">-T</span></code></p>
-<pre class="prettyprint ">test:build # builds this modules.
-test:make  # no description</pre><p><code>tasks.py test:build</code></p>
-<pre class="prettyprint ">make
+def _get_current_ns(): return _namespace and &quot;:&quot;.join(_namespace)+&quot;:&quot; or &quot;&quot;
+</code></pre>
+
+<p>結構短いかな？。一応ちゃんと動きます。</p>
+
+<p><code>tasks.py -T</code></p>
+
+<pre class="prettyprint"><code>test:build # builds this modules.
+test:make  # no description
+</code></pre>
+
+<p><code>tasks.py test:build</code></p>
+
+<pre class="prettyprint"><code>make
 tasks.py
-test:build : build done</pre><p>うむ。</p>
-<hr class="docutils" />
+test:build : build done
+</code></pre>
+
+<p>うむ。</p>
+
+<hr />
+
 <p>結局、Rubyの言語内DSL構築能力は</p>
-<ul class="simple">
+
+<ul>
 <li><code>()</code> が省略できる</li>
 <li>ブロック(pythonではデコレータとwith_statementがありますが)</li>
 </ul>
+
 <p>によるものが多いと思っています。ことPythonとの対比では。「シンプルさ」「書きやすさ」なんかは好みかな、と(Rakeの例だとdocstringを持っている分Pythonの方がいい感じさえしてきます)。例えば <code>end</code> ってなんだよ、って言う人にはPythonのほうがウケがいいかもしれませんしそうじゃないかもしれません。</p>
+
 <p>そんなこんなで試しに書いてみたらいい感じだったんで、ちゃんと本格的にPython版Rakeとして開発を続けてみようかなあ。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>ところで言語内DSLといえばScalaでしょう。Rubyなんてちょろいもんですよ。なんてったってScalaは(ry</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

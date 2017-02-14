@@ -76,18 +76,24 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>nil.to_sが&quot;nil&quot;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。
-Rubyより関数志向での開発がしやすくて楽しいですよねえ。</p>
+    <p>nil.to_sが&rdquo;nil&rdquo;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。 Rubyより関数志向での開発がしやすくて楽しいですよねえ。</p>
+
 <p>リハビリを兼ねてweb.pyで個人的なツールを作ってます。web.pyはシンプルで軽いので、個人用途（非公開でツールとして使う）だったらレンタルサーバーでCGIとして動作させても問題なさそうです。(XREAでは簡単なものなら負荷率0ptでした。Railsとかならいれるだけでダメなんで、素晴らしい)</p>
+
 <p>そこで、scriptaculousのAjax.InPlaceEditorを使っているわけですが、困ったことがひとつ。InPlace___Editor___なわけで、値を当然入力します。でその値がサーバー側でバリデーションエラーな時どうしたもんかと。</p>
+
 <p>理想的な動作としては</p>
-<ul class="simple">
+
+<ul>
 <li>エラーをユーザーに通知する</li>
 <li>サブミットする前の値のままtextareaを表示しておく</li>
 </ul>
+
 <p>なんですが、コンストラクタの中のoptionsあたりをのぞいてもそれらしきオプションはなさげ。</p>
+
 <p>ということでとりあえず場当たり的に書いてみたものが以下。</p>
-<pre class="prettyprint ">(function(){
+
+<pre class="prettyprint"><code>(function(){
 Ajax.RollbackableInPlaceEditor = Class.create();
 var dummy = function(){};
 dummy.prototype = Ajax.InPlaceEditor.prototype;
@@ -130,23 +136,34 @@ Object.extend(Ajax.RollbackableInPlaceEditor.prototype, {
     this._oldInnerHTML = this.element.innerHTML;
     return this.element.innerHTML;
   }
-});</pre><p>サーバー側でエラーがあったときは適当に500とか406とかでレスポンスを返せばオッケーです。</p>
+});
+</code></pre>
+
+<p>サーバー側でエラーがあったときは適当に500とか406とかでレスポンスを返せばオッケーです。</p>
+
 <p>なのでサーバー側ではたとえばweb.pyなら</p>
-<pre class="prettyprint "># errors = ['データが長すぎます。']　など
+
+<pre class="prettyprint"><code># errors = ['データが長すぎます。']　など
 if len(errors) != 0:
-  web.header("Content-Type", "text/javascript"),
-  web.ctx["status"] = "406 Not Acceptable"
-  print "".join(["alert('", "\n".join(errors), "');"])
-  return</pre><p>とすればエラーになって（エラーメッセージがアラートされる）、サブミットした内容のままで再度編集できます。</p>
+  web.header(&quot;Content-Type&quot;, &quot;text/javascript&quot;), 
+  web.ctx[&quot;status&quot;] = &quot;406 Not Acceptable&quot;
+  print &quot;&quot;.join([&quot;alert('&quot;, &quot;\n&quot;.join(errors), &quot;');&quot;])
+  return 
+</code></pre>
+
+<p>とすればエラーになって（エラーメッセージがアラートされる）、サブミットした内容のままで再度編集できます。</p>
+
 <p>豆知識ですが、以上のようにサーバー側でtext/javascriptでレスポンスを返すとprototype.jsでは自動的にjavascriptとして評価してくれます。</p>
+
 <p>うーむ、まさに場当たり的。いろいろまずそうだけど、まぁ動いてるっぽいし気にしないことにしとこう・・・・</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
-<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
 <li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
+<li><a href="/articles/2007/08/23/prototype160-rc">Prototype 1.6.0 RC</a></li>
+<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
 <li><a href="/articles/2006/04/02/attribute-selectors-in-prototype">$$で属性セレクタ</a></li>
 </ul>
     </div>

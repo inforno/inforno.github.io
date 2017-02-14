@@ -72,131 +72,201 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>ようやく自宅サーバや開発環境仮想マシンの構築手順を <a class="reference external" href="http://www.ansibleworks.com/">Ansible</a> 化した。</p>
+    <p>ようやく自宅サーバや開発環境仮想マシンの構築手順を <a href="http://www.ansibleworks.com/">Ansible</a> 化した。</p>
+
 <p>この手のツールはハマりポイント＋よく使うイディオムを抑えるのが大事。Pythonプロダクトらしく非常にドキュメントが充実しているのだけど、充実しすぎているのでポイントを自分のためにもまとめておくことにする。</p>
-<p>例はおもに <a class="reference external" href="http://www.ansibleworks.com/">Ansible</a> のドキュメントから引用させていただきました。</p>
-<section>
-<h2>設定ファイルを書きかえる（一行)</h2>
+
+<p>例はおもに <a href="http://www.ansibleworks.com/">Ansible</a> のドキュメントから引用させていただきました。</p>
+
+<h1>設定ファイルを書きかえる（一行)</h1>
+
 <p><code>lineinfile</code> モジュールを使う。使い方は以下のような形になる。</p>
-<pre class="prettyprint lang-yaml"> name: enalbe sudo without password if user belongs to the wheel group
- lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"</pre><p><code>state</code> を <code>absent</code> にすれば削除することができる。動きとしては <code>regexp</code> にマッチする行をみつけたら <code>line</code> に書きかえる、という動作になる。またデフォルトでは <code>regexp</code> にマッチする行がない場合最終行に追加される。</p>
+
+<pre class="prettyprint"><code class="language-yaml">name: enalbe sudo without password if user belongs to the wheel group
+lineinfile: &quot;dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'&quot;
+</code></pre>
+
+<p><code>state</code> を <code>absent</code> にすれば削除することができる。動きとしては <code>regexp</code> にマッチする行をみつけたら <code>line</code> に書きかえる、という動作になる。またデフォルトでは <code>regexp</code> にマッチする行がない場合最終行に追加される。</p>
+
 <p>上記のほかにも <code>regexp</code> にマッチする業の前後に追記するなど柔軟な動作が可能。</p>
-</section>
-<section>
-<h2>ファイルコピーを行う（再帰的)</h2>
+
+<h1>ファイルコピーを行う（再帰的)</h1>
+
 <p><code>copy</code> モジュールを使えばファイルコピーできるのは当たり前なのだが、じゃあディレクトリの場合どうするかというとてっとりばやくは以下のようにするとよい。</p>
-<pre class="prettyprint lang-yaml"> shell: rsync -a /path_to/source/  /path_to/dest/ creates=/path_to/dest/hoge</pre><p>このとおり、 <code>rsync</code> してしまうのがよい。上記はターゲットマシン上どうしでの <code>rsync</code> で、playbookを実行しているホスト→ターゲットマシンで実行する場合は以下。</p>
-<pre class="prettyprint lang-yaml"> local_action: command rsync -a /path_to/source/ {{ inventory_hostname }}:/path_to/dest/</pre><p><code>local_action</code> を使うとターゲット上でなくplaybookを実行しているホスト上でコマンドを実行できる。</p>
-</section>
-<section>
-<h2>make installする</h2>
+
+<pre class="prettyprint"><code class="language-yaml">shell: rsync -a /path_to/source/  /path_to/dest/ creates=/path_to/dest/hoge
+</code></pre>
+
+<p>このとおり、 <code>rsync</code> してしまうのがよい。上記はターゲットマシン上どうしでの <code>rsync</code> で、playbookを実行しているホスト→ターゲットマシンで実行する場合は以下。</p>
+
+<pre class="prettyprint"><code class="language-yaml">local_action: command rsync -a /path_to/source/ {{ inventory_hostname }}:/path_to/dest/
+</code></pre>
+
+<p><code>local_action</code> を使うとターゲット上でなくplaybookを実行しているホスト上でコマンドを実行できる。</p>
+
+<h1>make installする</h1>
+
 <p><code>make install</code> するソフトウェアをどうするか。一つ目のパターンはよく見る形で以下のように1個ずつタスクにする。</p>
-<pre class="prettyprint lang-yaml"> - name: "wget hoge src"
-   command: wget -O http://example.com/hoge.tar.gz  creates=hoge.tar.gz
 
- - name: "expand src"
-   command: tar xvfz hoge.tar.gz creates=hoge
+<pre class="prettyprint"><code class="language-yaml">- name: &quot;wget hoge src&quot;
+  command: wget -O http://example.com/hoge.tar.gz  creates=hoge.tar.gz
 
- # 続く…</pre><p>私の場合こっちというのは以下のような形で1個にまとめてしまう。たかが <code>make install</code> に上記のようにつらつらタスクを書きまくるのはしんどいので。</p>
-<pre class="prettyprint lang-yaml"> name: install python3.3
- shell: &gt;-
-   wget http://www.python.org/ftp/python/3.3.2/Python-3.3.2.tgz &amp;&amp;
-   tar zxvf Python-3.3.2.tgz &amp;&amp;
-   rm -f Python-3.3.2.tgz &amp;&amp;
-   cd Python-3.3.2 &amp;&amp;
-   ./configure --prefix=/usr/local/python3.3.2 --enable-shared &amp;&amp;
-   make &amp;&amp;
-   paco -D make install
-   chdir=/usr/local/src creates=/usr/local/python3.3.2/bin/python3.3</pre><p>もちろん、途中でこけると中途半端なことになるのだがそうそうコケないのでこれでよいと思っている。</p>
-</section>
-<section>
-<h2>変数を使いこなす</h2>
-<p>ターゲット固有の情報はデフォルトで収集される。内容を見たければ <code>ansible hostname <span class="pre">-m</span> setup</code> と実行すればよい。</p>
+- name: &quot;expand src&quot;
+  command: tar xvfz hoge.tar.gz creates=hoge
+
+# 続く…
+</code></pre>
+
+<p>私の場合こっちというのは以下のような形で1個にまとめてしまう。たかが <code>make install</code> に上記のようにつらつらタスクを書きまくるのはしんどいので。</p>
+
+<pre class="prettyprint"><code class="language-yaml">name: install python3.3
+shell: &gt;-
+  wget http://www.python.org/ftp/python/3.3.2/Python-3.3.2.tgz &amp;&amp;
+  tar zxvf Python-3.3.2.tgz &amp;&amp;
+  rm -f Python-3.3.2.tgz &amp;&amp;
+  cd Python-3.3.2 &amp;&amp;
+  ./configure --prefix=/usr/local/python3.3.2 --enable-shared &amp;&amp;
+  make &amp;&amp;
+  paco -D make install
+  chdir=/usr/local/src creates=/usr/local/python3.3.2/bin/python3.3
+</code></pre>
+
+<p>もちろん、途中でこけると中途半端なことになるのだがそうそうコケないのでこれでよいと思っている。</p>
+
+<h1>変数を使いこなす</h1>
+
+<p>ターゲット固有の情報はデフォルトで収集される。内容を見たければ <code>ansible hostname -m setup</code> と実行すればよい。</p>
+
 <p>他のホストの情報は以下のようにすればアクセスできる。</p>
-<pre class="prettyprint lang-yaml"> {{ hostvars['test.example.com']['ansible_distribution'] }}</pre><p>変数は実行時にコマンドラインオプションで上書きできる。</p>
-<pre class="prettyprint lang-yaml"> ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"</pre></section>
-<section>
-<h2>ループを使いこなす</h2>
+
+<pre class="prettyprint"><code class="language-yaml">{{ hostvars['test.example.com']['ansible_distribution'] }}
+</code></pre>
+
+<p>変数は実行時にコマンドラインオプションで上書きできる。</p>
+
+<pre class="prettyprint"><code class="language-yaml">ansible-playbook release.yml --extra-vars &quot;version=1.23.45 other_variable=foo&quot;
+</code></pre>
+
+<h1>ループを使いこなす</h1>
+
 <p>Ansibleは結構複雑なループが使える。ただ実用的な範囲で言うと以下ぐらいを抑えておくとよいのでは。</p>
+
 <p><code>with_items</code> による単純ループ</p>
-<pre class="prettyprint lang-yaml"> name: add several users
- user: name={{ item }} state=present groups=wheel
- with_items:
-    - testuser1
-    - testuser2</pre><p><code>with_items</code> + 辞書によるループ</p>
-<pre class="prettyprint lang-yaml"> name: add several users
- user: name={{ item.name }} state=present groups={{ item.groups }}
- with_items:
-   - { name: 'testuser1', groups: 'wheel' }
-   - { name: 'testuser2', groups: 'root' }</pre><p>コマンド実行結果を <code>with_items</code> で回す</p>
-<pre class="prettyprint lang-yaml"> - name: retrieve the list of home directories
-   command: ls /home
-   register: home_dirs
 
- - name: add home dirs to the backup spooler
-   file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
-   with_items: home_dirs.stdout_lines
-   # same as with_items: home_dirs.stdout.split()</pre><p><code>with_sequence</code> による整数範囲ループ(Pythonの <code>range</code> のようなもの)</p>
-<pre class="prettyprint lang-yaml"> file: dest=/var/stuff/{{ item }} state=directory
- with_sequence: start=4 end=16 stride=2</pre><p>do-until(+sleep)ループ</p>
-<pre class="prettyprint lang-yaml"> action: shell /usr/bin/foo
- register: result
- until: result.stdout.find("all systems go") != -1
- retries: 5
- delay: 10</pre><p>ファイルglobでループ</p>
-<pre class="prettyprint lang-yaml"> copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
- with_fileglob:
-   - /playbooks/files/fooapp/*</pre></section>
-<section>
-<h2>条件分岐を使いこなす</h2>
+<pre class="prettyprint"><code class="language-yaml">name: add several users
+user: name={{ item }} state=present groups=wheel
+with_items:
+   - testuser1
+   - testuser2
+</code></pre>
+
+<p><code>with_items</code> + 辞書によるループ</p>
+
+<pre class="prettyprint"><code class="language-yaml">name: add several users
+user: name={{ item.name }} state=present groups={{ item.groups }}
+with_items:
+  - { name: 'testuser1', groups: 'wheel' }
+  - { name: 'testuser2', groups: 'root' }
+</code></pre>
+
+<p>コマンド実行結果を <code>with_items</code> で回す</p>
+
+<pre class="prettyprint"><code class="language-yaml">- name: retrieve the list of home directories
+  command: ls /home
+  register: home_dirs
+
+- name: add home dirs to the backup spooler
+  file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
+  with_items: home_dirs.stdout_lines
+  # same as with_items: home_dirs.stdout.split()
+</code></pre>
+
+<p><code>with_sequence</code> による整数範囲ループ(Pythonの <code>range</code> のようなもの)</p>
+
+<pre class="prettyprint"><code class="language-yaml">file: dest=/var/stuff/{{ item }} state=directory
+with_sequence: start=4 end=16 stride=2
+</code></pre>
+
+<p>do-until(+sleep)ループ</p>
+
+<pre class="prettyprint"><code class="language-yaml">action: shell /usr/bin/foo
+register: result
+until: result.stdout.find(&quot;all systems go&quot;) != -1
+retries: 5
+delay: 10
+</code></pre>
+
+<p>ファイルglobでループ</p>
+
+<pre class="prettyprint"><code class="language-yaml">copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
+with_fileglob:
+  - /playbooks/files/fooapp/*
+</code></pre>
+
+<h1>条件分岐を使いこなす</h1>
+
 <p>これまた条件分岐もいろいろできることはあるのだが、以下のパターンを抑えておくとよいと思う。</p>
+
 <p>単純な変数による分岐</p>
-<pre class="prettyprint lang-yaml"> - name: "shutdown Debian flavored systems"
-   command: /sbin/shutdown -t now
-   when: ansible_os_family == "Debian"</pre><p>コマンド実行結果による分岐</p>
-<pre class="prettyprint lang-yaml"> tasks:
-   # まずはコマンドを実行してresultに格納
-   - shell: /usr/bin/foo
-     register: result
-     ignore_errors: True
 
-   # タスクが失敗した場合
-   - debug: msg="it failed"
-     when: result|failed
+<pre class="prettyprint"><code class="language-yaml">- name: &quot;shutdown Debian flavored systems&quot;
+  command: /sbin/shutdown -t now
+  when: ansible_os_family == &quot;Debian&quot;
+</code></pre>
 
-   # タスクにより更新された場合
-   - debug: msg="it changed"
-     when: result|changed
+<p>コマンド実行結果による分岐</p>
 
-   # タスクが成功した場合
-   - debug: msg="it succeeded"
-     when: result|success
+<pre class="prettyprint"><code class="language-yaml">tasks:
+  # まずはコマンドを実行してresultに格納
+  - shell: /usr/bin/foo
+    register: result
+    ignore_errors: True
 
-   # タスクがskipされた場合
-   - debug: msg="it was skipped"
-     when: result|skipped
+  # タスクが失敗した場合
+  - debug: msg=&quot;it failed&quot;
+    when: result|failed
 
-   # タスクの標準出力によって分岐
-   - shell: echo "hi does not found"
-     when: result.stdout.find('hi') != -1</pre></section>
-<section>
-<h2>複数ターゲットが関連するタスクを実行する</h2>
+  # タスクにより更新された場合
+  - debug: msg=&quot;it changed&quot;
+    when: result|changed
+
+  # タスクが成功した場合
+  - debug: msg=&quot;it succeeded&quot;
+    when: result|success
+
+  # タスクがskipされた場合
+  - debug: msg=&quot;it was skipped&quot;
+    when: result|skipped
+
+  # タスクの標準出力によって分岐
+  - shell: echo &quot;hi does not found&quot;
+    when: result.stdout.find('hi') != -1
+</code></pre>
+
+<h1>複数ターゲットが関連するタスクを実行する</h1>
+
 <p>ローリングアップデートのように複数ターゲットが連動して動くタスクがある。その場合、playbookを実行するマシンを核としてタスクを作ればよい。</p>
-<pre class="prettyprint lang-yaml"> - hosts: webservers
-   serial: 5
 
-   tasks:
-     - name: take out of load balancer pool
-       local_action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
+<pre class="prettyprint"><code class="language-yaml">- hosts: webservers
+  serial: 5
 
-     - name: actual steps would go here
-       yum: name=acme-web-stack state=latest
+  tasks:
+    - name: take out of load balancer pool
+      local_action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
 
-     - name: add back to load balancer pool
-       local_action: command: /usr/bin/add_back_to_pool {{ inventory_hostname }}</pre><p><code>local_action</code> モジュールはplaybookを実行しているホストで実行するコマンドを定義する。上記の例だとWEBサーバを5並列でLB切り離し→更新→LB組み込みを実行する。</p>
-<hr class="docutils" />
+    - name: actual steps would go here
+      yum: name=acme-web-stack state=latest
+
+    - name: add back to load balancer pool
+      local_action: command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
+</code></pre>
+
+<p><code>local_action</code> モジュールはplaybookを実行しているホストで実行するコマンドを定義する。上記の例だとWEBサーバを5並列でLB切り離し→更新→LB組み込みを実行する。</p>
+
+<hr />
+
 <p>この程度を理解していればだいたいやりたいことはできるはず。あとはモジュール一覧を頭にいれるだけですね。ついつい <code>shell</code> でゴリ押ししそうになるのでぐっとそこをこらえて…</p>
-</section>
+
   </div>
 </article>
 
@@ -220,78 +290,70 @@
 </header>
   <div itemprop="articleBody">
     <p>Python3も3.3になり性能も向上して、移行が順調に進んできているように見える。それを考慮して最近Python3系と2系の互換性確保を見直した。</p>
+
 <p>ひとことでいうと「Python3中心」にした。</p>
-<section>
-<h2>今までの手法</h2>
+
+<h1>今までの手法</h1>
+
 <p>基本的に3系と2系の互換性確保は「単一ソースコード」でやっていてそれは今も変わらず。</p>
+
 <p>で、今までは <strong>Python3とPython2の中間</strong> のコードを書いていた。組み込みの関数のリネームなどはしない、というような(例えば <code>zip</code> を <code>izip</code> で上書いてしまうとか)。ただこの手法だといざPython2系のサポートをdropする場合に処理的にもコード的にも無駄が多くなる。</p>
-</section>
-<section>
-<h2>今の手法</h2>
-<p><a class="reference external" href="https://github.com/yuin/rays">rays</a> の <a class="reference external" href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> では以下のような方針とした。</p>
+
+<h1>今の手法</h1>
+
+<p><a href="https://github.com/yuin/rays">rays</a> の <a href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> では以下のような方針とした。</p>
+
 <ul>
-<li><dl class="first docutils">
-<dt>Python3中心。</dt>
-<dd><ul class="first last simple">
+<li>Python3中心。<br />
+
+<ul>
 <li>Python3の時に効率的に動作する</li>
 <li>Python2のサポートドロップ時にソース修正が容易</li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ul>
-<p>なのでガンガンPython2の関数はPython3に置き換える。( <code>map</code> を <code>imap</code> にしてしまうなど ) 大まかには <a class="reference external" href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> のコメント通り以下のようなコーディング。</p>
+
+<p>なのでガンガンPython2の関数はPython3に置き換える。( <code>map</code> を <code>imap</code> にしてしまうなど ) 大まかには <a href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> のコメント通り以下のようなコーディング。</p>
+
 <ul>
-<li><p class="first">文字列は <code>str</code> と <code>bytes</code> を使う。</p>
-</li>
-<li><p class="first"><code>range</code> , <code>map</code> , <code>zip</code> などはイテレータを返すものとする。</p>
-</li>
-<li><p class="first">コレクションの列挙は <code>iter_items</code> などの関数を通す。</p>
-</li>
-<li><p class="first"><code>iterator.next()</code> の代わりに <code>next</code> 関数を使う。</p>
-</li>
-<li><dl class="first docutils">
-<dt>クラスは <code>object</code> の代わりに <code>compatobject</code> を継承する。</dt>
-<dd><ul class="first last simple">
-<li><code>__str__</code> , <code>__nonzero__</code> , <code>__cmp__</code> など廃止・仕様変更されたメソッドは
-Python3の仕様で実装する。 <code>compatobject</code> が Python2の場合は自動で変換する。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>リネームされたモジュールのimportは <code>compat_import</code> メソッドを使う。</dt>
-<dd><ul class="first last">
-<li><dl class="first docutils">
-<dt>例: <code><span class="pre">compat_import(py2=&quot;email.MIMEMultipart&quot;,</span> <span class="pre">py3=&quot;email.mime.multipart&quot;)</span></code></dt>
-<dd><ul class="first last simple">
+<li>文字列は <code>str</code> と <code>bytes</code> を使う。</li>
+<li><code>range</code> , <code>map</code> , <code>zip</code> などはイテレータを返すものとする。</li>
+<li>コレクションの列挙は <code>iter_items</code> などの関数を通す。</li>
+<li><code>iterator.next()</code> の代わりに <code>next</code> 関数を使う。</li>
+
+<li><p>クラスは <code>object</code> の代わりに <code>compatobject</code> を継承する。</p>
+
+<ul>
+<li><code>__str__</code> , <code>__nonzero__</code> , <code>__cmp__</code> など廃止・仕様変更されたメソッドは Python3の仕様で実装する。 <code>compatobject</code> が Python2の場合は自動で変換する。</li>
+</ul></li>
+
+<li><p>リネームされたモジュールのimportは <code>compat_import</code> メソッドを使う。</p>
+
+<ul>
+<li>例: <code>compat_import(py2=&quot;email.MIMEMultipart&quot;, py3=&quot;email.mime.multipart&quot;)</code><br />
+
+<ul>
 <li>このようにするとPython2でも <code>email.mime.multipart</code> でアクセスできる。</li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt><code>urllib</code> は複雑にリネームされているので、 python2用 <code>urllib</code> を作ってしまう。</dt>
-<dd><ul class="first last simple">
+</ul></li>
+</ul></li>
+
+<li><p><code>urllib</code> は複雑にリネームされているので、 python2用 <code>urllib</code> を作ってしまう。</p>
+
+<ul>
 <li>Python2でも普通に <code>import urllib.request</code> のように書ける</li>
+</ul></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ul>
+
 <p>キモは <code>compat_import</code> かなと。</p>
+
 <p>そうすると、以下のような感じでほぼPython3のみ対象としたのと同じソースコードになる。Python2サポートdrop時は単純なソースコード置換でいけるはず。</p>
-<pre class="prettyprint ">import urllib.request
-compat_import(py2="cookielib", py3="http.cookiejar")
+
+<pre class="prettyprint"><code>import urllib.request
+compat_import(py2=&quot;cookielib&quot;, py3=&quot;http.cookiejar&quot;)
 
 class Html(compatobject):
   def __init__(self, text):
     if isinstance(text, bytes):
-      text = text.decode("utf8")
+      text = text.decode(&quot;utf8&quot;)
     self.text = text
 
   def __str__(self):
@@ -300,8 +362,11 @@ class Html(compatobject):
 cookie_jar = http.cookiejar.MozillaCookieJar()
 handlers = [urllib.request.HTTPCookieProcessor(cookie_jar)]
 opener = urllib.request.build_opener(*handlers)
-html = Html(opener.open("http://www.google.co.jp/").read())</pre><p>ソースコードの寿命をのばすためにもボチボチこの方針で書き変えていくつもり。</p>
-</section>
+html = Html(opener.open(&quot;http://www.google.co.jp/&quot;).read())
+</code></pre>
+
+<p>ソースコードの寿命をのばすためにもボチボチこの方針で書き変えていくつもり。</p>
+
   </div>
 </article>
 
@@ -329,27 +394,36 @@ html = Html(opener.open("http://www.google.co.jp/").read())</pre><p>ソースコ
 </header>
   <div itemprop="articleBody">
     <p>放置して久しいこのブログ、やっと重い腰をあげていろいろ手をいれた。</p>
-<ul class="simple">
+
+<ul>
 <li>HTML5化</li>
 <li>ブログシステムを入れ替え</li>
 </ul>
-<section>
-<h2>silkylog</h2>
+
+<h1>silkylog</h1>
+
 <p>このブログはxreaのレンタルサーバで動かしているのだけど、しばらく見ないうちにxreaもサーバがすごく増えて、新しいサーバではpython2.7.5が使えるようになっていた。</p>
-<p>なので自作のwebフレームワーク <a class="reference external" href="https://github.com/yuin/rays">rays</a> を使った新しいブログシステム <a class="reference external" href="https://github.com/yuin/silkylog">silkylog</a> に移行した。silkylogはpython3.3でも動くのでしばらくは安心。これまで使っていたのはpython2系でしか動かないし、かといってpython3対応させる気力も起きないしでどーしたものかと思っていた。</p>
+
+<p>なので自作のwebフレームワーク <a href="https://github.com/yuin/rays">rays</a> を使った新しいブログシステム <a href="https://github.com/yuin/silkylog">silkylog</a> に移行した。silkylogはpython3.3でも動くのでしばらくは安心。これまで使っていたのはpython2系でしか動かないし、かといってpython3対応させる気力も起きないしでどーしたものかと思っていた。</p>
+
 <p>流行に乗ってOctpressとかにしようかなあ、と思いつつせっかく作ったのだしと思って。ただなんとなく悔しかったのでsilkylogにOctpressと同等の完全に静的なサイトを出力できる機能も付けた。</p>
+
 <p>さらにこれまでのDBベースからファイルベースに変更した。Blosxomみたいにファイルを直接検索してもいいんだけどタギングを考慮するとそれはそれでめんどくさいので、インデックス情報のみsqliteで保持するような中途半端なカタチに。</p>
+
 <p>手前味噌ながらraysの機能を余すところなくつかって、シンプルに作れたと思う。</p>
-</section>
-<section>
-<h2>html5化(デザイン)</h2>
-<p>ようやくhtml5に。デザインも見直し。シンプルでよいデザインにできた･･･と思う。cssはscssでまとめた。
-レスポンシブルデザインにも対応。コメントはDisqus、シンタックスハイライトはgoogle code prettifyと外部だよりに。</p>
+
+<h1>html5化(デザイン)</h1>
+
+<p>ようやくhtml5に。デザインも見直し。シンプルでよいデザインにできた･･･と思う。cssはscssでまとめた。 レスポンシブルデザインにも対応。コメントはDisqus、シンタックスハイライトはgoogle code prettifyと外部だよりに。</p>
+
 <p>マークアップはreStructuredTextに統一した。普及度を考えるとmarkdownなのだけどやはりmarkdownは表現力が低くて。いろんな方言が乱立してるし、独自に拡張をするしくみに乏しいので使いづらかった。</p>
+
 <p>ここのところ、Pythonかどうかに関わらずドキュメントはsphinxで書いているので、日常的に書いているのはreStructuredTextが圧倒的だし、ディレクティブが簡単に作れるのもよい。</p>
-<hr class="docutils" />
+
+<hr />
+
 <p>ともかく、これでしばらくは手をいれなくてすむ・・・はず。</p>
-</section>
+
   </div>
 </article>
 

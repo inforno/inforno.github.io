@@ -70,21 +70,30 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>コマンドラインランチャー <a class="reference external" href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.6 をリリースしました。 GitHubの <a class="reference external" href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
+    <p>コマンドラインランチャー <a href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.6 をリリースしました。 GitHubの <a href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
+
 <p>v0.9.5からのバージョンアップ方法は同梱ドキュメントの更新履歴を参照してください。</p>
+
 <p>更新点は以下です。</p>
-<ul class="simple">
+
+<ul>
 <li><strong>FIXED</strong> : 一部のパスでアイコンが正しく読み込まれない問題を修正</li>
 <li><strong>FIXED</strong> : 一部のパスを読み込んだ際にクラッシュする問題を修正</li>
 <li><strong>CHANGED</strong> : 使用するコンパイラをMinGW-W64 4.9.1にアップグレード</li>
 <li><strong>IMPROVED</strong> : 単一キーをホットキーに割り当てられるようになった</li>
 <li><strong>NEW</strong> : パス補完とオプション補完でオートコンプリートを有効にする path_autocomplete と option_autocomplete を追加</li>
 </ul>
+
 <p>ようやく重い腰をあげてgccのバージョンアップをしました…。icebergは今までmingw gcc4.5系を使っていて、これWindowsのくせにLP64なんですね。まぁそのおかげで＊nix生まれのライブラリでも割と普通に使えていました。</p>
+
 <p>で4.9にあげたのでWindowsらしくLLP64になったわけで、fltkなんかは平気で <code>long</code> を <code>void*</code> にキャストしてるのでワーニング出まくりでした…。そんなクリティカルな場所はなかったので簡単なパッチ当てて終了。</p>
+
 <p>鬼車も今まで使ってたバージョンは <code>long</code> のポインタキャストがあって落ちるので最新に。</p>
-<p>なんやかんやあったけど今のところきちんと動いている気がします。なにか問題ありましたらGithubの <a class="reference external" href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
+
+<p>なんやかんやあったけど今のところきちんと動いている気がします。なにか問題ありましたらGithubの <a href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
+
 <p>あと、どうやらicebergはWindows8で動かないっぽいです(Windows7互換モードにすると動く)。 8の環境持ってないのでなんで動かないのかわかりません。コンパイラ変えただけで動くようになってたり…しないかなあ。というわけでWindows8使ってる方、もし互換モードなしで動いたらコメントください。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>

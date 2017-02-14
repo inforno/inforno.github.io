@@ -73,36 +73,41 @@
 </header>
   <div itemprop="articleBody">
     <p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
+
 <p>一方、Pythonにはexperimentalながら <code>re.Scanner</code> というクラスがあります( <code>&gt;= 2.4</code> )。experimentalなのでマニュアルにはのっていませんが。この <code>re.Scanner</code> はかなりシンプルなんですが典型的な <code>StringScanner</code> の使い方の範疇では、こちらのほうがキレイに書けるような気がします。</p>
-<section>
-<h2><code>re.Scanner</code> の使い方</h2>
+
+<h1><code>re.Scanner</code> の使い方</h1>
+
 <p>使い方は非常に簡単で</p>
+
 <ul>
-<li><dl class="first docutils">
-<dt><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</dt>
-<dd><ul class="first last simple">
+<li><p><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</p>
+
+<ul>
 <li><code>action</code> は(scanner, string_matched) =&gt; stringな関数、Noneを返せば結果は無視される。</li>
+</ul></li>
+
+<li><p>scanメソッドでスキャン。結果が配列で返ってくる</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">scanメソッドでスキャン。結果が配列で返ってくる</p>
-</li>
-</ul>
+
 <p>といった感じ。関数を渡すので、 <code>StringScanner</code> のようなwhileループを作る必要がなく、キレイにまとまります。</p>
-</section>
-<section>
-<h2>例：S式パーサ</h2>
+
+<h1>例：S式パーサ</h1>
+
 <p><code>re.Scanner</code> は簡単、ということでS式パーサでも。トークナイズ+αな処理をするので、 <code>action</code> をインスタンスメソッドにして状態を保存することにします。</p>
+
 <p>目標は</p>
-<ul class="simple">
+
+<ul>
 <li>数値(っぽいもの)、文字列、シンボルが使える</li>
 <li>シンボルのみ、新たにクラスを定義して(unicodeのサブクラス)それにマップ。それ以外は組み込み型に。</li>
 <li>パースエラーも分かりやすく</li>
 <li>結果はPythonのリストorオブジェクトとして返る</li>
 </ul>
+
 <p>で</p>
-<pre class="prettyprint ">import re, sys
+
+<pre class="prettyprint"><code>import re, sys
 from unicodedata import east_asian_width
 
 try:
@@ -114,10 +119,10 @@ class ParseError(StandardError): pass
 
 class Symbol(unicode):
   def __repr__(self):
-    return "Symbol(%s)"%unicode.__repr__(self)
+    return &quot;Symbol(%s)&quot;%unicode.__repr__(self)
 
 class TokenProcessor(object):
-  PAREN = {"]":"[", ")":"("}
+  PAREN = {&quot;]&quot;:&quot;[&quot;, &quot;)&quot;:&quot;(&quot;}
   def __init__(self, value):
     self.result = []
     self.append = self.result.append
@@ -135,93 +140,112 @@ class TokenProcessor(object):
     self.pos += len(s)
     self.skip(scanner, s)
 
-  def error(self, scanner, s): self.raise_error("unknown token: %s"%s)
+  def error(self, scanner, s): self.raise_error(&quot;unknown token: %s&quot;%s)
 
-  def skip_whitespaces(self, scanner, s): self.append(",")
+  def skip_whitespaces(self, scanner, s): self.append(&quot;,&quot;)
 
   def skip(self, scanner, s):
-    last = "".join(self.result[-2:])
-    if last in ["[,", ",,", ",]"]:
+    last = &quot;&quot;.join(self.result[-2:])
+    if last in [&quot;[,&quot;, &quot;,,&quot;, &quot;,]&quot;]: 
       self.result[-2:] = sorted(last, key=ord)[1]
 
   def atom(self, scanner, s):
-    if s in ["(", "["]:
-      self.append("[")
+    if s in [&quot;(&quot;, &quot;[&quot;]:
+      self.append(&quot;[&quot;)
       self.paren_stack.append(s)
-    elif s in [")", "]"]:
+    elif s in [&quot;)&quot;, &quot;]&quot;]:
       if not self.paren_stack:
-        self.raise_error("missing opening parenthesis.")
+        self.raise_error(&quot;missing opening parenthesis.&quot;)
       if self.PAREN[s] != self.paren_stack.pop():
-        self.raise_error("missing closing parenthesis.")
-      self.append("]")
-    elif re.match(r"""^(".*)$""", s or ""):
-      self.append("u"+s)
-    elif re.match(r"""^((\-?\d[\de\.]+)|(\s*)|(.*"))$""", s or ""):
+        self.raise_error(&quot;missing closing parenthesis.&quot;)
+      self.append(&quot;]&quot;)
+    elif re.match(r&quot;&quot;&quot;^(&quot;.*)$&quot;&quot;&quot;, s or &quot;&quot;):
+      self.append(&quot;u&quot;+s)
+    elif re.match(r&quot;&quot;&quot;^((\-?\d[\de\.]+)|(\s*)|(.*&quot;))$&quot;&quot;&quot;, s or &quot;&quot;):
       self.append(s)
     else:
-      self.append("Symbol(u\"%s\")"%s)
+      self.append(&quot;Symbol(u\&quot;%s\&quot;)&quot;%s)
 
-  def raise_error(self, msg="parse error", range=3):
-    lines = self.string.split("\n")
-    curline = self.string[:self.pos].count("\n")
-    linepos = self.pos - len("\n".join(lines[:curline]))
-    buf = ["\n"]
+  def raise_error(self, msg=&quot;parse error&quot;, range=3):
+    lines = self.string.split(&quot;\n&quot;)
+    curline = self.string[:self.pos].count(&quot;\n&quot;)
+    linepos = self.pos - len(&quot;\n&quot;.join(lines[:curline]))
+    buf = [&quot;\n&quot;] 
     for i in xrange(max(0, curline-range), curline+1):
-      buf.append("% 5d: %s"%(i+1, lines[i]))
+      buf.append(&quot;% 5d: %s&quot;%(i+1, lines[i]))
     width = 6 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in lines[i])
-    buf.append("%s~"%(" "*width))
-    buf.append("line %d, %d: %s"%(curline+1,linepos, msg))
-    raise ParseError(("\n".join(buf)).encode(sys.stderr.encoding))
+    buf.append(&quot;%s~&quot;%(&quot; &quot;*width))
+    buf.append(&quot;line %d, %d: %s&quot;%(curline+1,linepos, msg))
+    raise ParseError((&quot;\n&quot;.join(buf)).encode(sys.stderr.encoding))
 
 def read_sexp(sexp):
   processor = TokenProcessor(sexp)
   scanner = Scanner([
-    (r"\s+", processor("skip_whitespaces")),
-    (r";[^\n]*\n", processor("skip")),
-    (r""""(?:[^"])*"|(\]|\[|\)|\(|[^\(\)\s]+)""", processor("atom")),
-    (r".*", processor("error"))
+    (r&quot;\s+&quot;, processor(&quot;skip_whitespaces&quot;)),
+    (r&quot;;[^\n]*\n&quot;, processor(&quot;skip&quot;)),
+    (r&quot;&quot;&quot;&quot;(?:[^&quot;])*&quot;|(\]|\[|\)|\(|[^\(\)\s]+)&quot;&quot;&quot;, processor(&quot;atom&quot;)),
+    (r&quot;.*&quot;, processor(&quot;error&quot;))
   ], re.M)
   scanner.scan(processor.string)
   if processor.paren_stack:
-    processor.raise_error("missing closing parenthesis.")
-  result = eval("".join(processor.result).lstrip(","))
-  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]</pre><p>こんな感じ。非常にシンプルな気がします。</p>
-<pre class="prettyprint ">print read_sexp(u"""("ほげほげ"
+    processor.raise_error(&quot;missing closing parenthesis.&quot;)
+  result = eval(&quot;&quot;.join(processor.result).lstrip(&quot;,&quot;))
+  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]
+</code></pre>
+
+<p>こんな感じ。非常にシンプルな気がします。</p>
+
+<pre class="prettyprint"><code>print read_sexp(u&quot;&quot;&quot;(&quot;ほげほげ&quot;
 ;comment
   ;comment
   (hogehoge 123) ;aaaaaaa
-  "hoge\\"aaaa"
+  &quot;hoge\\&quot;aaaa&quot;
 ;comment
 ;comment
 
-aaaa          b)""")</pre><p>output:</p>
-<pre class="prettyprint ">[u'\u307b\u3052\u307b\u3052', [Symbol(u'hogehoge'), 123], u'hoge"aaaa', Symbol(u'aaaa'), Symbol(u'b')]</pre><p>エラーも一応。</p>
-<pre class="prettyprint ">print read_sexp(u"""(
+aaaa          b)&quot;&quot;&quot;)
+</code></pre>
+
+<p>output:</p>
+
+<pre class="prettyprint"><code>[u'\u307b\u3052\u307b\u3052', [Symbol(u'hogehoge'), 123], u'hoge&quot;aaaa', Symbol(u'aaaa'), Symbol(u'b')]
+</code></pre>
+
+<p>エラーも一応。</p>
+
+<pre class="prettyprint"><code>print read_sexp(u&quot;&quot;&quot;(
 aaaa
 bbbb (ccc ddd) )
-(eee
-ああああああ""")</pre><p>output:</p>
-<pre class="prettyprint ">__main__.ParseError:
+(eee 
+ああああああ&quot;&quot;&quot;)
+</code></pre>
+
+<p>output:</p>
+
+<pre class="prettyprint"><code>__main__.ParseError:
 
     2: aaaa
     3: bbbb (ccc ddd) )
     4: (eee
     5: ああああああ
                   ~
-line 5, 7: missing closing parenthesis.</pre><p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
-</section>
-<section>
-<h2>というわけで</h2>
+line 5, 7: missing closing parenthesis.
+</code></pre>
+
+<p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
+
+<h1>というわけで</h1>
+
 <p>Pythonでトークナイズするときにはかなり便利なんじゃないかと思いました。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

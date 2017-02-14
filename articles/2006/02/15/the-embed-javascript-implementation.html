@@ -76,56 +76,69 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><a class="reference external" href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
-<p>同様の実装として <a class="reference external" href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
-<p><a class="reference external" href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
-<p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。
-実際の動作はサンプルファイルを見ていただくとして</p>
+    <p><a href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
+
+<p>同様の実装として <a href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
+
+<p><a href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
+
+<p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。 実際の動作はサンプルファイルを見ていただくとして</p>
+
 <p>lyase_view.jsの説明どおり</p>
-<pre class="prettyprint ">/*
+
+<pre class="prettyprint"><code>/*
  *   using innerHTML
  *   -------------
  *   //in HTML
- *   &lt;textarea id="template" style="display:none"&gt;
+ *   &lt;textarea id=&quot;template&quot; style=&quot;display:none&quot;&gt;
  *     The value of x is:&lt; %= context.x%&gt;
  *   &lt;/textarea&gt;
  *   //code
- *   document.write(Lyase.View.render({element:"template"}, {x : 10}));
+ *   document.write(Lyase.View.render({element:&quot;template&quot;}, {x : 10}));
  *
  *   using a template file
  *   -------------
  *   //in /template.jhtml
  *   The value of x is:&lt; %= context.x%&gt;
  *   //code
- *   document.write(Lyase.View.render({file:"/template.jhtml"}, {x : 10}));
+ *   document.write(Lyase.View.render({file:&quot;/template.jhtml&quot;}, {x : 10}));
  *
  *   Of course, you can embed more complex codes.
  *   //in HTML, with prototype.js
- *   &lt;textarea id="template" style="display:none"&gt;
+ *   &lt;textarea id=&quot;template&quot; style=&quot;display:none&quot;&gt;
  *     &lt; % context.list.each(function(pair){%&gt;
  *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
  *     &lt; % }) %&gt;
  *   &lt;/textarea&gt;
  *   //code
- *   document.write(Lyase.View.render({element:"template"},
- *     {list :[{name : "x", value : 10}, {name : "y", value : 20}]}));
- */</pre><p>こんな感じでjavascriptのコードが読み込めます。</p>
+ *   document.write(Lyase.View.render({element:&quot;template&quot;},
+ *     {list :[{name : &quot;x&quot;, value : 10}, {name : &quot;y&quot;, value : 20}]}));
+ */
+</code></pre>
+
+<p>こんな感じでjavascriptのコードが読み込めます。</p>
+
 <p>また</p>
-<pre class="prettyprint ">&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
+
+<pre class="prettyprint"><code>&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
  この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
 
 
 以下のようにクロージャも問題なく使用できます。
 
-&lt; % var c = "," %&gt;
+&lt; % var c = &quot;,&quot; %&gt;
 &lt; % context.list.each(function(num){ %&gt;
   &lt; %= num+c %&gt;
 
 &lt; % })%&gt;
 
-&lt; %= render({file :"./sample2.jhtml"}, context)%&gt; &lt;!--ココに注目--!&gt;</pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
-<p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。
-prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
+&lt; %= render({file :&quot;./sample2.jhtml&quot;}, context)%&gt; &lt;!--ココに注目--!&gt;
+</code></pre>
+
+<p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
+
+<p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。 prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
@@ -133,7 +146,7 @@ prototype.jsのAjax.Updaterあたりをハックすれば結構使えるもの�
 <li><a href="/articles/2008/12/11/functional-pattern-matching-for-python">Python: パターンマッチしてみる</a></li>
 <li><a href="/articles/2008/09/19/sexp-library-for-python">Python: S式パーサライブラリを作りました</a></li>
 <li><a href="/articles/2008/05/28/yahoo-jlp-api-wrapper-for-python-2">Python版Yahooテキスト解析 APIライブラリをかな漢字変換に対応させました</a></li>
-<li><a href="/articles/2007/11/08/instant-pluggable-python-class">Python:お手軽にPluggableにする</a></li>
+<li><a href="/articles/2008/04/03/a-python-library-for-nicovideo-testing">Python版ニコニコ動画ライブラリを試しに公開してみる</a></li>
 </ul>
     </div>
   </div>

@@ -61,368 +61,9 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala" itemprop="url">Scalaでスタック指向言語をサクッと実装する</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/11/03/maintenance-is-difficult-than-development" itemprop="url">やっぱり新規開発より保守が難しい</a></h3>
 <div class="meta">
-<time datetime="2008-05-17T22:30:47&#43;09:00">May 17, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
-  
-  <span class="tag"><a href="/articles/tag/language/" rel="tag" itemprop="keywords">language</a></span>
-  
-  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
-  
-  <span class="tag"><a href="/articles/tag/compiler/" rel="tag" itemprop="keywords">compiler</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Scalaにはご存知のとおり <code>scala.util.parsing.combinator</code> というパーサコンビネータライブラリがある。さらには <code>scala.util.parsing.ast</code> というのもあるわけだけど、これは激しく開発中な感じ。Scalaはバージョンがあがるとこういう開発中ライブラリはごそっと変わったりするので今はおいておく。ちなみに、2.7.1では前のパーサコンビネータは <code>scala.util.parsing.combinatorold</code> といういかにも使いたくない名前にされてしまった。</p>
-<p>パーサコンビネータといえば言語処理系だ（そうか？）。というわけで <code>scala.util.parsing.ast</code> は置いておいて、とりあえずASTについてほとんど考える必要がない、簡単なスタック指向言語を実装してみることにする。実行はScala 2.7.1.finalで。</p>
-<section>
-<h2>スタック指向言語とは</h2>
-<p>こんなブログを見ている人は、だいたいスタック指向言語を知っているだろうから俺みたいな素人が書いてもなんだけど、一応。
-スタック指向言語にはForthやPostScriptやFactorがある。素晴らしく簡単にいうと、 <strong>「とりあえずスタックがあればなんとかなるよね」</strong> という言語だ。</p>
-<p>んでスタック使うなら逆ポーランドで書いてあったら、処理も楽だしいいんじゃね、読みにくい？Lispだって慣れてる人は無問題なんだし、慣れの問題じゃね、という感じである。</p>
-<p>関数（スタック指向言語ではwordという）もスタックに値をつんで実行すればいい。wordから値を返すときも返したい分だけスタックにつめばいい。というわけで、非常に単純なのである。</p>
-<p>今回は <code>Factor</code> ライクなスタック指向言語処理系（インタプリタ）「SimpleFactor」を作ってみることに。文法とかはだいたいFactorと一緒なのでさきにFactorの文法を学んでおくと分かりやすい。</p>
-</section>
-<section>
-<h2>まずはレクサ</h2>
-<p>まずはレクサを作る。サポートするリテラルは文字列、整数値、真偽値で以下のような感じ。</p>
-<ul class="simple">
-<li>文字列： <code>&quot;hoge&quot;</code></li>
-<li>整数値： <code>10, <span class="pre">-10</span></code></li>
-<li>真偽値： <code>t,f</code></li>
-</ul>
-<p>あと、コメントは <code>!</code> から行末までとする。ソースはこんな感じで、ScalaのDSL構築能力を生かしてかなり定義どおりに書ける。</p>
-<pre class="prettyprint ">import scala.util.parsing.combinator._
-import scala.util.parsing.combinator.syntactical._
-import scala.util.parsing.combinator.lexical._
-import scala.util.parsing.input.CharArrayReader.EofCh
-class Lexer extends StdLexical with ImplicitConversions {
-  override def token: Parser[Token] =
-    ( string ^^ StringLit
-    | '-' ~&gt; number ^^ { case num =&gt; NumericLit("-" + num) }
-    | number ^^ NumericLit
-    | EofCh ^^^ EOF
-    | delim
-    | '\"' ~&gt; failure("Unterminated string")
-    | rep(chrAny) ^^ checkKeyword
-    | failure("Illegal character")
-    )
-
-
-  def number  = zero | (nonzero ~ rep(digit) ^^ {case x ~ y =&gt; mkS(x::y)})
-  def string = '\"' ~&gt; rep(charSeq | chrExcept('\"', '\n', EofCh)) &lt;~ '\"' ^^ {case x =&gt; mkS(x)}
-  def checkKeyword(xs : List[Any]) = {
-    val strRep = mkS(xs)
-    if (reserved contains strRep){ Keyword(strRep) }
-    else if(identiferRe.findFirstIn(strRep) != None  ) { Identifier(strRep) }
-    else {ErrorToken("Not a Identifier: " + strRep)}
-  }
-
-  override def whitespace: Parser[Any] =
-    rep( whitespaceChar | '!' ~ rep( chrExcept(EofCh, '\n') ))
-  def nonzero = elem("nonzero digit", d =&gt; d.isDigit &amp;&amp; d != '0')
-  def zero: Parser[String] = '0' ^^^ "0"
-  def charSeq: Parser[String] =
-    ('\\' ~ '\"' ^^^ "\"" |'\\' ~ '\\' ^^^ "\\" |'\\' ~ '/'  ^^^ "/" |'\\' ~ 'b'  ^^^ "\b" | '\\' ~ '0' ^^^ ""
-    |'\\' ~ 'f'  ^^^ "\f" |'\\' ~ 'n'  ^^^ "\n" |'\\' ~ 'r'  ^^^ "\r" |'\\' ~ 't'  ^^^ "\t")
-  def identiferRe = """^(\w|[^"])+$""".r
-  def chrAny = chrExcept(EofCh, ' ', '\n', '\t', '\r', '\"', '!')
-
-  def mkS[A](seq: Seq[A]) = seq mkString ""
-}</pre><p>Scalaで処理系を作る場合はとりあえず <code>StdLexical</code> を継承して拡張すれば、だいたいOK。ここでは <code>Token</code> を返すパーサを定義する。 <code>Keyword</code> や <code>StringLit</code> といった <code>Token</code> を継承したケースクラスは <code>scala.util.parsing.sytax.StdTokens</code> で定義されていて、 <code>StdLexical</code> は <code>StdTokens</code> をMix-inしている。</p>
-</section>
-<section>
-<h2>抽象構文木をつくる</h2>
-<p>次に、このトークンの並びから文法を定義して、それに従って抽象構文木を作るわけだけど、スタック指向言語の場合、ここで難しいことはあまりない。</p>
-<p>とりあえず、処理(といっても4種類、しかもうち2種類は意味なし）と、抽象構文木をあらわすケースクラスを作る。インタプリタなのでオペコードとかする意味はないけど、こうしとくとVMにしようと思ったとき楽なのでそうした。というよりエミュとかを作ることが好きなので、こういう数値を見ると安心するのである。</p>
-<pre class="prettyprint ">import scala.util.logging.ConsoleLogger
-import scala.collection.mutable.{Stack, ArrayBuffer, HashMap}
-trait Opecode {
-  final val OP_NOP  : byte = 0x00
-  final val OP_PUSH : byte = 0x01
-  final val OP_CALL : byte = 0x50
-  final val OP_RTN  : byte = 0x51
-}
-
-abstract class Node {
-  type Value
-  val v:Value
-  def value = v
-}
-abstract class NodeValue extends Node
-case class NodeStr(v:String) extends NodeValue { type Value = String }
-case class NodeInt(v:int) extends NodeValue { type Value = int }
-case class NodeBool(v:boolean) extends NodeValue { type Value = boolean }
-case class NodeSymbol(override val v:String) extends NodeStr(v)
-case class NodeQuotation(val v:List[Node]) extends Node{ type Value = List[Node] }
-case class NodeOpe(v:byte, operand:List[Node]) extends Node { type Value = byte }
-case class NodeNamed(v:Named) extends NodeValue with Opecode{ type Value = Named }
-case class NodeProgram(v:List[Node]) extends Node with Opecode{
-  type Value = List[Node]
-  var quotIndex = 0
-  def nextQuotSym = { quotIndex += 1; "quot"+quotIndex }
-
-  def toplevel = {
-    val nullsf = List[NodeSymbol]()
-    val words = new ArrayBuffer[Node]
-    def visitNode(n:Node):List[Node] = n match {
-      case NodeNamed(NamedWord(name, sin, sout, body)) =&gt;
-         words += NodeNamed(NamedWord(name, sin, sout, body.flatMap(visitNode)))
-         List[Node]()
-      case NodeQuotation(nodes) =&gt;
-        val name = nextQuotSym
-        words += NodeNamed(NamedWord(name, nullsf, nullsf, nodes.flatMap(visitNode)))
-        List(NodeOpe(OP_PUSH, List(NodeSymbol(name))))
-      case x =&gt; List(x)
-    }
-    value.flatMap(visitNode)
-    words.toList
-  }
-}
-
-abstract class Named(name:String)
-case class NamedWord(name:String, stackin:List[NodeSymbol], stackout:List[NodeSymbol], body:List[Node]) extends Named(name)
-case class NamedNativeWord[T](name:String, stackin:List[NodeSymbol],
-  stackout:List[NodeSymbol], body:()=&gt;T) extends Named(name)
-class NamedTable extends HashMap[String, Named] {
-}</pre><p><code>Node</code> という抽象クラスを継承して、いろんなノードを定義する。だいたい名前をみてのとおりだけど、わかりにくいところだとこんな感じ。</p>
-<ul class="simple">
-<li>NodeNamed：名前付けされた値への参照</li>
-<li>NodeSymbol：word名</li>
-<li>NodeQuotation：無名関数(quotationという)</li>
-<li>NodeProgram：プログラム全体</li>
-</ul>
-<p><code>Named</code> は名前付けされた値なわけだけど、今回変数にあたるものはないので、wordのみがコレにあたる。 <code>NamedWord</code> がSimpleFactorで書かれたふつーのword、 <code>NamedNativeWord</code> はいわゆる組み込みwordでScalaで書いたものをあらわす。 <code>NamedTable</code> はその対応を保存する単なるハッシュマップ。</p>
-<p>さて、ではこいつらを使って構文木を作って実行する。</p>
-<pre class="prettyprint ">class SimpleFactorInterp extends StdTokenParsers with ImplicitConversions with Opecode{
-  type Tokens = Lexer
-  val lexical = new Tokens
-  lexical.reserved ++= List("t", "f", "(", ")", "[", "]", ":", ";", "--")
-  lexical.delimiters ++= List("\n", " ", "\t")
-  import lexical.{NumericLit, StringLit, Keyword, Identifier}
-
-  def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }
-  def lWord       = ":" ~ lSymbol ~ "(" ~ rep(lSymbol) ~ "--" ~ rep(lSymbol) ~ ")" ~ rep(lExpr) ~ ";" ^^
-                        { case ":" ~ name ~ "(" ~ sin ~ "--" ~ sout ~ ")" ~ body ~ ";" =&gt;
-                            NodeNamed(NamedWord(name.value, sin, sout, body+NodeOpe(OP_RTN, List[Node]()))) }
-  def lExpr:Parser[Node] = (lString | lNumber | lBool | lInvokeWord | lQuotation)
-  def lString     = accept("string", { case StringLit(n)  =&gt;  NodeOpe(OP_PUSH, List(NodeStr(n))) })
-  def lNumber     = accept("number", { case NumericLit(n) =&gt;  NodeOpe(OP_PUSH, List(NodeInt(n.toInt))) })
-  def lBool       = accept("boolean",{ case Keyword("t")  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(true)))
-                                       case Keyword("f")  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(false)))  })
-  def lInvokeWord    = accept("symbol", { case Identifier(n) =&gt; NodeOpe(OP_CALL, List(NodeSymbol(n))) })
-  def lQuotation      = "[" ~&gt; rep(lExpr) &lt;~ "]" ^^ { case expr =&gt; NodeQuotation(expr+NodeOpe(OP_RTN, List[Node]())) }
-
-  def lSymbol        = accept("symbol", { case Identifier(n) =&gt; NodeSymbol(n) })
-
-  protected val stack = new Stack[Node]
-  protected var namedTable = new NamedTable
-
-  def parse(input: String) =
-    phrase(program)(new lexical.Scanner(input)) match {
-      case Success(programNode, _) =&gt; initTopLevel(programNode.toplevel)
-      case x                       =&gt; error(x.toString)
-    }
-
-  def initTopLevel(toplevelNodes:List[Node]) = {
-    def sl(v:String) = v.split(" ").map(NodeSymbol).toList
-    def nword[T](n:String, sin:String, sout:String, m:()=&gt;T) =
-      (n, NamedNativeWord(n, sl(sin), sl(sout), m))
-    namedTable ++= List(
-      nword("drop", "x", "", ()=&gt;{ pop }),
-      nword("dup", "x", "x x", ()=&gt;{ val v = pop; npush(v,v) }),
-      nword("rotate", "x y z", "y z x", ()=&gt; npop(3) match {
-        case List(x, y, z) =&gt; npush(y, z, x)
-      }),
-      nword("swap", "x y", "y x", ()=&gt; npop(2) match {
-        case List(x, y) =&gt; npush(y, x)
-      }),
-
-      nword("+", "x y", "z", ()=&gt;{ iArI2(_+_) }),
-      nword("-", "x y", "z", ()=&gt;{ iArI2(_-_) }),
-      nword("*", "x y", "z", ()=&gt;{ iArI2(_*_) }),
-      nword("/", "x y", "z", ()=&gt;{ iArI2(_/_) }),
-
-      nword("&gt;", "x y", "?", ()=&gt;{ ilB2(_&gt;_) }),
-      nword("&lt;", "x y", "?", ()=&gt;{ ilB2(_&lt;_) }),
-      nword("==", "x y", "?", ()=&gt;{ ilB2(_==_) }),
-      nword("&gt;=", "x y", "?", ()=&gt;{ ilB2(_&gt;=_) }),
-      nword("&lt;=", "x y", "?", ()=&gt;{ ilB2(_&lt;=_) }),
-
-      nword("not", "?", "?", ()=&gt; pop match {
-        case NodeBool(v) =&gt; push(NodeBool(!v))
-      }),
-      nword("and", "? ?", "?", ()=&gt; (pop, pop) match {
-        case (NodeBool(true), NodeBool(true)) =&gt; push(NodeBool(true))
-        case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(false))
-      }),
-      nword("or", "? ?", "?", ()=&gt; (pop, pop) match {
-        case (NodeBool(false), NodeBool(false)) =&gt; push(NodeBool(false))
-        case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(true))
-      }),
-
-      nword(".", "obj", "", ()=&gt;{ println(pop.value) }),
-      nword("call", "quot", "", ()=&gt; pop match {
-        case NodeSymbol(qname) =&gt; callWord(qname)
-      }),
-
-      nword("if", "? quot quot", "", ()=&gt; (pop, pop, pop) match {
-        case (_, NodeSymbol(qname), NodeBool(true))   =&gt; callWord(qname)
-        case (NodeSymbol(qname),  _, NodeBool(false)) =&gt; callWord(qname)
-      }),
-
-      nword("string&gt;number", "str", "x", ()=&gt; pop match {
-        case NodeStr(str) =&gt; push(NodeInt(str.toInt))
-      }),
-      nword("&gt;string", "obj", "str", ()=&gt; { push(NodeStr(pop.value.toString)) })
-
-    )
-    toplevelNodes.foreach {
-      case NodeNamed(n@NamedWord(name, _, _, _)) =&gt; namedTable(name) = n
-      case _ =&gt; ()
-    }
-  }
-
-  def evaluate(input:String, args:Array[String]) = {
-    parse(input)
-    args.map(NodeStr).foreach(push _)
-    callWord("main")
-  }
-
-  def callWord(wordName:String):unit =
-    namedTable(wordName.ensuring(namedTable.contains _, "word '"+wordName+"' is not defined.")) match {
-      case NamedNativeWord(_, sin, sout, body) =&gt; try {
-          body()
-        } catch {
-          case e =&gt; wordError(wordName, sin, sout)
-                    throw e
-        }
-      case NamedWord(_, sin, sout, body) =&gt;
-        body foreach {
-          case NodeOpe(OP_PUSH, List(v, _*)) =&gt; push(v)
-          case NodeOpe(OP_CALL, List(NodeSymbol(name), _*)) =&gt;
-            try {
-              callWord(name)
-            }catch {
-              case e =&gt; wordError(wordName, sin, sout)
-                        throw e
-            }
-          case NodeOpe(OP_RTN, _) =&gt; ()
-        }
-    }
-
-  def npop(n:int):List[Node] = (1 to n).map(x=&gt;pop).reverse.toList
-  def npush(ns:Node*) = ns.reverse.foreach(push(_))
-
-  def iArI2(f:(int,int)=&gt;int) = (pop, pop) match {
-    case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeInt(f(v2,v1)))
-  }
-  def ilB2(f:(int,int)=&gt;boolean) = (pop, pop) match {
-    case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeBool(f(v2,v1)))
-  }
-  def wordError(name:String, sin:List[NodeSymbol], sout:List[NodeSymbol]) = {
-    printf("word '%s' ( %s -- %s ).\n", name, sin.map(_.value).mkString(" "),
-                                              sout.map(_.value).mkString(" "))
-  }
-  def push(a:Node) = stack.push(a)
-  def pop = stack.pop
-
-}</pre><p>はじめの方でプログラムの文法を定義し、 <code>Token</code> から <code>Node</code> のリストへ変換し、 <code>NodeProgram</code> にする。処理の簡単さのため、プログラムはwordから構成されていて、プログラム開始時にはmain wordから実行が開始されるとするので</p>
-<pre class="prettyprint ">def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }</pre><p>wordは</p>
-<pre class="prettyprint ">: add ( x y -- z )
- +
-;</pre><p>という感じに定義するので <code>lWord</code> の定義になっている。ほとんどそのまま書いた感じだ。 <code>( x y <span class="pre">--</span> z )</code> の部分はスタックエフェクトといって、このwordがスタックにどのような影響を与えるのかを記述している。あくまで説明であって本質的な意味はない。 <code>( x y <span class="pre">--</span> z )</code> ならスタックから2個取り出されて、結果が1個詰まれるのだな、ということがわかる。</p>
-<p>あとは自明なので省略。</p>
-</section>
-<section>
-<h2>実行</h2>
-<p>そんなこんなでソースコードから <code>NodeProgram</code> が作れるようになった。次に <code>NodeProgram</code> からTOPレベル環境を作る。</p>
-<p>ここでは、 <code>NodeProgram</code> に含まれるquotationを(実行する際の）簡単さのためNamedWordに変換し、変換後のNamedWordの呼び出しに変換する。組み込みwordもここで定義している。これはこの部分で定義すると、クロージャになるため定義が簡単だから( <code>pop</code> や <code>push</code> といった <code>SimpleFactorInterp</code> のメソッドがそのまま書ける)である。また、パターンマッチを活用することで非常に直感的に書けていることが見て取れるかと。やっぱりパターンマッチ最高だわぁ･･･。そして出揃ったTOPレベルのwordを <code>NamedTable</code> にマッピングし、TOPレベル環境の作成が完了する。</p>
-<p>あとは <code>main</code> wordを呼び出すだけ。</p>
-</section>
-<section>
-<h2>サンプルコード</h2>
-<p>こんな感じ。サンプルでは10の階乗を計算している。</p>
-<pre class="prettyprint ">object SimpleFactor extends ConsoleLogger{
-  def main(args: Array[String]) = {
-    log("Starting SimpleFactor.")
-    log("-"*40)
-    val ip = new SimpleFactorInterp
-    ip.evaluate("""
-! Performs a factorial calculation.
-: main ( str -- )
-string&gt;number fact .
-;
-
-: fact ( x -- y ) dup factit ;
-
-: factit ( x y -- z )
-  dup 1 &lt;=
-    [ drop ]
-    [ 1 - dup rotate * swap factit ] if
-;
-
-    """, args)
-  }
-}
-
-SimpleFactor.main(Array("10"))</pre><p>ここで使っているwordを簡単に説明すると</p>
-<ul class="simple">
-<li><cite>string&gt;number</cite>:スタックからpopし、文字列を数値に変換してpushする</li>
-<li><cite>*</cite>: スタックから2個popし、掛けたものをpushする</li>
-<li><cite>-</cite>: スタックから2個popし、引き算したものをpushする</li>
-<li><cite>&lt;=</cite>:スタックから2個popし、 <code>&lt;=</code> な比較をして真偽値をpushする</li>
-<li><cite>.</cite>: スタックからpopし、文字列表現を表示する</li>
-<li><cite>dup</cite>:スタックからpopし、それを2回pushする</li>
-<li><cite>drop</cite>:スタックからpopする</li>
-<li><cite>rotate</cite>:「x y z」というスタックのトップ部分を、「y z x」にローテーションする</li>
-<li><cite>swap</cite>:「x y」というスタックのトップ部分を「y x」に入れ替える</li>
-<li><cite>if</cite>:「真偽値 真のとき実行するquotation 偽のとき実行するquotation」というスタックのトップ部分から条件を判定しquotationを実行する</li>
-</ul>
-<p>てな感じ。これだけの命令でもちゃんとプログラムが書けて、条件分岐、ループが実現できるのはスタック指向言語を知らない人から見ると面白い部分かも。 <code>3 fact</code> なら</p>
-<ul class="simple">
-<li>[ 3 3 ] : fact内 <code>dup</code></li>
-<li>[ 3 3 3 ] : factit内 <code>dup</code></li>
-<li>[ 3 3 3 1 ] : <code>1</code></li>
-<li>[ 3 3 f ] : <code>&lt;=</code></li>
-<li>[ 3 3 f quot ] : <code>[ drop ]</code></li>
-<li>[ 3 3 f quot quot ] : <code>[1 - ... ]</code></li>
-<li>[ 3 3 ] : <code>if</code></li>
-<li>[ 3 3 1 ] : <code>1</code></li>
-<li>[ 3 2 ] :  <code>-</code></li>
-<li>[ 3 2 2 ] : <code>dup</code></li>
-<li>[ 2 2 3 ] : <code>rotate</code></li>
-<li>[ 2 6 ] : <code>*</code></li>
-<li>[ 6 2 ] : <code>swap</code></li>
-<li>factitに戻る</li>
-</ul>
-<p>こんな感じで計算される。</p>
-<p>またLispのS式とマクロによる拡張性は名高いと思うが、スタック指向言語も単純に空白で区切られたwordが並んでいる、という点で非常に自己拡張性が高い。こういう変態的(?)な部分も魅力の一つ。</p>
-<p>ForthはSUNのOpen Firmware、Firefox4で採用が予定されているJavascriptの処理系Tamarinの中など、今でもあまり表には見えてこない部分で使用されているので、これを機会にスタック指向言語を嗜んでみては。Forthは基本だけど、今なら注目され始めている(？)Factorかなあ。</p>
-</section>
-<section>
-<h2>簡単に作れます</h2>
-<p>というわけでScalaで簡単なスタック指向言語処理系を作ってみたわけだけど、非常に簡単。さくっと作れる。 <code>scala.util.parsing.ast</code> ができたら、またなんか処理系を試し書きしてみようかな。</p>
-</section>
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/06/24/creating-what-im-interested-in-anyway-or-else-about-that-a-jack-of-all-trades-is-master-of-none" itemprop="url">とにかく好きなものを作るということ、あるいは器用貧乏について</a></h3>
-<div class="meta">
-<time datetime="2007-06-24T00:36:19&#43;09:00">Jun 24, 2007</time>
+<time datetime="2007-11-03T00:16:42&#43;09:00">Nov  3, 2007</time>
 
   
   <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
@@ -431,22 +72,34 @@ SimpleFactor.main(Array("10"))</pre><p>ここで使っているwordを簡単に�
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>via  <a class="reference external" href="http://la.ma.la/blog/diary_200706231433.ht">つまらなくて役に立つ物を作るということ</a></p>
-<p>実は俺のプログラミングというかクリエイティブなことについての考えはシンプルで、「とにかく作りたいものを作る」それだけだったりする。まぁ結局その作りたいものがゲームだったり、XMLをパースしたりすることだったりするわけなんだろうけど。</p>
-<hr class="docutils" />
-<p>もっと突っ込んで言うと、作りたいものを作る、それだけなので別に何も残せなくても俺はぜんぜん気にしない。死ぬまでのなかで、あの人は○○を作った人だ、とかそんな人になりたいとは思わない。</p>
-<p>事実、俺が個人で作っているものは好き勝手だ。</p>
-<p>このブログに出してる成果物で言えば、あるときはRailsを触っていろいろやっていたり（まぁこれは仕事もあったが）、Javascriptをいじってテンプレートエンジンつくったりいろいろしたり、PythonでNESエミュレータを書いたり。</p>
-<p>ma.laさんとは違ってゲームも作る。SDLを使って2Dのも作るし(Ruby/SDLやpygameではない。CあるいはC++、昔だとDXLibかなあ)、最近はIrrlichtも勉強していて3Dゲームも作りたい。</p>
-<p>言語とかその他の面でも手を出しまくりだ。普段からC,C++,Java,Ruby,Python,Javascript,Schemeなどを書くし（作りたいものに一番便利な言語を使うだけ）、単に勉強として変な言語にも手を出す。</p>
-<p>他にはReasonやハード音源を使って自作の曲をだしてたりもした（別名義）。一応小さいころから音楽はやっていて、しかもきちんと音楽理論も教えてくれるとこだったので、そこそこのクオリティだと思う。DTM特有の技術も、一通りの生楽器の奏法の再現法を勉強したり、エフェクトをいじり倒したりした。</p>
-<p>画像もやる。そこまで絵心があるわけじゃないけど、いろいろなソフトを経てGimpに落ち着き、ある程度の画像処理ならできるし、ゲームのマップ作成とか位なら普通にやる(A5のインテュオスほしいなあ・・・)。前にも書いたけど、3Dにも手を出している。</p>
-<hr class="docutils" />
-<p>んで、そんなに手を出しまくってお前は何を残せたんだ、と言われたら「何も残してないよ」だ。何も誇れるものなんてない。結局どれも中途半端で役立たずだ。だから、俺はWEBプログラマでもなければ、ゲームプログラマでもなく、プログラマですらなく、ミュージシャンでもなく、絵描きでもない。</p>
-<p>実はこれは結構悩んだ。というか悩んでる人は結構いるんじゃないかと思っている。世の中、スペシャリストスペシャリストで、仕事をしようにも俺みたいな器用貧乏タイプの人は困る。だから、無理に自分がほんとに好きなものはどれなんだ、とか何か残せているのか、とか自問したりする。</p>
-<p>それに対しての俺の結論は、「器用貧乏で何が悪い」だ。楽しければそれでいいのだ。俺は作ることすべてが好きなんだ。たとえ何の才能もなくて何も残せなくても作る過程が大好きなんだよ。少なくとも、世の中がスペシャリスト優遇だからといって自分を抑えて、スペシャリストになって生きるよりは、不器用に器用貧乏で生きるほうが絶対楽しい。めざせ最強の器用貧乏。なにかひとつ、スペシャリストになるほど好きなものが持てる人は運が良かっただけなのだ。</p>
-<hr class="docutils" />
-<p>ただ、器用貧乏じゃないとできないこともあるんだぜ、とは常々思っている。器用貧乏タイプの人はどうか、負けないでほしい。</p>
+    <p>システム開発の話ではありません。</p>
+
+<p>最近、やっぱりというかなんというか初音ミクに刺激されて音楽をもう一回やりたくなったんです。</p>
+
+<p>中学高校と音楽ばっかりやっていたので、大学の４年間やってないくらいで忘れてないだろう、と思ってたんです。</p>
+
+<p>でも、いろいろ忘れているわけですよ、実際。</p>
+
+<hr />
+
+<p>クラシック的な理論を習っていたので、感性優先で作りたいと思っても理論がわかってないと不安になっちゃう。というわけで、現在、和声法とか自由対位法とか復習しています。その次はFMとアナログでの音作りの感触を取り戻すことかな・・・</p>
+
+<p>でもやっぱり基礎の基礎って絶対に忘れないもんだな、と思った。久しく使ってない知識だけど、トニイホロヘハ、ヘロホイニトハ、シミラレソドファ、ファドソレラミシ、これはしっかり覚えていた。</p>
+
+<hr />
+
+<p>知識を保っていくことはほんとに難しい。人間の脳の記憶容量は普通に生きている限りだと無限に近い。storeにはあまり失敗しない。結局retrieveできなくなっていくのが問題だったりする。</p>
+
+<p>それを大学の講義で習って、しばらくして自分用のメモを残すようになった。</p>
+
+<p>今、昔書いた曲の譜面（ソース）をみても何でこういう進行にしたか、わからない。今回、勉強しなおしながらメモを残している。なんか、ドキュメントがないとわかんないやつになっちゃったみたいですごくむなしい。けど、やっぱりメモを残すのが一番効率がいい。記憶はそう簡単に消えない。retrieveする手がかりがあればいい。基礎とか、メモする必要はない。自分が忘れそうなことをうまく見抜いて、残していく。</p>
+
+<p>これは幅広くやろうとしてしまう人の宿命だよなあ。言語にしても、実は自分用メモを見ないとまったく書けない、というレベルになってしまっているものもあるんだよねえ(HaskellとかSmalltalkとか･･･最近はどう書く？orgでコードを見るおかげでそこまでひどくないが)。</p>
+
+<hr />
+
+<p>どう書く？orgと言えば主に <a href="http://ja.doukaku.org/user/82/">Scalaで参戦</a> してるわけですが、ブログでほとんどScalaに言及してないな。まぁ、Scalaの記事とか読みたい人もあんまりいないだろうし、いいか。</p>
+
   </div>
 </article>
 
@@ -458,23 +111,125 @@ SimpleFactor.main(Array("10"))</pre><p>ここで使っているwordを簡単に�
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2007/05/22/erlang-process" itemprop="url">Erlangのプロセス</a></h3>
+<h3 itemprop="name"><a href="/articles/2007/09/12/machine-language" itemprop="url">マシン語とか</a></h3>
 <div class="meta">
-<time datetime="2007-05-22T23:57:09&#43;09:00">May 22, 2007</time>
+<time datetime="2007-09-12T19:17:38&#43;09:00">Sep 12, 2007</time>
 
   
-  <span class="tag"><a href="/articles/tag/erlang/" rel="tag" itemprop="keywords">erlang</a></span>
+  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
+  
+  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
+  
+  <span class="tag"><a href="/articles/tag/programing/" rel="tag" itemprop="keywords">programing</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>via  <a class="reference external" href="http://d.hatena.ne.jp/methane/2007051">Erlangの強さ</a></p>
-<p>最近（でもないか・・・）Erlangが話題になっていて、趣味プログラマーになったとはいえ、ちょっと触ってみたいなあと思いつつ、時間ないなあと思いつつ。</p>
-<p>んで話題のErlangのプロセスなんだけど、microthreadだろうなあ、と思っていたけどそれであってるっぽい。あんま詳しくないんでアレですが。詳しくは <a class="reference external" href="http://www.erlang.org/ml-archive/erlang-questions/200104/msg00072.html">コチラ</a> 。</p>
-<p>Erlangのプロセスについてはmethaneさんがおっしゃてる通りだと思う。要はこれを使いやすい形で言語仕様にとりこんでるあたりがErlangの良さなんだよなあ。</p>
-<p>たとえばPythonでもyieldがあるのでmicrothreadは可能で（Stackless Pythonまである)、Erlangのプロセスっぽいこともやろうと思えば可能じゃないか、って感じなんだけどあくまでやればできる、って感じだと思う。</p>
-<p>というわけでmicrothreadを用いたプログラミングに対するある意味DSL的な言語ではないのかなあ、というのが今のところの印象。パッと見た感じその他は魅力的な部分があまり見当たらなかった。かといって機能が足りてないわけでもぜんぜんないので、microthreadや分散のメリットが前面にでるならガンガンつかってもいいと思ってたりするのです。</p>
+    <p>最近の若いもんはマシン語をしらん、けしからん、みたいな話が盛り上がってますね。</p>
+
+<p>そんな若くもないのですが(22歳)、中学のころにはWindows95があって、携帯電話を持っていて、高校生のころには既にADSLなどの高速回線を普通に使っていた、そんな世代の俺の考え。まぁ俺はプログラマでもなんでもないんだけど。</p>
+
+<h1>全体的な結論</h1>
+
+<p>全体的な結論を先に言うと、個人的にこういう原点回帰的な話というのはそんなに好きじゃない。もっと高次で活躍する人が増えてもいい、と思っているから。一人の人間の時間は有限で、それを高次レイヤにつぎ込んでもっとおもしろいことができるなら、そっちにつぎこめばいいんじゃないかな。俺はそれは全然アリ派。たとえば、音楽でいうと、DTMしかできないやつは音楽できる顔すんな、みたいなのが嫌い。DTMしかできなくてもいい曲かく人なんていっぱいいるし、それでいいと思う。なんていうか、努力とかよりも、感性にあこがれるタイプだからかな。上のレイヤからはいっても、きっと基礎を固めてちゃんとやりたい、それが必要だ、と思えば人は勉強する。だからあえて言うこと（必要だと言い切ること）でもないんじゃないかなあ。現に、だいたいコンピュータ技術者というものは最終的に下のレイヤへ下がっていく人が多いですよね。</p>
+
+<h1>マシン語とかについて</h1>
+
+<p>きっと議論を呼んでいるのは「絶対必要」みたいに断定してしまったからで、知っていればこんないいことがあるんだよ、という感じならみんな納得するんじゃないかなあ。</p>
+
+<p>上に書いたように俺の世代ってのは中学ですでにWindows95があってVBやらVCやらDelphiがあった世代で。そんなに苦労しなくても見栄えのいいGUIアプリがかける環境があったわけで。当然意識しないとマシン語とかアセンブラには触れない。俺はたしかJAVAからプログラミングに入ったけど、別にマシン語知らなくても全然大丈夫だった。</p>
+
+<p>んでさらにはWebアプリの台頭。Webアプリを書いているときにマシン語をしらないから、という理由で困ったこともないし、新しい言語を覚えるときに困った覚えもない。つまりプログラマでも書くプログラムによってはそんなに必要ない、ということ。そういう時代まで、先人達の努力でやってきた、ということ。暇があるなら低レイヤを覚えておくにこしたことはないけど、他に覚えるべきことがあるなら、そっちを勉強したらいいと思う。</p>
+
+<p>ただ、知っといたほうがいろいろいいことがあるのも事実。なので覚えたい人はがんばりましょう、ということで。</p>
+
+<p>同じことを書いてる人もいるけど、むしろアセンブラとかにこだわりを持っている人のほうが、「ひどい」コードを書くこともあるよね。処理効率を優先しまくって可読性を落としたりとか、何をやってるのかわからないのがイヤ、と自分で必要ないものまで書いたりとか。</p>
+
+<h1>俺と低レイヤ技術</h1>
+
+<p>とそんなことを書きつつ、実は低レイヤも好きな俺。すみませんすみません。個人的に低レイヤの（特にCPUとか。ネットワークとかじゃなく。）ことを勉強したいなら、エミュレータは一度書いてみるべきだと思う。一個8bitCPUのエミュレータを書いて、そのCPUの逆アセンブラを書いて、デバッガ作って、できれば自分でアセンブラを書いて、アセンブリ言語をマシン語に落として、そのコードを実行させてみれば、CPUの基礎はかなりわかると思う。データがそろってる8bitCPUならそんなに苦労することなくかけるので、一度書いてみてはいかが。アセンブリ言語の書き方も、割り込みがどーたらも、なんMhzとかってなんなの、とかサイクルってなにとかメモリってどうなってんの、DMAってなにがうれしいんだよとかそういやビット演算ってなんの役にたつの、とか色々一気に疑問が解決する。それがわかっていればあとは順をおってCPU関連技術を勉強していけば理解もはやい気がする。自分で命令セットまで考えてそのCPUをソフトで実装すればもっと完璧。</p>
+
+<p>実装言語はなんでもいいんじゃないかなあ。手前味噌だけど、 <a href="/articles/2007/03/02/nes-emulator-development-with-python-5">Pythonでもエミュレータを書こうと思えばかける</a> わけで、PerlでもRubyでもJavascriptでもいいと思う。動作速度よりも理解する過程が楽しいかと。ちなみに自分の書いたPythonでのNESエミュレータだとCPU（6502)とメモリ関連で、簡易逆アセンブラ込みで1000行ほど。速度を犠牲にすればもっと短くかける。</p>
+
+<p>あと、これも書かれてるけどむしろネットワークとか、DBとかのほうがよっぽど低レイヤの知識が必要だよなあ。10BASE-Tと100BASE-Tでなんでつなげるリピータハブの数が違うのかとか、これならどれだけスループットが確保できるか、それをわかるためにもCSMA/CDはなんたるかとか、実際どうやってケーブル上で衝突を検出してんのかとか色々わかってないと困るしねえ。他のネットワーク技術でも一緒。生のパケット(orフレーム）を見なけりゃいけないことも多々あるし。ソフト使ってちゃんと設定がかけます、だけだと意味ない。OSIの層を上から下までカバーしないと。そういった意味でもネットワークっておもろい。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2007/09/08/parser-combinators-in-python" itemprop="url">Javascriptでパーサジェネレータを書いてみた</a></h3>
+<div class="meta">
+<time datetime="2007-09-08T00:04:03&#43;09:00">Sep  8, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>ちょっと前にjavascriptで構文解析とかがはやった気がするので、javascriptのリハビリがてらかいてみた。</p>
+
+<p>ググってみると</p>
+
+<ul>
+<li><a href="http://t-code.org/blog/2007/06/jsparsec_javascript.htm">Jsparsec - JavaScriptパーザコンビネータライブラリ</a></li>
+<li><a href="http://d.hatena.ne.jp/bellbind/20060529/114884313">HaskellのMonadをJavaScriptで実装するとしたら</a></li>
+</ul>
+
+<p>あたりがあるのだが、まぁ勉強ということで。javascriptらしく書いてみようかと。</p>
+
+<p>ということで、モナドがどーたらとか難しい話はまぁおいておいて、簡単に値がとりだせますよ、という見栄え重視で作ってみた。基本的な機能しかない。けど拡張するのは簡単。せめて相互再帰くらいは実装したほうがよかったかな。まぁ、こんなの真剣に使う人もいないと思うので、要望があればってことで。ちなみに依存するライブラリはありません。</p>
+
+<p><strong>ダウンロード</strong> ： <a href="/statics/files/parsec.js">Inforno.Parsec</a></p>
+
+<p>たとえばこんな感じにCSVのパーサが定義できる。withを使ってDSLっぽくしてみた。</p>
+
+<pre class="prettyprint"><code>var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
+  this.chars = chrLike(function(c){ return c != '' &amp;&amp; c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='&quot;';});
+  this.quote = chr('&quot;') 
+  this.quoteInQuote = str('&quot;&quot;') .ret(function(){return '&quot;';}); 
+  this.charInQuote  = chrLike(function(c){ return c!='&quot;';});
+  this.quotedField  = quote .and (rep((quoteInQuote) .or (charInQuote))) .and (quote)
+                      .ret(function(q1, cs, q2){
+                        return cs.join(&quot;&quot;);
+                      });
+  this.field        = rep1(chars) .ret(Return.str)
+  this.record       = sep( (field) .or (quotedField), chr(&quot;,&quot;), true) .ret(function(fields) {
+    return {fields: fields};
+  })
+  this.csv          = sep(record, chr(&quot;\n&quot;), true) .and(eof) .ret(function(records) {
+    return {records : records};
+  })
+}});
+
+var testCsv = [
+'&quot;aaa&quot;,&quot;b',
+'bb&quot;,&quot;ccc&quot;,zzz,&quot;y&quot;&quot;Y&quot;&quot;y&quot;,xxx'
+].join(&quot;\n&quot;);
+
+var parser = new CSVParser(testCsv);
+var parseResult = parser.csv.parse()
+if(parseResult.success()) {
+  var records = parseResult.result[0].records;
+  for(var i=0,l=records.length;i&lt;l;i++){
+    alert(&quot;row(&quot;+i+&quot;)    &quot;+records[i].fields);
+  }
+}
+</code></pre>
+
+<p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり 、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
+
   </div>
 </article>
 

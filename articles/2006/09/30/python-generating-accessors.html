@@ -71,45 +71,60 @@
 </header>
   <div itemprop="articleBody">
     <p>Pythonの練習がてら、アクセサの生成をやってみる。どうせ探したらいっぱいコードが転がってるだろうし、練習にはうってつけかな、と。</p>
+
 <p>まず、ダメそうだけど、Rubyをやってる人からするとこうかきたい、というコード。</p>
-<pre class="prettyprint ">class Test(Accessor):
-  attr_accessor("__test", "__test2", "test3", "_test4")
+
+<pre class="prettyprint"><code>class Test(Accessor):
+  attr_accessor(&quot;__test&quot;, &quot;__test2&quot;, &quot;test3&quot;, &quot;_test4&quot;)
 
   def __init__(self):
-    self.__test = "test_value"
-    self.__test2 = "test2_value"
-    self.test3 = "test3_value"
-    self._test4 = "test4_value"</pre><p>こんな感じ。まぁ、絶対にダメそうだ（笑
-でも組み込みとはいえ、classmethodやstaticmethodみたいなのもあるから無理やりにならできるのかもしれない。</p>
-<pre class="prettyprint ">def test():
+    self.__test = &quot;test_value&quot;
+    self.__test2 = &quot;test2_value&quot;
+    self.test3 = &quot;test3_value&quot;
+    self._test4 = &quot;test4_value&quot;
+</code></pre>
+
+<p>こんな感じ。まぁ、絶対にダメそうだ（笑 でも組み込みとはいえ、classmethodやstaticmethodみたいなのもあるから無理やりにならできるのかもしれない。</p>
+
+<pre class="prettyprint"><code>def test():
   print sys._getframe(1).f_code.co_name
 
 class Test:
   test()
 
-#=&gt; 文字列"Test"を出力</pre><p>こんな感じで呼び出しもとのクラス名は取得できる。ならevalすれば、というところなのだが予想通り</p>
-<pre class="prettyprint ">def test():
-  exec "cls = %s" % sys._getframe(1).f_code.co_name
+#=&gt; 文字列&quot;Test&quot;を出力
+</code></pre>
+
+<p>こんな感じで呼び出しもとのクラス名は取得できる。ならevalすれば、というところなのだが予想通り</p>
+
+<pre class="prettyprint"><code>def test():
+  exec &quot;cls = %s&quot; % sys._getframe(1).f_code.co_name
 
 class Test:
   test()
 
-#=&gt; NameError: name 'Test' is not defined</pre><p>この時点ではクラスオブジェクトの生成が完了していないので無理なようだ。Rubyのようにはいかない。</p>
-<p>結局のところ__metaclass__を使うことになる。
-マニュアルにもズバリ
-&gt; メタクラスは限りない潜在的利用価値を持っています。これまで試されてきたアイデアには、ログ記録、インタフェースのチェック、自動デリゲーション、 <strong>自動プロパティ生成</strong> 、プロキシ、フレームワーク、そして自動リソースロック／同期といったものがあります。</p>
+#=&gt; NameError: name 'Test' is not defined
+</code></pre>
+
+<p>この時点ではクラスオブジェクトの生成が完了していないので無理なようだ。Rubyのようにはいかない。</p>
+
+<p>結局のところ__metaclass__を使うことになる。 マニュアルにもズバリ &gt; メタクラスは限りない潜在的利用価値を持っています。これまで試されてきたアイデアには、ログ記録、インタフェースのチェック、自動デリゲーション、 <strong>自動プロパティ生成</strong> 、プロキシ、フレームワーク、そして自動リソースロック／同期といったものがあります。</p>
+
 <p>と書いてあるのだ。</p>
-<ul class="simple">
+
+<ul>
 <li>後からもアクセサを追加したい(メソッドとしても独立させたい)</li>
 <li>当然、読み出しと書き込み、そして両方を行えるインターフェイス</li>
 <li>オーバーライドはできないとまずい</li>
 </ul>
-<p>というアクセサ生成としては至極当たり前なことを考えつつ、コードを書いてみる。</p>
-<pre class="prettyprint "># vim: fileencoding=utf-8
-from itertools import *
 
-def property_accessor(cls, *names):
-  map(lambda n : _add_setter(cls, n[0], n[1]) or
+<p>というアクセサ生成としては至極当たり前なことを考えつつ、コードを書いてみる。</p>
+
+<pre class="prettyprint"><code># vim: fileencoding=utf-8
+from itertools import * 
+
+def property_accessor(cls, *names): 
+  map(lambda n : _add_setter(cls, n[0], n[1]) or 
                  _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
 
 def property_reader(cls, *names):
@@ -120,24 +135,24 @@ def property_writer(cls, *names):
 
 def _real_names(cls, names) :
   cls_name = cls.__name__
-  return imap(lambda n : n.startswith("__") and "_%s%s"%(cls_name, n) or n, names)
+  return imap(lambda n : n.startswith(&quot;__&quot;) and &quot;_%s%s&quot;%(cls_name, n) or n, names)
 
 def _add_setter(cls, name, real_name) :
-  setter_name = "set_%s" % name.lstrip("_")
-  if cls.__dict__.has_key(setter_name): return
+  setter_name = &quot;set_%s&quot; % name.lstrip(&quot;_&quot;)
+  if cls.__dict__.has_key(setter_name): return 
   setattr(cls, setter_name, lambda self, v: setattr(self, real_name, v))
 
 def _add_getter(cls, name, real_name) :
-  getter_name = "get_%s" % name.lstrip("_")
-  if cls.__dict__.has_key(getter_name): return
+  getter_name = &quot;get_%s&quot; % name.lstrip(&quot;_&quot;)
+  if cls.__dict__.has_key(getter_name): return 
   setattr(cls, getter_name, lambda self: getattr(self, real_name))
 
 class AccessorType(type):
   def __new__(cls, class_name, class_bases, classdict):
     cls = type.__new__(cls, class_name, class_bases, classdict)
-    list = ["__accessor__", "__reader__", "__writer__"]
-    methods = imap(lambda n: eval("property_%s"%n.strip("_")), list)
-    map(lambda n:
+    list = [&quot;__accessor__&quot;, &quot;__reader__&quot;, &quot;__writer__&quot;]
+    methods = imap(lambda n: eval(&quot;property_%s&quot;%n.strip(&quot;_&quot;)), list)
+    map(lambda n: 
           classdict.has_key(n[0]) and
             n[1](cls, *classdict[n[0]]), izip(list, methods))
     return cls
@@ -146,48 +161,55 @@ class Accessor:
   __metaclass__ = AccessorType
 
 class Test(Accessor):
-  __accessor__ = ["__test2", "test3", "_test4"]
-  __reader__   = ["__test"]
+  __accessor__ = [&quot;__test2&quot;, &quot;test3&quot;, &quot;_test4&quot;]
+  __reader__   = [&quot;__test&quot;]
 
   def __init__(self):
-    self.__test = "test_value"
-    self.__test2 = "test2_value"
-    self.test3 = "test3_value"
-    self._test4 = "test4_value"
+    self.__test = &quot;test_value&quot;
+    self.__test2 = &quot;test2_value&quot;
+    self.test3 = &quot;test3_value&quot;
+    self._test4 = &quot;test4_value&quot;
 
   def get_test3(self) :
-    return "changed_test3_value"
+    return &quot;changed_test3_value&quot;
 
 obj = Test()
 
 print obj.get_test2()
-# =&gt; "test2_value"
+# =&gt; &quot;test2_value&quot;
 print obj.get_test3()
-# =&gt; "changed_test3_value"
+# =&gt; &quot;changed_test3_value&quot;
 
-property_writer(Test, "__test")
-obj.set_test("new_test_value")
+property_writer(Test, &quot;__test&quot;)
+obj.set_test(&quot;new_test_value&quot;)
 print obj.get_test()
-# =&gt; "new_test_value"</pre><p>テストもろくにしてないし、汚いコードだけどなんとなくそれっぽい動き。だいたい40行くらいで実装できる。パフォーマンスを考えなければitertoolsがなくても大丈夫。</p>
+# =&gt; &quot;new_test_value&quot;
+</code></pre>
+
+<p>テストもろくにしてないし、汚いコードだけどなんとなくそれっぽい動き。だいたい40行くらいで実装できる。パフォーマンスを考えなければitertoolsがなくても大丈夫。</p>
+
 <p>そして、回答をさがしてみる。とりあえず「python accessor __metaclass__」あたりでググるとすぐにコードが見つかる。</p>
-<ul class="simple">
-<li><a class="reference external" href="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/307969">ASPN : Python Cookbook : Generating get/set methods using a metaclass</a></li>
+
+<ul>
+<li><a href="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/307969">ASPN : Python Cookbook : Generating get/set methods using a metaclass</a></li>
 </ul>
+
 <p>見事なくらい同じようなコード。ただ、自分で書いたやつのほうが、オーバーライドできる、あとからもアクセサが生成できる、という点ではいい感じ。</p>
-<section>
-<h2>感想</h2>
-<p>ここらへんのメタプログラミングはやっぱりRubyのほうが柔軟性があってかつ、一貫しているので楽かな。
-Pythonはやっぱり関数をオブジェクトとして扱いやすい、というのが楽。Rubyのobj.some_methodでメソッドが呼び出せるのは便利だが、その点ではやっぱキツい。ループもPythonほうが好きだな。</p>
+
+<h1>感想</h1>
+
+<p>ここらへんのメタプログラミングはやっぱりRubyのほうが柔軟性があってかつ、一貫しているので楽かな。 Pythonはやっぱり関数をオブジェクトとして扱いやすい、というのが楽。Rubyのobj.some_methodでメソッドが呼び出せるのは便利だが、その点ではやっぱキツい。ループもPythonほうが好きだな。</p>
+
 <p>ま、やっぱり個人の好み、としかいいようがないなあ。最近ではWindowsの小物はほとんどpythonで書いてるけど（インストーラーがあって関連付けまでしてくれて、楽）、Linuxのほうはそうでもないし。</p>
-</section>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2013/10/09/python3-python2-compat">Python3 &amp; 2互換性確保の見直し</a></li>
 <li><a href="/articles/2013/09/25/shifting-new-blog-system">ブログにいろいろ手をいれた</a></li>
 <li><a href="/articles/2012/04/11/my-python-oss-development-environments">俺的モダンなPythonのOSS開発環境</a></li>
-<li><a href="/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2">XREAで好きなバージョンのPythonを使う方法2</a></li>
 <li><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></li>
+<li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 </ul>
     </div>
   </div>

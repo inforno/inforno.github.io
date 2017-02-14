@@ -75,25 +75,28 @@
 </header>
   <div itemprop="articleBody">
     <p>Typoでのlive search文字化けについては多くのブログで解決策が示されています。</p>
-<ul class="simple">
-<li><a class="reference external" href="http://www.flatz.jp/articles/2005/12/14/live-search%E3%82%92%E7%9B%B4%E3%81%97%E3%81%9F%E3%82%88%E3%80%82">live searchの文字化けを修正</a></li>
-<li><a class="reference external" href="http://typo.ctrl.jp/articles/2005/11/14/typo2.6.0-release-to-live-search-no-nihongo-bug">Typo2.6.0リリースとLive Searhの日本語バグ</a></li>
+
+<ul>
+<li><a href="http://www.flatz.jp/articles/2005/12/14/live-search%E3%82%92%E7%9B%B4%E3%81%97%E3%81%9F%E3%82%88%E3%80%82">live searchの文字化けを修正</a></li>
+<li><a href="http://typo.ctrl.jp/articles/2005/11/14/typo2.6.0-release-to-live-search-no-nihongo-bug">Typo2.6.0リリースとLive Searhの日本語バグ</a></li>
 </ul>
-<p>最新でもやっぱり文字化けしているわけで。
-僕も直してみました。</p>
-<pre class="prettyprint ">Index: app/views/shared/_search.rhtml
+
+<p>最新でもやっぱり文字化けしているわけで。 僕も直してみました。</p>
+
+<pre class="prettyprint"><code>Index: app/views/shared/_search.rhtml
 ===================================================================
 --- app/views/shared/_search.rhtml      (revision 850)
 +++ app/views/shared/_search.rhtml      (working copy)
 @@ -7,4 +7,4 @@
-     :loading =&gt; "Element.show('search_spinner')",
-     :complete =&gt; "Element.hide('search_spinner')",
-     :update =&gt; "search-results",
--    :with =&gt; "'q=' + escape($F('q'))" -%&gt;
-+    :with =&gt; "'q=' + encodeURIComponent($F('q'))" -%&gt;</pre><p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・）
-あ、このファイルはテーマにも含まれてますので注意です。
-てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・
-ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
+     :loading =&gt; &quot;Element.show('search_spinner')&quot;,
+     :complete =&gt; &quot;Element.hide('search_spinner')&quot;,
+     :update =&gt; &quot;search-results&quot;,
+-    :with =&gt; &quot;'q=' + escape($F('q'))&quot; -%&gt;
++    :with =&gt; &quot;'q=' + encodeURIComponent($F('q'))&quot; -%&gt;
+</code></pre>
+
+<p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・） あ、このファイルはテーマにも含まれてますので注意です。 てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・ ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
@@ -101,7 +104,7 @@
 <li><a href="/articles/2006/06/05/object-with_options">ActiveSupportのObject#with_optionsの使いどころ</a></li>
 <li><a href="/articles/2006/01/22/fckeditor">FCKEditor</a></li>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
-<li><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers">コマンドライン型ランチャーとexplorerの連携</a></li>
+<li><a href="/articles/2007/09/08/parser-combinators-in-python">Javascriptでパーサジェネレータを書いてみた</a></li>
 </ul>
     </div>
   </div>

@@ -78,17 +78,18 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>まぁ需要はないと思うんですが一応。内部的には <code><span class="pre">WebService::Simple</span></code> みたいになってるんでサクッと対応できます。</p>
-<section>
-<h2>ダウンロード</h2>
-<p><a class="reference external" href="/statics/files/yahooapi_0_2.zip">yahooapi</a></p>
-</section>
-<section>
-<h2>使い方</h2>
-<pre class="prettyprint ">import yahooapi.jlp as jlp
+    <p>まぁ需要はないと思うんですが一応。内部的には <code>WebService::Simple</code> みたいになってるんでサクッと対応できます。</p>
 
-client = jlp.JIMServiceAPI("your_apikey")
-result = client.conversion(sentence=u"かなかんじへんかんたいしょうのてきすとです")
+<h1>ダウンロード</h1>
+
+<p><a href="/statics/files/yahooapi_0_2.zip">yahooapi</a></p>
+
+<h1>使い方</h1>
+
+<pre class="prettyprint"><code>import yahooapi.jlp as jlp
+
+client = jlp.JIMServiceAPI(&quot;your_apikey&quot;)
+result = client.conversion(sentence=u&quot;かなかんじへんかんたいしょうのてきすとです&quot;)
 for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
   print i
 #=&gt;
@@ -105,15 +106,18 @@ for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
 #華奈
 #花奈
 #哉
-#金</pre><p>うむ。</p>
-</section>
+#金
+</code></pre>
+
+<p>うむ。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
 <li><a href="/articles/2009/02/12/the-embedded-python-implementation">埋め込みPythonを実装してみました</a></li>
 <li><a href="/articles/2008/12/11/functional-pattern-matching-for-python">Python: パターンマッチしてみる</a></li>
 <li><a href="/articles/2008/09/19/sexp-library-for-python">Python: S式パーサライブラリを作りました</a></li>
-<li><a href="/articles/2007/11/08/instant-pluggable-python-class">Python:お手軽にPluggableにする</a></li>
+<li><a href="/articles/2008/04/03/a-python-library-for-nicovideo-testing">Python版ニコニコ動画ライブラリを試しに公開してみる</a></li>
 <li><a href="/articles/2007/11/18/parser-combinators-in-javascript">OreScriptがはやってるならパーサコンビネータの需要もあるのかな？</a></li>
 </ul>
     </div>

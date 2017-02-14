@@ -73,19 +73,24 @@
 </header>
   <div itemprop="articleBody">
     <p>なんの幸運か、Softbank（しかもJ-phone時代からの）ユーザだったので、SMS認証もアッサリ通ってGAEのアカウントをゲットしたわけですが･･･（ただしiPhoneには興味ほぼなし)。</p>
-<p>というわけで <a class="reference external" href="http://www.metareal.org/2008/05/20/porting-weblog-to-google-app-engine/">ishikawaさんがブログをGAEに移行された</a> 、というのを知って俺も移行しようかなあとか思いつつブログアプリ作りました。すでに今ブログで使っている機能は全て実装済みだったりします。デザインも全頁XHTMLTr validでCSSもvalidなことを確認済みだったりします。しかも <code>Django</code> じゃなくて <code>web.py</code> だったりします。慣れてるしね。</p>
+
+<p>というわけで <a href="http://www.metareal.org/2008/05/20/porting-weblog-to-google-app-engine/">ishikawaさんがブログをGAEに移行された</a> 、というのを知って俺も移行しようかなあとか思いつつブログアプリ作りました。すでに今ブログで使っている機能は全て実装済みだったりします。デザインも全頁XHTMLTr validでCSSもvalidなことを確認済みだったりします。しかも <code>Django</code> じゃなくて <code>web.py</code> だったりします。慣れてるしね。</p>
+
 <p>それはおいといて、データストアまわりがそのままだと</p>
-<ul class="simple">
-<li><code><span class="pre">filter(&quot;hoge</span> =&quot;, value)</code> が長ったらしい</li>
+
+<ul>
+<li><code>filter(&quot;hoge =&quot;, value)</code> が長ったらしい</li>
 <li>CRUDが微妙。</li>
 <li>フォーム作成用等に空のモデルを一時的に作成したいけど、作成した時点でvalidateされるので作成できない</li>
 </ul>
+
 <p>らへんがいまいちだったで、ちょっといじってみました。</p>
-<pre class="prettyprint ">def _getattr(self, name):
-  if name.endswith("_eq"):
-    return lambda v: self.filter("%s ="%name[:-3], v)
+
+<pre class="prettyprint"><code>def _getattr(self, name):
+  if name.endswith(&quot;_eq&quot;):
+    return lambda v: self.filter(&quot;%s =&quot;%name[:-3], v)
   raise AttributeError(name)
-setattr(db.Query, "__getattr__", _getattr)
+setattr(db.Query, &quot;__getattr__&quot;, _getattr)
 
 class ModelMixin(object):
 
@@ -126,21 +131,34 @@ class ModelMixin(object):
     self.put()
 
   def destroy(self):
-    self.delete()</pre><p>これで</p>
-<pre class="prettyprint ">class Test(ModelMixin, db.Model):
+    self.delete()
+</code></pre>
+
+<p>これで</p>
+
+<pre class="prettyprint"><code>class Test(ModelMixin, db.Model):
   name = db.StringProperty(require=True)
   created_at = db.DatetTmeProperty(auto_now_add=True)
 
-  default_order="-created_at"
+  default_order=&quot;-created_at&quot;
 
 Test.find_all() # created_atの降順
-Test.all().name_eq("user").update(created_at = datetime.now())
-stab = Test.stab() #nameがなくても作成できる</pre><p>こんな感じにかけます。</p>
+Test.all().name_eq(&quot;user&quot;).update(created_at = datetime.now())
+stab = Test.stab() #nameがなくても作成できる
+</code></pre>
+
+<p>こんな感じにかけます。</p>
+
 <p>さて、そんなこんなでブログアプリを作ったのはいいんだけど、なんとなく移行する気にならない。現在はWordpressで運用しているけど、正直セキュリティホールは多いし、ソースコードを見ると泣きたくなるようなコードだし、頻繁なバージョンアップはめんどくさい･･･。プラグインのセキュリティホールまで考えるとなおめんどくさい。しかもそこまで機能を使い倒しているわけじゃないし。</p>
+
 <p>だからGAEにでも移行したいんだけど･･･。データがGoogleに握られるのはそこまで心配じゃない。ブログサービスでブログをやれば、そのブログサービス事業者にデータを握られるってのと同じだから気にならないんだな。移行作業自体も記事数がかなり少ないのでそんなにめんどくさそうではない。</p>
+
 <p>ひとつ引っかかっているのはトランザクションの問題。まぁめったにトランザクションで問題はおきないと思うけど、GAEのトランザクションは一応ある、といった程度でほとんど使えない。使おうとしたらtransactionの中でこれはしちゃだめ、これもしちゃだめ、とおこられまくったので現在トランザクション管理ができていない。GAEには集約系のメソッドがないので、月別記事数とか、タグ別記事数とかを記事のCRUD時に別モデルで管理しているわけだけど、ここのトランザクションが管理できないのは結構不安。</p>
+
 <p>もうひとつはなんとなーく使い切らないんだけど無料の上限である500Mという容量が微妙。画像のアップとかしなけりゃまず大丈夫なんだけど。</p>
+
 <p>その他にもなんとなくGoogleの罠じゃないかとかいろいろ気になって移行に踏み切れないでいる今日この頃。実際に本格的にGAEに移行した人の感想がききたいなあ。</p>
+
 
     <div class="seealso">
       <ul><h3>See Also</h3>
