@@ -61,6 +61,162 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/11/08/instant-pluggable-python-class" itemprop="url">Python:お手軽にPluggableにする</a></h3>
+<div class="meta">
+<time datetime="2007-11-08T01:33:50&#43;09:00">Nov  8, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>Pythonで自分用の小物アプリを結構書き溜めてるんですけど、実はそのほとんどにプラグインシステムみたいなのをつくってたりします。</p>
+
+<p>たとえばファイルの整理自動化みたいなの。ファイルの移動前に処理を追加する、てな部分をプラグインにしてあるわけです。</p>
+
+<p>まぁ機能的にはCPANのClass::Componentっぽいもんですね。ですがそこまで高機能なのはいらないので、シンプルに自分が必要な部分だけまとめてみました。</p>
+
+<pre class="prettyprint"><code>from inspect import getmembers, ismethod
+import types
+
+class Pluggable(object):
+  def __init__(self):
+    self.hooks = {}
+
+  def load(self, *config):
+    self.load_config(*config)
+    self.load_plugins()
+
+  def load_config(self, *config):
+    self.config = []
+    for i in config:
+      if isinstance(i, (&quot;&quot;.__class__, u&quot;&quot;.__class__)):
+        self.config.append((i, {}))
+      else:
+        self.config.append((i[0], len(i) &gt; 1 and i[1] or {}))
+
+  def load_plugins(self):
+    for klass,config in self.config:
+      plugin = None
+      try:
+        plugin = eval(klass)
+      except (NameError, AttributeError),e:
+        names = klass.split(&quot;.&quot;)
+        mod = __import__(&quot;.&quot;.join(names[0:-1]))
+        globals()[names[0]] = mod
+        for name in names[1:-1]: mod = getattr(mod, name)
+        plugin = getattr(mod, names[-1])
+
+      p = plugin(config)
+      make_closure = lambda obj,name: lambda *a, **k: getattr(obj,name)(*a, **k)
+
+      for name, method in ((n,m) for n,m in getmembers(p) if ismethod(m)):
+        if hasattr(method, &quot;__plugin_method__&quot;):
+          setattr(self, name, make_closure(p, name))
+        for hook_type in getattr(method, &quot;__hook_types__&quot;, []):
+          if hook_type not in self.hooks: self.hooks[hook_type] = []
+          self.hooks[hook_type].append(getattr(p, name))
+
+  def _run_hooks(self, dct, f=lambda x:x):
+    result = {}
+    for (name,value) in dct.iteritems():
+      if name not in self.hooks: continue
+      k,a = {}, value
+      if isinstance(value[-1], types.DictType):
+        k,a = value[-1],value[0:-1]
+      result[name] = [m(*a, **k) for m in f(self.hooks[name])]
+    return result
+
+  def run_hooks(self, dct):
+    return self._run_hooks(dct)
+
+  def reverse_run_hooks(self, dct):
+    return self._run_hooks(dct, reversed)
+
+class Plugin(object):
+  def __init__(self, config):
+    self.config = config
+
+method = lambda f: setattr(f, &quot;__plugin_method__&quot;, True) or f
+hook = lambda *args: lambda f: setattr(f, &quot;__hook_types__&quot;, args) or f
+</code></pre>
+
+<p>機能的には</p>
+
+<ul>
+<li>クラスに対して設定とともにメソッドを追加する(setattrします)</li>
+<li>任意のhookの登録と実行</li>
+</ul>
+
+<p>ぐらいです。</p>
+
+<p>使い方は</p>
+
+<pre class="prettyprint"><code>import pluggable
+class People(pluggable.Pluggable):
+  pass
+
+class Hacker(pluggable.Plugin):
+  @pluggable.method
+  def hack(self):
+    print self.config[&quot;msg&quot;]
+
+  @pluggable.hook(&quot;hello&quot;)
+  def hello(self, msg1, msg2, msg3):
+    print &quot;Hello World!!&quot;, msg1, msg2, msg3
+
+class Otaku(pluggable.Plugin):
+  @pluggable.method
+  def niconico(self, msg):
+    print self.config[&quot;msg&quot;], msg
+
+  @pluggable.hook(&quot;hello&quot;)
+  def hello(self, msg1, msg2, msg3):
+    print u&quot;にぱー&quot;, msg1, msg2, msg3
+</code></pre>
+
+<p>みたいにプラグインクラスを作っておいて</p>
+
+<pre class="prettyprint"><code>p = People()
+p.load(
+  (&quot;plugins.Hacker&quot;, {&quot;msg&quot;: &quot;Happy Hacking!&quot;}),
+  (&quot;plugins.Otaku&quot;,  {&quot;msg&quot;: u&quot;ニコ厨ですが&quot;})
+)
+p.hack() #=&gt; Happy Hacking!
+p.niconico(u&quot;なにか？&quot;) #=&gt; ニコ厨ですが なにか？
+p.run_hooks({&quot;hello&quot;:([1,2],{&quot;msg3&quot;:3})})
+#=&gt; Hello World!! 1 2 3
+#=&gt; にぱー 1 2 3
+p.reverse_run_hooks({&quot;hello&quot;:[1,2,3]})
+#=&gt; にぱー 1 2 3
+#=&gt; Hello World!! 1 2 3
+</code></pre>
+
+<p>という感じで使います。あとは設定の部分をyamlなんかに押し出せばオッケーというわけ。</p>
+
+<p>モジュールのインポートは自動でやってくれます。Pythonは地味に動的なimportが面倒だったので、ライブラリにまとめたことでだいぶ手元の小物アプリがすっきりしました。 　</p>
+
+<hr />
+
+<ul>
+<li>2008/01/27 若干修正を加えました。</li>
+</ul>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/11/03/maintenance-is-difficult-than-development" itemprop="url">やっぱり新規開発より保守が難しい</a></h3>
 <div class="meta">
 <time datetime="2007-11-03T00:16:42&#43;09:00">Nov  3, 2007</time>
@@ -153,82 +309,6 @@
 <p>実装言語はなんでもいいんじゃないかなあ。手前味噌だけど、 <a href="/articles/2007/03/02/nes-emulator-development-with-python-5">Pythonでもエミュレータを書こうと思えばかける</a> わけで、PerlでもRubyでもJavascriptでもいいと思う。動作速度よりも理解する過程が楽しいかと。ちなみに自分の書いたPythonでのNESエミュレータだとCPU（6502)とメモリ関連で、簡易逆アセンブラ込みで1000行ほど。速度を犠牲にすればもっと短くかける。</p>
 
 <p>あと、これも書かれてるけどむしろネットワークとか、DBとかのほうがよっぽど低レイヤの知識が必要だよなあ。10BASE-Tと100BASE-Tでなんでつなげるリピータハブの数が違うのかとか、これならどれだけスループットが確保できるか、それをわかるためにもCSMA/CDはなんたるかとか、実際どうやってケーブル上で衝突を検出してんのかとか色々わかってないと困るしねえ。他のネットワーク技術でも一緒。生のパケット(orフレーム）を見なけりゃいけないことも多々あるし。ソフト使ってちゃんと設定がかけます、だけだと意味ない。OSIの層を上から下までカバーしないと。そういった意味でもネットワークっておもろい。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/09/08/parser-combinators-in-python" itemprop="url">Javascriptでパーサジェネレータを書いてみた</a></h3>
-<div class="meta">
-<time datetime="2007-09-08T00:04:03&#43;09:00">Sep  8, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>ちょっと前にjavascriptで構文解析とかがはやった気がするので、javascriptのリハビリがてらかいてみた。</p>
-
-<p>ググってみると</p>
-
-<ul>
-<li><a href="http://t-code.org/blog/2007/06/jsparsec_javascript.htm">Jsparsec - JavaScriptパーザコンビネータライブラリ</a></li>
-<li><a href="http://d.hatena.ne.jp/bellbind/20060529/114884313">HaskellのMonadをJavaScriptで実装するとしたら</a></li>
-</ul>
-
-<p>あたりがあるのだが、まぁ勉強ということで。javascriptらしく書いてみようかと。</p>
-
-<p>ということで、モナドがどーたらとか難しい話はまぁおいておいて、簡単に値がとりだせますよ、という見栄え重視で作ってみた。基本的な機能しかない。けど拡張するのは簡単。せめて相互再帰くらいは実装したほうがよかったかな。まぁ、こんなの真剣に使う人もいないと思うので、要望があればってことで。ちなみに依存するライブラリはありません。</p>
-
-<p><strong>ダウンロード</strong> ： <a href="/statics/files/parsec.js">Inforno.Parsec</a></p>
-
-<p>たとえばこんな感じにCSVのパーサが定義できる。withを使ってDSLっぽくしてみた。</p>
-
-<pre class="prettyprint"><code>var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
-  this.chars = chrLike(function(c){ return c != '' &amp;&amp; c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='&quot;';});
-  this.quote = chr('&quot;') 
-  this.quoteInQuote = str('&quot;&quot;') .ret(function(){return '&quot;';}); 
-  this.charInQuote  = chrLike(function(c){ return c!='&quot;';});
-  this.quotedField  = quote .and (rep((quoteInQuote) .or (charInQuote))) .and (quote)
-                      .ret(function(q1, cs, q2){
-                        return cs.join(&quot;&quot;);
-                      });
-  this.field        = rep1(chars) .ret(Return.str)
-  this.record       = sep( (field) .or (quotedField), chr(&quot;,&quot;), true) .ret(function(fields) {
-    return {fields: fields};
-  })
-  this.csv          = sep(record, chr(&quot;\n&quot;), true) .and(eof) .ret(function(records) {
-    return {records : records};
-  })
-}});
-
-var testCsv = [
-'&quot;aaa&quot;,&quot;b',
-'bb&quot;,&quot;ccc&quot;,zzz,&quot;y&quot;&quot;Y&quot;&quot;y&quot;,xxx'
-].join(&quot;\n&quot;);
-
-var parser = new CSVParser(testCsv);
-var parseResult = parser.csv.parse()
-if(parseResult.success()) {
-  var records = parseResult.result[0].records;
-  for(var i=0,l=records.length;i&lt;l;i++){
-    alert(&quot;row(&quot;+i+&quot;)    &quot;+records[i].fields);
-  }
-}
-</code></pre>
-
-<p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり 、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
 
   </div>
 </article>

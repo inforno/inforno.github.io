@@ -7,10 +7,129 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>14 Feb 17 16:25 UTC</lastBuildDate>
+    <lastBuildDate>26 Apr 17 16:50 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
+    
+    <item>
+      <title>Go言語でCommonMarkパーサを実装した、またCommonMarkについて </title>
+      <link>http://inforno.net/articles/2017/04/27/commonmark-parser-written-in-go</link>
+      <description>&lt;p&gt;GoでCommonMarkのパーサを実装しました。&lt;/p&gt;
+
+&lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/goldmark&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;分かりやすいASTに変換＋拡張が容易、そこそこ速い実装になっています。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;めちゃくちゃしんどかったです。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2&gt;経緯&lt;/h2&gt;
+
+&lt;p&gt;Go言語のMarkdownパーサといえば&lt;a href=&#34;https://github.com/russross/blackfriday/tree/v2&#34;&gt;blackfriday&lt;/a&gt;ですが、
+拡張するための機構がないのでさくっと自前でMarkdownパーサを書くか、と思い立ちました。&lt;/p&gt;
+
+&lt;p&gt;そこで「そういえばCommonMarkなんてもんがあったな」と思い出しせっかくならCommonMark準拠にするかと
+おもってCommonMarkの仕様を読み始めました。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;え、なにこれは…&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Markdownで出来ることなんてrestructuredTextなどほかのマークアップ言語に比べれば
+わずかなものです。しかし、たかがそれだけを実装するために凄まじく複雑な仕様
+が定義されているのでした。&lt;/p&gt;
+
+&lt;p&gt;以下、CommonMarkに寄せられた声です。&lt;/p&gt;
+
+&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;commonmarkのlistの仕様複雑すぎて死んでいる&lt;/p&gt;&amp;mdash; tkr (@kgtkr) &lt;a href=&#34;https://twitter.com/kgtkr/status/1111140801621286913?ref_src=twsrc%5Etfw&#34;&gt;2019年3月28日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;う〜ん、CommonMark難しすぎる！w&lt;/p&gt;&amp;mdash; らぃと (@lightnet328) &lt;a href=&#34;https://twitter.com/lightnet328/status/1099352824750587909?ref_src=twsrc%5Etfw&#34;&gt;2019年2月23日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;質問：&lt;br&gt;CommonMarkのパーザの実装を試みていますが、仕様が絶望的です。どうしたらいいでしょうか？&lt;br&gt;&lt;br&gt;回答：&lt;br&gt;もっとテキトーにパーザを実装して、そのパーザの動作を以て“新しいMarkdown方言”であると定めましょう！&lt;a href=&#34;https://twitter.com/hashtag/Markdown?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#Markdown&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt;&lt;/p&gt;&amp;mdash; ZR-TeXnobabbler🤔 (@zr_tex8r) &lt;a href=&#34;https://twitter.com/zr_tex8r/status/1057951517859209217?ref_src=twsrc%5Etfw&#34;&gt;2018年11月1日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;皆さんには是非 CommonMark Spec を読んで絶望してほしい．&lt;/p&gt;&amp;mdash; 画力・博士号・油田 (@bd_gfngfn) &lt;a href=&#34;https://twitter.com/bd_gfngfn/status/1057689153561710592?ref_src=twsrc%5Etfw&#34;&gt;2018年10月31日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;しまいには、CommonMarkの中心人物自体が「えらいもん作ってしまった・・・」となっています。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://talk.commonmark.org/t/beyond-markdown/2787&#34;&gt;Beyond Markdown&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;There are 17 principles governing emphasis , for example, and these rules still
+leave cases undecided. The rules for list items and HTML blocks are also
+very complex. All of these rules lead to unexpected results sometimes, and they
+make writing a parser for CommonMark a complex affair.
+I despair, at times, of getting to a spec that is worth calling 1.0.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;私も仕様を読んだ段階で「これはヤバい」と感じたのですがここで引くのも悔しかったので作り切りました。&lt;/p&gt;
+
+&lt;h2&gt;CommonMarkについて思うところ&lt;/h2&gt;
+
+&lt;p&gt;正直なところ、これが世に広まるってどうなの、と思います。&lt;/p&gt;
+
+&lt;p&gt;そもそもなんでMarkdownが軽量マークアップ言語の中でこれだけ広く使われるようになったのかというと&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;書き手としての書きやすさ&lt;/li&gt;
+&lt;li&gt;実装者としての実装しやすさ&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;つまり、「書き手の適当さ」と「実装側の適当さ」がいい具合に噛み合ったからだと思っています。
+書き手はそれなりに適当に書けるし、実装するにしても仕様が適当なので、適当に実装してもMarkdown
+対応であると言うことができました。&lt;/p&gt;
+
+&lt;p&gt;それによってあらゆる言語、さまざまなタイプの実装が生まれそれが至るところで使われることになり
+Markdownは広まっていったのです。&lt;/p&gt;
+
+&lt;p&gt;それに対して、CommonMarkはあまりに実装するのがしんどすぎます。さらにはそれだけしんどい思いを
+しても出来ること自体は少ないのです。テーブルさえ使えないのです。&lt;/p&gt;
+
+&lt;p&gt;その実装の難しさからCommonMark対応のパーサはいわゆるMarkdownパーサと比べるとわずかしかありません。
+CommonMarkにかかわっている人の中には「それが何の問題ですか？」という人さえいます。
+「CとJSで参照実装提供してるじゃん。ブラウザはC動かないからJSも用意してある。それ以外の言語は
+C実装のバインディング作ればいいだけでしょ。実装なんて1個あればいいんだよ」なんて感じです。&lt;/p&gt;
+
+&lt;p&gt;CommonMarkはオリジナルのMarkdown作者から「Markdownの名前は使うな」と言われてCommonMarkという名前
+になったという経緯があります。&lt;/p&gt;
+
+&lt;p&gt;Markdownを冠していないのであれば、perlの神正規表現で実装されたオリジナルのMarkdown.plの動きにでき
+るだけ寄せようとするのではなく、もっと仕様をシンプルにする方向に動いて欲しかったです。&lt;/p&gt;
+
+&lt;h2&gt;CommonMarkパーサを実装したい人に向けて&lt;/h2&gt;
+
+&lt;p&gt;とにかく、CommonMarkに準拠するのは難しい。ということでいるかいないかわからない、CommonMarkパーサを
+これから書こうと言う人に気づきを共有しておきます。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;いわゆるプログラミング言語やXML, JSONなどのパースとは全く別物です。そういうものはもともと
+「パースしやすいように」という視点で文法が作られてますが、CommonMarkはそんなことはありません。
+pegベースのパーサもあるので無理じゃないですがいわゆるLL,LRやLALRのような方法では厳しいです。&lt;/li&gt;
+&lt;li&gt;Markdownはいうなれば「行志向」なので業単位を基本としましょう。&lt;/li&gt;
+&lt;li&gt;「lazy continuation」はかなり曲者です。&lt;/li&gt;
+&lt;li&gt;仕様策定者自身が &lt;a href=&#34;https://talk.commonmark.org/t/beyond-markdown/2787&#34;&gt;Beyond Markdown&lt;/a&gt; で述べている
+部分は間違いなくしんどいです。特に強調は自分で考えるのは諦めましょう。素直に参照実装と同じ
+アルゴリズムで実装するより他にspec testを通すのは難しいです。&lt;/li&gt;
+&lt;li&gt;タブが本来のタブの意味でつかわれる点に注意。つまりタブ文字の位置によりタブは
+1文字分、2文字分、3文字分、4文字分、いずれの文字幅にもなりえます。&lt;/li&gt;
+&lt;li&gt;とにかく折れない心が大事です。CommonMarkとMarkdownは別物です。覚悟してかかりましょう。&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+      
+      <category>golang</category>
+      
+      <category>commonmark</category>
+      
+      <category>markdown</category>
+      
+      <category>parser</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2017/04/27/commonmark-parser-written-in-go</guid>
+      <pubDate>26 Apr 17 16:50 UTC</pubDate>
+    </item>
     
     <item>
       <title>batの中にbashスクリフﾟトを埋め込む方法 </title>
@@ -337,383 +456,6 @@ s = MustDecodeReader(bytes.NewReader(source), &amp;quot;Windows-31J&amp;quot;)
       
       <guid isPermaLink="true">http://inforno.net/articles/2016/07/14/go-charsetutil</guid>
       <pubDate>13 Jul 16 15:23 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>Goのインタフェースがパフォーマンスに及ぼす影響 </title>
-      <link>http://inforno.net/articles/2015/12/11/go-interface-performance-penalty</link>
-      <description>&lt;p&gt;&lt;a href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 11日目です。その3まであるなんてGo大人気ですね。&lt;/p&gt;
-
-&lt;p&gt;Gopherというのはいろいろな人がいてLLからGoへ、という方も多いかと思います。&lt;/p&gt;
-
-&lt;p&gt;LLではそもそも全てがオブジェクトだったりで話題になりませんが、よりマシンに近く&lt;s&gt;変態的に&lt;/s&gt;速度を重視される方が多いC&#43;&#43;では例えば仮想関数や実行時キャストのコストが議論になります。
-Goにおいてこういう多態性はインタフェースで表現されます。結論からいうと、 &lt;strong&gt;Goのインタフェースにもそれなりのコストがあります。&lt;/strong&gt; なので極限までパフォーマンスを要求される場合には &lt;strong&gt;例えばインターフェースを使わない&lt;/strong&gt; というも選択肢に入ってくるのではないかと思います。&lt;/p&gt;
-
-&lt;h1&gt;Go言語におけるインタフェースの内部表現&lt;/h1&gt;
-
-&lt;p&gt;さて、Goはブートストラップ化(言語処理系をその言語自身で実装する)を進めており、1.5ではGoのコンパイラ、ランタイムはほぼほぼGoで実装されています。ということはインターフェースもGoで実装されているはずですね。&lt;/p&gt;
-
-&lt;p&gt;Goのインタフェースは２個のポインタを持った &lt;code&gt;struct&lt;/code&gt; です。例えば、 &lt;code&gt;reflect/value.go&lt;/code&gt; では以下のようなコードがあります。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://raw.githubusercontent.com/golang/go/master/src/reflect/value.go&#34;&gt;reflect/value.go&lt;/a&gt; :&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;// emptyInterface is the header for an interface{} value.
-type emptyInterface struct {
-    typ  *rtype
-    word unsafe.Pointer
-}
-
-// nonEmptyInterface is the header for a interface value with methods.
-type nonEmptyInterface struct {
-    // see ../runtime/iface.go:/Itab
-    itab *struct {
-        ityp   *rtype // static interface type
-        typ    *rtype // dynamic concrete type
-        link   unsafe.Pointer
-        bad    int32
-        unused int32
-        fun    [100000]unsafe.Pointer // method table
-    }
-    word unsafe.Pointer
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;コメントに書かれているように実態は &lt;code&gt;runtime/iface.go&lt;/code&gt; ですがこちらのほうが簡略化されていてわかりやすいでしょう。1個目のポインタは 「空のインタフェース( &lt;code&gt;iterface{}&lt;/code&gt; )」(これを &lt;code&gt;eface&lt;/code&gt; という)の場合、型情報、そうでない場合(これを &lt;code&gt;iface&lt;/code&gt; という)の場合 &lt;code&gt;itab&lt;/code&gt; と呼ばれるC&#43;&#43;における仮想テーブルのようなものです。2個目に値が格納されます。2個目はどちらもポインタであることに注意してください。&lt;/p&gt;
-
-&lt;h1&gt;インターフェース経由のメソッド呼び出し&lt;/h1&gt;
-
-&lt;p&gt;ここで、インターフェースを使用するとどの程度パフォーマンスペナルティがあるのか、様々なケースで見てみます。&lt;/p&gt;
-
-&lt;p&gt;まずは、直接メソッドを呼び出すのと、インタフェース経由で呼び出す場合の違いを見てみましょう。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;type MyError struct{}
-func (e *MyError) Error() string { return &amp;quot;error&amp;quot; }
-
-func BenchmarkNoInterface(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        err := &amp;amp;MyError{}
-        err.Error()
-    }
-}
-
-func BenchmarkInterface(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        var err error = &amp;amp;MyError{}
-        err.Error()     
-    }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;結果は以下のようになります。10倍程度遅くなります。単位が単位なので微々たる違いですが極限までパフォーマンスを追求したい場合は考慮しておいたほうがいいかもしれませんね。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface    2000000000               0.73 ns/op
-BenchmarkInterface      200000000                9.56 ns/op
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;しかし実はこの中には &lt;code&gt;*MyError&lt;/code&gt; を &lt;code&gt;error&lt;/code&gt; インタフェースに変換するコストも含まれていて、そのコストを除くと5倍くらいの遅さです。次はそのインタフェースへの変換コストを詳しく見ていこうと思います。&lt;/p&gt;
-
-&lt;h1&gt;インターフェースへの変換コスト(非ポインタ型)&lt;/h1&gt;
-
-&lt;p&gt;Goにおけるインタフェースの変換時はC&#43;&#43;におけるキャストよりも複雑なことが発生します。&lt;/p&gt;
-
-&lt;p&gt;Goでは「なんでも」を表すために &lt;code&gt;interface{}&lt;/code&gt; を使いますね。 &lt;code&gt;int&lt;/code&gt; などの組み込み型かつ非ポインタ型を &lt;code&gt;interface{}&lt;/code&gt; として処理するとなにが起こるでしょうか？以下のようにフィボナッチを計算させてみます。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;func IntFibNoInterface(n int) int {
-    if n &amp;lt; 2 {
-        return n
-    }
-    return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
-}
-
-func IntFibInterface(o interface{}) interface{} {
-    n := o.(int)
-    if n &amp;lt; 2 {
-        return o
-    }
-    return IntFibInterface(n-1).(int) &#43; IntFibInterface(n-2).(int)
-}
-
-func BenchmarkNoInterface(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        IntFibNoInterface(20)
-    }
-}
-
-func BenchmarkInterface(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        IntFibInterface(20)
-    }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;結果は以下。40 - 50倍くらいおそくなりますね。これを見ると気軽にインタフェースを使いたくなくなるかもしれません。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface       30000             57938 ns/op               0 B/op          0 allocs/op
-BenchmarkInterface           500           2448250 ns/op          525376 B/op      32836 allocs/op
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;はじめに書いたように、インタフェースは &lt;strong&gt;ポインタとして値を保持します&lt;/strong&gt; 。 そのためコード上アロケートしていなくても、内部的に &lt;code&gt;int&lt;/code&gt; をアロケートしそこに値をコピーせねばなりません。&lt;/p&gt;
-
-&lt;p&gt;どのような処理が実行されたか、プロファイルを見てみましょう。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;1.46s of 1.46s total (  100%)
-Showing top 20 nodes out of 35 (cum &amp;gt;= 0.01s)
-      flat  flat%   sum%        cum   cum%
-     0.37s 25.34% 25.34%      0.68s 46.58%  runtime.mallocgc
-     0.26s 17.81% 43.15%      1.44s 98.63%  12.IntFibInterface
-     0.20s 13.70% 56.85%      0.20s 13.70%  runtime.memmove
-     0.16s 10.96% 67.81%      0.16s 10.96%  runtime.mSpan_Sweep.func1
-     0.12s  8.22% 76.03%      0.96s 65.75%  runtime.convT2E
-     0.11s  7.53% 83.56%      0.31s 21.23%  runtime.typedmemmove
-     0.10s  6.85% 90.41%      0.26s 17.81%  runtime.heapBitsSweepSpan
-     0.05s  3.42% 93.84%      0.22s 15.07%  runtime.assertE2T
-     0.02s  1.37% 95.21%      0.70s 47.95%  runtime.newobject
-     0.02s  1.37% 96.58%      0.02s  1.37%  runtime.prefetchnta
-     0.01s  0.68% 97.26%      0.01s  0.68%  runtime.(*gcControllerState).findRunnableGCWorker
-     0.01s  0.68% 97.95%      0.01s  0.68%  runtime.lock
-     0.01s  0.68% 98.63%      0.01s  0.68%  runtime.mSpanList_InsertBack
-     0.01s  0.68% 99.32%      0.01s  0.68%  runtime.xadd64
-     0.01s  0.68%   100%      0.01s  0.68%  runtime.xchg
-         0     0%   100%      1.44s 98.63%  12.BenchmarkInterface
-         0     0%   100%      0.01s  0.68%  runtime.GC
-         0     0%   100%      0.01s  0.68%  runtime.deductSweepCredit
-         0     0%   100%      0.01s  0.68%  runtime.gc
-         0     0%   100%      0.01s  0.68%  runtime.gc.func4
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h1&gt;非ポインタ型のインターフェースへの変換コスト&lt;/h1&gt;
-
-&lt;p&gt;では、ということで自分でアロケーションしてみましょう。 &lt;code&gt;int&lt;/code&gt; ではなく &lt;code&gt;*int&lt;/code&gt; を使ってみます。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;func IntFibNoInterface(n int) int {
-    if n &amp;lt; 2 {
-        return n
-    }
-    return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
-}
-
-func IntFibPointer(i *int) *int {
-    n := *i
-    if n &amp;lt; 2 {
-        return i
-    }
-    a1 := new(int)
-    *a1 = n - 1
-    a2 := new(int)
-    *a2 = n - 2
-    v1 := IntFibPointer(a1)
-    v2 := IntFibPointer(a2)
-    ret := new(int)
-    *ret = *v1 &#43; *v2
-    return ret
-}
-
-func IntFibInterface(o interface{}) interface{} {
-    n := *(o.(*int))
-    if n &amp;lt; 2 {
-        return o
-    }
-    a1 := new(int)
-    *a1 = n - 1
-    a2 := new(int)
-    *a2 = n - 2
-    v1 := IntFibInterface(a1).(*int)
-    v2 := IntFibInterface(a2).(*int)
-    ret := new(int)
-    *ret = *v1 &#43; *v2
-    return ret
-}
-
-func BenchmarkNoInterface(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        IntFibNoInterface(20)
-    }
-}
-
-func BenchmarkPointer(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        a := new(int)
-        *a = 20
-        IntFibPointer(a)
-    }
-}
-
-func BenchmarkInterface(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        a := new(int)
-        *a = 20
-        IntFibInterface(a)
-    }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;結果は以下のようになります。20-30倍というところでしょうか。こちらのほうがコードだけ見ると遅そうですが、なんと &lt;code&gt;int&lt;/code&gt; を使った場合より速いのです。そして、インタフェースへの変換コストは少ない、ということがわかります。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface       30000             55558 ns/op               0 B/op          0 allocs/op
-BenchmarkPointer            1000           1297598 ns/op          525376 B/op      32836 allocs/op
-BenchmarkInterface          1000           1357172 ns/op          525376 B/op      32836 allocs/op
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;1.54s of 1.54s total (  100%)
-Showing top 20 nodes out of 37 (cum &amp;gt;= 0.01s)
-      flat  flat%   sum%        cum   cum%
-     0.75s 48.70% 48.70%      1.24s 80.52%  runtime.mallocgc
-     0.22s 14.29% 62.99%      0.22s 14.29%  runtime.mSpan_Sweep.func1
-     0.16s 10.39% 73.38%      0.38s 24.68%  runtime.heapBitsSweepSpan
-     0.14s  9.09% 82.47%      1.38s 89.61%  runtime.newobject
-     0.11s  7.14% 89.61%      1.49s 96.75%  12.IntFibInterface
-     0.08s  5.19% 94.81%      0.08s  5.19%  runtime.prefetchnta
-     0.02s  1.30% 96.10%      0.02s  1.30%  runtime.heapBitsForObject
-     0.01s  0.65% 96.75%      0.01s  0.65%  runtime.(*bucket).mp
-     0.01s  0.65% 97.40%      0.01s  0.65%  runtime.atomicload64
-     0.01s  0.65% 98.05%      0.41s 26.62%  runtime.mCentral_CacheSpan
-     0.01s  0.65% 98.70%      0.03s  1.95%  runtime.scanblock
-     0.01s  0.65% 99.35%      0.01s  0.65%  runtime.schedule
-     0.01s  0.65%   100%      0.01s  0.65%  runtime.xchg
-         0     0%   100%      1.49s 96.75%  12.BenchmarkInterface
-         0     0%   100%      0.04s  2.60%  runtime.backgroundgc
-         0     0%   100%      0.01s  0.65%  runtime.deductSweepCredit
-         0     0%   100%      0.04s  2.60%  runtime.gc
-         0     0%   100%      0.02s  1.30%  runtime.gc.func1
-         0     0%   100%      0.01s  0.65%  runtime.gc.func3
-         0     0%   100%      0.01s  0.65%  runtime.gc.func4
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h1&gt;非ポインタ型とポインタ型の違いは？&lt;/h1&gt;
-
-&lt;p&gt;プロファイルをみるとわかりますが、 &lt;code&gt;runtime.convT2E&lt;/code&gt; , &lt;code&gt;runtime.assertE2T&lt;/code&gt; が非ポインタ型の場合重荷になっています。ここまで「ポインタ型」「非ポインタ型」という曖昧な表現をしていましたが、正確には これは &lt;code&gt;isdirectiface&lt;/code&gt; という関数の結果が &lt;code&gt;true&lt;/code&gt; かどうかです。これによりインターフェス変換の処理が変わります。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;// Can this type be stored directly in an interface word?
-// Yes, if the representation is a single pointer.
-func isdirectiface(t *Type) bool {
-    switch t.Etype {
-    case TPTR32,
-        TPTR64,
-        TCHAN,
-        TMAP,
-        TFUNC,
-        TUNSAFEPTR:
-        return true
-
-        // Array of 1 direct iface type can be direct.
-    case TARRAY:
-        return t.Bound == 1 &amp;amp;&amp;amp; isdirectiface(t.Type)
-
-        // Struct with 1 field of direct iface type can be direct.
-    case TSTRUCT:
-        return t.Type != nil &amp;amp;&amp;amp; t.Type.Down == nil &amp;amp;&amp;amp; isdirectiface(t.Type.Type)
-    }
-
-    return false
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;これが &lt;code&gt;false&lt;/code&gt; になるオブジェクトをインタフェースとして利用する際は注意です。&lt;/p&gt;
-
-&lt;h1&gt;時にはインタフェースを使わない、という選択も&lt;/h1&gt;
-
-&lt;p&gt;以上のことから、特に性能が必要な場合、インタフェースを使わず擬似共用体(Goに共用体はないので)のような実装をしたほうがよい場合が出てきます。フィボナッチの例を &lt;code&gt;struct&lt;/code&gt; で書いてみましょう。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;const (
-    TypeInt int = iota
-    TypeBool
-)
-
-type Object struct {
-    Type      int
-    IntValue  int
-    BoolValue bool
-}
-
-func IntFibNoInterface(n int) int {
-    if n &amp;lt; 2 {
-        return n
-    }
-    return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
-}
-
-func IntFibStruct(o Object) Object {
-    if o.IntValue &amp;lt; 2 {
-        return o
-    }
-    return Object{TypeInt,
-        IntFibStruct(Object{TypeInt, o.IntValue - 1, false}).IntValue &#43;
-            IntFibStruct(Object{TypeInt, o.IntValue - 2, false}).IntValue,
-        false}
-}                                                               
-
-func BenchmarkNoInterface(b *testing.B) {                       
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        IntFibNoInterface(20)
-    }
-}
-
-func BenchmarkStruct(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        IntFibStruct(Object{TypeInt, 20, false})
-    }  
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;速度ですが、インタフェースを使うより断然早く、2-3倍程度しか遅くなりません。当たり前ですが、暗黙的なメモリアロケーションも発生しません。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface       30000             58491 ns/op               0 B/op          0 allocs/op
-BenchmarkStruct            10000            139924 ns/op               0 B/op          0 allocs/op
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;reflect&lt;/code&gt; を使えば・・・というのもありますが、結局 &lt;code&gt;reflect.ValueOf&lt;/code&gt; の引数が &lt;code&gt;interface{}&lt;/code&gt; なので素直に使うと &lt;code&gt;interface{}&lt;/code&gt; の場合と同様の遅さです。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;func IntFibNoInterface(n int) int {
-    if n &amp;lt; 2 {
-        return n
-    }
-    return IntFibNoInterface(n-1) &#43; IntFibNoInterface(n-2)
-}
-
-func IntFibReflect(r reflect.Value) reflect.Value {
-    n := r.Int()
-    if n &amp;lt; 2 {
-        return r
-    }     
-    return reflect.ValueOf(IntFibReflect(reflect.ValueOf(n-1)).Int() &#43; IntFibReflect(reflect.ValueOf(n-2)).Int())
-}                         
-
-func BenchmarkNoInterface(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        IntFibNoInterface(20)
-    }     
-}         
-
-func BenchmarkReflect(b *testing.B) {
-    for i := 0; i &amp;lt; b.N; i&#43;&#43; {
-        IntFibReflect(reflect.ValueOf(20))
-    }                        
-}         
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;BenchmarkNoInterface       30000             56238 ns/op               0 B/op          0 allocs/op
-BenchmarkReflect            1000           2271026 ns/op          525376 B/op      32836 allocs/op
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h1&gt;ちなみにGopherLuaでは&lt;/h1&gt;
-
-&lt;p&gt;拙作のGo言語によるLua実装 &lt;a href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; では一番おそい、非ポインタ型をインタフェースとして使う実装になっています。なのでGopherLuaはおそらく現在でもGo上で動くスクリプト言語としては最速の部類ですがさらに速くしようと思えばできたのかもなあと思っています(まぁこの例ほど言語実装は単純ではないし、擬似共用体にするにしてもサイズが大きくなるので、速くなるかどうかはやってみないとなんともいえないのですが。あとサイズがおおきくなるのでスタック型のAPIにするよりないでしょうね)。&lt;/p&gt;
-
-&lt;p&gt;これは使い易さや実装のし易さやメモリ効率、そして「Goらしさ」とのトレードオフだと思っています。私は、とにかく使い易いものがほしかったので一番使い易く、そして実装が楽なものを選びました。&lt;/p&gt;
-
-&lt;p&gt;とはいえ、特に数値型をインタフェースに変換する負荷を軽減するために、独自のアロケータを実装しています。これは一定数の &lt;code&gt;float64&lt;/code&gt; をまとめてアロケートすることでインタフェース変換コストを減らしています。かなり強引なのですが興味のある方は &lt;a href=&#34;https://github.com/yuin/gopher-lua/blob/master/alloc.go&#34;&gt;gopher-lua/alloc.go&lt;/a&gt; をご参照ください。&lt;/p&gt;
-
-&lt;h1&gt;最後に&lt;/h1&gt;
-
-&lt;p&gt;インタフェースはGoで中心的な役割を果たしていますが、時に大幅なパフォーマンス劣化を起こす可能性があります。 特に、非ポインタ型を &lt;code&gt;interface{}&lt;/code&gt; などとして引数に渡す場合が要注意です。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://qiita.com/advent-calendar/2015/go3&#34;&gt;Go Advent Calendar 2015 その3&lt;/a&gt; 12日目は &lt;a href=&#34;http://qiita.com/Ladicle&#34;&gt;Ladicle&lt;/a&gt; さんです。&lt;/p&gt;
-</description>
-      
-      <category>golang</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2015/12/11/go-interface-performance-penalty</guid>
-      <pubDate>10 Dec 15 15:00 UTC</pubDate>
     </item>
     
   </channel>

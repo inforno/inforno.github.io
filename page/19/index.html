@@ -61,6 +61,152 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers" itemprop="url">コマンドライン型ランチャーとexplorerの連携</a></h3>
+<div class="meta">
+<time datetime="2007-02-24T03:11:39&#43;09:00">Feb 24, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/craftlaunch/" rel="tag" itemprop="keywords">craftlaunch</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">こちら</a> にも書いたとおり、Windowsではコマンドライン型ランチャーのcraftlaunchとexplorer.exeを連携させて使ってます。</p>
+
+<p>最前面のディレクトリ（アクティブなディレクトリ）に対して、キーボードで、Linuxと同じ感覚でmkdirとかrmとかしたいなー、ってのを実現してみました。</p>
+
+<p>今まではC言語で作った自前のライブラリで処理していたんですが、COMを使ったものに書き直しました。同様の目的にはAHKが使えるんですが、やっぱり使い慣れた言語でいろいろコマンドを作りたかったのでCOM＋Javascriptにしてみました。もちろん、COMなのでRubyでもPerlでもPythonでも同様の実装が作れます。</p>
+
+<p>craftlaunchを前提にしてますが、コマンドライン型のランチャーならなんでも適応できる方法だと思います。explorerを使っていてもキーボードだけでmkdir,rm,mvなんかが実行できちゃって、非常に便利です。</p>
+
+<ul>
+<li><a href="/statics/files/explorehelper.zip">ダウンロード</a></li>
+</ul>
+
+<p>簡単なコマンドラインランチャーもどきも同梱してますので、現在コマンドライン型ランチャーをいれていない人でも試せます。</p>
+
+<p>以下readmeからの転載です。</p>
+
+<h1>利用方法</h1>
+
+<p>explorehelper.wsf,explorehelper.js,getadir.exeは同じフォルダになければ なりません。</p>
+
+<pre class="prettyprint"><code>explorehelper.wsf [command] [args]
+</code></pre>
+
+<p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、 ctrl-eなどにショートカット登録しておくと良いでしょう。すると、 mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
+
+<h1>それぞれのファイルについて</h1>
+
+<h2>simple_launcher.exe</h2>
+
+<p>コマンドライン型ランチャーを導入していない方でも試せるように、AHKで作った 簡単なランチャーを同梱してあります。ただしこのランチャーは</p>
+
+<ul>
+<li>ホットキー（有効化）はalt+space</li>
+<li>コマンド実行はctrl+e</li>
+</ul>
+
+<p>に固定されています。つまり</p>
+
+<p>「起動」→(「alt+space」でアクティブに)→「command入力」→「ctrl+e」で実行</p>
+
+<p>という操作になります。気にいった人はちゃんとしたコマンドライン型ランチャー の導入をオススメします。</p>
+
+<h2>getahwnd.exe</h2>
+
+<p>最前面のExplorer.exeのウインドウハンドルを出力するだけのプログラムです。</p>
+
+<h2>explorehelper.js</h2>
+
+<p>JscriptによるCOMに対するヘルパーです。</p>
+
+<h2>explorehelper.wsf</h2>
+
+<p>Jscriptによるカスタムコマンドが定義されたファイルです。このファイルを編集 することによってcommandが自由に追加できます。</p>
+
+<h1>ビルトインコマンド</h1>
+
+<ul>
+<li>mv</li>
+<li>mkdir</li>
+<li>cmd</li>
+<li>touch</li>
+<li>rm</li>
+<li>chvm : 表示モードを変更します。</li>
+<li>ls : -x, -s, -tオプションのみ受け付けます。つまりフォルダ内をソートします。</li>
+<li>verbs : 右クリックメニューを出します。shift+F10と同じ効果です。</li>
+</ul>
+
+<p>説明の無いものはUnixのそれから類推してください。</p>
+
+<h1>カスタムコマンドの追加について</h1>
+
+<p>explorehelper.wsfを編集することによってcommandが自由に追加できます。</p>
+
+<pre class="prettyprint"><code>var procs = {
+  mv : function() {
+    var path = get_dir_and_focused_item_path();
+    var name = InputBox(&quot;新しい名前を入力してください。&quot;, path.item._base_name());
+    if(name) get_dir_and_focused_item().item.Name = name;
+  }._item_proc()._auto_win_activate(),
+
+  mkdir : function() {
+    var path = get_dir_and_focused_item_path();
+    var name = InputBox(&quot;フォルダ名を入力してください。&quot;);
+    if(name) fs().GetFolder(path.win).SubFolders.Add(name);
+  }._auto_win_activate(),
+  .
+  .
+  .
+  .
+</code></pre>
+
+<p>commandは上記のように、procオブジェクトのプロパティとして定義されます。その際、 command名がキー、値は引数なしの関数になります。キーに大文字は使用できません。</p>
+
+<p>commandを定義する際にはexplorehelper.jsで定義されたヘルパを使用することができます。 カスタムcommandを定義しようとする人は当然、JScript(Javascript)が理解できる人 だと思いますので、ヘルパの詳細はexplorehelper.jsを見てください。ここではリスト のみ紹介します。</p>
+
+<ul>
+<li>InputBox : 入力フォームを表示します。</li>
+<li>MessageBox : メッセージを表示します。</li>
+<li>Confirm : 確認フォームを表示します。</li>
+<li>shell : Shell.Applicationオブジェクト返します。</li>
+<li>wscript_shell : WScript.Shellオブジェクトを返します。</li>
+<li>fs : Scripting.FileSystemObjectを返します。</li>
+<li>win_activate : ディレクトリをアクティブにします。SendKeysする前に実行します。</li>
+<li>get_dir_and_focused_item : アクティブなディレクトリと選択されているアイテムを返します。</li>
+<li>get_dir_and_focused_item_lst : アクティブなディレクトリと選択されているアイテムのリストを返します。</li>
+<li>get_dir_and_focused_item_path : アクティブなディレクトリと選択されているアイテムのパスを返します。</li>
+<li>get_dir_and_focused_item_path_lst : アクティブなディレクトリと選択されているアイテムのパスのリストを返します。</li>
+<li>$wsh_args : argsを格納した配列です。</li>
+
+<li><p>Function.prototype._item_proc : アイテムに対する手続きであることを宣言します。アイテムを選択していない場合、処理が実行されなくなります。</p></li>
+
+<li><p>Function.prototype._auto_win_activate : 手続きを終了後、ウインドウをアクティブにします。 　 　 　</p></li>
+</ul>
+
+<hr />
+
+<p>こんな感じです。COMなら大概なんでもできるので、便利です。しかもJScriptとexeなのでUSBメモリなどにいれて持ち運べますので、俺ポータビリティもそこそこあります。</p>
+
+<p>また、いかにAHKスクリプトが簡単でも、普段使い慣れた言語でかけるほうが落ち着きます。AHKなんかをみてると、完全なDSLというのは俺的に扱うのがめんどくさくて（覚える熱意があればいいんだろうけど、趣味で使うものにそれほどの情熱がでるかというと・・・）なじみにくいようだ。Rakeみたいな言語内DSLがいいよね、やっぱ。ああ、2007年はRubyの年になるんでしょうかねえ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/02/04/nes-emulator-development-with-python-4" itemprop="url">PythonによるNESエミュレータ開発4</a></h3>
 <div class="meta">
 <time datetime="2007-02-04T00:25:04&#43;09:00">Feb  4, 2007</time>
@@ -211,137 +357,6 @@ write = self.memory.write
 <p>というわけで、PPUをつめてパッド入力あたりを書けばマッパー0のゲームなら動き出しそうな感じがします。ちなみにマッパーは全然です。とりあえずPythonで書いてみることが目的なので実際に使うことは想定して無いですし。</p>
 
 <p>卒論の試問会も終わり、家探しの旅も終わり、つかの間の落ち着きが戻ってきました。なんか資格とかをとらないといけないらしいので、それをちょっとずつ勉強しつつ、こっちもちょっとずつ進めていきたいなーと思ってます。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers" itemprop="url">キーボード派のWindows開発環境</a></h3>
-<div class="meta">
-<time datetime="2007-01-17T01:50:22&#43;09:00">Jan 17, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
-  
-  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
-  <span class="tag"><a href="/articles/tag/craftlaunch/" rel="tag" itemprop="keywords">craftlaunch</a></span>
-  
-  <span class="tag"><a href="/articles/tag/cltc/" rel="tag" itemprop="keywords">cltc</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>そういえば、こういうサイトに定番っぽい開発環境を書いたのがないので、自己紹介？も兼ねて晒してみます。</p>
-
-<p>開発はだいたいWindows上のvmware(Debian)でやってます。ただし、そこは定番どころばっかりなのでパス。まぁvim+screen+zshです。puttyでつないでますよ。sambaでマウントしてますよ。ええ。それぞれ結構設定しまくっていて、グローバルなSVNサーバーにおいてあります。</p>
-
-<h1>Windowsでの開発環境</h1>
-
-<p>あんまりWindowsは好きではないけど、Macよりは好きだったりする。というわけでWindows。普段使いのOSでもあるので、主に自分用の小物を書くことが多いです。怠け者なので、自動化できるものはすぐプログラムに置き換えちゃいます。でも言語は結構様々。もとから言語にこだわらず、一番適しているものを使う主義なので小物が多いにもかかわらず、言語は結構多いのかも。</p>
-
-<p>今のところ、だいたい</p>
-
-<ul>
-<li>それなりのGUIが必要なアプリ:Delphi6</li>
-<li>一枚ウインドウがあるくらいのGUIアプリ:Python(wxWidgets)</li>
-<li>GUIがなく、立ち上がりの速さや軽さが欲しいもの：C(MinGW)</li>
-<li>それ以外の小物:Python</li>
-</ul>
-
-<p>という感じで適材適所。</p>
-
-<p>Linuxではまったく定番な感じ（定番が自分にしっくりきた）だったけど、Windowsにはキーボード派の定番ってのは少ない気がするので、結構独特なのかも。方針は</p>
-
-<ul>
-<li>キーボードで操作しやすいように。</li>
-<li>なるべくlinuxと同じような感覚（←これ重要)で。</li>
-</ul>
-
-<p>感覚なので一緒じゃなくてもいいのです。</p>
-
-<h2>gvim</h2>
-
-<p>開発はほとんどこいつです。Delphi以外は。Linuxのvimと同じ設定ファイルを共有してます。俺はvimがなくちゃ生きていけない人間なので、USBメモリにいれてもち運べるようにしてあります。</p>
-
-<h2>Firefox</h2>
-
-<p>ブラウザはこいつ。ただし <a href="http://portablefirefox.mozdev.org/">PortableFirefox</a> です。これもUSBメモリにいれて持ち運べるように。学校にいってもUSBメモリをさすだけで普段の環境。拡張も結構つっこんでます。</p>
-
-<h2><a href="http://d.hatena.ne.jp/cogma">cltc</a></h2>
-
-<p>タスク切り替えが便利になるソフト。こんな感じで表示されます。インクリメンタル検索での選択や、カーソルキーでの選択ができます。</p>
-
-<p><a href="http://inforno.net/statics/files/cltc.jpg"><img src="http://inforno.net/statics/files/cltc.thumbnail.jpg" alt="image" /></a></p>
-
-<p>windowsでタスク切り替えというと`Alt+TAB`ですが、これ非常に使いづらい。そこでこのソフト。ここでキモになるのがキー設定で</p>
-
-<ul>
-<li><code>Ctrl+Shift+z</code> で起動</li>
-<li><code>Ctrl+j</code> と <code>Ctrl+k</code> でタスクを選択</li>
-</ul>
-
-<p>という風に設定しています。俺と同じLinux開発環境の人は分かるでしょう（笑</p>
-
-<p><code>Ctrl+z` がscreenのエスケープで</code>jk`` はvim。これだけでかなりLinuxと同じ感覚でタスクが選べるようになります。</p>
-
-<h2>MigemizeExplorer</h2>
-
-<p>こりゃ定番。説明不要ですよねえ。超便利。</p>
-
-<h2><a href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h2>
-
-<p>これがないと始まらない。コマンド型ランチャー。craftlanuchラブ。こいつはデスクトップ用と持ち運び用（USBメモリに入れる用）の2個も用意してます。起動用ホットキーはeclipseなんてもんは使ってないので <code>Ctrl+Space</code> です。</p>
-
-<p>俺の場合はほぼ全ての作業の起点がこのソフト。ランチャーとしてのソフト起動から簡易シェルとしてまで大活躍。中でもオススメなのはexplorer.exe(windows標準のシェル)+craftlaunchの連携。</p>
-
-<p>craftlaunchというと「<a href="http://www.h5.dion.ne.jp/~akt/">あふ</a>」との連携が有名ですが、俺はあえてexplorer.exeと連携してます。というのも、なにぶん普段使いのOSですから、マルチメディアのファイルなんかも多いわけです。重くてもプレビューが見れたりするのは便利なもんです。日本語のファイル名だし、ファイラーつかってもファイル選択するのがめんどくさいもんです。</p>
-
-<p>どうやって連携してるかというと、基本的に小物アプリ＋ショートカットキー。この使い方をはじめるきっかけになったのは「せっかくcraftlaunchからキーボードだけでフォルダ開けるんだから、ホームポジションで楽にキーボードだけで閉じたいなあ」という思い。</p>
-
-<p><code>ctrl+space</code>,<code>ctrl+[</code></p>
-
-<p>の2ステップでウインドウが閉じられます。ctrlは押しっぱなしでいいので非常に軽快に閉じられます。鉄の小指を持つemacs使いの人ならなおのことでしょう（笑</p>
-
-<h2>その他の連携</h2>
-
-<p><strong>フォルダの新規作成</strong></p>
-
-<p>windowのexplorerの不満はフォルダを作るのがめんどくさいことですよね。キーボードなら<code>Alt+F W F</code> でしょうか。というわけでfiniのような自作コマンドで対応してます。超テキトーなのですが、あげておきます。</p>
-
-<p><a href="/statics/files/amkdir.zip">amkdir.zip</a></p>
-
-<p>こいつを <code>ctrl+n</code>にショートカットとして割り当ててあります。すると・・・  craftlaunchでフォルダを開く→MigemizeExplorerで快適にフォルダをたどる→「フォルダつくりてえ」→<code>ctrl+space</code>フォルダ名入力<code>ctrl+n</code>という感じになるわけで、結構ハッピーです。</p>
-
-<p><strong>コンソール</strong></p>
-
-<p>おなじような感じで、表示されているフォルダをカレントディレクトリとしてcmd.exeを起動するものもつくってあります。ほとんどつかわないけど。</p>
-
-<hr />
-
-<p>以上のような、変なWindowsで日々暮らしています。cltcでブラウザやvim、コンソールを行き来しながらIDEはあんまり使わないでガリガリ書いています。  まぁ、だいたいvmware上のLinuxにいるんですけど（笑  まとめると</p>
-
-<ul>
-<li>cltcで<code>ctrl+z</code>に<code>ctrl+j,k</code> 。快適ですよ。</li>
-<li>MigemizeExplorerはWindows標準装備になればいいのに。</li>
-<li>craftlaunchはあふと連携してもいいけど、explorerと連携してもハッピーですよ。</li>
-</ul>
-
-<p>という感じです。</p>
-
-<hr />
-
-<p>エミュレーターのほうはあのあとCPUを若干チューニングして、1フレーム0.1はキリました。今はPPUを書いてるんですが、そろそろ就職に備えて家を探さないといけません。京都と関東を行き来するのはいろいろこたえます。移動中はシグマリオンのPocketSchemeでSchemeでも書いて暇つぶしです。</p>
 
   </div>
 </article>

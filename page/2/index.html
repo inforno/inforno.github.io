@@ -61,6 +61,123 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2016/07/28/golbot" itemprop="url">Go&#43;Luaのチャットボットフレームワークを作った</a></h3>
+<div class="meta">
+<time datetime="2016-07-28T20:32:33&#43;09:00">Jul 28, 2016</time>
+
+  
+  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>たまには実用的なものをつくろうと思って、Go+Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。</p>
+
+<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
+
+<p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
+
+<p>特徴は以下です。</p>
+
+<ul>
+<li>Goなので置けば動く</li>
+<li>それでいてLuaでスクリプトを書ける</li>
+<li>最初からマルチスレッド(複数goroutine)を考慮している</li>
+<li>HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる</li>
+<li>定期ジョブも流せる</li>
+</ul>
+
+<pre class="prettyprint"><code class="language-lua">function main()
+  local bot = golbot.newbot(&quot;Slack&quot;, { token = &quot;xxxxx&quot; })
+
+  bot:respond([[\s*(\d+)\s*\+\s*(\d+)\s*]], function(m, e) -- 3
+    bot:say(e.target, tostring(tonumber(m[2]) + tonumber(m[3])))
+  end)
+
+  bot:serve(function(msg)
+    if msg.type == &quot;say&quot; then
+      bot:say(msg.channel, msg.message)
+      respond(msg, true)
+    end
+  end)
+end
+</code></pre>
+
+<p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
+
+<pre class="prettyprint"><code class="language-lua">function main()
+  bot:respond([[deploy]], function(m, e)
+    bot:say(e.target, &quot;accepted&quot;)
+    goworker({target=e.target, type=&quot;deploy&quot;})
+  end)
+
+  bot:serve(function(msg)
+    if msg.type == &quot;say&quot; then
+      bot:say(msg.target, msg.message)
+    end
+  end)
+end
+
+function worker(msg)
+  if msg.type == &quot;deploy&quot; then
+    do_deploy()
+    notifymain({type=&quot;say&quot;, target=msg.target, message=&quot;your deployment has been completed&quot;})
+  end
+end
+</code></pre>
+
+<p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
+
+<p>HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。</p>
+
+<pre class="prettyprint"><code class="language-lua">function http(r)
+  if r.method == &quot;POST&quot; and r.URL.path == &quot;/webhook&quot; then
+    local data = assert(json.decode(r:readbody()))
+    local message = data.item.message.message
+    local user = data.item.message.from.name
+    local room = data.item.room.name
+
+    local ret = {
+      message = &quot;hello! from webhook&quot;,
+      message_format = &quot;html&quot;
+    }
+
+    return 200, headers, json.encode(ret)
+  end
+  return 400, headers, json.encode({result=&quot;not found&quot;})
+end
+</code></pre>
+
+<p>定期ジョブは以下のような感じ。</p>
+
+<pre class="prettyprint"><code class="language-lua">function main()
+  golbot.newbot(&quot;Null&quot;, { 
+    http = &quot;0.0.0.0:6669&quot; ,
+    crons = {
+      { &quot;0 * * * * * &quot;, &quot;job1&quot;}
+    }
+  }):serve(function() end)
+end
+
+function job1()
+  print &quot;hello!&quot;
+end
+</code></pre>
+
+<p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2016/07/14/go-charsetutil" itemprop="url">Goで文字コードを手軽に変換するライブラリ作った</a></h3>
 <div class="meta">
 <time datetime="2016-07-14T00:23:19&#43;09:00">Jul 14, 2016</time>
@@ -487,42 +604,6 @@ BenchmarkReflect            1000           2271026 ns/op          525376 B/op   
 <p>インタフェースはGoで中心的な役割を果たしていますが、時に大幅なパフォーマンス劣化を起こす可能性があります。 特に、非ポインタ型を <code>interface{}</code> などとして引数に渡す場合が要注意です。</p>
 
 <p><a href="http://qiita.com/advent-calendar/2015/go3">Go Advent Calendar 2015 その3</a> 12日目は <a href="http://qiita.com/Ladicle">Ladicle</a> さんです。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2015/11/19/iceberg-0-9-7-released" itemprop="url">icebergのLinux対応版 v0.9.7リリース</a></h3>
-<div class="meta">
-<time datetime="2015-11-19T20:58:00&#43;09:00">Nov 19, 2015</time>
-
-  
-  <span class="tag"><a href="/articles/tag/iceberg/" rel="tag" itemprop="keywords">iceberg</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>コマンドラインランチャー <a href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.7 をリリースしました。 GitHubの <a href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
-
-<p>今回からLinuxに対応しました。私は普段、ほぼWindowsがホストでVirtualbox上のUbuntuで開発を行っておりそこではLaunchyを使ってお茶をにごして？いたのです。がやはり慣れているicebergを使いたいと思っていたのでがんばって対応してみました。</p>
-
-<p>Macを使っている人はそもそもAlfredなどを使っているでしょうけど、Windowsだと私と同じかたちの人も多いのではないかと思います。ぜひ使ってみてください。Linuxのコマンドラインランチャーでmigemo対応しているものはなかなか無いのではないでしょうか。</p>
-
-<p>icebergはQtやGTKではなくfltkというミニマリストなGUIフレームワークなのでGUI以外の機能はほとんどフレームワークにありません。かといって、ここでQtやGTKに依存するのも癪だったのでLinuxではアイコンのルックアップなどを自分で実装したんですが結構しんどかったですね･･･。ただ、あらかじめマルチプラットフォームを視野にいれたつくりにしてあったので、ゴリゴリ書いていくだけで動くのは動いたのでよかったです。</p>
-
-<p>内部的にはfltkのバージョンもあげました。これでWindows8以降でも互換モードなしで動いたりしないかなあ、と思っているのですが、いかんせん実機をもっていないのでどうにも。次はWindows10にすると思うので結局Windows8系は確認できないまま終わりそうです。</p>
-
-<p>あと、ここまできたらなんでMacに対応しないんだ、となりそうですが単純に私がMacを持っていないからです。それに、icebergはMacの文化に合わない気がします。ただ、icebergは作者の私が一番の愛用者であるソフトなのでもし私がMacを手に入れることがあったら、対応すると思います。まぁイケてる会社のプログラマーに転職でもしないとMacを使うようなことはないと思いますが。</p>
-
-<p>なにか問題ありましたらGithubの <a href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
 
   </div>
 </article>

@@ -61,6 +61,60 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2013/11/07/iceberg-commands" itemprop="url">AlfredのWorkflow的なやつをWindowsで</a></h3>
+<div class="meta">
+<time datetime="2013-11-07T02:59:04&#43;09:00">Nov  7, 2013</time>
+
+  
+  <span class="tag"><a href="/articles/tag/iceberg/" rel="tag" itemprop="keywords">iceberg</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a href="http://blog.ruedap.com/2013/10/30/alfred-workflow-for-front-end-developers">フロントエンド開発者向けのAlfred Workflow</a> という記事を見かけたので、それ <a href="http://yuin.github.io/iceberg/index.html">iceberg</a> でもできる <strong>かも</strong> よ！ということでいくつか作ってみました(仕様上実装できないものもあったのでiceberg自体も改修して <a href="https://github.com/yuin/iceberg/releases/tag/v0.9.4">v0.9.4としてリリース</a> しています)。</p>
+
+<p>簡単にできそうなものをピックアップしたつもりが以外と苦労したかもしれない…</p>
+
+<h1><a href="https://github.com/yuin/iceberg-ip">iceberg-ip</a></h1>
+
+<p><img src="http://inforno.net/statics/files/iceberg-ip.jpg" alt="image" /></p>
+
+<p>IPアドレス一覧を表示するコマンド。</p>
+
+<h1><a href="https://github.com/yuin/iceberg-worldtime">iceberg-worldtime</a></h1>
+
+<p><img src="http://inforno.net/statics/files/iceberg-worldtime.jpg" alt="image" /></p>
+
+<p>世界主要都市の現在時刻を表示する。頑張ってサマータイム対応したのだけど、これがめんどくさかった…</p>
+
+<h1><a href="https://github.com/yuin/iceberg-encodedecode">iceberg-encodedecode</a></h1>
+
+<p><img src="http://inforno.net/statics/files/iceberg-encodedecode.jpg" alt="image" /></p>
+
+<p>Base64, URL, HTML entityでのエンコード結果を表示。</p>
+
+<h1>というわけで</h1>
+
+<p>これらのコマンドはLuaのみで書かれています。</p>
+
+<p>以下の <code>weather</code> コマンドのようにHTTPで結果を取得してそれをリストに表示することもできます。加えてmigemoに対応しているので絞り込みも簡単です。</p>
+
+<p><img src="http://inforno.net/statics/files/iceberg-weather.gif" alt="image" /></p>
+
+<p>Windows7以降はOS自体にWin+Rより高度なコマンドラインランチャー的な機能が内蔵されたこともあって、こういうのがあるとコマンドラインランチャを使う意義みたいなのも高まるかな、と。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2013/10/15/ansible-tips" itemprop="url">Ansibleのツボ</a></h3>
 <div class="meta">
 <time datetime="2013-10-15T02:37:20&#43;09:00">Oct 15, 2013</time>
@@ -366,63 +420,6 @@ html = Html(opener.open(&quot;http://www.google.co.jp/&quot;).read())
 </code></pre>
 
 <p>ソースコードの寿命をのばすためにもボチボチこの方針で書き変えていくつもり。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2013/09/25/shifting-new-blog-system" itemprop="url">ブログにいろいろ手をいれた</a></h3>
-<div class="meta">
-<time datetime="2013-09-25T23:05:00&#43;09:00">Sep 25, 2013</time>
-
-  
-  <span class="tag"><a href="/articles/tag/essay/" rel="tag" itemprop="keywords">essay</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/html5/" rel="tag" itemprop="keywords">html5</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>放置して久しいこのブログ、やっと重い腰をあげていろいろ手をいれた。</p>
-
-<ul>
-<li>HTML5化</li>
-<li>ブログシステムを入れ替え</li>
-</ul>
-
-<h1>silkylog</h1>
-
-<p>このブログはxreaのレンタルサーバで動かしているのだけど、しばらく見ないうちにxreaもサーバがすごく増えて、新しいサーバではpython2.7.5が使えるようになっていた。</p>
-
-<p>なので自作のwebフレームワーク <a href="https://github.com/yuin/rays">rays</a> を使った新しいブログシステム <a href="https://github.com/yuin/silkylog">silkylog</a> に移行した。silkylogはpython3.3でも動くのでしばらくは安心。これまで使っていたのはpython2系でしか動かないし、かといってpython3対応させる気力も起きないしでどーしたものかと思っていた。</p>
-
-<p>流行に乗ってOctpressとかにしようかなあ、と思いつつせっかく作ったのだしと思って。ただなんとなく悔しかったのでsilkylogにOctpressと同等の完全に静的なサイトを出力できる機能も付けた。</p>
-
-<p>さらにこれまでのDBベースからファイルベースに変更した。Blosxomみたいにファイルを直接検索してもいいんだけどタギングを考慮するとそれはそれでめんどくさいので、インデックス情報のみsqliteで保持するような中途半端なカタチに。</p>
-
-<p>手前味噌ながらraysの機能を余すところなくつかって、シンプルに作れたと思う。</p>
-
-<h1>html5化(デザイン)</h1>
-
-<p>ようやくhtml5に。デザインも見直し。シンプルでよいデザインにできた･･･と思う。cssはscssでまとめた。 レスポンシブルデザインにも対応。コメントはDisqus、シンタックスハイライトはgoogle code prettifyと外部だよりに。</p>
-
-<p>マークアップはreStructuredTextに統一した。普及度を考えるとmarkdownなのだけどやはりmarkdownは表現力が低くて。いろんな方言が乱立してるし、独自に拡張をするしくみに乏しいので使いづらかった。</p>
-
-<p>ここのところ、Pythonかどうかに関わらずドキュメントはsphinxで書いているので、日常的に書いているのはreStructuredTextが圧倒的だし、ディレクティブが簡単に作れるのもよい。</p>
-
-<hr />
-
-<p>ともかく、これでしばらくは手をいれなくてすむ・・・はず。</p>
 
   </div>
 </article>

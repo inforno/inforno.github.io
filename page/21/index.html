@@ -61,6 +61,100 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/01/01/happy-late-new-year-and-how-i-am-doing" itemprop="url">謹賀新年＆近況</a></h3>
+<div class="meta">
+<time datetime="2007-01-01T23:39:16&#43;09:00">Jan  1, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+  <span class="tag"><a href="/articles/tag/life/" rel="tag" itemprop="keywords">life</a></span>
+  
+  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>2007年になりましたね。月に1回更新するか怪しいこのブログを購読してくださってる方々、ありがとうございます（笑</p>
+
+<p>無事卒論も提出し、気楽な学生気分を満喫しています。ちなみに、卒論は完璧にコンピュータは関係ないもので、まぁラットと戯れていました。生物、こと脳にかかわる話も面白いですよ。まったくもって大した研究ではないのですが、教授が今年ヨーロッパの学会で発表してくださるらしいです。とりあえず書けて何より。</p>
+
+<p>さて、プログラミング関連ですが、卒論もようやく終わり4月までは暇な学生生活、まとまった時間がとれるようになったので、ちょろちょろ書き始めています。</p>
+
+<p>書いているのは・・・なんと今更NESエミュレータ。</p>
+
+<p>一から自分で解析してエミュレータを書くのは達人ワザですが、十分なハードウェアの情報がある場合、実はそんなに難しくなかったりします。</p>
+
+<p>というわけで書いているんですが、ここで普通にC言語やアセンブラで書こうというような楽？はしてません！NESエミュレータをPythonで書いてみる、これがチャレンジング。ぶっちゃけPythonで速度がシビアに求められるものを書いたことがないので、チャレンジです。</p>
+
+<p>書く上で、とりあえず</p>
+
+<ul>
+<li>ctypesは使わない（Cの流儀をそのままもっていってもおもしろくない)</li>
+<li>当然Cで拡張モジュールは書かない</li>
+</ul>
+
+<p>というポリシーで書き進めています。</p>
+
+<p>しかしやっぱりキツイ。絶対Cの方が楽な気がするのは気のせいだろうか・・・。現在はだいたいCPU（6502）のコアが書き終わったので、メモリ周りを書き進めてます。とりあえず.NESファイルから読み込んでメモリに読み込み、PCをセットするあたりまで書きました。</p>
+
+<p>まず、NESのヘッダ読み込むのもめんどくさい。Cならfreadで構造体にマップしておわり、なのにPythonだとそうは行かない。そしてなんといってもポインタがない。これ。メモリのミラーリングとかめんどくさいだろうな・・・（笑</p>
+
+<p>そうこう書いてるうちに、Pythonでのバイナリの扱いが上手くなってきました（きたような気がします）。 　 　 　 今のところ以下のような関数が活躍しています。エディアンは今のところ決めうちです。</p>
+
+<pre class="prettyprint"><code>from struct import * 
+from array import array
+
+def unpack_byte(b):
+  return unpack(&quot;&lt;B&quot;, b)[0]
+
+def zero_filled(n):
+  n /= 2
+  return pack('h'*n, *([0]*n))
+
+def byte_array(v):
+  return array('c', v)
+
+class byte_ref(object):
+  def __init__(self, p):
+    self._value = p
+  def get_value(self):
+    return self._value
+  def set_value(self, v):
+    self.value[0:] = byte_array(v)
+  value = property(get_value, set_value)
+</code></pre>
+
+<p>まず、PythonでRAMをエミュレートしようと思うと、可変なunsigned charな配列が当然必要です。</p>
+
+<p>Pythonで <code>data = open(&quot;name&quot;, &quot;rb&quot;).read()</code> とした場合、きちんとバイナリデータがdataに入って、 <code>unpack_byte(data[0:1])</code> などとするとちゃんとデータを取り出せます。</p>
+
+<p>しかし、この場合、Pythonの内部では*不変な型である*文字列型として扱われているので <code>data[w_addr &amp; 0x7ff] = 0x12</code> みたいなことは出来ません。つまりROMにはなりますが、RAMになれません。じゃあどうやってunsigned charの配列を表現するか、ということで <code>array</code> モジュールの登場なわけです。 <code>data = byte_array(open(&quot;name&quot;, &quot;rb&quot;).read())</code> という感じで使っています。生成方法がことなるだけで <code>data[0]</code> みたいなインデックスによるアクセスも出来るし、部分書き換えも可能です。</p>
+
+<p>byte_refは・・・別になくてもいいかもしれませんが、byte配列に対する参照を表現するオブジェクトです。といっても注意して使わないと意味がないクラスで気持ちの問題かもしれません。</p>
+
+<p>ここをctypesでポインタを使えば考えなくてもよかったんですが、あえてPythonなんだ、ということで（笑</p>
+
+<p>　</p>
+
+<p>　 　</p>
+
+<p>近況はこんな感じです。</p>
+
+<p>ついに就職が近づいてきました。仕事はプログラマではないので、プログラムを書く時間はあんまり取れないかもしれません。でもまぁ、日曜プログラマとして細々やっていけたらなあ、と思っています。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2006/11/28/sync-clipboards-between-windows-and-vmware" itemprop="url">vimでvmwareとWindowsのクリップボードを同期する</a></h3>
 <div class="meta">
 <time datetime="2006-11-28T00:19:12&#43;09:00">Nov 28, 2006</time>
@@ -297,87 +391,6 @@ obj.r = &quot;value&quot;
 <p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
 
 <p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/10/05/hide-the-console-window-with-python" itemprop="url">Python:バイナリでコンソールを表示しないようにするには？</a></h3>
-<div class="meta">
-<time datetime="2006-10-05T14:59:11&#43;09:00">Oct  5, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/gui/" rel="tag" itemprop="keywords">gui</a></span>
-  
-  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>Pythonのコードをwindows用exeにするには当然、 <a href="http://www.py2exe.org/">py2exe</a> を使います。</p>
-
-<p>で、そのとき、</p>
-
-<pre class="prettyprint"><code>python setup.py py2exe --windows
-</code></pre>
-
-<p>とすれば、コンソールを表示しないようにできます。</p>
-
-<p>これはもう古いやり方で、現在のバージョンのpy2exeでは動きません・・・。現在はターゲットファイルの拡張子を.pywにする、もしくは <code>windows = [{'script' : 'script.py', &quot;icon_resources&quot;: [(1,&quot;script.ico&quot;)]}]</code> というオプションをsetupに渡す、という方法になっています。</p>
-
-<p>今日、昔py2exeで作ったファイルが出てきたんですが、困ったことにpythonのソースファイルはない。いや、別に改良とかもうしないしいいんだけど。 ふと起動してみるとGUI with console。かっちょわりい。</p>
-
-<p>コンソールが表示される、というのは単純にPEファイルのオプションなわけで。</p>
-
-<p><img src="/statics/files/pe.jpg" alt="image" /></p>
-
-<p>この部分を変更してやればとりあえずは直る。ちなみに、</p>
-
-<ul>
-<li>00 00:未知のサブシステム</li>
-<li>01 00:デバイス ライバおよびWindowsNTネイティブプロセス用</li>
-<li>02 00:GUIで実行されるファイル</li>
-<li>03 00:コンソールで実行されるファイル</li>
-<li>07 00:Posixコンソールで実行されるファイル</li>
-<li>09 00:WindowsCEで実行されるファイル</li>
-</ul>
-
-<p>なので02h 00hにしてやればオッケー。</p>
-
-<p>Pythonでバイナリファイルの読み書きとかしたことないので練習もかねて。</p>
-
-<pre class="prettyprint"><code># vim: fileencoding=utf-8
-import sys
-from struct import * 
-target_file = len(sys.argv) &gt; 1 and sys.argv[1] or sys.exit(&quot;Target file is not specified.&quot;)
-target_file = unicode(target_file, &quot;mbcs&quot;)
-out_file    = open(target_file + &quot;_gui&quot;, &quot;wb&quot;)
-
-io = open(target_file, &quot;rb&quot;)
-while 1 :
-  if io.read(1) == &quot;P&quot; and io.read(1) == &quot;E&quot; : break
-subsystem_pos = io.tell() +90 
-io.seek(0)
-out_file.write(io.read(subsystem_pos))
-io.seek(4, 1)
-out_file.write(pack('hh', 2, 0))
-out_file.write(io.read())
-
-io.close()
-out_file.close()
-</code></pre>
-
-<p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
 
   </div>
 </article>

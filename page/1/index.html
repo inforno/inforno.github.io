@@ -61,6 +61,137 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2017/04/27/commonmark-parser-written-in-go" itemprop="url">Go言語でCommonMarkパーサを実装した、またCommonMarkについて</a></h3>
+<div class="meta">
+<time datetime="2017-04-27T01:50:04&#43;09:00">Apr 27, 2017</time>
+
+  
+  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
+  
+  <span class="tag"><a href="/articles/tag/commonmark/" rel="tag" itemprop="keywords">commonmark</a></span>
+  
+  <span class="tag"><a href="/articles/tag/markdown/" rel="tag" itemprop="keywords">markdown</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>GoでCommonMarkのパーサを実装しました。</p>
+
+<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/goldmark" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
+
+<p>分かりやすいASTに変換＋拡張が容易、そこそこ速い実装になっています。</p>
+
+<p><strong>めちゃくちゃしんどかったです。</strong></p>
+
+<h2>経緯</h2>
+
+<p>Go言語のMarkdownパーサといえば<a href="https://github.com/russross/blackfriday/tree/v2">blackfriday</a>ですが、
+拡張するための機構がないのでさくっと自前でMarkdownパーサを書くか、と思い立ちました。</p>
+
+<p>そこで「そういえばCommonMarkなんてもんがあったな」と思い出しせっかくならCommonMark準拠にするかと
+おもってCommonMarkの仕様を読み始めました。</p>
+
+<p><strong>え、なにこれは…</strong></p>
+
+<p>Markdownで出来ることなんてrestructuredTextなどほかのマークアップ言語に比べれば
+わずかなものです。しかし、たかがそれだけを実装するために凄まじく複雑な仕様
+が定義されているのでした。</p>
+
+<p>以下、CommonMarkに寄せられた声です。</p>
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">commonmarkのlistの仕様複雑すぎて死んでいる</p>&mdash; tkr (@kgtkr) <a href="https://twitter.com/kgtkr/status/1111140801621286913?ref_src=twsrc%5Etfw">2019年3月28日</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">う〜ん、CommonMark難しすぎる！w</p>&mdash; らぃと (@lightnet328) <a href="https://twitter.com/lightnet328/status/1099352824750587909?ref_src=twsrc%5Etfw">2019年2月23日</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">質問：<br>CommonMarkのパーザの実装を試みていますが、仕様が絶望的です。どうしたらいいでしょうか？<br><br>回答：<br>もっとテキトーにパーザを実装して、そのパーザの動作を以て“新しいMarkdown方言”であると定めましょう！<a href="https://twitter.com/hashtag/Markdown?src=hash&amp;ref_src=twsrc%5Etfw">#Markdown</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a></p>&mdash; ZR-TeXnobabbler🤔 (@zr_tex8r) <a href="https://twitter.com/zr_tex8r/status/1057951517859209217?ref_src=twsrc%5Etfw">2018年11月1日</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">皆さんには是非 CommonMark Spec を読んで絶望してほしい．</p>&mdash; 画力・博士号・油田 (@bd_gfngfn) <a href="https://twitter.com/bd_gfngfn/status/1057689153561710592?ref_src=twsrc%5Etfw">2018年10月31日</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+
+<p>しまいには、CommonMarkの中心人物自体が「えらいもん作ってしまった・・・」となっています。</p>
+
+<ul>
+<li><a href="https://talk.commonmark.org/t/beyond-markdown/2787">Beyond Markdown</a></li>
+</ul>
+
+<blockquote>
+<p>There are 17 principles governing emphasis , for example, and these rules still
+leave cases undecided. The rules for list items and HTML blocks are also
+very complex. All of these rules lead to unexpected results sometimes, and they
+make writing a parser for CommonMark a complex affair.
+I despair, at times, of getting to a spec that is worth calling 1.0.</p>
+</blockquote>
+
+<p>私も仕様を読んだ段階で「これはヤバい」と感じたのですがここで引くのも悔しかったので作り切りました。</p>
+
+<h2>CommonMarkについて思うところ</h2>
+
+<p>正直なところ、これが世に広まるってどうなの、と思います。</p>
+
+<p>そもそもなんでMarkdownが軽量マークアップ言語の中でこれだけ広く使われるようになったのかというと</p>
+
+<ul>
+<li>書き手としての書きやすさ</li>
+<li>実装者としての実装しやすさ</li>
+</ul>
+
+<p>つまり、「書き手の適当さ」と「実装側の適当さ」がいい具合に噛み合ったからだと思っています。
+書き手はそれなりに適当に書けるし、実装するにしても仕様が適当なので、適当に実装してもMarkdown
+対応であると言うことができました。</p>
+
+<p>それによってあらゆる言語、さまざまなタイプの実装が生まれそれが至るところで使われることになり
+Markdownは広まっていったのです。</p>
+
+<p>それに対して、CommonMarkはあまりに実装するのがしんどすぎます。さらにはそれだけしんどい思いを
+しても出来ること自体は少ないのです。テーブルさえ使えないのです。</p>
+
+<p>その実装の難しさからCommonMark対応のパーサはいわゆるMarkdownパーサと比べるとわずかしかありません。
+CommonMarkにかかわっている人の中には「それが何の問題ですか？」という人さえいます。
+「CとJSで参照実装提供してるじゃん。ブラウザはC動かないからJSも用意してある。それ以外の言語は
+C実装のバインディング作ればいいだけでしょ。実装なんて1個あればいいんだよ」なんて感じです。</p>
+
+<p>CommonMarkはオリジナルのMarkdown作者から「Markdownの名前は使うな」と言われてCommonMarkという名前
+になったという経緯があります。</p>
+
+<p>Markdownを冠していないのであれば、perlの神正規表現で実装されたオリジナルのMarkdown.plの動きにでき
+るだけ寄せようとするのではなく、もっと仕様をシンプルにする方向に動いて欲しかったです。</p>
+
+<h2>CommonMarkパーサを実装したい人に向けて</h2>
+
+<p>とにかく、CommonMarkに準拠するのは難しい。ということでいるかいないかわからない、CommonMarkパーサを
+これから書こうと言う人に気づきを共有しておきます。</p>
+
+<ul>
+<li>いわゆるプログラミング言語やXML, JSONなどのパースとは全く別物です。そういうものはもともと
+「パースしやすいように」という視点で文法が作られてますが、CommonMarkはそんなことはありません。
+pegベースのパーサもあるので無理じゃないですがいわゆるLL,LRやLALRのような方法では厳しいです。</li>
+<li>Markdownはいうなれば「行志向」なので業単位を基本としましょう。</li>
+<li>「lazy continuation」はかなり曲者です。</li>
+<li>仕様策定者自身が <a href="https://talk.commonmark.org/t/beyond-markdown/2787">Beyond Markdown</a> で述べている
+部分は間違いなくしんどいです。特に強調は自分で考えるのは諦めましょう。素直に参照実装と同じ
+アルゴリズムで実装するより他にspec testを通すのは難しいです。</li>
+<li>タブが本来のタブの意味でつかわれる点に注意。つまりタブ文字の位置によりタブは
+1文字分、2文字分、3文字分、4文字分、いずれの文字幅にもなりえます。</li>
+<li>とにかく折れない心が大事です。CommonMarkとMarkdownは別物です。覚悟してかかりましょう。</li>
+</ul>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2017/02/15/bash-script-in-bat" itemprop="url">batの中にbashスクリフﾟトを埋め込む方法</a></h3>
 <div class="meta">
 <time datetime="2017-02-15T01:25:04&#43;09:00">Feb 15, 2017</time>
@@ -258,123 +389,6 @@ function: 0xc4200c9840
 <p>少なくとも、Linuxでは <code>plugin</code> パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。</p>
 
 <p>Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2016/07/28/golbot" itemprop="url">Go&#43;Luaのチャットボットフレームワークを作った</a></h3>
-<div class="meta">
-<time datetime="2016-07-28T20:32:33&#43;09:00">Jul 28, 2016</time>
-
-  
-  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>たまには実用的なものをつくろうと思って、Go+Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。</p>
-
-<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
-
-<p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
-
-<p>特徴は以下です。</p>
-
-<ul>
-<li>Goなので置けば動く</li>
-<li>それでいてLuaでスクリプトを書ける</li>
-<li>最初からマルチスレッド(複数goroutine)を考慮している</li>
-<li>HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる</li>
-<li>定期ジョブも流せる</li>
-</ul>
-
-<pre class="prettyprint"><code class="language-lua">function main()
-  local bot = golbot.newbot(&quot;Slack&quot;, { token = &quot;xxxxx&quot; })
-
-  bot:respond([[\s*(\d+)\s*\+\s*(\d+)\s*]], function(m, e) -- 3
-    bot:say(e.target, tostring(tonumber(m[2]) + tonumber(m[3])))
-  end)
-
-  bot:serve(function(msg)
-    if msg.type == &quot;say&quot; then
-      bot:say(msg.channel, msg.message)
-      respond(msg, true)
-    end
-  end)
-end
-</code></pre>
-
-<p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
-
-<pre class="prettyprint"><code class="language-lua">function main()
-  bot:respond([[deploy]], function(m, e)
-    bot:say(e.target, &quot;accepted&quot;)
-    goworker({target=e.target, type=&quot;deploy&quot;})
-  end)
-
-  bot:serve(function(msg)
-    if msg.type == &quot;say&quot; then
-      bot:say(msg.target, msg.message)
-    end
-  end)
-end
-
-function worker(msg)
-  if msg.type == &quot;deploy&quot; then
-    do_deploy()
-    notifymain({type=&quot;say&quot;, target=msg.target, message=&quot;your deployment has been completed&quot;})
-  end
-end
-</code></pre>
-
-<p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
-
-<p>HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。</p>
-
-<pre class="prettyprint"><code class="language-lua">function http(r)
-  if r.method == &quot;POST&quot; and r.URL.path == &quot;/webhook&quot; then
-    local data = assert(json.decode(r:readbody()))
-    local message = data.item.message.message
-    local user = data.item.message.from.name
-    local room = data.item.room.name
-
-    local ret = {
-      message = &quot;hello! from webhook&quot;,
-      message_format = &quot;html&quot;
-    }
-
-    return 200, headers, json.encode(ret)
-  end
-  return 400, headers, json.encode({result=&quot;not found&quot;})
-end
-</code></pre>
-
-<p>定期ジョブは以下のような感じ。</p>
-
-<pre class="prettyprint"><code class="language-lua">function main()
-  golbot.newbot(&quot;Null&quot;, { 
-    http = &quot;0.0.0.0:6669&quot; ,
-    crons = {
-      { &quot;0 * * * * * &quot;, &quot;job1&quot;}
-    }
-  }):serve(function() end)
-end
-
-function job1()
-  print &quot;hello!&quot;
-end
-</code></pre>
-
-<p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
 
   </div>
 </article>

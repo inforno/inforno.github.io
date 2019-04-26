@@ -61,6 +61,53 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/02/09/scala-infinite-list-like-a-haskell" itemprop="url">Scalaで無限リスト：Haskellライクに</a></h3>
+<div class="meta">
+<time datetime="2008-02-09T23:52:10&#43;09:00">Feb  9, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>ScalaにはStreamという無限リストがあるんだけど、微妙に使いづらい、というか分かりづらい。Haskellでいうcycleはどうだ、とかよく忘れるのでメモ。</p>
+
+<pre class="prettyprint"><code>def repeat[T](a:T) = Stream.const(a)
+def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
+def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
+def replicate[T](n:int, elem:T) = Stream.make(n, elem)
+</code></pre>
+
+<p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
+
+<pre class="prettyprint"><code>repeat(1) take 10 print
+// =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
+
+cycle(1 to 4) take 10 print
+// =&gt; 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, Stream.empty
+
+iterate((x:int)=&gt;x+1, 0) take 10 print
+// =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
+
+replicate(3, 1) take 10 print
+// =&gt; 1, 1, 1, Stream.empty
+</code></pre>
+
+<p>うんうん。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/02/04/the-scala-most-instructive-language" itemprop="url">最もタメになる「初心者用言語」はScala!</a></h3>
 <div class="meta">
 <time datetime="2008-02-04T20:13:59&#43;09:00">Feb  4, 2008</time>
@@ -274,225 +321,6 @@ println(
 <hr />
 
 <p>さて、数少ない日本人Scala好きの皆さん。どれくらいご存知でしたでしょうか。まぁ、基礎からちょっとScalaやればこれくらいは皆さんご存知だと思うんですが、やはりScalaはカオスな言語なので、なかなか見つけられない機能も多いんで、最近Scalaやりはじめた人は参考にしてもらえるとうれしいです。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/01/23/pseudo-rake-in-python-standard-modules" itemprop="url">Python標準モジュールでRakeもどき</a></h3>
-<div class="meta">
-<time datetime="2008-01-23T04:30:23&#43;09:00">Jan 23, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>誰もが一度使うと便利さと気軽さに感動するRubyが誇るライブラリ、 <a href="http://raa.ruby-lang.org/project/rake/">Rake</a> 。</p>
-
-<p>プログラムのビルドもそうなんですが、雑多なタスクを簡単に書けて、整理できるのがなんといっても魅力的。RailsなんかではDBの作成から何から、ばんばんRakeタスクにされていますよね。</p>
-
-<p>　</p>
-
-<p>さて、俺はPythonistasなので、PythonでRakeみたいなのがほしいわけです。ビルドに限っていえばPythonは <a href="http://www.scons.org/">Scons</a> という素晴らしいツールがあります。C言語はおろか、JAVA、PDF、PostScriptなどなど、さらにはSubversionもサポートしていますし、並列コンパイルもでき、実績も多数で申し分ありません。</p>
-
-<p>でも俺がしたいのは、雑多なタスクを放り込む、コレ。そういうのを簡単にやるライブラリってPythonではないんでしょうか。RubyではRakeが標準添付されるというのに。いえ、あります。前からあるんです。それが <a href="http://www.python.jp/doc/nightly/lib/module-distutils.html">distutils</a> 。</p>
-
-<p>distutils(およびその拡張のsetuptools)はPythonの標準的なパッケージ配布システムとして有名です。でも実は自分でコマンドを定義してRakeのように使うことができることはあまりしられていないのではないでしょうか。</p>
-
-<h1>distutilsでコマンドを定義する</h1>
-
-<p>distutilsでコマンドを定義するにはdistutils.core.Commandクラスを継承し、色々オーバーライドします。説明もつけられますし、オプションもとれて、sub_commandsで依存関係(コマンド分割)を設定することもできます。</p>
-
-<pre class="prettyprint"><code>class MyCommand(Command):
-  description = &quot;コマンドの説明&quot;
-  user_options = [(&quot;host=&quot;, &quot;h&quot;, &quot;hostname&quot;)] # オプション
-  sub_commands = [(&quot;pre_task&quot;, None)] # サブコマンド
-  def run(self): pass # 実行する内容
-  def initialize_options(self): # オプションの初期化
-    self.host = None
-  def finalize_options(self):
-    if not self.host: raise &quot;Error&quot;
-
-setup(cmdclass={&quot;my_command&quot;:MyCommand})
-</code></pre>
-
-<p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
-
-<h1>もっと簡単にdistutilsでタスク</h1>
-
-<p>30行程度のテンプレを足して、簡単にタスクを定義できるようにしましょう。namespace機能はPython2.5以上限定です。</p>
-
-<pre class="prettyprint"><code>from __future__ import with_statement
-from distutils.core import Command, setup
-from contextlib import contextmanager
-
-_cmds = {}
-_namespace = []
-_get_ns = lambda:_namespace and &quot;_&quot;.join(_namespace)+&quot;_&quot; or &quot;&quot;
-class CommandType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    d = dict(user_options=[], finalize_options=lambda s:None)
-    d.update(classdict)
-    def _(self):
-      [setattr(self,i[0].rstrip(&quot;=&quot;),None) for i in d[&quot;user_options&quot;]]
-    d[&quot;initialize_options&quot;] = _
-    d[&quot;boolean_options&quot;] = [i for i,j,k in d[&quot;user_options&quot;] if not i.endswith(&quot;=&quot;)]
-    def _(self):
-      map(self.run_command, self.get_sub_commands())
-      return classdict[&quot;run&quot;](self)
-    d[&quot;run&quot;] = _
-    name = _get_ns()+class_name.lower()
-    cls = type.__new__(cls, name, class_bases + (object,), d)
-    cls.description = cls.__doc__
-    if class_name != &quot;BaseCommand&quot; : _cmds[name] = cls
-    return cls
-class BaseCommand(Command): __metaclass__ = CommandType
-
-@contextmanager
-def namespace(name):
-  _namespace.append(name)
-  yield _get_ns()
-  _namespace.pop()
-</code></pre>
-
-<p>これだけです。これでかなり簡単にタスクが作れるようになります。例を示しましょう。</p>
-
-<pre class="prettyprint"><code>with namespace(&quot;db&quot;) as ns:
-  with namespace(&quot;create&quot;) as ns:
-    class Test1(BaseCommand):
-      &quot;&quot;&quot;test1 discription
-      &quot;&quot;&quot;
-      user_options = [ (&quot;host=&quot;, &quot;h&quot;, &quot;hostname&quot;),
-                      (&quot;port=&quot;, &quot;p&quot;, &quot;port&quot;),
-                      (&quot;force&quot;, &quot;f&quot;, &quot;force execute&quot;)]
-      def run(self):
-        print self.host
-        print self.force
-        print &quot;hello, &quot;, self.__class__.__name__
-
-      sub_commands = [(ns+&quot;test2&quot;,None)]
-
-    class Test2(BaseCommand):
-      &quot;&quot;&quot;test2 discription
-      &quot;&quot;&quot;
-      def run(self):
-        print &quot;hello, &quot;, self.__class__.__name__
-
-
-  class Test3(BaseCommand):
-    &quot;&quot;&quot;test3 discription
-    &quot;&quot;&quot;
-    def run(self):
-      print &quot;hello, &quot;, self.__class__.__name__
-
-class Test4(BaseCommand):
-  &quot;&quot;&quot;test4 discription
-  &quot;&quot;&quot;
-  user_options = [ (&quot;host=&quot;, &quot;h&quot;, &quot;hostname&quot;) ]
-  def run(self):
-    print &quot;hello, &quot;, self.__class__.__name__
-
-  def finalize_options(self):
-    if not self.host:
-      raise ValueError(&quot;host must not be None&quot;)
-
-
-setup(cmdclass=_cmds)
-</code></pre>
-
-<p>かなり直感的になったのではないでしょうか。withを使えば名前空間も結構簡単に実現できます。コマンドのヘルプを見てみましょう。</p>
-
-<pre class="prettyprint"><code># python task.py --help-commands
-Standard commands:
-  build            build everything needed to install
-  build_py         &quot;build&quot; pure Python modules (copy to build directory)
-  build_ext        build C/C++ extensions (compile/link to build directory)
-  build_clib       build C/C++ libraries used by Python extensions
-  build_scripts    &quot;build&quot; scripts (copy and fixup #! line)
-  clean            clean up temporary files from 'build' command
-  install          install everything from build directory
-  install_lib      install all Python modules (extensions and pure Python)
-  install_headers  install C/C++ header files
-  install_scripts  install scripts (Python or otherwise)
-  install_data     install data files
-  sdist            create a source distribution (tarball, zip file, etc.)
-  register         register the distribution with the Python package index
-  bdist            create a built (binary) distribution
-  bdist_dumb       create a &quot;dumb&quot; built distribution
-  bdist_rpm        create an RPM distribution
-  bdist_wininst    create an executable installer for MS Windows
-
-Extra commands:
-  db_test3         test3 discription
-
-  db_create_test2  test2 discription
-
-  db_create_test1  test1 discription
-
-  test4            test4 discription
-
-
-usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: task.py --help [cmd1 cmd2 ...]
-  or: task.py --help-commands
-  or: task.py cmd --help
-</code></pre>
-
-<p>こんな感じで、標準コマンドに加え「Extra commands」という形で定義したタスクが使えるようになります。もちろん、distutilsのビルド機能、パッケージ管理機能も使えますよ。</p>
-
-<p>db_create_test1のヘルプを見てみましょう。</p>
-
-<pre class="prettyprint"><code># python task.py db_create_test1 --help
-Common commands: (see '--help-commands' for more)
-
-  setup.py build      will build the package underneath 'build/'
-  setup.py install    will install the package
-
-Global options:
-  --verbose (-v)  run verbosely (default)
-  --quiet (-q)    run quietly (turns verbosity off)
-  --dry-run (-n)  don't actually do anything
-  --help (-h)     show detailed help message
-
-Options for 'db_create_test1' command:
-  --host (-h)   hostname
-  --port (-p)   port
-  --force (-f)  force execute
-
-usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: task.py --help [cmd1 cmd2 ...]
-  or: task.py --help-commands
-  or: task.py cmd --help
-</code></pre>
-
-<p>ちゃんとオプションが表示されていますね。最後に、db_create_test1タスクを実行してみましょう。</p>
-
-<pre class="prettyprint"><code># python task.py db_create_test1 --host=localhost
-running db_create_test1
-running db_create_test2
-hello,  Test2
-localhost
-None
-hello,  Test1
-</code></pre>
-
-<p>サブコマンドのdb_create_test2が実行されていること、きちんとオプションがselfの属性として設定されていることがわかりますね。</p>
-
-<hr />
-
-<p>標準的な機能だけでもRakeのようなタスクはつくれますが、30行程度の工夫で断然便利になります。Rakeと違いrakeコマンドのような外部コマンドも必要なく、pythonのスクリプト1つで実現できるのも手軽です。というわけで、雑多なタスクはdistutilsでまとめてみてはいかがでしょうか。</p>
 
   </div>
 </article>

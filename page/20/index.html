@@ -61,6 +61,137 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers" itemprop="url">キーボード派のWindows開発環境</a></h3>
+<div class="meta">
+<time datetime="2007-01-17T01:50:22&#43;09:00">Jan 17, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/windows/" rel="tag" itemprop="keywords">windows</a></span>
+  
+  <span class="tag"><a href="/articles/tag/vim/" rel="tag" itemprop="keywords">vim</a></span>
+  
+  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
+  
+  <span class="tag"><a href="/articles/tag/craftlaunch/" rel="tag" itemprop="keywords">craftlaunch</a></span>
+  
+  <span class="tag"><a href="/articles/tag/cltc/" rel="tag" itemprop="keywords">cltc</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>そういえば、こういうサイトに定番っぽい開発環境を書いたのがないので、自己紹介？も兼ねて晒してみます。</p>
+
+<p>開発はだいたいWindows上のvmware(Debian)でやってます。ただし、そこは定番どころばっかりなのでパス。まぁvim+screen+zshです。puttyでつないでますよ。sambaでマウントしてますよ。ええ。それぞれ結構設定しまくっていて、グローバルなSVNサーバーにおいてあります。</p>
+
+<h1>Windowsでの開発環境</h1>
+
+<p>あんまりWindowsは好きではないけど、Macよりは好きだったりする。というわけでWindows。普段使いのOSでもあるので、主に自分用の小物を書くことが多いです。怠け者なので、自動化できるものはすぐプログラムに置き換えちゃいます。でも言語は結構様々。もとから言語にこだわらず、一番適しているものを使う主義なので小物が多いにもかかわらず、言語は結構多いのかも。</p>
+
+<p>今のところ、だいたい</p>
+
+<ul>
+<li>それなりのGUIが必要なアプリ:Delphi6</li>
+<li>一枚ウインドウがあるくらいのGUIアプリ:Python(wxWidgets)</li>
+<li>GUIがなく、立ち上がりの速さや軽さが欲しいもの：C(MinGW)</li>
+<li>それ以外の小物:Python</li>
+</ul>
+
+<p>という感じで適材適所。</p>
+
+<p>Linuxではまったく定番な感じ（定番が自分にしっくりきた）だったけど、Windowsにはキーボード派の定番ってのは少ない気がするので、結構独特なのかも。方針は</p>
+
+<ul>
+<li>キーボードで操作しやすいように。</li>
+<li>なるべくlinuxと同じような感覚（←これ重要)で。</li>
+</ul>
+
+<p>感覚なので一緒じゃなくてもいいのです。</p>
+
+<h2>gvim</h2>
+
+<p>開発はほとんどこいつです。Delphi以外は。Linuxのvimと同じ設定ファイルを共有してます。俺はvimがなくちゃ生きていけない人間なので、USBメモリにいれてもち運べるようにしてあります。</p>
+
+<h2>Firefox</h2>
+
+<p>ブラウザはこいつ。ただし <a href="http://portablefirefox.mozdev.org/">PortableFirefox</a> です。これもUSBメモリにいれて持ち運べるように。学校にいってもUSBメモリをさすだけで普段の環境。拡張も結構つっこんでます。</p>
+
+<h2><a href="http://d.hatena.ne.jp/cogma">cltc</a></h2>
+
+<p>タスク切り替えが便利になるソフト。こんな感じで表示されます。インクリメンタル検索での選択や、カーソルキーでの選択ができます。</p>
+
+<p><a href="http://inforno.net/statics/files/cltc.jpg"><img src="http://inforno.net/statics/files/cltc.thumbnail.jpg" alt="image" /></a></p>
+
+<p>windowsでタスク切り替えというと`Alt+TAB`ですが、これ非常に使いづらい。そこでこのソフト。ここでキモになるのがキー設定で</p>
+
+<ul>
+<li><code>Ctrl+Shift+z</code> で起動</li>
+<li><code>Ctrl+j</code> と <code>Ctrl+k</code> でタスクを選択</li>
+</ul>
+
+<p>という風に設定しています。俺と同じLinux開発環境の人は分かるでしょう（笑</p>
+
+<p><code>Ctrl+z` がscreenのエスケープで</code>jk`` はvim。これだけでかなりLinuxと同じ感覚でタスクが選べるようになります。</p>
+
+<h2>MigemizeExplorer</h2>
+
+<p>こりゃ定番。説明不要ですよねえ。超便利。</p>
+
+<h2><a href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h2>
+
+<p>これがないと始まらない。コマンド型ランチャー。craftlanuchラブ。こいつはデスクトップ用と持ち運び用（USBメモリに入れる用）の2個も用意してます。起動用ホットキーはeclipseなんてもんは使ってないので <code>Ctrl+Space</code> です。</p>
+
+<p>俺の場合はほぼ全ての作業の起点がこのソフト。ランチャーとしてのソフト起動から簡易シェルとしてまで大活躍。中でもオススメなのはexplorer.exe(windows標準のシェル)+craftlaunchの連携。</p>
+
+<p>craftlaunchというと「<a href="http://www.h5.dion.ne.jp/~akt/">あふ</a>」との連携が有名ですが、俺はあえてexplorer.exeと連携してます。というのも、なにぶん普段使いのOSですから、マルチメディアのファイルなんかも多いわけです。重くてもプレビューが見れたりするのは便利なもんです。日本語のファイル名だし、ファイラーつかってもファイル選択するのがめんどくさいもんです。</p>
+
+<p>どうやって連携してるかというと、基本的に小物アプリ＋ショートカットキー。この使い方をはじめるきっかけになったのは「せっかくcraftlaunchからキーボードだけでフォルダ開けるんだから、ホームポジションで楽にキーボードだけで閉じたいなあ」という思い。</p>
+
+<p><code>ctrl+space</code>,<code>ctrl+[</code></p>
+
+<p>の2ステップでウインドウが閉じられます。ctrlは押しっぱなしでいいので非常に軽快に閉じられます。鉄の小指を持つemacs使いの人ならなおのことでしょう（笑</p>
+
+<h2>その他の連携</h2>
+
+<p><strong>フォルダの新規作成</strong></p>
+
+<p>windowのexplorerの不満はフォルダを作るのがめんどくさいことですよね。キーボードなら<code>Alt+F W F</code> でしょうか。というわけでfiniのような自作コマンドで対応してます。超テキトーなのですが、あげておきます。</p>
+
+<p><a href="/statics/files/amkdir.zip">amkdir.zip</a></p>
+
+<p>こいつを <code>ctrl+n</code>にショートカットとして割り当ててあります。すると・・・  craftlaunchでフォルダを開く→MigemizeExplorerで快適にフォルダをたどる→「フォルダつくりてえ」→<code>ctrl+space</code>フォルダ名入力<code>ctrl+n</code>という感じになるわけで、結構ハッピーです。</p>
+
+<p><strong>コンソール</strong></p>
+
+<p>おなじような感じで、表示されているフォルダをカレントディレクトリとしてcmd.exeを起動するものもつくってあります。ほとんどつかわないけど。</p>
+
+<hr />
+
+<p>以上のような、変なWindowsで日々暮らしています。cltcでブラウザやvim、コンソールを行き来しながらIDEはあんまり使わないでガリガリ書いています。  まぁ、だいたいvmware上のLinuxにいるんですけど（笑  まとめると</p>
+
+<ul>
+<li>cltcで<code>ctrl+z</code>に<code>ctrl+j,k</code> 。快適ですよ。</li>
+<li>MigemizeExplorerはWindows標準装備になればいいのに。</li>
+<li>craftlaunchはあふと連携してもいいけど、explorerと連携してもハッピーですよ。</li>
+</ul>
+
+<p>という感じです。</p>
+
+<hr />
+
+<p>エミュレーターのほうはあのあとCPUを若干チューニングして、1フレーム0.1はキリました。今はPPUを書いてるんですが、そろそろ就職に備えて家を探さないといけません。京都と関東を行き来するのはいろいろこたえます。移動中はシグマリオンのPocketSchemeでSchemeでも書いて暇つぶしです。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/01/12/nes-emulator-development-with-python-2" itemprop="url">PythonによるNESエミュレータ開発2</a></h3>
 <div class="meta">
 <time datetime="2007-01-12T02:50:02&#43;09:00">Jan 12, 2007</time>
@@ -292,100 +423,6 @@ self.__getattribute__(&quot;ope_&quot;+hex(opecode))()
 <p>メモリ周りもIO以外はだいたい作ったので、今日の時点で単純なコードなら実行可能に。早速アセンブラを書いてNESASMで.NESファイルを作成。それを読み込んで動かしてみました。とりあえず動くことは動く・・・が全命令が正しく実装されているかはまだ分からないです（笑</p>
 
 <p>というわけで次はデバッグ環境を整えて、命令のテストをしないとなあ。 　 　 　 余談。いやー卒論という重圧がないのは非常にプログラミングがはかどる。別にギリギリなわけでもないのに「卒論完全に出来上がってないのにこんなことしてていいのかなーって感じちゃう」的なものがないし。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/01/01/happy-late-new-year-and-how-i-am-doing" itemprop="url">謹賀新年＆近況</a></h3>
-<div class="meta">
-<time datetime="2007-01-01T23:39:16&#43;09:00">Jan  1, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/life/" rel="tag" itemprop="keywords">life</a></span>
-  
-  <span class="tag"><a href="/articles/tag/binary/" rel="tag" itemprop="keywords">binary</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>2007年になりましたね。月に1回更新するか怪しいこのブログを購読してくださってる方々、ありがとうございます（笑</p>
-
-<p>無事卒論も提出し、気楽な学生気分を満喫しています。ちなみに、卒論は完璧にコンピュータは関係ないもので、まぁラットと戯れていました。生物、こと脳にかかわる話も面白いですよ。まったくもって大した研究ではないのですが、教授が今年ヨーロッパの学会で発表してくださるらしいです。とりあえず書けて何より。</p>
-
-<p>さて、プログラミング関連ですが、卒論もようやく終わり4月までは暇な学生生活、まとまった時間がとれるようになったので、ちょろちょろ書き始めています。</p>
-
-<p>書いているのは・・・なんと今更NESエミュレータ。</p>
-
-<p>一から自分で解析してエミュレータを書くのは達人ワザですが、十分なハードウェアの情報がある場合、実はそんなに難しくなかったりします。</p>
-
-<p>というわけで書いているんですが、ここで普通にC言語やアセンブラで書こうというような楽？はしてません！NESエミュレータをPythonで書いてみる、これがチャレンジング。ぶっちゃけPythonで速度がシビアに求められるものを書いたことがないので、チャレンジです。</p>
-
-<p>書く上で、とりあえず</p>
-
-<ul>
-<li>ctypesは使わない（Cの流儀をそのままもっていってもおもしろくない)</li>
-<li>当然Cで拡張モジュールは書かない</li>
-</ul>
-
-<p>というポリシーで書き進めています。</p>
-
-<p>しかしやっぱりキツイ。絶対Cの方が楽な気がするのは気のせいだろうか・・・。現在はだいたいCPU（6502）のコアが書き終わったので、メモリ周りを書き進めてます。とりあえず.NESファイルから読み込んでメモリに読み込み、PCをセットするあたりまで書きました。</p>
-
-<p>まず、NESのヘッダ読み込むのもめんどくさい。Cならfreadで構造体にマップしておわり、なのにPythonだとそうは行かない。そしてなんといってもポインタがない。これ。メモリのミラーリングとかめんどくさいだろうな・・・（笑</p>
-
-<p>そうこう書いてるうちに、Pythonでのバイナリの扱いが上手くなってきました（きたような気がします）。 　 　 　 今のところ以下のような関数が活躍しています。エディアンは今のところ決めうちです。</p>
-
-<pre class="prettyprint"><code>from struct import * 
-from array import array
-
-def unpack_byte(b):
-  return unpack(&quot;&lt;B&quot;, b)[0]
-
-def zero_filled(n):
-  n /= 2
-  return pack('h'*n, *([0]*n))
-
-def byte_array(v):
-  return array('c', v)
-
-class byte_ref(object):
-  def __init__(self, p):
-    self._value = p
-  def get_value(self):
-    return self._value
-  def set_value(self, v):
-    self.value[0:] = byte_array(v)
-  value = property(get_value, set_value)
-</code></pre>
-
-<p>まず、PythonでRAMをエミュレートしようと思うと、可変なunsigned charな配列が当然必要です。</p>
-
-<p>Pythonで <code>data = open(&quot;name&quot;, &quot;rb&quot;).read()</code> とした場合、きちんとバイナリデータがdataに入って、 <code>unpack_byte(data[0:1])</code> などとするとちゃんとデータを取り出せます。</p>
-
-<p>しかし、この場合、Pythonの内部では*不変な型である*文字列型として扱われているので <code>data[w_addr &amp; 0x7ff] = 0x12</code> みたいなことは出来ません。つまりROMにはなりますが、RAMになれません。じゃあどうやってunsigned charの配列を表現するか、ということで <code>array</code> モジュールの登場なわけです。 <code>data = byte_array(open(&quot;name&quot;, &quot;rb&quot;).read())</code> という感じで使っています。生成方法がことなるだけで <code>data[0]</code> みたいなインデックスによるアクセスも出来るし、部分書き換えも可能です。</p>
-
-<p>byte_refは・・・別になくてもいいかもしれませんが、byte配列に対する参照を表現するオブジェクトです。といっても注意して使わないと意味がないクラスで気持ちの問題かもしれません。</p>
-
-<p>ここをctypesでポインタを使えば考えなくてもよかったんですが、あえてPythonなんだ、ということで（笑</p>
-
-<p>　</p>
-
-<p>　 　</p>
-
-<p>近況はこんな感じです。</p>
-
-<p>ついに就職が近づいてきました。仕事はプログラマではないので、プログラムを書く時間はあんまり取れないかもしれません。でもまぁ、日曜プログラマとして細々やっていけたらなあ、と思っています。</p>
 
   </div>
 </article>

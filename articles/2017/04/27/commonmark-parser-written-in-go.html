@@ -2,7 +2,7 @@
 <html lang="ja-JP">
   <head>
     <meta charset="utf-8">
-    <title>inforno</title>
+    <title>inforno :: Go言語でCommonMarkパーサを実装した、またCommonMarkについて</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
@@ -57,11 +57,9 @@
 
 
 
-
-
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2017/04/27/commonmark-parser-written-in-go" itemprop="url">Go言語でCommonMarkパーサを実装した、またCommonMarkについて</a></h3>
+<h3 itemprop="name">Go言語でCommonMarkパーサを実装した、またCommonMarkについて</h3>
 <div class="meta">
 <time datetime="2017-04-27T01:50:04&#43;09:00">Apr 27, 2017</time>
 
@@ -181,224 +179,46 @@ pegベースのパーサもあるので無理じゃないですがいわゆるLL
 <li>とにかく折れない心が大事です。CommonMarkとMarkdownは別物です。覚悟してかかりましょう。</li>
 </ul>
 
-  </div>
-</article>
 
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2017/02/15/bash-script-in-bat" itemprop="url">batの中にbashスクリフﾟトを埋め込む方法</a></h3>
-<div class="meta">
-<time datetime="2017-02-15T01:25:04&#43;09:00">Feb 15, 2017</time>
-
-  
-  <span class="tag"><a href="/articles/tag/bash/" rel="tag" itemprop="keywords">bash</a></span>
-  
-  <span class="tag"><a href="/articles/tag/bat/" rel="tag" itemprop="keywords">bat</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>相変わらずメインのマシンはWindowsなのですが、batファイルのもろもろがいつまでも覚えられず、bashスクリプトで書きたいなあ、ということでbatファイルにbashスクリプトを埋め込むことにしました。 Cでつくった自作用ツールがあるため、Windowsにはかならずmsys2をいれているのでbashは絶対あるんですよね。</p>
-
-<p>その他の言語を埋め込む方法は</p>
-
-<ul>
-<li><a href="http://qiita.com/snipsnipsnip/items/50e4ca88e3ce3f8cffda">Windowsでshebangもどき、またはバッチにスクリプトを埋め込む方法</a></li>
+    <div class="seealso">
+      <ul><h3>See Also</h3>
+<li><a href="/articles/2016/12/16/gopher-lua-plugins-in-go18">Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた</a></li>
+<li><a href="/articles/2016/07/28/golbot">Go+Luaのチャットボットフレームワークを作った</a></li>
+<li><a href="/articles/2016/07/14/go-charsetutil">Goで文字コードを手軽に変換するライブラリ作った</a></li>
+<li><a href="/articles/2015/12/11/go-interface-performance-penalty">Goのインタフェースがパフォーマンスに及ぼす影響</a></li>
+<li><a href="/articles/2015/03/23/gluamapper-released">GopherLuaを設定ファイルで使うライブラリを書きました</a></li>
 </ul>
-
-<p>が詳しいです。</p>
-
-<h1>シェルスクリプトをバッチファイルに埋め込む</h1>
-
-<p>以下のようにすると、バッチファイルにシェルスクリプト(bashスクリプト)を埋め込むことにできます。拡張子 <code>.bat</code> で保存すると <code>cmd.exe</code> からもmsys2の <code>bash.exe</code> からも起動できます。</p>
-
-<pre class="prettyprint"><code>:rem () { &lt;&lt;'#__CO__'
-@bash  &quot;%~f0&quot; %* &amp; exit /b
-#__CO__
-}
-
-echo 以下普通にシェルスクリプト
-</code></pre>
-
-<p>仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、<code>:</code> コマンドやらをうまく利用して埋め込んでいます。</p>
-
+    </div>
   </div>
+  <footer>
+    <dl>
+      <dt>
+        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2017/04/27/commonmark-parser-written-in-go" class="hatena-bookmark-button" data-hatena-bookmark-title="Go言語でCommonMarkパーサを実装した、またCommonMarkについて" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+       <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+      </dt>
+      <dd> </dd>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2017/04/27/commonmark-parser-written-in-go" itemprop="url">Permalink</a></dt>
+      <dd> </dd>
+    </dl>
+  </footer>
 </article>
 
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2016/12/16/gopher-lua-plugins-in-go18" itemprop="url">Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた</a></h3>
-<div class="meta">
-<time datetime="2016-12-16T21:10:26&#43;09:00">Dec 16, 2016</time>
-
-  
-  <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
-  
-  <span class="tag"><a href="/articles/tag/lua/" rel="tag" itemprop="keywords">lua</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p><a href="http://qiita.com/advent-calendar/2016/go">Go Advent Calendar 2016</a> 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。</p>
-
-<p>さて、Go1.8では待望？のShared Libraryのロードが可能になります。 <a href="https://tip.golang.org/pkg/plugin/">pluginパッケージ</a> を使います。</p>
-
-<p>Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。</p>
-
-<p>Advent Calendar 2の <a href="http://qiita.com/qt-luigi/items/47a7913145fc747da0c7">qt-luigiさんのネタ</a> と被ってしまったのですが実戦的に使ってみました、ということで許してください。</p>
-
-<h1>プラグインの作成とコンパイル</h1>
-
-<p>マニュアルページにあるとおり、以下のようになります。</p>
-
-<pre class="prettyprint"><code class="language-go">package main
-
-// // No C code needed.
-import &quot;C&quot;
-
-import &quot;fmt&quot;
-
-var V int
-
-func F() { fmt.Printf(&quot;Hello, number %d\n&quot;, V) }
-</code></pre>
-
-<p>ポイントは</p>
-
-<ul>
-<li>Cのコードはないが、 <code>import &quot;C&quot;</code> が必要</li>
-<li><code>package</code> は <code>main</code></li>
-</ul>
-
-<p>という２点です。コンパイルは</p>
-
-<pre class="prettyprint"><code class="language-bash">$ go build -buildmode=plugin -o plugin.so plugin.go
-</code></pre>
-
-<p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
-
-<h1>プラグインのロード</h1>
-
-<p>これまたマニュアルページどおりですが</p>
-
-<pre class="prettyprint"><code class="language-go">p, err := plugin.Open(&quot;plugin.so&quot;)
-if err != nil {
-    panic(err)
-}
-v, err := p.Lookup(&quot;V&quot;)
-if err != nil {
-    panic(err)
-}
-f, err := p.Lookup(&quot;F&quot;)
-if err != nil {
-    panic(err)
-}
-*v.(*int) = 7
-f.(func())() // prints &quot;Hello, number 7&quot;
-</code></pre>
-
-<p>のように非常に直感的に使えます。</p>
-
-<h1>GopherLuaで使ってみた</h1>
-
-<p>拙作のPure GoによるLua実装 <a href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。</p>
-
-<p>そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。</p>
-
-<p>こちらは <a href="https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins">feature-exp-go1.8pluginsブランチ</a> で実際に動かせます。プラグイン部分のコミットは <a href="https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b">571b031</a> です。</p>
-
-<p>まずプラグイン側から。Luaのお作法通りです。</p>
-
-<pre class="prettyprint"><code class="language-go">package main
-
-import (
-    &quot;C&quot;
-    &quot;github.com/yuin/gopher-lua&quot;
-)
-
-func Add(L *lua.LState) int {
-    v1 := L.CheckInt(1)
-    v2 := L.CheckInt(2)
-    L.Push(lua.LNumber(v1 + v2))
-    return 1
-}
-
-func LuaOpenPlugin(L *lua.LState) int {
-    L.Push(
-        L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
-            &quot;add&quot;: Add,
-        }))
-    return 1
-}
-</code></pre>
-
-<p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
-
-<p>こいつをコンパイルして・・・</p>
-
-<pre class="prettyprint"><code class="language-bash">$ cd /home/yuin/tmp/plugin
-$ go build -buildmode=plugin -o plugin.so plugin.go
-</code></pre>
-
-<p>こうじゃ</p>
-
-<pre class="prettyprint"><code>$ glua
-&gt; package.cpath = package.cpath .. &quot;;&quot; .. &quot;/home/yuin/tmp/plugin/?.so&quot;
-&gt; adder = require(&quot;plugin&quot;)
-&gt; print(adder.add(1, 2))
-3
-</code></pre>
-
-<p>おおおおおおおおおおおおお</p>
-
-<p>普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。</p>
-
-<pre class="prettyprint"><code>&lt;string&gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua
-</code></pre>
-
-<p><code>package.loadlib</code> も実装しました。</p>
-
-<pre class="prettyprint"><code>$ glua
-&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/notfound&quot;, &quot;foo&quot;))
-nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
-&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/plugin.so&quot;, &quot;foo&quot;))
-nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
-&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/plugin.so&quot;, &quot;LuaOpenPlugin&quot;))
-function: 0xc4200c9840
-&gt; 
-</code></pre>
-
-<p>完璧ですね。</p>
-
-<h1>pluginパッケージ、使えそうですが・・・</h1>
-
-<p>少なくとも、Linuxでは <code>plugin</code> パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。</p>
-
-<p>Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous-off">&laquo;Previous</li><li class="active">1</li><li><a href="/page/2/" class="page">2</a></li><li><a href="/page/3/" class="page">3</a></li><li><a href="/page/4/" class="page">4</a></li><li><a href="/page/5/" class="page">5</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/2/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
-
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  var disqus_shortname = 'inforno';
+  var disqus_identifier = 'articles\/2017\/04\/27\/commonmark-parser-written-in-go';
+  var disqus_developer = 0;
+  if(islocal) {
+    disqus_developer = 1;
+  }
+  (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 
     </div>
 

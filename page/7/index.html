@@ -61,6 +61,409 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2009/11/11/go-language" itemprop="url">個人的Go雑感&amp;メモ</a></h3>
+<div class="meta">
+<time datetime="2009-11-11T20:00:00&#43;09:00">Nov 11, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/go/" rel="tag" itemprop="keywords">go</a></span>
+  
+  <span class="tag"><a href="/articles/tag/language/" rel="tag" itemprop="keywords">language</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>Googleが <a href="http://golang.org/">Goという新しいプログラミング言語</a> を出したようで。早速、インストールして軽くドキュメントを流し読みしてみました。</p>
+
+<p>英語なんて読みたくないよ、という人もいるかもしれないし、誰かの役に立つかもしれないので自分用メモおいときます。完全に自分用なんである程度他の言語の知識がある人向けな上、ざっくり流し読みなんで間違ってるかも。</p>
+
+<h1>どんな言語？</h1>
+
+<ul>
+<li>ネイティブコードを吐く、コンパイル型。</li>
+<li>速度はCレベル。</li>
+<li>GC搭載。ポインタはあるけど、ポインタ演算はできません。</li>
+
+<li><p>各種アーキに最適化された、それぞれのコンパイラセットを持ちます。例：</p>
+
+<ul>
+<li>6g, 6l : amd64</li>
+<li>8g, 8l : i386</li>
+</ul></li>
+
+<li><p>linux, mac, naclに対応。</p></li>
+
+<li><p>動的型言語と静的型言語のおいしいとこどり。</p></li>
+
+<li><p>concurrent処理が組み込まれてます。</p></li>
+</ul>
+
+<h1>個人的雑感</h1>
+
+<ul>
+<li><p>こんな言語設計思想かなあと感じたり</p>
+
+<ul>
+<li><p>とにかく、シンプルな言語に。</p>
+
+<ul>
+<li><p>C++の複雑な部分などはできるだけはずしているような。</p>
+
+<ul>
+<li><p>いわゆるクラスベースのオブジェクト指向はない。</p>
+
+<ul>
+<li>継承はない。</li>
+<li>あるのはフラットなインタフェース空間のみ。</li>
+</ul></li>
+
+<li><p>例外もない。</p></li>
+</ul></li>
+</ul></li>
+
+<li><p>低レイヤからは離れすぎたくない。</p></li>
+
+<li><p>concurrentを言語的にサポートしたい。</p></li>
+</ul></li>
+
+<li><p>以下の言語からの影響を感じたり</p>
+
+<ul>
+<li>言語コアはC。</li>
+<li>C++はパッケージの書き方、記法に影響がみられる。</li>
+<li>命名規則や記法にPythonの影響がみられる。</li>
+<li>concurrentな部分はErlangから影響をうけている。</li>
+</ul></li>
+</ul>
+
+<h1>言語仕様</h1>
+
+<p>自分なりに簡単にまとめて見ます。</p>
+
+<h2>変数への代入</h2>
+
+<p>下へ行くほど省略形。 <code>var</code> もあるから <code>const</code> もあるでよ。</p>
+
+<pre class="prettyprint"><code>var s string = &quot;&quot;;
+var s = &quot;&quot;;
+s := &quot;&quot;;
+</code></pre>
+
+<h2>オブジェクト構造</h2>
+
+<p>値扱いの型と参照型があります。</p>
+
+<ul>
+<li><p>値扱い : 代入、関数への私はコピーとなる。配列もまるごとコピーされる。</p>
+
+<ul>
+<li>各種数値 : <code>int</code> , <code>float</code> といったプラットフォームごとにサイズがきまる型と <code>int32</code> のようにサイズ固定の型。</li>
+<li><code>string</code> : 不変、UTF8、ただのバイト配列</li>
+<li>配列</li>
+<li><code>struct</code> : ユーザ定義型</li>
+<li>などなど</li>
+</ul></li>
+
+<li><p>参照 : 3つのみ</p>
+
+<ul>
+<li><code>map</code> : 辞書</li>
+<li><code>slice</code> : 明示的なサイズを持たない、配列のようなもの</li>
+<li><code>channel</code> : concurrentで使う</li>
+</ul></li>
+</ul>
+
+<p>値扱い型のアロケート方法 : <code>new -&gt; T*</code> を返す</p>
+
+<pre class="prettyprint"><code>var t *T = new(T);
+</code></pre>
+
+<p>参照型のアロケート方法 : <code>make -&gt; T</code> を返す</p>
+
+<pre class="prettyprint"><code>m := make(map[string]int);
+// これはダメ
+var m map[string]int;
+</code></pre>
+
+<h2>配列とスライス</h2>
+
+<ul>
+<li>配列は「値」。でユーザがメモリ構造などを読める。スライスはコンパイラがよしなに確保する、参照型。</li>
+</ul>
+
+<p>例えば <code>int</code> 型配列のポインタを受け取る場合。</p>
+
+<p>標準配列(&amp;がいる)</p>
+
+<pre class="prettyprint"><code>s := sum(&amp;[3]int{1,2,3});
+s := sum(&amp;[...]int{1,2,3});
+</code></pre>
+
+<p>スライス</p>
+
+<pre class="prettyprint"><code>s := sum([]int{1,2,3});
+</code></pre>
+
+<h2>辞書型</h2>
+
+<pre class="prettyprint"><code>timeZone := map[string]int{
+  &quot;UTC&quot;: 0*60*60,
+  &quot;EST&quot;: -5*60*60,
+  &quot;CST&quot;: -6*60*60,
+  &quot;MST&quot;: -7*60*60,
+  &quot;PST&quot;: -8*60*60,
+}
+
+seconds, ok = timeZone[tz]
+//値がなければokはfalse
+if seconds, ok := timeZone[tz]; ok {
+    return seconds
+}
+//消す場合
+timeZone[&quot;UTC&quot;] = 0, false;
+</code></pre>
+
+<h2>パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h2>
+
+<p>命名規則に特徴があります。 <strong>大文字始まり以外は外部から見えない</strong> が原則。単なる命名規則ではなく、そういう仕様。</p>
+
+<h3>パッケージ</h3>
+
+<p>パッケージ文でファイルの先頭に書きます。これが基本的な単位となります。</p>
+
+<pre class="prettyprint"><code>package file
+</code></pre>
+
+<h3>制御構造</h3>
+
+<p>特徴は</p>
+
+<ul>
+<li>()がいらない。</li>
+<li><code>if</code> や <code>switch</code> などの条件部に複数の文がかける</li>
+<li>ループは <code>for</code> のみ( <code>while</code> や <code>do</code> はない)</li>
+<li><code>switch</code> が強力に(内容的にif-else if-elseチェイン)</li>
+<li>concurrent用に <code>select</code> がある</li>
+</ul>
+
+<p>という点。かと。</p>
+
+<p>ifの例</p>
+
+<pre class="prettyprint"><code>if i % prime != 0 {
+    fmt.Printf(&quot;%d&quot;, i);
+}
+</code></pre>
+
+<p>switchの例</p>
+
+<pre class="prettyprint"><code>switch nr, er := f.Read(&amp;buf); true {
+           case nr &lt; 0:
+               fmt.Fprintf(os.Stderr, &quot;cat: error reading from %s: %s\n&quot;, f.String(), er.String());
+               os.Exit(1);
+           case nr == 0: // EOF
+               return;
+           case nr &gt; 0:
+               if nw, ew := file.Stdout.Write(buf[0:nr]); nw != nr {
+                   fmt.Fprintf(os.Stderr, &quot;cat: error writing from %s: %s\n&quot;, f.String(), ew.String());
+               }
+}
+</code></pre>
+
+<p>caseに条件式がかける。breakは自動でされる。</p>
+
+<h3>型定義</h3>
+
+<p><code>type</code> , <code>struct</code> キーワードを組み合わせる。 <strong>メンバにメソッドは含みません。</strong></p>
+
+<pre class="prettyprint"><code>type File struct {
+    fd int; // file descriptor number
+    name string; // file name at Open time
+}
+</code></pre>
+
+<p>メンバ名が小文字なので、パッケージ外からは見えません。</p>
+
+<h3>関数とメソッド</h3>
+
+<ul>
+<li>両方とも <code>func</code> キーワードで定義。</li>
+<li>違いはレシーバを指定するか否か。 レシーバを明示的に書くところはPythonっぽい。</li>
+<li>多値が返せる。</li>
+</ul>
+
+<p>この多値がかえせる、というのがGoでは非常に重要な意味をもっています。</p>
+
+<p>関数定義: 多値を返しています。大文字始まりなので、外部に公開されます。</p>
+
+<pre class="prettyprint"><code>func Open(name string, mode int, perm int) (file *File, err os.Error) {
+     r, e := syscall.Open(name, mode, perm);
+     if e != 0 {
+         err = os.Errno(e);
+     }
+     return newFile(r, name), err
+}
+</code></pre>
+
+<p>返す型に <code>(file *File, err os.Error)</code> と変数名がついてますね。これをつけておけば <code>return;</code> ってかくだけでその名前の変数を返してくれます。</p>
+
+<pre class="prettyprint"><code>func Open(name string, mode int, perm int) (file *File, err os.Error) {
+     r, e := syscall.Open(name, mode, perm);
+     if e != 0 {
+         err = os.Errno(e);
+     }
+     file = newFile(r, name)
+     return;
+}
+</code></pre>
+
+<p>こんな風にもかけるってことです。おそらく、エラー処理が絡む場合とかこっちのほうが書きやすかったりするんじゃないですかね。</p>
+
+<p>クロージャにもなります。いわゆる関数ポインタをとるようなところで、関数がそのままかけて外部変数も見えます。</p>
+
+<pre class="prettyprint"><code>startServer(func(a, b int) int { return a + b });
+</code></pre>
+
+<p>メソッド定義。 <code>(file *File)</code> がレシーバの指定。</p>
+
+<pre class="prettyprint"><code>func (file *File) Close() os.Error {
+    if file == nil {
+        return os.EINVAL
+    }
+    e := syscall.Close(file.fd);
+    file.fd = -1; // so it can't be closed again
+    if e != 0 {
+        return os.Errno(e);
+    }
+    return nil
+}
+</code></pre>
+
+<p>メソッド定義が <code>struct</code> での型定義時ではないことに注目。つまり <strong>組み込み型などに対してもあとからメソッドを作成できるのです</strong> 。こんな感じ。</p>
+
+<pre class="prettyprint"><code>type IntArray []int
+func (p IntArray) Len() int { return len(p); }
+</code></pre>
+
+<h3>インタフェース</h3>
+
+<p>これ重要。Goはいわゆるクラスがないので、継承などもなく <strong>インタフェースによるダックタイピングでそれらを片付けます</strong> 。 <code>interface</code> キーワードで定義。</p>
+
+<pre class="prettyprint"><code>type reader interface {
+     Read(b []byte) (ret int, err os.Error);
+     String() string;
+}
+</code></pre>
+
+<p>このように、 <code>Read</code> と <code>String</code> が定義されていればそれは <code>reader</code> なんだ、と考えます( <strong>ダックタイピング</strong> )。</p>
+
+<p>実行時、動的にインタフェースが実装されているかも検査できます。</p>
+
+<pre class="prettyprint"><code>s, ok := v.(Stringer);
+</code></pre>
+
+<blockquote>
+<p><code>v</code> が <code>Stringer</code> インタフェースを満たしていれば</p>
+</blockquote>
+
+<ul>
+<li><code>s</code> に <code>Stringer</code> オブジェクトとしてのv</li>
+<li><code>ok</code> に <code>true</code> が</li>
+</ul>
+
+<p>がかえってきます。</p>
+
+<h2>Concurrency</h2>
+
+<p>concurrentプログラミングはGoの大きな特徴。 <strong>CSP(Communicating Sequential Processes)</strong> に基づいてます。並行して動く「goroutines」という軽量プロセスが「channel」を介してやりとり。ガードと多重化のためにselect文があります。</p>
+
+<p>channelは単体ではなくchan 受け渡しする型という感じで書きます。以下はチュートリアルのコードまんまです。</p>
+
+<pre class="prettyprint"><code>func generate(ch chan int) {
+    for i := 2; ; i++ {
+        ch &lt;- i // Send 'i' to channel 'ch'.
+    }
+}
+</code></pre>
+
+<p><code>int</code> を扱う <code>channel</code> を受け取ってそれにiを送っていきます。</p>
+
+<pre class="prettyprint"><code>func filter(in, out chan int, prime int) {
+    for {
+        i := &lt;-in; // Receive value of new variable 'i' from 'in'.
+        if i % prime != 0 {
+            out &lt;- i // Send 'i' to channel 'out'.
+        }
+    }
+}
+</code></pre>
+
+<p>送られた <code>i</code> が一定の条件を満たしていたら、 <code>int</code> を扱う <code>out</code> というchannelに送ります。</p>
+
+<pre class="prettyprint"><code>func main() {
+    ch := make(chan int); // Create a new channel.
+    go generate(ch); // Start generate() as a goroutine.
+    for {
+        prime := &lt;-ch;
+        fmt.Println(prime);
+        ch1 := make(chan int);
+        go filter(ch, ch1, prime);
+        ch = ch1
+    }
+}
+</code></pre>
+
+<p>channelは参照型なので <code>make</code> で作ります。 <code>go</code> で実行します。これは丁寧に書いた感じ。クロージャを使えばもっとシンプル。</p>
+
+<pre class="prettyprint"><code>func generate() chan int {
+    ch := make(chan int);
+    go func(){
+        for i := 2; ; i++ {
+            ch &lt;- i
+        }
+    }();
+    return ch;
+}
+</code></pre>
+
+<h3>多重化とガード</h3>
+
+<p>複数のチャンネルをとりあつかって、それらをガードにより振り分けられます。ErlangやScalaでおなじみの書き方です。</p>
+
+<pre class="prettyprint"><code>func server(op binOp, service chan *request, quit chan bool) {
+    for {
+        select {
+        case req := &lt;-service:
+            go run(op, req); // don't wait for it
+        case &lt;-quit:
+            return;
+        }
+    }
+}
+</code></pre>
+
+<p><code>request</code> 型のポインタを扱うchannelと <code>bool</code> 型を扱うchannelを使って、多重化しています。 <code>quit</code> チャンネルに値が送られてくるまでは、送られてきたものから良しなに処理してくれる、という感じですね。</p>
+
+<h1>というわけで</h1>
+
+<p>なぐり書きしたメモでした。変なことかいてたらすみません。まぁこんな感じな言語かなあ、という程度で。</p>
+
+<p>繰り替えしになりますが、C言語を元にシンプルに保ちながらconcurrentプログラミングしやすくしてます、って感じですね。完全にダックタイピングベースで多値を多様するスタイルはおもしろいですね。なんとなく見た目がキモく感じるのは私の気のせいでしょう。</p>
+
+<p>というか数ヶ月もブログ放置してたのかー。コード書いてないわけじゃないんですけど、たいしたもんかいてないんですよね。割合的には8割がたCかな。月一くらいはブログ書いていきたいなあ・・・</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2009/06/28/open-cmd-here" itemprop="url">一瞬で今いるフォルダでcmd.exeを開く</a></h3>
 <div class="meta">
 <time datetime="2009-06-28T00:00:00&#43;09:00">Jun 28, 2009</time>
@@ -215,152 +618,6 @@ n.find_node(other_node)
 <h1>というわけで</h1>
 
 <p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2009/02/12/the-embedded-python-implementation" itemprop="url">埋め込みPythonを実装してみました</a></h3>
-<div class="meta">
-<time datetime="2009-02-12T00:00:00&#43;09:00">Feb 12, 2009</time>
-
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <h1>更新履歴</h1>
-
-<ul>
-<li><p>2009/02/20 version 1.0.0</p>
-
-<ul>
-<li><code>Renderer</code> と <code>Helper</code> を追加。詳しくはソースファイルヘッダ部分のドキュメントを参照してください。</li>
-</ul></li>
-
-<li><p>2009/02/17 version 0.5.0</p>
-
-<ul>
-<li><code>&lt;%= %&gt;</code> で自動的にフィルタを適応できるようになりました。また、 <code>render</code> メソッドが <code>unicode</code> オブジェクトではなく <code>unicode</code> のサブクラス <code>EmbpyString</code> オブジェクトを返すようになりました。filterは <code>EmbpyString</code> オブジェクトをスルーします。これにより2重でfilterが適応されることがなくなります。&lt;%=r %&gt;でフィルターをオフにできます。</li>
-</ul></li>
-</ul>
-
-<pre class="prettyprint"><code>Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# =&gt; &quot;&amp;lt;b&amp;gt;&quot;
-Embpy(&quot;&lt;%=r b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# =&gt; &quot;&lt;b&gt;&quot;
-
-result = Embpy(&quot;&lt;%=r b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# result.__class__ =&gt; EmbpyString
-Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:result})
-# =&gt; &quot;&lt;b&gt;&quot;
-</code></pre>
-
-<ul>
-<li><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</li>
-
-<li><p>2009/02/16 version 0.4.0</p>
-
-<ul>
-<li>パフォーマンス改善</li>
-</ul></li>
-
-<li><p>2009/02/15 version 0.3.0</p>
-
-<ul>
-<li><a href="http://wids.net/lab/epy.html">epy</a> の中の人から「end.. orz」という反応をいただいたので、endの代わりに <code>&lt;% %&gt;</code> も使えるようにしました。</li>
-</ul></li>
-</ul>
-
-<pre class="prettyprint"><code>&lt;%- if True: -%&gt;
-   ok
-   &lt;% %&gt;
-</code></pre>
-
-<p>と書けるようになりました。</p>
-
-<ul>
-<li>2009/02/14 version 0.2.0<br />
-
-<ul>
-<li>&rdquo;{&rdquo; と &ldquo;}&ldquo;が辞書リテラルとかぶっていたので、&rdquo;{:&ldquo;と&rdquo;:}&ldquo;に変更しました。</li>
-<li>変換後コードでなく、コンパイル済みcodeオブジェクトをキャッシュするようにしました。</li>
-</ul></li>
-</ul>
-
-<h1>はじめに</h1>
-
-<p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
-
-<p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
-
-<p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= &quot;hoge%&gt;&quot;</code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
-
-<ul>
-<li>キャッシュ</li>
-<li>インラインでPythonを書くことも出来る: <code>def format(v) {: return &quot;%4d&quot;%v; :}</code> みたいに。</li>
-<li>eRubyのtrim modeの&rdquo;&lt;%-&ldquo;と&rdquo;-%&gt;&rdquo; : これがあると無いではテンプレートの見易さが段違い。</li>
-<li>自動的にフィルタを適応。しかも2重でフィルタが適応されない。</li>
-<li>もちろんマルチバイトでも大丈夫。</li>
-</ul>
-
-<p>といったところが特徴ですかね。</p>
-
-<h1>例</h1>
-
-<p>テンプレートはこんな感じにかけます。</p>
-
-<pre class="prettyprint"><code>&lt;%-
-class Hoge(object):
-  def __init__(self):
-    pass
-  end
-end
-hoge = Hoge()
-a = &quot;&lt; title &gt;&quot;
--%&gt;
-&lt;%=r a %&gt;
-&lt;%- def format(v) {: return &quot;%4d&quot;%v; :} -%&gt;
-&lt;%- def format2(v) {: return &quot;%2d&quot;%v; :} -%&gt;
-  &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
-&lt;%- for x in xrange(1,xx): -%&gt;
-&lt;%= format2(x) -%&gt;
-  &lt;%- for y in xrange(1,xx): -%&gt;
-&lt;%= format(x*y) -%&gt;
-  &lt;%- end %&gt;
-&lt;%- end -%&gt;
-</code></pre>
-
-<p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
-
-<pre class="prettyprint"><code>e = embpy.Embpy(codecs.open(&quot;path_to_template&quot;, encoding=&quot;utf8&quot;),
-          cache_path = &quot;path_to_cache_file&quot;,
-          template_globals = {}, filter=cgi.escape)
-print e.render({&quot;xx&quot;: &quot;10&quot;})
-</code></pre>
-
-<h1>ダウンロード</h1>
-
-<p><a href="/statics/files/embpy.zip">embpy</a></p>
-
-<h1>コード</h1>
-
-<p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
-
-<p>あと <code>&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</code> という正規表現は自分的には常套句。&rdquo;で囲まれていて\&ldquo;は&rdquo;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
 
   </div>
 </article>

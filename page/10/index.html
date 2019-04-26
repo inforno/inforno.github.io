@@ -61,6 +61,97 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/07/28/use-my-own-blog-software-on-a-trial-basis" itemprop="url">試験的に自作ブログに移行しました</a></h3>
+<div class="meta">
+<time datetime="2008-07-28T02:25:25&#43;09:00">Jul 28, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/gae/" rel="tag" itemprop="keywords">gae</a></span>
+  
+  <span class="tag"><a href="/articles/tag/wordpress/" rel="tag" itemprop="keywords">wordpress</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a href="http://inforno.net/articles/2008/07/04/strong-arm-approach-toward-gae-transactions">前のエントリー</a> でGAEにおけるトランザクションの問題は一応解決をみた。</p>
+
+<p>その後、GAEで開発を続けた結果、やはりGAEにブログを移行するのは断念した。理由としては</p>
+
+<ul>
+<li><code>os.listdir</code> などで不審な挙動が見られた</li>
+<li>スキーマを変更したときが非常に面倒</li>
+<li>インポート、エクスポートの難しさ</li>
+</ul>
+
+<p>が主なところ。</p>
+
+<p><code>os.listdir</code> については、web.pyでテンプレートを検索するときに <code>os.listdir</code> を使っているのだけど、どうも動きが怪しい。正しくファイルリストが帰ってきたり帰ってこなかったりするのだ。何回も本番にアップして試したところ、 <code>os.listdir(&quot;hoge&quot;);os.listdir(&quot;hoge&quot;)</code> というように同じ内容で2回連続で呼び出すとなぜか確実にファイルリストが帰ってくる、という･･･これはちょっと･･･</p>
+
+<p>スキーマの変更に関しては、まんま。変更したとき、それを本番に反映させるのがめんどくさい。</p>
+
+<p>インポートエクスポートも負荷を考えるとしんどい。現在もWEBはレンタルサーバで運用しているのでわざわざGAEにもっていく旨みもない。</p>
+
+<p>ということでせっかくブログをつくったのに移行をやめたのである。</p>
+
+<hr />
+
+<p>しかし、せっかく作ったのにもったいない。ということで今度はGAE用につくったブログを普通にMySQLを使うようにポーティングした。今回はそれに試験的に移行してみたのだ。</p>
+
+<p>なぜWordpressからわざわざ独自ブログソフトウェアに移行したのか。理由は前のエントリーにも書いたとおりだけど</p>
+
+<ul>
+<li>Wordpressのコードが気に食わない（OSSとしてバランスをとっている、というのはあるんですが）</li>
+<li>使用しているテンプレートや、プラグインも含めると出力されるHTMLが汚い。</li>
+
+<li><p>ついている機能の半分以上は使っていない。ブログライトユーザの俺には機能が多すぎる。</p>
+
+<ul>
+<li>自分の使う機能が固まった。それさえあれば俺には十分とわかり始めた。</li>
+</ul></li>
+
+<li><p>セキュリティ的にもWordpressはターゲットになっていて微妙。</p></li>
+</ul>
+
+<p>以上のようなところをふまえ</p>
+
+<ul>
+<li>明快なコード。</li>
+<li>キレイなXHTML。</li>
+<li>自分が使う機能だけ実装。</li>
+<li>堅牢なコード。</li>
+</ul>
+
+<p>ということを心がけた。またレンタルサーバで動かすということで</p>
+
+<ul>
+<li>なるべく静的HTMLとしてキャッシュしてmod_rewriteで飛ばす</li>
+<li>見た目や外部連携に関する動的な部分はなるべくクライアントサイドで</li>
+</ul>
+
+<p>ということにも気を配った。</p>
+
+<p>このブログは3年目に入るのだけど、やはりWEBの世界というのは流れが速いもので大分変化があった。その中で、外部連携はほぼJSONPで行えるようになったのでサーバサイドでやらなくても良くなった。今回実装したブログでは各SBMのブクマ数を表示しているけど、これも全てJSONPでクライアントサイドで実現している。それに対し、旧ブログ(Wordpress)ではサーバサイドで定期的に取得していた。</p>
+
+<p>という感じで出来上がったのがこのブログだ。もうひとつ、実はこのブログ、XREAでしかもPython2.5で動かしている。あれ、XREAでPython2.5使えたっけ、というあなた。実は簡単に使えちゃうワザがあるんですよ。それについては、また。</p>
+
+<hr />
+
+<p>あまりテストもせず試験的に移行してみたのでおかしい部分もあるかと思いますが、そこはおいおい。パーマリンクはそのままになっていると思います。基本的にURLは変更していません。また、CGIで動かしていますので、負荷が高ければ前のに戻す予定です。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/07/04/strong-arm-approach-toward-gae-transactions" itemprop="url">GoogleAppEngineのトランザクションをねじふせる</a></h3>
 <div class="meta">
 <time datetime="2008-07-04T02:19:49&#43;09:00">Jul  4, 2008</time>
@@ -334,69 +425,6 @@ stab = Test.stab() #nameがなくても作成できる
 <p>もうひとつはなんとなーく使い切らないんだけど無料の上限である500Mという容量が微妙。画像のアップとかしなけりゃまず大丈夫なんだけど。</p>
 
 <p>その他にもなんとなくGoogleの罠じゃないかとかいろいろ気になって移行に踏み切れないでいる今日この頃。実際に本格的にGAEに移行した人の感想がききたいなあ。</p>
-
-  </div>
-</article>
-
-
-  <hr class="list1sep" />
-
-
-
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/05/28/yahoo-jlp-api-wrapper-for-python-2" itemprop="url">Python版Yahooテキスト解析 APIライブラリをかな漢字変換に対応させました</a></h3>
-<div class="meta">
-<time datetime="2008-05-28T20:08:20&#43;09:00">May 28, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/api/" rel="tag" itemprop="keywords">api</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/text/" rel="tag" itemprop="keywords">text</a></span>
-  
-  <span class="tag"><a href="/articles/tag/yahoo/" rel="tag" itemprop="keywords">yahoo</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>まぁ需要はないと思うんですが一応。内部的には <code>WebService::Simple</code> みたいになってるんでサクッと対応できます。</p>
-
-<h1>ダウンロード</h1>
-
-<p><a href="/statics/files/yahooapi_0_2.zip">yahooapi</a></p>
-
-<h1>使い方</h1>
-
-<pre class="prettyprint"><code>import yahooapi.jlp as jlp
-
-client = jlp.JIMServiceAPI(&quot;your_apikey&quot;)
-result = client.conversion(sentence=u&quot;かなかんじへんかんたいしょうのてきすとです&quot;)
-for i in result.Result.SegmentList.Segment[0].CandidateList.Candidate:
-  print i
-#=&gt;
-#かな
-#佳な
-#仮名
-#カナ
-#ｶﾅ
-#加奈
-#可奈
-#佳奈
-#香奈
-#香菜
-#華奈
-#花奈
-#哉
-#金
-</code></pre>
-
-<p>うむ。</p>
 
   </div>
 </article>
