@@ -7,14 +7,14 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>26 Apr 17 16:50 UTC</lastBuildDate>
+    <lastBuildDate>26 Apr 19 16:50 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
     
     <item>
       <title>Go言語でCommonMarkパーサを実装した、またCommonMarkについて </title>
-      <link>http://inforno.net/articles/2017/04/27/commonmark-parser-written-in-go</link>
+      <link>http://inforno.net/articles/2019/04/27/commonmark-parser-written-in-go</link>
       <description>&lt;p&gt;GoでCommonMarkのパーサを実装しました。&lt;/p&gt;
 
 &lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/goldmark&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
@@ -127,8 +127,8 @@ pegベースのパーサもあるので無理じゃないですがいわゆるLL
       
       <category>parser</category>
       
-      <guid isPermaLink="true">http://inforno.net/articles/2017/04/27/commonmark-parser-written-in-go</guid>
-      <pubDate>26 Apr 17 16:50 UTC</pubDate>
+      <guid isPermaLink="true">http://inforno.net/articles/2019/04/27/commonmark-parser-written-in-go</guid>
+      <pubDate>26 Apr 19 16:50 UTC</pubDate>
     </item>
     
     <item>
