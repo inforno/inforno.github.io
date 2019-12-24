@@ -61,6 +61,40 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/05/22/erlang-process" itemprop="url">Erlangのプロセス</a></h3>
+<div class="meta">
+<time datetime="2007-05-22T23:57:09&#43;09:00">May 22, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/erlang/" rel="tag" itemprop="keywords">erlang</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>via <a href="http://d.hatena.ne.jp/methane/2007051">Erlangの強さ</a></p>
+
+<p>最近（でもないか・・・）Erlangが話題になっていて、趣味プログラマーになったとはいえ、ちょっと触ってみたいなあと思いつつ、時間ないなあと思いつつ。</p>
+
+<p>んで話題のErlangのプロセスなんだけど、microthreadだろうなあ、と思っていたけどそれであってるっぽい。あんま詳しくないんでアレですが。詳しくは <a href="http://www.erlang.org/ml-archive/erlang-questions/200104/msg00072.html">コチラ</a> 。</p>
+
+<p>Erlangのプロセスについてはmethaneさんがおっしゃてる通りだと思う。要はこれを使いやすい形で言語仕様にとりこんでるあたりがErlangの良さなんだよなあ。</p>
+
+<p>たとえばPythonでもyieldがあるのでmicrothreadは可能で（Stackless Pythonまである)、Erlangのプロセスっぽいこともやろうと思えば可能じゃないか、って感じなんだけどあくまでやればできる、って感じだと思う。</p>
+
+<p>というわけでmicrothreadを用いたプログラミングに対するある意味DSL的な言語ではないのかなあ、というのが今のところの印象。パッと見た感じその他は魅力的な部分があまり見当たらなかった。かといって機能が足りてないわけでもぜんぜんないので、microthreadや分散のメリットが前面にでるならガンガンつかってもいいと思ってたりするのです。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/05/13/python-reversed-list" itemprop="url">Python:リストの逆順</a></h3>
 <div class="meta">
 <time datetime="2007-05-13T23:22:19&#43;09:00">May 13, 2007</time>
@@ -182,99 +216,10 @@ let decode t n = Enc.encode (Encoding.of_name n) t;;
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/03/02/nes-emulator-development-with-python-5" itemprop="url">PythonによるNESエミュレータ開発5</a></h3>
-<div class="meta">
-<time datetime="2007-03-02T00:32:14&#43;09:00">Mar  2, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/development/" rel="tag" itemprop="keywords">development</a></span>
-  
-  <span class="tag"><a href="/articles/tag/emulator/" rel="tag" itemprop="keywords">emulator</a></span>
-  
-  <span class="tag"><a href="/articles/tag/nes/" rel="tag" itemprop="keywords">nes</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>もうすぐ引越しです。頑張って部屋を片付けないと・・・</p>
-
-<p>しばらくドタバタすると思し、これ以上作りこむモチベーションもないので、ここまで作ったものをあげておこうと思いました。</p>
-
-<p><strong>ダウンロード</strong></p>
-
-<p><a href="/statics/files/pynes-0-0-1.zip">pynes-0-0-1.zip</a></p>
-
-<h1>試し方</h1>
-
-<p>インストールはダウンロードしたzipファイルを展開するだけです。</p>
-
-<p>必要なライブラリは</p>
-
-<ul>
-<li><a href="http://psyco.sourceforge.net">psyco</a></li>
-<li><a href="http://www.pygame.org">pygame</a></li>
-</ul>
-
-<p>です。 両方とも <code>easy_install psyco</code> 、`easy_install pygame` でインストールできたはずです。</p>
-
-<p><code>roms/</code> 以下に最低1つ以上ロムファイルを置いてください。現状、マッパーに対応してませんので、マッパー0のしか動く可能性はありません。現在動作を確認してるのは、前回あげさせていただいた <a href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">TkShoot</a> くらいです。市販のはほとんど動かないんじゃないでしょうか。</p>
-
-<p>一応参考までにあげておくと、動く可能性があるのはGolf,DonkeyKongなどです。</p>
-
-<p><code>bin/pynesi.py</code> が起動用スクリプトです。コマンドラインから起動してください。起動したら、romファイルを番号で選択してください。</p>
-
-<p>キーバーインドは</p>
-
-<ul>
-<li>十字キー : カーソル</li>
-<li>スタート : テンキーの0</li>
-<li>セレクト : テンキーのEnter</li>
-<li>A : テンキーの3</li>
-<li>B : テンキーの2</li>
-</ul>
-
-<p>になってます。キーバーインドを代えたい方は <code>src/pynes/pad.py</code> を適当に書き換えてください。</p>
-
-<pre class="prettyprint"><code>self.keymap1 = {
-  K_UP : NES_PAD_UP,
-  K_DOWN : NES_PAD_DOWN,
-  K_LEFT : NES_PAD_LEFT,
-  K_RIGHT : NES_PAD_RIGHT,
-  K_KP0 : NES_PAD_START,
-  K_KP_ENTER : NES_PAD_SELECT,
-  K_KP2 : NES_PAD_B,
-  K_KP3 : NES_PAD_A
-}
-</code></pre>
-
-<p>ここです。</p>
-
-<p>とにかく、めちゃくちゃ遅いので、固まったと思ってもしばらくすると画面がちゃんと切り替わったりします。</p>
-
-<h1>よもや話</h1>
-
-<p>かなり適当です。前回（PythonによるNESエミュレータ開発4)から変わってません。マッパーっぽいのが用意してありますが、これはダミーです。他のエミュのソースを参考に必要そうな部分に適当にいれただけです。</p>
-
-<p>一応、速度を重視しているものの、わかりやすく書いてるつもりなんで、Pythonが分かっていてかつ、エミュレータの基本的な構造が知りたい人には参考になるかもしれません。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/17/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li class="active">18</li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/19/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/17/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li><a href="/page/17/" class="page">17</a></li><li class="active">18</li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li><a href="/page/22/" class="page">22</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/27/" class="page">27</a></li><li class="next"><a href="/page/19/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

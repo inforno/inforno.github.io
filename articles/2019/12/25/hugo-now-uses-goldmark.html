@@ -2,7 +2,7 @@
 <html lang="ja-JP">
   <head>
     <meta charset="utf-8">
-    <title>inforno :: GopherLuaでchannelを扱えるようにした</title>
+    <title>inforno :: goldmarkがHugoに採用された</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
@@ -59,110 +59,65 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name">GopherLuaでchannelを扱えるようにした</h3>
+<h3 itemprop="name">goldmarkがHugoに採用された</h3>
 <div class="meta">
-<time datetime="2015-02-24T20:00:24&#43;09:00">Feb 24, 2015</time>
+<time datetime="2019-12-25T02:22:51&#43;09:00">Dec 25, 2019</time>
 
   
   <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
   
-  <span class="tag"><a href="/articles/tag/gopherlua/" rel="tag" itemprop="keywords">gopherlua</a></span>
-  
-  <span class="tag"><a href="/articles/tag/lua/" rel="tag" itemprop="keywords">lua</a></span>
+  <span class="tag"><a href="/articles/tag/goldmark/" rel="tag" itemprop="keywords">goldmark</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>先日公開した <a href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが。</p>
+    <p>ちょっと前の話ですが、<a href="http://github.com/yuin/goldmark">goldmark</a>が
+<a href="https://gohugo.io/news/0.60.0-relnotes/">HugoのMarkdownレンダラーに採用されました</a>。</p>
 
-<p>GopherLuaはLuaなので、ホスト言語との親和性を重視しております。GolangなのにGoroutine関係のサポートがないとだめでしょ！ということで、とりあえずですが、channelを扱えるようにしました。</p>
+<p>(しかし、このブログはHogoではなく独自のプログラムで生成されているのであった…)</p>
 
-<p>これもまたReadmeに書いてありますが、以下のように使います。 selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ通信できます。</p>
+<p>やっぱりblackfridayに対する不満というのはGo界隈ではそこそこあったんだなあ、というのと
+単純にこう、自分の書いたコードが評価されるっていうのはうれしいし自信につながりますね。</p>
 
-<pre class="prettyprint"><code class="language-go">func receiver(ch, quit chan lua.LValue) {
-    L := lua.NewState()
-    defer L.Close()
-    L.SetGlobal(&quot;ch&quot;, lua.LChannel(ch))
-    L.SetGlobal(&quot;quit&quot;, lua.LChannel(quit))
-    if err := L.DoString(`
-    local exit = false
-    while not exit do
-      channel.select(
-        {&quot;|&lt;-&quot;, ch, function(ok, v)
-          if not ok then
-            print(&quot;channel closed&quot;)
-            exit = true
-          else
-            print(&quot;received:&quot;, v)
-          end
-        end},
-        {&quot;|&lt;-&quot;, quit, function(ok, v)
-            print(&quot;quit&quot;)
-            exit = true
-        end}
-      )
-    end
-  `); err != nil {
-        panic(err)
-    }
-}
+<p>柔軟な拡張性を担保しつつ、CommonMark仕様を実装するというのは実はかなり難易度が高くこれを
+実現しているライブラリは多言語ふくめてもそれほどないので頑張ってよかったなあと。</p>
 
-func sender(ch, quit chan lua.LValue) {
-    L := lua.NewState()
-    defer L.Close()
-    L.SetGlobal(&quot;ch&quot;, lua.LChannel(ch))
-    L.SetGlobal(&quot;quit&quot;, lua.LChannel(quit))
-    if err := L.DoString(`
-    ch:send(&quot;1&quot;)
-    ch:send(&quot;2&quot;)
-  `); err != nil {
-        panic(err)
-    }
-    ch &lt;- lua.LString(&quot;3&quot;)
-    quit &lt;- lua.LTrue
-}
+<p>本当はGoのAdventカレンダーで実装の詳細やパフォーマンスチューニングの話など書こうかなと
+思ってたんですけどあっという間に埋まってしまい。Adventカレンダー最終日のポエムです。</p>
 
-func main() {
-    ch := make(chan lua.LValue)
-    quit := make(chan lua.LValue)
-    go receiver(ch, quit)
-    go sender(ch, quit)
-    time.Sleep(3 * time.Second)
-}
-</code></pre>
+<hr />
 
-<p>こんな感じですね。Luaと同じくState自体はスレッドセーフではないので、goroutineごとにStateをもってChannelで通信します。</p>
+<p>2019年も終わりが近づいてますが、まだ自分の書くコードは世界にある程度通用するなあ、という
+自信も得られたので来年こそは転職活動に本腰を入れて、もう一度ソフトウェアエンジニアとして
+勝負してみたいなあ、と思っております。仕事でGo書きたいほんとに。</p>
 
-<h1>実装について</h1>
+<p>話だけでも聞いてみたいなーというのはいろいろあるんですけど、そういうの、雇う側からすると
+冷やかしちっくでやっぱり嫌なものなんですかね。
+冷やかしでもいいよーとか、よい話があればGithubにあるメアドなりに連絡ください笑</p>
 
-<p>迷ったんですが、channelは <strong>基本型</strong> として実装しています。 ユーザーデータ型でもよかったんですが、channelはGolangの特徴の一つですし、基本型にしたほうが親和性がよいので。</p>
-
-<p>あと、内部的にはリフレクションなのでそんなに性能はよくないかもしれません。</p>
-
-<h1>よければ使ってみてください</h1>
-
-<p>実装してみたものの、正直私は職業プログラマでなく趣味プログラマなのであんまり使うシーンがないです。なんかいい使いどころがあれば使ってみてください。</p>
+<p>メリークリスマス。
+よいお年を。</p>
 
 
     <div class="seealso">
       <ul><h3>See Also</h3>
-<li><a href="/articles/2019/12/25/hugo-now-uses-goldmark">goldmarkがHugoに採用された</a></li>
 <li><a href="/articles/2019/04/27/commonmark-parser-written-in-go">Go言語でCommonMarkパーサを実装した、またCommonMarkについて</a></li>
 <li><a href="/articles/2016/12/16/gopher-lua-plugins-in-go18">Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた</a></li>
 <li><a href="/articles/2016/07/28/golbot">Go+Luaのチャットボットフレームワークを作った</a></li>
 <li><a href="/articles/2016/07/14/go-charsetutil">Goで文字コードを手軽に変換するライブラリ作った</a></li>
+<li><a href="/articles/2015/12/11/go-interface-performance-penalty">Goのインタフェースがパフォーマンスに及ぼす影響</a></li>
 </ul>
     </div>
   </div>
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2015/02/24/channel-support-in-gopher-lua" class="hatena-bookmark-button" data-hatena-bookmark-title="GopherLuaでchannelを扱えるようにした" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2019/12/25/hugo-now-uses-goldmark" class="hatena-bookmark-button" data-hatena-bookmark-title="goldmarkがHugoに採用された" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>
-      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2015/02/24/channel-support-in-gopher-lua" itemprop="url">Permalink</a></dt>
+      <dt><i class="icon-bookmark-empty"></i><a href="/articles/2019/12/25/hugo-now-uses-goldmark" itemprop="url">Permalink</a></dt>
       <dd> </dd>
     </dl>
   </footer>
@@ -171,7 +126,7 @@ func main() {
 <div id="disqus_thread"></div>
 <script type="text/javascript">
   var disqus_shortname = 'inforno';
-  var disqus_identifier = 'articles\/2015\/02\/24\/channel-support-in-gopher-lua';
+  var disqus_identifier = 'articles\/2019\/12\/25\/hugo-now-uses-goldmark';
   var disqus_developer = 0;
   if(islocal) {
     disqus_developer = 1;

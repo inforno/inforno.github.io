@@ -61,6 +61,117 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2008/06/30/gae-model-improvements" itemprop="url">GoogleAppEngineのモデルをいじってみた</a></h3>
+<div class="meta">
+<time datetime="2008-06-30T23:51:58&#43;09:00">Jun 30, 2008</time>
+
+  
+  <span class="tag"><a href="/articles/tag/gae/" rel="tag" itemprop="keywords">gae</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>なんの幸運か、Softbank（しかもJ-phone時代からの）ユーザだったので、SMS認証もアッサリ通ってGAEのアカウントをゲットしたわけですが･･･（ただしiPhoneには興味ほぼなし)。</p>
+
+<p>というわけで <a href="http://www.metareal.org/2008/05/20/porting-weblog-to-google-app-engine/">ishikawaさんがブログをGAEに移行された</a> 、というのを知って俺も移行しようかなあとか思いつつブログアプリ作りました。すでに今ブログで使っている機能は全て実装済みだったりします。デザインも全頁XHTMLTr validでCSSもvalidなことを確認済みだったりします。しかも <code>Django</code> じゃなくて <code>web.py</code> だったりします。慣れてるしね。</p>
+
+<p>それはおいといて、データストアまわりがそのままだと</p>
+
+<ul>
+<li><code>filter(&quot;hoge =&quot;, value)</code> が長ったらしい</li>
+<li>CRUDが微妙。</li>
+<li>フォーム作成用等に空のモデルを一時的に作成したいけど、作成した時点でvalidateされるので作成できない</li>
+</ul>
+
+<p>らへんがいまいちだったで、ちょっといじってみました。</p>
+
+<pre class="prettyprint"><code>def _getattr(self, name):
+  if name.endswith(&quot;_eq&quot;):
+    return lambda v: self.filter(&quot;%s =&quot;%name[:-3], v)
+  raise AttributeError(name)
+setattr(db.Query, &quot;__getattr__&quot;, _getattr)
+
+class ModelMixin(object):
+
+  default_order = None
+  _stab_class = None
+
+  @classmethod
+  def stab(cls):
+    if not cls._stab_class:
+      stab = type('Stab%s'%cls.__name__, (cls,), dict())
+      for k,v in stab._properties.iteritems():
+        v.required = False
+        v.choice   = None
+        v.validator= None
+      cls._stab_class = stab
+    stab = cls._stab_class()
+    for k,v in stab._properties.iteritems():
+      v.__set__(stab, v.default_value())
+    return stab
+
+  @classmethod
+  def create(cls, *a, **k):
+    obj = cls(*a, **k)
+    obj.put()
+    return obj
+
+  @classmethod
+  def find_all(cls):
+    result = cls.all()
+    if cls.default_order is not None:
+      return result.order(cls.default_order)
+    return result
+
+  def update(self, **k):
+    for prop in self.properties().values():
+      if prop.name in k:
+        prop.__set__(self, k[prop.name])
+    self.put()
+
+  def destroy(self):
+    self.delete()
+</code></pre>
+
+<p>これで</p>
+
+<pre class="prettyprint"><code>class Test(ModelMixin, db.Model):
+  name = db.StringProperty(require=True)
+  created_at = db.DatetTmeProperty(auto_now_add=True)
+
+  default_order=&quot;-created_at&quot;
+
+Test.find_all() # created_atの降順
+Test.all().name_eq(&quot;user&quot;).update(created_at = datetime.now())
+stab = Test.stab() #nameがなくても作成できる
+</code></pre>
+
+<p>こんな感じにかけます。</p>
+
+<p>さて、そんなこんなでブログアプリを作ったのはいいんだけど、なんとなく移行する気にならない。現在はWordpressで運用しているけど、正直セキュリティホールは多いし、ソースコードを見ると泣きたくなるようなコードだし、頻繁なバージョンアップはめんどくさい･･･。プラグインのセキュリティホールまで考えるとなおめんどくさい。しかもそこまで機能を使い倒しているわけじゃないし。</p>
+
+<p>だからGAEにでも移行したいんだけど･･･。データがGoogleに握られるのはそこまで心配じゃない。ブログサービスでブログをやれば、そのブログサービス事業者にデータを握られるってのと同じだから気にならないんだな。移行作業自体も記事数がかなり少ないのでそんなにめんどくさそうではない。</p>
+
+<p>ひとつ引っかかっているのはトランザクションの問題。まぁめったにトランザクションで問題はおきないと思うけど、GAEのトランザクションは一応ある、といった程度でほとんど使えない。使おうとしたらtransactionの中でこれはしちゃだめ、これもしちゃだめ、とおこられまくったので現在トランザクション管理ができていない。GAEには集約系のメソッドがないので、月別記事数とか、タグ別記事数とかを記事のCRUD時に別モデルで管理しているわけだけど、ここのトランザクションが管理できないのは結構不安。</p>
+
+<p>もうひとつはなんとなーく使い切らないんだけど無料の上限である500Mという容量が微妙。画像のアップとかしなけりゃまず大丈夫なんだけど。</p>
+
+<p>その他にもなんとなくGoogleの罠じゃないかとかいろいろ気になって移行に踏み切れないでいる今日この頃。実際に本格的にGAEに移行した人の感想がききたいなあ。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2008/05/28/yahoo-jlp-api-wrapper-for-python-2" itemprop="url">Python版Yahooテキスト解析 APIライブラリをかな漢字変換に対応させました</a></h3>
 <div class="meta">
 <time datetime="2008-05-28T20:08:20&#43;09:00">May 28, 2008</time>
@@ -519,157 +630,10 @@ SimpleFactor.main(Array(&quot;10&quot;))
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/04/03/a-python-library-for-nicovideo-testing" itemprop="url">Python版ニコニコ動画ライブラリを試しに公開してみる</a></h3>
-<div class="meta">
-<time datetime="2008-04-03T22:06:31&#43;09:00">Apr  3, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/nicovideo/" rel="tag" itemprop="keywords">nicovideo</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>※あくまで試験的に公開しています</p>
-
-<p>まぁありきたりというか、なんというかなんですけどニコニコ動画の自分用ライブラリを以前から作っていました。公開してもよかったんですけど、需要があるかわかんないし、まとまってないですし、ニコニコ動画的にもこういうライブラリをつかってごにゃごにゃするのはちょっと･･･という感じらしいので公開してませんでした。</p>
-
-<p>なんですけど、公開されてるライブラリもありますし、せっかくなんで試験的に公開しておけばなんかの役に立つかな、と思いまして。使ってくれる人が多かったりすれば、まとめなおしてCodeReposに突っ込むかもしれません。</p>
-
-<h1>ダウンロードしてみる奇特な方はどうぞ</h1>
-
-<p><a href="/statics/files/nicovideo.zip">nicovideo.zip</a></p>
-
-<h2>必要なもの</h2>
-
-<pre class="prettyprint"><code>easy_install mechanize
-easy_install lxml
-</code></pre>
-
-<h2>使い方</h2>
-
-<pre class="prettyprint"><code>import nicovideo as n
-client = n.NicoClient(&quot;mail&quot;, &quot;pass&quot;, cookie_file=&quot;&quot;)
-
-print &quot;nickname: %s&quot; % client.nickname
-
-client.video(&quot;sm9&quot;).download(with_comments=True)
-
-print &quot;search&quot;
-for video in client.video_search(&quot;test&quot;, by=n.SEARCH_KEYWORD, sort=n.SORT_POSTED_AT, order=n.ORDER_DESC)[:10]:
-  print video.title
-
-print &quot;ranking&quot;
-for video in client.video_ranking(by=n.RANKING_MYLIST, span=n.RANKING_DAILY, category=&quot;all&quot;)[:10]:
-  print video.title
-
-print &quot;new arrival&quot;
-for video in client.video_newarrival()[100:110]:
-  print video.title
-
-print &quot;mylist&quot;
-for video in client.video_mylist(2792158)[100:110]:
-  print video.title
-
-print &quot;random&quot;
-for video in client.video_random():
-  print video.title
-</code></pre>
-
-<p>こんな感じです。ニコニコ動画に負荷をかけないように、各httpリクエストの間に最低1秒待つので遅いです。ですが、できるかぎり情報はlazyにとりに行くようになっています。たとえば、 <code>video_search</code> でかえってくる <code>Video</code> はidとタイトルの情報のみもっていて、その他の情報(lengthなど)にアクセスすると自動的にメタ情報を取りにいきます。メタ情報は</p>
-
-<pre class="prettyprint"><code>print client.video(&quot;sm9&quot;).meta
-# =&gt;
-description レッツゴー！陰陽師（フルコーラスバージョン）
-tags {'#text': '', u'tag': [u'\u9670\u967d\u5e2b', u'\u30ec\u30c3\u30c4\u30b4\u30fc\uff01\u9670\u967d\u5e2b', u'\u516c\u5f0f', u'\u904b\u55b6\u516c\u8a8d\u52d5\u753b', u'\u3053\u306e\u52d5\u753b\u306e\u3046\uff50\u4e3b\u306fnicovideo', u'\u97f3\u697d', u'\u4f1d\u8aac\u306esm9', u'\u03b2\u6642\u4ee3\u306e\u82f1\u96c4', u'\u5439\u3044\u305f\u3089\u6210\u4ecf', u'\u30de\u30a4\u30ea\u30b9\uff15\uff10\u4e07\u796d\u308a\u4f1a\u5834']}
-file_type flv
-comment_num 2618200
-l 320
-is_premium 0
-thread_id 1173108780
-view_counter 3839233
-link http://www.smilevideo.jp/view/9/350170
-nickname name
-user_id 00000
-title 新・豪血寺一族 -煩悩解放 - レッツゴー！陰陽師
-url http://smile-clb42.nicovideo.jp/smile?v=9.0468
-posted_at 2007-03-06 00:33:00
-video_id sm9
-thumb_type video
-watch_url http://www.nicovideo.jp/watch/sm9
-first_retrieve 2007-03-06 00:33:00
-mylist_counter 49956
-length 00:05:20
-thumbnail_url http://tn-skr.smilevideo.jp/smile?i=9
-ms http://msg.nicovideo.jp/10/api/
-time 1207225894
-done true
-#text
-last_res_body 1人だけじゃね
-</code></pre>
-
-<p>こんな感じのがとれます。基本的にthubnail APIからとってきて適当に型変換しています。thumbnail APIでの情報に加えて、file_typeなんかが付け加えられます。file_typeもちゃんと判別するのでflvでもmp4でもswfでももちろんちゃんとダウンロードできます。</p>
-
-<p>ほかにも <code>client.video_newarrival()[100:110]</code> とすると、自動的に何ページ目かを計算してそのページからhttpアクセスしてとりにいきます。</p>
-
-<p>あと、ちょっとダウンロード中の表示がリッチな感じです。</p>
-
-<h1>ちょっと設計について</h1>
-
-<p>基本的に、NicoClientを拡張して機能を実装します。拡張方法は <code>NicoClientExtension</code> クラスを拡張したクラスを定義する、以上です。これでNicoClientに自動的にクラス名をunderscoreしたメソッドが生えます。</p>
-
-<p>たとえば <code>Video</code> も <code>NicoClientExtension</code> です。</p>
-
-<pre class="prettyprint"><code>class Video(NicoClientExtension):
-  URL_WATCH = NicoClient.URL_BASE + &quot;watch/%s&quot;
-  URL_API_GET_FLV = NicoClient.URL_BASE + &quot;api/getflv/%s&quot;
-  URL_API_GET_THUMB_INFO = NicoClient.URL_BASE + &quot;api/getthumbinfo/%s&quot;
-
-  FILE_TYPE_RE = re.compile(&quot;.*/smile\?([a-z]{1})\=.*&quot;)
-
-  def __init__(self, client, id, meta = None):
-    self.client = client
-    self.id = id
-    self.meta = meta or {}
-
-# ...
-</code></pre>
-
-<p>という定義で <code>client.video</code> というメソッドが生えるという設計になっています。メタクラスにはこういう使い方があります。検索機能も、新着も、気まぐれも全部 <code>NicoClientExtension</code> として実装されています。</p>
-
-<h2>問題点</h2>
-
-<ul>
-<li>まとまってません。1ファイルに適当につめこんでいます。</li>
-<li>全然テストしてません。</li>
-<li>sm9(陰陽師)が消されると動かなくなります</li>
-</ul>
-
-<p>　</p>
-
-<h3>　</h3>
-
-<p>こんな感じです。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/10/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li class="active">11</li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/12/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/10/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/7/" class="page">7</a></li><li><a href="/page/8/" class="page">8</a></li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li class="active">11</li><li><a href="/page/12/" class="page">12</a></li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/27/" class="page">27</a></li><li class="next"><a href="/page/12/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

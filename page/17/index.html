@@ -61,6 +61,81 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2007/07/30/parser-combinators-in-scala" itemprop="url">Scalaでパーサコンビネータ</a></h3>
+<div class="meta">
+<time datetime="2007-07-30T19:50:16&#43;09:00">Jul 30, 2007</time>
+
+  
+  <span class="tag"><a href="/articles/tag/scala/" rel="tag" itemprop="keywords">scala</a></span>
+  
+  <span class="tag"><a href="/articles/tag/parser/" rel="tag" itemprop="keywords">parser</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>Scala 2.6.0-RC1 でscala.util.parsing.combinatorが標準パッケージになりました。というわけでリファレンスとちょっとしたサンプルくらしかなかったのだけど、とりあえず書いてみた。</p>
+
+<p><a href="http://ja.doukaku.org/33/">どう書く?org</a> に投稿した、ExcelライクCSVのパーサ。</p>
+
+<pre class="prettyprint"><code>import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
+import scala.util.parsing.input.CharArrayReader
+import Character.isISOControl
+
+object CSVParser {
+ trait Base
+ case class Field(s:String) extends Base {
+   override def toString = s
+ }
+ case class Record(fields: List[Field]) extends Base
+ case class File(records :List[Record]) extends Base
+
+ def mkString(cs :List[Any]) = cs.mkString(&quot;&quot;)
+ class CSVParser extends Parsers {
+   type Elem = Char
+   def notMeta(c:Elem) = c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='&quot;' &amp;&amp; !isISOControl(c)
+
+   lazy val file   = record.*('\n') ^^ File
+   lazy val record = (field|quotedField|nullableField).*(',') ^^ Record
+   lazy val field = chars.+ ^^ {cs =&gt; Field(mkString(cs))}
+   lazy val nullableField = chars.* ^^ {cs =&gt; Field(&quot;&quot;)}
+   lazy val quotedField = '&quot;' ~ (charsInQuote|quoteInQuote).* ~ '&quot;' ^^ {cs =&gt; Field(mkString(cs))}
+   lazy val charsInQuote = elem(&quot;chars in field&quot;, _!='&quot;')
+   lazy val quoteInQuote = repN(2, quote) ^^ {cs =&gt; '&quot;'}
+   lazy val quote  = '&quot;' ^^ success
+   lazy val chars  = elem(&quot;chars&quot;, notMeta)
+ }
+}
+
+val data = &quot;&quot;&quot;
+&quot;aaa&quot;,&quot;b
+bb&quot;,&quot;ccc&quot;,zzz,&quot;y&quot;&quot;Y&quot;&quot;y&quot;,xxx
+&quot;&quot;&quot;.trim
+
+(new CSVParser.CSVParser).file(new
+CharArrayReader(data.toCharArray)).map(file =&gt; {
+ file.records.map({record =&gt;
+   val fields = record.fields
+   (1 to fields.length).foreach(i =&gt; println(i +&quot; =&gt; &quot; + fields(i-1)))
+ })
+})
+</code></pre>
+
+<p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
+
+<p>時間が出来たらもうちょっといじってみよう。よさげな解説してるサイトがあったら是非教えてください。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2007/06/24/creating-what-im-interested-in-anyway-or-else-about-that-a-jack-of-all-trades-is-master-of-none" itemprop="url">とにかく好きなものを作るということ、あるいは器用貧乏について</a></h3>
 <div class="meta">
 <time datetime="2007-06-24T00:36:19&#43;09:00">Jun 24, 2007</time>
@@ -164,44 +239,10 @@
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2007/05/22/erlang-process" itemprop="url">Erlangのプロセス</a></h3>
-<div class="meta">
-<time datetime="2007-05-22T23:57:09&#43;09:00">May 22, 2007</time>
-
-  
-  <span class="tag"><a href="/articles/tag/erlang/" rel="tag" itemprop="keywords">erlang</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>via <a href="http://d.hatena.ne.jp/methane/2007051">Erlangの強さ</a></p>
-
-<p>最近（でもないか・・・）Erlangが話題になっていて、趣味プログラマーになったとはいえ、ちょっと触ってみたいなあと思いつつ、時間ないなあと思いつつ。</p>
-
-<p>んで話題のErlangのプロセスなんだけど、microthreadだろうなあ、と思っていたけどそれであってるっぽい。あんま詳しくないんでアレですが。詳しくは <a href="http://www.erlang.org/ml-archive/erlang-questions/200104/msg00072.html">コチラ</a> 。</p>
-
-<p>Erlangのプロセスについてはmethaneさんがおっしゃてる通りだと思う。要はこれを使いやすい形で言語仕様にとりこんでるあたりがErlangの良さなんだよなあ。</p>
-
-<p>たとえばPythonでもyieldがあるのでmicrothreadは可能で（Stackless Pythonまである)、Erlangのプロセスっぽいこともやろうと思えば可能じゃないか、って感じなんだけどあくまでやればできる、って感じだと思う。</p>
-
-<p>というわけでmicrothreadを用いたプログラミングに対するある意味DSL的な言語ではないのかなあ、というのが今のところの印象。パッと見た感じその他は魅力的な部分があまり見当たらなかった。かといって機能が足りてないわけでもぜんぜんないので、microthreadや分散のメリットが前面にでるならガンガンつかってもいいと思ってたりするのです。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/16/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li class="active">17</li><li><a href="/page/18/" class="page">18</a></li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/18/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/16/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/13/" class="page">13</a></li><li><a href="/page/14/" class="page">14</a></li><li><a href="/page/15/" class="page">15</a></li><li><a href="/page/16/" class="page">16</a></li><li class="active">17</li><li><a href="/page/18/" class="page">18</a></li><li><a href="/page/19/" class="page">19</a></li><li><a href="/page/20/" class="page">20</a></li><li><a href="/page/21/" class="page">21</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/27/" class="page">27</a></li><li class="next"><a href="/page/18/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

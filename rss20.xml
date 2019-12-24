@@ -7,10 +7,49 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>26 Apr 19 16:50 UTC</lastBuildDate>
+    <lastBuildDate>24 Dec 19 17:22 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
+    
+    <item>
+      <title>goldmarkがHugoに採用された </title>
+      <link>http://inforno.net/articles/2019/12/25/hugo-now-uses-goldmark</link>
+      <description>&lt;p&gt;ちょっと前の話ですが、&lt;a href=&#34;http://github.com/yuin/goldmark&#34;&gt;goldmark&lt;/a&gt;が
+&lt;a href=&#34;https://gohugo.io/news/0.60.0-relnotes/&#34;&gt;HugoのMarkdownレンダラーに採用されました&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;(しかし、このブログはHogoではなく独自のプログラムで生成されているのであった…)&lt;/p&gt;
+
+&lt;p&gt;やっぱりblackfridayに対する不満というのはGo界隈ではそこそこあったんだなあ、というのと
+単純にこう、自分の書いたコードが評価されるっていうのはうれしいし自信につながりますね。&lt;/p&gt;
+
+&lt;p&gt;柔軟な拡張性を担保しつつ、CommonMark仕様を実装するというのは実はかなり難易度が高くこれを
+実現しているライブラリは多言語ふくめてもそれほどないので頑張ってよかったなあと。&lt;/p&gt;
+
+&lt;p&gt;本当はGoのAdventカレンダーで実装の詳細やパフォーマンスチューニングの話など書こうかなと
+思ってたんですけどあっという間に埋まってしまい。Adventカレンダー最終日のポエムです。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;2019年も終わりが近づいてますが、まだ自分の書くコードは世界にある程度通用するなあ、という
+自信も得られたので来年こそは転職活動に本腰を入れて、もう一度ソフトウェアエンジニアとして
+勝負してみたいなあ、と思っております。仕事でGo書きたいほんとに。&lt;/p&gt;
+
+&lt;p&gt;話だけでも聞いてみたいなーというのはいろいろあるんですけど、そういうの、雇う側からすると
+冷やかしちっくでやっぱり嫌なものなんですかね。
+冷やかしでもいいよーとか、よい話があればGithubにあるメアドなりに連絡ください笑&lt;/p&gt;
+
+&lt;p&gt;メリークリスマス。
+よいお年を。&lt;/p&gt;
+</description>
+      
+      <category>golang</category>
+      
+      <category>goldmark</category>
+      
+      <guid isPermaLink="true">http://inforno.net/articles/2019/12/25/hugo-now-uses-goldmark</guid>
+      <pubDate>24 Dec 19 17:22 UTC</pubDate>
+    </item>
     
     <item>
       <title>Go言語でCommonMarkパーサを実装した、またCommonMarkについて </title>
@@ -419,43 +458,6 @@ end
       
       <guid isPermaLink="true">http://inforno.net/articles/2016/07/28/golbot</guid>
       <pubDate>28 Jul 16 11:32 UTC</pubDate>
-    </item>
-    
-    <item>
-      <title>Goで文字コードを手軽に変換するライブラリ作った </title>
-      <link>http://inforno.net/articles/2016/07/14/go-charsetutil</link>
-      <description>&lt;p&gt;日本人である以上、いくらUTF-8が主権を得てきたといっても文字コード変換というカルマからは逃れられません。Pure Goでの文字コード変換はLLに比べるといろいろめんどくさい。&lt;/p&gt;
-
-&lt;p&gt;それに、そのままだと任意の文字コードを指定させるのが難しい。特定の文字コード決め打ちならいいんですけど、全世界の利用者に向けて任意の文字コード設定できるようにする場合とかはさらにめんどくさいし、かといって &lt;code&gt;iconv&lt;/code&gt; に依存するのも嫌なのライブラリにしました。&lt;/p&gt;
-
-&lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/charsetutil&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
-&lt;p&gt;以下のような感じで簡単に文字コードを変換できます。Pythonと同じで &lt;code&gt;encode&lt;/code&gt; がUTF-8からUTF-8以外へ、 &lt;code&gt;decode&lt;/code&gt; がUTF-8以外からUTF-8へ、です。内部では &lt;code&gt;golang.org/x/net/html/charset&lt;/code&gt; を使っているので文字コードの指定もそれに習います。(WHATWGで定義されている名前になります) 。なので &lt;code&gt;cp932&lt;/code&gt; などではなく &lt;code&gt;Windows-31J&lt;/code&gt; です。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;b, err = EncodeString(&amp;quot;こんにちわ&amp;quot;, &amp;quot;Windows-31J&amp;quot;)
-b, err = Encode(&amp;quot;こんにちわ&amp;quot;, &amp;quot;Windows-31J&amp;quot;)
-b, err = EncodeBytes([]byte(&amp;quot;こんにちわ&amp;quot;), &amp;quot;Windows-31J&amp;quot;)
-b, err = EncodeReader(strings.NewReader(&amp;quot;こんにちわ&amp;quot;), &amp;quot;Windows-31J&amp;quot;)
-b = MustEncodeString(&amp;quot;こんにちわ&amp;quot;, &amp;quot;Windows-31J&amp;quot;)
-b = MustEncode(&amp;quot;こんにちわ&amp;quot;, &amp;quot;Windows-31J&amp;quot;)
-b = MustEncodeBytes([]byte(&amp;quot;こんにちわ&amp;quot;), &amp;quot;Windows-31J&amp;quot;)
-b = MustEncodeReader(strings.NewReader(&amp;quot;こんにちわ&amp;quot;), &amp;quot;Windows-31J&amp;quot;)
-
-s, err = DecodeString(string(source), &amp;quot;Windows-31J&amp;quot;)
-s, err = Decode(source, &amp;quot;Windows-31J&amp;quot;)
-s, err = DecodeBytes(source, &amp;quot;Windows-31J&amp;quot;)
-s, err = DecodeReader(bytes.NewReader(source), &amp;quot;Windows-31J&amp;quot;)
-s = MustDecodeString(string(source), &amp;quot;Windows-31J&amp;quot;)
-s = MustDecode(source, &amp;quot;Windows-31J&amp;quot;)
-s = MustDecodeBytes(source, &amp;quot;Windows-31J&amp;quot;)
-s = MustDecodeReader(bytes.NewReader(source), &amp;quot;Windows-31J&amp;quot;)
-&lt;/code&gt;&lt;/pre&gt;
-</description>
-      
-      <category>golang</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2016/07/14/go-charsetutil</guid>
-      <pubDate>13 Jul 16 15:23 UTC</pubDate>
     </item>
     
   </channel>

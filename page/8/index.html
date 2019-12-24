@@ -61,6 +61,110 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python" itemprop="url">Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました</a></h3>
+<div class="meta">
+<time datetime="2009-04-23T00:00:00&#43;09:00">Apr 23, 2009</time>
+
+  
+  <span class="tag"><a href="/articles/tag/DHT/" rel="tag" itemprop="keywords">DHT</a></span>
+  
+  <span class="tag"><a href="/articles/tag/kademlia/" rel="tag" itemprop="keywords">kademlia</a></span>
+  
+  <span class="tag"><a href="/articles/tag/p2p/" rel="tag" itemprop="keywords">p2p</a></span>
+  
+  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
+
+<p>Kademliaはいろいろ実装があるので、ソースを読んじゃうと答えみちゃった感じになるかなーと思って、元論文と <a href="http://www.shudo.net/article/Kademlia-20040727/shudo-Kademlia.pdf">首藤様の資料</a> くらいしか見ずに実装してみました。ので、いろいろ間違ってるかも知れませんが･･･。</p>
+
+<p>本家Kademliaとの主な違いは</p>
+
+<ul>
+<li><p>UDPではなくTCPを使っている</p>
+
+<ul>
+<li>ローカル環境しかもっていないので、UDPパケットがロスしやすい場合(WAN)を想定して実装するのがめんどくさい。</li>
+<li>よってRPC-IDをつけていない。</li>
+<li>パケットの分割や再送もTCPにおまかせ。</li>
+</ul></li>
+
+<li><p>original publisherから一定時間publishを受けなくてもインデックス情報をexpireしていない</p>
+
+<ul>
+<li>実装するのは簡単です。</li>
+</ul></li>
+
+<li><p>ノードがネットワークに参加したとき、Index情報を移動させていません</p>
+
+<ul>
+<li>これも実装は簡単です。</li>
+</ul></li>
+</ul>
+
+<h1>ダウンロード</h1>
+
+<p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
+
+<ul>
+<li><a href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
+</ul>
+
+<h1>実装について</h1>
+
+<p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
+
+<p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
+
+<p>通信にはjsonを使いました。</p>
+
+<h1>基本的な動かし方</h1>
+
+<pre class="prettyprint"><code>import kademlia_tcp
+kademlia_tcp.DEBUG = True
+n = kademlia_tcp.KademliaNode(&quot;ip address&quot;, port)
+n.join(n)
+remote = kademlia_tcp.ContactNode(&quot;ip address&quot;, port)
+n.join(remote)
+</code></pre>
+
+<p>という感じでネットワークを作れます。DEBUGをセットすると、通信情報など、様々な情報が出力されます。あとは</p>
+
+<pre class="prettyprint"><code>key = n.hash(&quot;key&quot;)
+n.publish(key, &quot;value&quot;)
+n.find_value(key)
+n.ping(other_node)
+n.store(other_node, key, value)
+n.find_node(other_node)
+</code></pre>
+
+<p>というようなメソッドが使えます。</p>
+
+<h1>動かしてみて</h1>
+
+<p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
+
+<p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
+
+<h1>というわけで</h1>
+
+<p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2009/02/12/the-embedded-python-implementation" itemprop="url">埋め込みPythonを実装してみました</a></h3>
 <div class="meta">
 <time datetime="2009-02-12T00:00:00&#43;09:00">Feb 12, 2009</time>
@@ -307,210 +411,10 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2008/12/11/functional-pattern-matching-for-python" itemprop="url">Python: パターンマッチしてみる</a></h3>
-<div class="meta">
-<time datetime="2008-12-11T01:25:07&#43;09:00">Dec 11, 2008</time>
-
-  
-  <span class="tag"><a href="/articles/tag/python/" rel="tag" itemprop="keywords">python</a></span>
-  
-  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p>なんか、趣味では最近はC言語ばっかりだったりするわけですが。</p>
-
-<p>さて、関数型言語系をカジった人なら誰しも取り付かれる、モノ、それがパターンマッチ。パターンマッチが使えると、とにかく直感的にコードをかけますよね。</p>
-
-<p>つーわけで、Pythonでパターンマッチを実装してみました。機能的には</p>
-
-<ul>
-<li>リスト,タプルに対するパターンマッチ</li>
-<li>パターン変数への束縛</li>
-<li>ガード条件</li>
-<li>任意のオブジェクトに対するパターンマッチ</li>
-<li>部分パターンの束縛(Ocamlのas)</li>
-</ul>
-
-<p>あたりを実装してみました。これだけあれば、かなり便利にコードをかけます。できるだけ、手軽に書けるように工夫してみました。こんな感じです。</p>
-
-<p>変数束縛とガード。 <code>getattr</code> でごにょごにょしてるので簡単にかけます。</p>
-
-<pre class="prettyprint"><code>m = Match([1,2,3]) 
-if m.when([1,2,m.var]) and m.var &gt; 2:
-  print m.var
-# &gt;&gt; 3
-</code></pre>
-
-<p>こう使えば、Pythonに念願のswitchが！</p>
-
-<pre class="prettyprint"><code>m = Match(10)
-if m(9):
-  print 1
-elif m(10):
-  print 2
-else:
-  False
-# &gt;&gt; 2
-</code></pre>
-
-<p>部分パターンを束縛してみます。 <code>[1,2,m.var]</code> 全体を <code>all</code> というパターン変数に束縛します。</p>
-
-<pre class="prettyprint"><code>m = Match([1,2,3]) 
-if m.when([1,2,m.var]) and m.var &gt; 5:
-  False
-elif m.when(m._as_all([1,2,m.var])):
-  print m.all
-  print m.var
-else:
-  raise StandardError(&quot;&quot;)
-# &gt;&gt; [1, 2, 3]
-# &gt;&gt; 3
-</code></pre>
-
-<p>任意のオブジェクトにも使えます。いわゆるレコードに対するマッチも簡単にできるということです。</p>
-
-<pre class="prettyprint"><code>class Test(object):
-  def __init__(self, v1, v2):
-    self.v1 = v1
-    self.v2 = v2
-  def __repr__(self):
-    return &quot;Test(%s, %s)&quot;%(repr(self.v1), repr(self.v2))
-m = Match([1, Test(2, 3)])
-if m.when([1, m._class(Test, {&quot;v1&quot;:2, &quot;v2&quot;: m.v2})]):
-  print m.v2
-else:
-  False
-# &gt;&gt; 3
-</code></pre>
-
-<p>オブジェクトに対するパターンマッチは <code>__match__</code> メソッドを定義するとカスタマイズできます。ここらのアイデアはScalaからいただきました。</p>
-
-<pre class="prettyprint"><code>class Test2(Test):
-  def __match__(self):
-    return {&quot;value&quot;: self.v1 + self.v2}
-m = Match([1, 2, Test2(3,4)])
-if m.when([1,2, m._class(Test2, {&quot;value&quot;: m.var})]):
-  m.var
-else:
-  False
-# &gt;&gt; 7
-</code></pre>
-
-<p>結構いい感じな気がします。</p>
-
-<h1>ダウンロード</h1>
-
-<p><a href="/statics/files/patternmatch.zip">patternmatch.py</a></p>
-
-<h1>実装のお話</h1>
-
-<p>ソースコードはこんな感じ。</p>
-
-<pre class="prettyprint"><code>class Match(object):
-  class _var(str): pass
-  class _class(object):
-    def __init__(self, klass, attrs):
-      self.klass= klass
-      self.attrs= sorted(attrs.iteritems())
-    def match(self, m, obj):
-      props = getattr(obj, &quot;__match__&quot;, lambda: obj.__dict__)()
-      return issubclass(obj.__class__, self.klass) and \
-            m.when(self.attrs, sorted(props.iteritems()))
-  class _as(object):
-    def __init__(self, name, pattern = None):
-      self.name = name
-      self.pattern = pattern
-    def __call__(self, pattern):
-      self.pattern = pattern
-      return self
-
-  def __init__(self, obj):
-    self.obj = obj
-    self.bind = {}
-
-  def __getitem__(self, key):
-    if not self.bind.has_key(key):
-      if key.startswith(&quot;_as_&quot;):
-        return self._as(self._var(key[4:]))
-      return self._var(key)
-    return self.bind[key]
-  __getattr__ = __getitem__
-  __call__ = lambda self, *a, **k : self.when(*a, **k)
-
-  def when(self, pattern, obj = None):
-    if not obj: obj = self.obj
-    if isinstance(pattern, (self._var, self._class, self._as)):
-      if isinstance(obj, (list, tuple)):
-        pattern = [pattern]
-        obj     = [obj]
-
-    if not isinstance(obj, (list, tuple)) and \
-      not isinstance(pattern, (list, tuple)) :
-      obj = [obj]
-      pattern = [pattern]
-
-    if not isinstance(obj, (list, tuple)) or  \
-      not isinstance(pattern, (list, tuple)) :
-      self.bind = {}
-      return False
-
-    if len(obj) != len(pattern):
-      if not ((pattern[-1].__class__ == self._var) and pattern[-1].startswith(&quot;__&quot;)):
-        self.bind = {}
-        return False
-
-    for i, (value, pat) in enumerate(zip(obj, pattern)):
-      if value == pat:
-        continue
-      elif pat.__class__ == self._var and pat.startswith(&quot;__&quot;): 
-        self.bind[str(pat)] = obj[i:]
-        return True
-      elif pat.__class__ == self._var:
-        self.bind[str(pat)] = value
-      elif pat.__class__ == self._class:
-        if not pat.match(self, value):
-          self.bind ={}
-          return False
-      elif pat.__class__ == self._as:
-        if not self.when(pat.pattern, value):
-          self.bind ={}
-          return False
-        self.bind[str(pat.name)] = value
-      elif isinstance(value, (list, tuple)) and isinstance(pat, (list,tuple)):
-        if not self.when(pat, value):
-          self.bind = {}
-          return False
-      else:
-        self.bind = {}
-        return False
-
-    return True
-</code></pre>
-
-<p>まぁわりかしシンプルですね。</p>
-
-<h2>　</h2>
-
-<p>　 今年も終わりが近づいてまいりました。年をとると時間がすぎるのが速いナァ･･･と痛感しております。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/7/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/4/" class="page">4</a></li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li class="active">8</li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/26/" class="page">26</a></li><li class="next"><a href="/page/9/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/7/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/4/" class="page">4</a></li><li><a href="/page/5/" class="page">5</a></li><li><a href="/page/6/" class="page">6</a></li><li><a href="/page/7/" class="page">7</a></li><li class="active">8</li><li><a href="/page/9/" class="page">9</a></li><li><a href="/page/10/" class="page">10</a></li><li><a href="/page/11/" class="page">11</a></li><li><a href="/page/12/" class="page">12</a></li><li>&nbsp;&nbsp;......&nbsp;&nbsp;</li><li><a href="/page/27/" class="page">27</a></li><li class="next"><a href="/page/9/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>

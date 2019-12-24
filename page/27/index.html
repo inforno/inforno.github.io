@@ -2,7 +2,7 @@
 <html lang="ja-JP">
   <head>
     <meta charset="utf-8">
-    <title>inforno :: tags :: golang</title>
+    <title>inforno</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <link href="http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic" rel="stylesheet">
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
@@ -57,31 +57,71 @@
 
 
 
-<ol class="archive-titles">
-  
-  <li><a href="/articles/2019/12/25/hugo-now-uses-goldmark">goldmarkがHugoに採用された</a> Dec 25, 2019</li>
-  
-  <li><a href="/articles/2019/04/27/commonmark-parser-written-in-go">Go言語でCommonMarkパーサを実装した、またCommonMarkについて</a> Apr 27, 2019</li>
-  
-  <li><a href="/articles/2016/12/16/gopher-lua-plugins-in-go18">Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた</a> Dec 16, 2016</li>
-  
-  <li><a href="/articles/2016/07/28/golbot">Go&#43;Luaのチャットボットフレームワークを作った</a> Jul 28, 2016</li>
-  
-  <li><a href="/articles/2016/07/14/go-charsetutil">Goで文字コードを手軽に変換するライブラリ作った</a> Jul 14, 2016</li>
-  
-  <li><a href="/articles/2015/12/11/go-interface-performance-penalty">Goのインタフェースがパフォーマンスに及ぼす影響</a> Dec 11, 2015</li>
-  
-  <li><a href="/articles/2015/03/23/gluamapper-released">GopherLuaを設定ファイルで使うライブラリを書きました</a> Mar 23, 2015</li>
-  
-  <li><a href="/articles/2015/02/24/channel-support-in-gopher-lua">GopherLuaでchannelを扱えるようにした</a> Feb 24, 2015</li>
-  
-  <li><a href="/articles/2015/02/15/gopher-lua-released">LuaのGo言語実装を公開しました</a> Feb 15, 2015</li>
-  
-  <li><a href="/articles/2014/10/06/cidre-my-new-webframework-in-golang">cidre: 軽量Go言語用WEBフレームワーク</a> Oct  6, 2014</li>
-  
-</ol>
 
-<nav class="paging"><ul><li class="previous-off">&laquo;Previous</li><li class="active">1</li><li class="next-off">Next&raquo;</li></ul></nav>
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
+<h3 itemprop="name"><a href="/articles/2006/01/22/fckeditor" itemprop="url">FCKEditor</a></h3>
+<div class="meta">
+<time datetime="2006-01-22T00:05:29&#43;09:00">Jan 22, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+  <span class="tag"><a href="/articles/tag/fckeditor/" rel="tag" itemprop="keywords">fckeditor</a></span>
+  
+  <span class="tag"><a href="/articles/tag/typo/" rel="tag" itemprop="keywords">typo</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。 WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
+
+<p>こちらもTinyMCEと同じく</p>
+
+<ul>
+<li>JavaScript で記述された</li>
+<li>LGPL でオープンソースな</li>
+<li>クロスプラットフォームの</li>
+<li>多言語対応もしてて</li>
+<li>簡単に使える</li>
+</ul>
+
+<p>ライブラリなんです。かなり使いやすいですよ。</p>
+
+<p>導入も簡単です。typoの場合、</p>
+
+<pre class="prettyprint"><code>&lt;script src=&quot;http://inforno.net/FCKeditor_install_path/fckeditor.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
+&lt;script language=&quot;javascript&quot;&gt;
+Event.observe(window, &quot;load&quot;, function(){
+  var list = [&quot;article_extended&quot;, &quot;article_body&quot;];
+  for(var i=0,l=list.length; i &lt; l; i++) {
+    var fck = new FCKeditor(list[i]);
+    fck.BasePath = &quot;FCKeditor_install_path&quot;;
+    fck.Config[&quot;CustomConfigurationsPath&quot;] = fck.BasePath + &quot;myconfig.js&quot;;
+    fck.Height = 400;
+    fck.ReplaceTextarea();
+  }
+});
+&lt;/script&gt;[/js]
+</code></pre>
+
+<p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
+
+<p><a href="/statics/files/fck.jpg"><img src="/statics/files/fck.thumbnail.jpg" alt="image" /></a></p>
+
+<p>海外ではAPIを使ったデスクトップクライアントが結構人気みたいですけど、日本じゃあんまり使ってる人聞かない・・・Typoもデフォルトはデスクトップクライアント使え！みたいな感じなんですけどFCKeditorで一件落着。便利便利。</p>
+
+  </div>
+</article>
+
+
+
+
+
+<nav class="paging"><ul><li class="previous"><a href="/page/26/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/23/" class="page">23</a></li><li><a href="/page/24/" class="page">24</a></li><li><a href="/page/25/" class="page">25</a></li><li><a href="/page/26/" class="page">26</a></li><li class="active">27</li><li class="next-off">Next&raquo;</li></ul></nav>
+
 
     </div>
 

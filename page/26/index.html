@@ -61,6 +61,97 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
+<h3 itemprop="name"><a href="/articles/2006/02/15/the-embed-javascript-implementation" itemprop="url">埋め込みjavascriptを実装してみました。</a></h3>
+<div class="meta">
+<time datetime="2006-02-15T01:09:43&#43;09:00">Feb 15, 2006</time>
+
+  
+  <span class="tag"><a href="/articles/tag/library/" rel="tag" itemprop="keywords">library</a></span>
+  
+  <span class="tag"><a href="/articles/tag/template/" rel="tag" itemprop="keywords">template</a></span>
+  
+  <span class="tag"><a href="/articles/tag/prototype_js/" rel="tag" itemprop="keywords">prototype_js</a></span>
+  
+  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
+  
+
+</div>
+</header>
+  <div itemprop="articleBody">
+    <p><a href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
+
+<p>同様の実装として <a href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
+
+<p><a href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
+
+<p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。 実際の動作はサンプルファイルを見ていただくとして</p>
+
+<p>lyase_view.jsの説明どおり</p>
+
+<pre class="prettyprint"><code>/*
+ *   using innerHTML
+ *   -------------
+ *   //in HTML
+ *   &lt;textarea id=&quot;template&quot; style=&quot;display:none&quot;&gt;
+ *     The value of x is:&lt; %= context.x%&gt;
+ *   &lt;/textarea&gt;
+ *   //code
+ *   document.write(Lyase.View.render({element:&quot;template&quot;}, {x : 10}));
+ *
+ *   using a template file
+ *   -------------
+ *   //in /template.jhtml
+ *   The value of x is:&lt; %= context.x%&gt;
+ *   //code
+ *   document.write(Lyase.View.render({file:&quot;/template.jhtml&quot;}, {x : 10}));
+ *
+ *   Of course, you can embed more complex codes.
+ *   //in HTML, with prototype.js
+ *   &lt;textarea id=&quot;template&quot; style=&quot;display:none&quot;&gt;
+ *     &lt; % context.list.each(function(pair){%&gt;
+ *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
+ *     &lt; % }) %&gt;
+ *   &lt;/textarea&gt;
+ *   //code
+ *   document.write(Lyase.View.render({element:&quot;template&quot;},
+ *     {list :[{name : &quot;x&quot;, value : 10}, {name : &quot;y&quot;, value : 20}]}));
+ */
+</code></pre>
+
+<p>こんな感じでjavascriptのコードが読み込めます。</p>
+
+<p>また</p>
+
+<pre class="prettyprint"><code>&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
+ この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
+
+
+以下のようにクロージャも問題なく使用できます。
+
+&lt; % var c = &quot;,&quot; %&gt;
+&lt; % context.list.each(function(num){ %&gt;
+  &lt; %= num+c %&gt;
+
+&lt; % })%&gt;
+
+&lt; %= render({file :&quot;./sample2.jhtml&quot;}, context)%&gt; &lt;!--ココに注目--!&gt;
+</code></pre>
+
+<p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
+
+<p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。 prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
+
+  </div>
+</article>
+
+
+  <hr class="list1sep" />
+
+
+
+
+<article itemscope itemtype="http://schema.org/Article">
+<header>
 <h3 itemprop="name"><a href="/articles/2006/02/06/garbled-multibyte-character-problem-in-live-search-on-typo" itemprop="url">Typoでlive search文字化け</a></h3>
 <div class="meta">
 <time datetime="2006-02-06T01:12:28&#43;09:00">Feb  6, 2006</time>
@@ -237,73 +328,10 @@ alert(&quot;c instanceof AClass:&quot;+(c instanceof AClass).toString()); //=&gt
 </article>
 
 
-  <hr class="list1sep" />
 
 
 
-
-<article itemscope itemtype="http://schema.org/Article">
-<header>
-<h3 itemprop="name"><a href="/articles/2006/01/22/fckeditor" itemprop="url">FCKEditor</a></h3>
-<div class="meta">
-<time datetime="2006-01-22T00:05:29&#43;09:00">Jan 22, 2006</time>
-
-  
-  <span class="tag"><a href="/articles/tag/javascript/" rel="tag" itemprop="keywords">javascript</a></span>
-  
-  <span class="tag"><a href="/articles/tag/fckeditor/" rel="tag" itemprop="keywords">fckeditor</a></span>
-  
-  <span class="tag"><a href="/articles/tag/typo/" rel="tag" itemprop="keywords">typo</a></span>
-  
-
-</div>
-</header>
-  <div itemprop="articleBody">
-    <p><a href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。 WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
-
-<p>こちらもTinyMCEと同じく</p>
-
-<ul>
-<li>JavaScript で記述された</li>
-<li>LGPL でオープンソースな</li>
-<li>クロスプラットフォームの</li>
-<li>多言語対応もしてて</li>
-<li>簡単に使える</li>
-</ul>
-
-<p>ライブラリなんです。かなり使いやすいですよ。</p>
-
-<p>導入も簡単です。typoの場合、</p>
-
-<pre class="prettyprint"><code>&lt;script src=&quot;http://inforno.net/FCKeditor_install_path/fckeditor.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
-&lt;script language=&quot;javascript&quot;&gt;
-Event.observe(window, &quot;load&quot;, function(){
-  var list = [&quot;article_extended&quot;, &quot;article_body&quot;];
-  for(var i=0,l=list.length; i &lt; l; i++) {
-    var fck = new FCKeditor(list[i]);
-    fck.BasePath = &quot;FCKeditor_install_path&quot;;
-    fck.Config[&quot;CustomConfigurationsPath&quot;] = fck.BasePath + &quot;myconfig.js&quot;;
-    fck.Height = 400;
-    fck.ReplaceTextarea();
-  }
-});
-&lt;/script&gt;[/js]
-</code></pre>
-
-<p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
-
-<p><a href="/statics/files/fck.jpg"><img src="/statics/files/fck.thumbnail.jpg" alt="image" /></a></p>
-
-<p>海外ではAPIを使ったデスクトップクライアントが結構人気みたいですけど、日本じゃあんまり使ってる人聞かない・・・Typoもデフォルトはデスクトップクライアント使え！みたいな感じなんですけどFCKeditorで一件落着。便利便利。</p>
-
-  </div>
-</article>
-
-
-
-
-
-<nav class="paging"><ul><li class="previous"><a href="/page/25/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/22/" class="page">22</a></li><li><a href="/page/23/" class="page">23</a></li><li><a href="/page/24/" class="page">24</a></li><li><a href="/page/25/" class="page">25</a></li><li class="active">26</li><li class="next-off">Next&raquo;</li></ul></nav>
+<nav class="paging"><ul><li class="previous"><a href="/page/25/" rel="prev" class="page">&laquo;Previous</a></li><li><a href="/page/1/" class="page">1</a></li><li>&nbsp;&nbsp;.......&nbsp;&nbsp;</li><li><a href="/page/22/" class="page">22</a></li><li><a href="/page/23/" class="page">23</a></li><li><a href="/page/24/" class="page">24</a></li><li><a href="/page/25/" class="page">25</a></li><li class="active">26</li><li><a href="/page/27/" class="page">27</a></li><li class="next"><a href="/page/27/" rel="next" class="page">Next&raquo;</a></li></ul></nav>
 
 
     </div>
