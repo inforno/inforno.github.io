@@ -61,45 +61,90 @@
 
 <article itemscope itemtype="http://schema.org/Article">
 <header>
-<h3 itemprop="name"><a href="/articles/2019/12/25/hugo-now-uses-goldmark" itemprop="url">goldmarkがHugoに採用された</a></h3>
+<h3 itemprop="name"><a href="/articles/2023/07/22/object-mapper-written-in-go" itemprop="url">Go言語用のObject mapper generatorを書いた</a></h3>
 <div class="meta">
-<time datetime="2019-12-25T02:22:51&#43;09:00">Dec 25, 2019</time>
+<time datetime="2023-07-22T20:14:03&#43;09:00">Jul 22, 2023</time>
 
   
   <span class="tag"><a href="/articles/tag/golang/" rel="tag" itemprop="keywords">golang</a></span>
-  
-  <span class="tag"><a href="/articles/tag/goldmark/" rel="tag" itemprop="keywords">goldmark</a></span>
   
 
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>ちょっと前の話ですが、<a href="http://github.com/yuin/goldmark">goldmark</a>が
-<a href="https://gohugo.io/news/0.60.0-relnotes/">HugoのMarkdownレンダラーに採用されました</a>。</p>
+    <p>Go言語で構造体と構造体をマッピングする、いわゆるObject mapperを生成するCLIを書きました。</p>
 
-<p>(しかし、このブログはHogoではなく独自のプログラムで生成されているのであった…)</p>
+<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/sesame" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
 
-<p>やっぱりblackfridayに対する不満というのはGo界隈ではそこそこあったんだなあ、というのと
-単純にこう、自分の書いたコードが評価されるっていうのはうれしいし自信につながりますね。</p>
+<h2>経緯</h2>
 
-<p>柔軟な拡張性を担保しつつ、CommonMark仕様を実装するというのは実はかなり難易度が高くこれを
-実現しているライブラリは多言語ふくめてもそれほどないので頑張ってよかったなあと。</p>
+<p>READMEに書いてる通りですが、いわゆるClean architectureなど多層構造のアプリケーションではどうしても
+似たようなオブジェクトを定義せざるを得ないことがあります。</p>
 
-<p>本当はGoのAdventカレンダーで実装の詳細やパフォーマンスチューニングの話など書こうかなと
-思ってたんですけどあっという間に埋まってしまい。Adventカレンダー最終日のポエムです。</p>
+<p>特にキツい(?)のがgRPCを採用した場合ですね。 <code>protoc</code>が吐く構造体は完全に<code>protobuf</code>に依存したものになっており
+ある程度層をまたいで同じオブジェクトを持っていくのは許容しよう、と割り切ってもこれをいわゆるドメイン層に
+そのままもっていくのは結構ハードルが高いのではないかと思います。</p>
 
-<hr />
+<p>＃あと、<code>gogo/protobuf</code> 亡き今、protoc-gen-goが非標準命名規則でソースコードを出力するのもキモチワルイ。。。</p>
 
-<p>2019年も終わりが近づいてますが、まだ自分の書くコードは世界にある程度通用するなあ、という
-自信も得られたので来年こそは転職活動に本腰を入れて、もう一度ソフトウェアエンジニアとして
-勝負してみたいなあ、と思っております。仕事でGo書きたいほんとに。</p>
+<p>WEB上にいっぱいあるGo + gRPCのクリーンアーキテクチャサンプル的なものでもここはかならず似たオブジェクトに
+詰め替えています。GoにはJavaにおけるDTOのような歴史はあまりないですし、アーキテクチャ上必要なことなんだから
+手で書くべき、という人もいますがとはいっても項目数が多くなってくるとつらいですよね。</p>
 
-<p>話だけでも聞いてみたいなーというのはいろいろあるんですけど、そういうの、雇う側からすると
-冷やかしちっくでやっぱり嫌なものなんですかね。
-冷やかしでもいいよーとか、よい話があればGithubにあるメアドなりに連絡ください笑</p>
+<p>これをある程度自動で詰め替えるライブラリはリフレクションを使ったものはそれなりにあるのですが、経験上</p>
 
-<p>メリークリスマス。
-よいお年を。</p>
+<ul>
+<li>リフレクションを使ったものはデバッグがつらい
+
+<ul>
+<li>項目が多くなってきたときに、1つだけなんかマッピングされてない！というときになんでマッピングされてないの？
+というのがわかりづらい</li>
+</ul></li>
+<li>性能が微妙
+
+<ul>
+<li>いくらGoのリフレクションが早いといってもリフレクション使わないコードよりは当たり前だが遅い</li>
+</ul></li>
+</ul>
+
+<p>ということで、コード生成してくれるタイプのものが欲しかったんですがいいのが無かったので書いた、という次第です。</p>
+
+<h2>できること</h2>
+
+<p>構造体と構造体をマッピングするインタフェースと実装を生成できます。マッピング定義はYAMLに記載、結構柔軟に定義できます。
+ネストしたものも再帰的にマッピングできます。</p>
+
+<ul>
+<li>例: <code>string</code>と<code>time.Time</code>をマッピングするものを登録しておけば自動的にこれらのフィールドを持つ構造体を変換可能</li>
+</ul>
+
+<p>比較的にきれいな(自分的には)インタフェースを吐くので最悪、このツール使うのやめようとなってもインタフェースに対する実装を
+自分で書けばよいだけです。生成するソースはこんな感じ</p>
+
+<pre class="prettyprint"><code class="language-go">package mapper
+
+import (
+    pkg00002 &quot;time&quot;
+
+    pkg00001 &quot;example.com/testmod/domain&quot;
+    pkg00000 &quot;example.com/testmod/model&quot;
+)
+
+type TodoMapperHelper interface {
+    ModelToEntity(*pkg00000.TodoModel, *pkg00001.Todo) error
+    EntityToModel(*pkg00001.Todo, *pkg00000.TodoModel) error
+}
+
+type TodoMapper interface {
+    ModelToEntity(*pkg00000.TodoModel) (*pkg00001.Todo, error)
+    EntityToModel(*pkg00001.Todo) (*pkg00000.TodoModel, error)
+}
+
+// ... (TodoMapper default implementation)
+</code></pre>
+
+<p>Goでの構造体のマッピング、結構どうにかしたいと思いつつとりあえず全部手でやってました、という人も多いと思うので
+もしよければ使ってみてください。</p>
 
   </div>
 </article>

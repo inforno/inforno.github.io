@@ -7,48 +7,93 @@
     <copyright>Yusuke Inuzuka</copyright>
     
     
-    <lastBuildDate>24 Dec 19 17:22 UTC</lastBuildDate>
+    <lastBuildDate>22 Jul 23 11:14 UTC</lastBuildDate>
     
     <generator>silkylog</generator>
     
     
     <item>
-      <title>goldmarkがHugoに採用された </title>
-      <link>http://inforno.net/articles/2019/12/25/hugo-now-uses-goldmark</link>
-      <description>&lt;p&gt;ちょっと前の話ですが、&lt;a href=&#34;http://github.com/yuin/goldmark&#34;&gt;goldmark&lt;/a&gt;が
-&lt;a href=&#34;https://gohugo.io/news/0.60.0-relnotes/&#34;&gt;HugoのMarkdownレンダラーに採用されました&lt;/a&gt;。&lt;/p&gt;
+      <title>Go言語用のObject mapper generatorを書いた </title>
+      <link>http://inforno.net/articles/2023/07/22/object-mapper-written-in-go</link>
+      <description>&lt;p&gt;Go言語で構造体と構造体をマッピングする、いわゆるObject mapperを生成するCLIを書きました。&lt;/p&gt;
 
-&lt;p&gt;(しかし、このブログはHogoではなく独自のプログラムで生成されているのであった…)&lt;/p&gt;
+&lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/sesame&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
 
-&lt;p&gt;やっぱりblackfridayに対する不満というのはGo界隈ではそこそこあったんだなあ、というのと
-単純にこう、自分の書いたコードが評価されるっていうのはうれしいし自信につながりますね。&lt;/p&gt;
+&lt;h2&gt;経緯&lt;/h2&gt;
 
-&lt;p&gt;柔軟な拡張性を担保しつつ、CommonMark仕様を実装するというのは実はかなり難易度が高くこれを
-実現しているライブラリは多言語ふくめてもそれほどないので頑張ってよかったなあと。&lt;/p&gt;
+&lt;p&gt;READMEに書いてる通りですが、いわゆるClean architectureなど多層構造のアプリケーションではどうしても
+似たようなオブジェクトを定義せざるを得ないことがあります。&lt;/p&gt;
 
-&lt;p&gt;本当はGoのAdventカレンダーで実装の詳細やパフォーマンスチューニングの話など書こうかなと
-思ってたんですけどあっという間に埋まってしまい。Adventカレンダー最終日のポエムです。&lt;/p&gt;
+&lt;p&gt;特にキツい(?)のがgRPCを採用した場合ですね。 &lt;code&gt;protoc&lt;/code&gt;が吐く構造体は完全に&lt;code&gt;protobuf&lt;/code&gt;に依存したものになっており
+ある程度層をまたいで同じオブジェクトを持っていくのは許容しよう、と割り切ってもこれをいわゆるドメイン層に
+そのままもっていくのは結構ハードルが高いのではないかと思います。&lt;/p&gt;
 
-&lt;hr /&gt;
+&lt;p&gt;＃あと、&lt;code&gt;gogo/protobuf&lt;/code&gt; 亡き今、protoc-gen-goが非標準命名規則でソースコードを出力するのもキモチワルイ。。。&lt;/p&gt;
 
-&lt;p&gt;2019年も終わりが近づいてますが、まだ自分の書くコードは世界にある程度通用するなあ、という
-自信も得られたので来年こそは転職活動に本腰を入れて、もう一度ソフトウェアエンジニアとして
-勝負してみたいなあ、と思っております。仕事でGo書きたいほんとに。&lt;/p&gt;
+&lt;p&gt;WEB上にいっぱいあるGo &#43; gRPCのクリーンアーキテクチャサンプル的なものでもここはかならず似たオブジェクトに
+詰め替えています。GoにはJavaにおけるDTOのような歴史はあまりないですし、アーキテクチャ上必要なことなんだから
+手で書くべき、という人もいますがとはいっても項目数が多くなってくるとつらいですよね。&lt;/p&gt;
 
-&lt;p&gt;話だけでも聞いてみたいなーというのはいろいろあるんですけど、そういうの、雇う側からすると
-冷やかしちっくでやっぱり嫌なものなんですかね。
-冷やかしでもいいよーとか、よい話があればGithubにあるメアドなりに連絡ください笑&lt;/p&gt;
+&lt;p&gt;これをある程度自動で詰め替えるライブラリはリフレクションを使ったものはそれなりにあるのですが、経験上&lt;/p&gt;
 
-&lt;p&gt;メリークリスマス。
-よいお年を。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;リフレクションを使ったものはデバッグがつらい
+
+&lt;ul&gt;
+&lt;li&gt;項目が多くなってきたときに、1つだけなんかマッピングされてない！というときになんでマッピングされてないの？
+というのがわかりづらい&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;性能が微妙
+
+&lt;ul&gt;
+&lt;li&gt;いくらGoのリフレクションが早いといってもリフレクション使わないコードよりは当たり前だが遅い&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;ということで、コード生成してくれるタイプのものが欲しかったんですがいいのが無かったので書いた、という次第です。&lt;/p&gt;
+
+&lt;h2&gt;できること&lt;/h2&gt;
+
+&lt;p&gt;構造体と構造体をマッピングするインタフェースと実装を生成できます。マッピング定義はYAMLに記載、結構柔軟に定義できます。
+ネストしたものも再帰的にマッピングできます。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;例: &lt;code&gt;string&lt;/code&gt;と&lt;code&gt;time.Time&lt;/code&gt;をマッピングするものを登録しておけば自動的にこれらのフィールドを持つ構造体を変換可能&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;比較的にきれいな(自分的には)インタフェースを吐くので最悪、このツール使うのやめようとなってもインタフェースに対する実装を
+自分で書けばよいだけです。生成するソースはこんな感じ&lt;/p&gt;
+
+&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;package mapper
+
+import (
+    pkg00002 &amp;quot;time&amp;quot;
+
+    pkg00001 &amp;quot;example.com/testmod/domain&amp;quot;
+    pkg00000 &amp;quot;example.com/testmod/model&amp;quot;
+)
+
+type TodoMapperHelper interface {
+    ModelToEntity(*pkg00000.TodoModel, *pkg00001.Todo) error
+    EntityToModel(*pkg00001.Todo, *pkg00000.TodoModel) error
+}
+
+type TodoMapper interface {
+    ModelToEntity(*pkg00000.TodoModel) (*pkg00001.Todo, error)
+    EntityToModel(*pkg00001.Todo) (*pkg00000.TodoModel, error)
+}
+
+// ... (TodoMapper default implementation)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Goでの構造体のマッピング、結構どうにかしたいと思いつつとりあえず全部手でやってました、という人も多いと思うので
+もしよければ使ってみてください。&lt;/p&gt;
 </description>
       
       <category>golang</category>
       
-      <category>goldmark</category>
-      
-      <guid isPermaLink="true">http://inforno.net/articles/2019/12/25/hugo-now-uses-goldmark</guid>
-      <pubDate>24 Dec 19 17:22 UTC</pubDate>
+      <guid isPermaLink="true">http://inforno.net/articles/2023/07/22/object-mapper-written-in-go</guid>
+      <pubDate>22 Jul 23 11:14 UTC</pubDate>
     </item>
     
     <item>
