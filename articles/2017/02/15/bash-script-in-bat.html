@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,28 +71,20 @@
 </header>
   <div itemprop="articleBody">
     <p>相変わらずメインのマシンはWindowsなのですが、batファイルのもろもろがいつまでも覚えられず、bashスクリプトで書きたいなあ、ということでbatファイルにbashスクリプトを埋め込むことにしました。 Cでつくった自作用ツールがあるため、Windowsにはかならずmsys2をいれているのでbashは絶対あるんですよね。</p>
-
 <p>その他の言語を埋め込む方法は</p>
-
 <ul>
 <li><a href="http://qiita.com/snipsnipsnip/items/50e4ca88e3ce3f8cffda">Windowsでshebangもどき、またはバッチにスクリプトを埋め込む方法</a></li>
 </ul>
-
 <p>が詳しいです。</p>
-
-<h1>シェルスクリプトをバッチファイルに埋め込む</h1>
-
+<h1 id="heading">シェルスクリプトをバッチファイルに埋め込む</h1>
 <p>以下のようにすると、バッチファイルにシェルスクリプト(bashスクリプト)を埋め込むことにできます。拡張子 <code>.bat</code> で保存すると <code>cmd.exe</code> からもmsys2の <code>bash.exe</code> からも起動できます。</p>
-
-<pre class="prettyprint"><code>:rem () { &lt;&lt;'#__CO__'
-@bash  &quot;%~f0&quot; %* &amp; exit /b
-#__CO__
-}
-
-echo 以下普通にシェルスクリプト
-</code></pre>
-
-<p>仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、<code>:</code> コマンドやらをうまく利用して埋め込んでいます。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>:rem () { &lt;&lt;&#39;#__CO__&#39;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>@bash  &#34;%~f0&#34; %* &amp; exit /b
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>#__CO__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>echo 以下普通にシェルスクリプト
+</span></span></code></pre><p>仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、<code>:</code> コマンドやらをうまく利用して埋め込んでいます。</p>
 
 
     <div class="seealso">
@@ -104,7 +94,7 @@ echo 以下普通にシェルスクリプト
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2017/02/15/bash-script-in-bat" class="hatena-bookmark-button" data-hatena-bookmark-title="batの中にbashスクリフﾟトを埋め込む方法" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2017/02/15/bash-script-in-bat" class="hatena-bookmark-button" data-hatena-bookmark-title="batの中にbashスクリフﾟトを埋め込む方法" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

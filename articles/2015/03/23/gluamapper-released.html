@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,50 +73,44 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="https://github.com/yuin/gopher-lua">GopherLua</a> で設定ファイルを書くためのライブラリを書きました。設定ファイル以外にも使えますけど。</p>
-
-<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/gluamapper" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
-
+<div data-theme="default" data-height="150" data-width="400" data-github="yuin/gluamapper" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script>
 <p>モノとしてはGopherLuaのテーブルをGoの構造体にマップしてくれます。といっても、内部動作的にはHashicorpの <a href="https://github.com/mitchellh/mapstructure">mapstructure</a> を使っているだけだったりします。一度GopherLuaのテーブルを <code>map[string]interface{}</code> に変換してあげて、あとはmapstructureにおまかせ。</p>
-
 <p>ただ、一般的なLuaの命名規則とGoの命名規則が違うので名前を変換する関数が指定できます。デフォルトでは <code>snake_case</code> を <code>CamelCase</code> に変換します。</p>
-
-<pre class="prettyprint"><code class="language-go">type Role struct {
-    Name string
-}
-
-type Person struct {
-    Name      string
-    Age       int
-    WorkPlace string
-    Role      []*Role
-}
-
-L := lua.NewState()
-if err := L.DoString(`
-person = {
-  name = &quot;Michel&quot;,
-  age  = &quot;31&quot;, -- weakly input
-  work_place = &quot;San Jose&quot;,
-  role = {
-    {
-      name = &quot;Administrator&quot;
-    },
-    {
-      name = &quot;Operator&quot;
-    }
-  }
-}
-`); err != nil {
-    panic(err)
-}
-var person Person
-if err := gluamapper.Map(L.GetGlobal(&quot;person&quot;).(*lua.LTable), &amp;person); err != nil {
-    panic(err)
-}
-fmt.Printf(&quot;%s %d&quot;, person.Name, person.Age)
-</code></pre>
-
-<p>のように非常に簡単にLuaを設定ファイルとして使うことができます。Luaは可読性が高く、JSONと異なりコメントが書けて、YAMLよりも簡単に値を変数化できるので設定ファイルにすると便利です(なんでも出来てしまう、というのがネックと言えばネックですが)。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Role</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    <span style="color:#a6e22e">Name</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Person</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    <span style="color:#a6e22e">Name</span>      <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    <span style="color:#a6e22e">Age</span>       <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    <span style="color:#a6e22e">WorkPlace</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#a6e22e">Role</span>      []<span style="color:#f92672">*</span><span style="color:#a6e22e">Role</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#a6e22e">L</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">NewState</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">DoString</span>(<span style="color:#e6db74">`
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#e6db74">person = {
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#e6db74">  name = &#34;Michel&#34;,
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#e6db74">  age  = &#34;31&#34;, -- weakly input
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span><span style="color:#e6db74">  work_place = &#34;San Jose&#34;,
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span><span style="color:#e6db74">  role = {
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span><span style="color:#e6db74">    {
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span><span style="color:#e6db74">      name = &#34;Administrator&#34;
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span><span style="color:#e6db74">    },
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span><span style="color:#e6db74">    {
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span><span style="color:#e6db74">      name = &#34;Operator&#34;
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span><span style="color:#e6db74">    }
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span><span style="color:#e6db74">  }
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span><span style="color:#e6db74">}
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span><span style="color:#e6db74">`</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">person</span> <span style="color:#a6e22e">Person</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gluamapper</span>.<span style="color:#a6e22e">Map</span>(<span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">GetGlobal</span>(<span style="color:#e6db74">&#34;person&#34;</span>).(<span style="color:#f92672">*</span><span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LTable</span>), <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">person</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;%s %d&#34;</span>, <span style="color:#a6e22e">person</span>.<span style="color:#a6e22e">Name</span>, <span style="color:#a6e22e">person</span>.<span style="color:#a6e22e">Age</span>)
+</span></span></code></pre><p>のように非常に簡単にLuaを設定ファイルとして使うことができます。Luaは可読性が高く、JSONと異なりコメントが書けて、YAMLよりも簡単に値を変数化できるので設定ファイルにすると便利です(なんでも出来てしまう、というのがネックと言えばネックですが)。</p>
 
 
     <div class="seealso">
@@ -134,7 +126,7 @@ fmt.Printf(&quot;%s %d&quot;, person.Name, person.Age)
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2015/03/23/gluamapper-released" class="hatena-bookmark-button" data-hatena-bookmark-title="GopherLuaを設定ファイルで使うライブラリを書きました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2015/03/23/gluamapper-released" class="hatena-bookmark-button" data-hatena-bookmark-title="GopherLuaを設定ファイルで使うライブラリを書きました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

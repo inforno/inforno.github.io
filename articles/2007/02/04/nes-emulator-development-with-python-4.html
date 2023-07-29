@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -76,63 +74,40 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p><img src="/statics/files/pynes1.jpg" alt="image" /></p>
-
+    <p><img src="/statics/files/pynes1.jpg" alt="image"></p>
 <p>パッド入力部分を書いたので、動くゲームも出てきました。といってもまだほとんどのゲームが動かないんですけど。画面は <a href="http://hp.vector.co.jp/authors/VA042397/nes/games.html">ブルジョアソフトウェア研究所</a> さんのTkShoot 1.00が動作している様子です。</p>
-
 <p>さて、ここまできたので基本的にはこの企画も終了かなー、という感じがします。目的はPythonのパフォーマンスについて知ることだったので。</p>
-
 <p>作成の過程でかなりPythonのパフォーマンス関連について勉強ができてよかったと思います。</p>
-
-<h1>速度</h1>
-
+<h1 id="heading">速度</h1>
 <p>サウンドは作っていないので、それを除くと1frameだいたい0.4秒弱くらいで動きます(もちろんpsycoを導入して)。変にベタ書きしたりはしていません。わりとメソッドはちゃんと分割しています。ただ、LDA $ssss(absolute addressingのLDA)だけ、実行回数が多いので完全にベタ書きしました。</p>
-
 <p>んで感じたのは</p>
-
 <ul>
 <li>プリプロセッサでマクロを使えばそこそこ実用的な速度になりえるのではないか</li>
 <li><a href="http://bytecodehacks.sourceforge.net/bch-docs/bch/index.html">bytecodehacks</a> でインライン化すれば結構いけるんじゃないか。ただし、bytecodehacksがオブジェクトのメソッドには対応していないので、classを使わずに書くことになる。</li>
 <li>部分的にCで拡張モジュールを書けば、わりといけそう</li>
 </ul>
-
 <p>ってことでしょうか。</p>
-
 <p>まぁただ、JAVAとかC系全く分かりません＞＜っていう人以外は、素直にC系かJAVAで書いたほうがいいと思います。</p>
-
 <p>高速化のためにオブジェクトのプロパティをローカルにだしたり</p>
-
-<pre class="prettyprint"><code>read = self.memory.read
-write = self.memory.write
-# .
-# .
-  for i in xrange(foo):
-    code = read(addr)
-    # .
-    # .
-    # .
-</code></pre>
-
-<p>するので、無駄に行数も増えますし、ぶっちゃけ読みにくいです。それでも普段使い慣れてるLLで書けるってのは大きな利点だとは思います。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>read = self.memory.read
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>write = self.memory.write
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span># .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span># .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>  for i in xrange(foo):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>    code = read(addr)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>    # .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>    # .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>    # .
+</span></span></code></pre><p>するので、無駄に行数も増えますし、ぶっちゃけ読みにくいです。それでも普段使い慣れてるLLで書けるってのは大きな利点だとは思います。</p>
 <p>10年くらいして、マシンがもっと速くなることに期待しましょう、ということで（笑</p>
-
-<h1>その他雑感</h1>
-
+<h1 id="heading-1">その他雑感</h1>
 <p>現時点でも単純なゲームくらいなら、そこそこ動くのでコンピューターの仕組みの基礎を学ぶには、もしかしたらLLでエミュレータってのはいいかも。当然ですけど、デバッグの段階ではアセンブリ言語を書くことになりますし、そのアセンブリ言語の内容も完全に自分で処理するわけですから、単に本で読むよりは格段CPUやメモリについて詳しくなれると思います。ただ、CPUの仕組みを勉強しながら書くのはきついものがあるかもしれませんが・・・</p>
-
 <p>他の利点としては「俺エミュレータ書いたんだぜ」と自慢できる（笑）、自分の書いたエミュレータでゲームが動くと結構感動できる、というくらいでしょうか。</p>
-
-<hr />
-
+<hr>
 <p>というわけで、とりあえず動くようになりました。今のところソースをアップする気はないです。（してもほとんどのゲームは動かないし意味無い）</p>
-
 <p>確実にいないと思いますが、もし、「俺もLLでエミュレータ書いてみるんだぜ！だからお前のしょーもないソースも参考にしてやるから見せるんだぜ！ついでにエミュってどうやって作るのか教えるんだぜ！」というような方や「おめーソースがないのに信用できるか！」という方がおられましたら、この記事のコメント欄やはてブなんかのコメントに、「うｐ」とか書いてください。適当にソースまとめてうｐして、それをネタに簡単なエミュの書き方でも記事にします（笑</p>
-
 <p>まぁとにかく書いてて楽しかったです。チャレンジ精神旺盛な方、そして時間があまっている方は是非LLでエミュにチャレンジしてみてください。</p>
-
 <p>#追記　 アップしました。コチラの記事へドウゾ。</p>
-
 <p><a href="/articles/2007/03/02/nes-emulator-development-with-python-5">PythonによるNESエミュレータ開発5</a></p>
 
 
@@ -149,7 +124,7 @@ write = self.memory.write
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/02/04/nes-emulator-development-with-python-4" class="hatena-bookmark-button" data-hatena-bookmark-title="PythonによるNESエミュレータ開発4" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/02/04/nes-emulator-development-with-python-4" class="hatena-bookmark-button" data-hatena-bookmark-title="PythonによるNESエミュレータ開発4" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

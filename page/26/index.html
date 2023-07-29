@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -79,66 +77,54 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
-
 <p>同様の実装として <a href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
-
 <p><a href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
-
 <p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。 実際の動作はサンプルファイルを見ていただくとして</p>
-
 <p>lyase_view.jsの説明どおり</p>
-
-<pre class="prettyprint"><code>/*
- *   using innerHTML
- *   -------------
- *   //in HTML
- *   &lt;textarea id=&quot;template&quot; style=&quot;display:none&quot;&gt;
- *     The value of x is:&lt; %= context.x%&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:&quot;template&quot;}, {x : 10}));
- *
- *   using a template file
- *   -------------
- *   //in /template.jhtml
- *   The value of x is:&lt; %= context.x%&gt;
- *   //code
- *   document.write(Lyase.View.render({file:&quot;/template.jhtml&quot;}, {x : 10}));
- *
- *   Of course, you can embed more complex codes.
- *   //in HTML, with prototype.js
- *   &lt;textarea id=&quot;template&quot; style=&quot;display:none&quot;&gt;
- *     &lt; % context.list.each(function(pair){%&gt;
- *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
- *     &lt; % }) %&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:&quot;template&quot;},
- *     {list :[{name : &quot;x&quot;, value : 10}, {name : &quot;y&quot;, value : 20}]}));
- */
-</code></pre>
-
-<p>こんな感じでjavascriptのコードが読み込めます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>/*
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span> *   using innerHTML
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span> *   -------------
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span> *   //in HTML
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span> *   &lt;textarea id=&#34;template&#34; style=&#34;display:none&#34;&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span> *     The value of x is:&lt; %= context.x%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span> *   &lt;/textarea&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span> *   //code
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span> *   document.write(Lyase.View.render({element:&#34;template&#34;}, {x : 10}));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span> *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span> *   using a template file
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span> *   -------------
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span> *   //in /template.jhtml
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span> *   The value of x is:&lt; %= context.x%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span> *   //code
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span> *   document.write(Lyase.View.render({file:&#34;/template.jhtml&#34;}, {x : 10}));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span> *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span> *   Of course, you can embed more complex codes.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span> *   //in HTML, with prototype.js
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span> *   &lt;textarea id=&#34;template&#34; style=&#34;display:none&#34;&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span> *     &lt; % context.list.each(function(pair){%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span> *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span> *     &lt; % }) %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span> *   &lt;/textarea&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span> *   //code
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span> *   document.write(Lyase.View.render({element:&#34;template&#34;},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span> *     {list :[{name : &#34;x&#34;, value : 10}, {name : &#34;y&#34;, value : 20}]}));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span> */
+</span></span></code></pre><p>こんな感じでjavascriptのコードが読み込めます。</p>
 <p>また</p>
-
-<pre class="prettyprint"><code>&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
- この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
-
-
-以下のようにクロージャも問題なく使用できます。
-
-&lt; % var c = &quot;,&quot; %&gt;
-&lt; % context.list.each(function(num){ %&gt;
-  &lt; %= num+c %&gt;
-
-&lt; % })%&gt;
-
-&lt; %= render({file :&quot;./sample2.jhtml&quot;}, context)%&gt; &lt;!--ココに注目--!&gt;
-</code></pre>
-
-<p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span> この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>以下のようにクロージャも問題なく使用できます。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>&lt; % var c = &#34;,&#34; %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>&lt; % context.list.each(function(num){ %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  &lt; %= num+c %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>&lt; % })%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>&lt; %= render({file :&#34;./sample2.jhtml&#34;}, context)%&gt; &lt;!--ココに注目--!&gt;
+</span></span></code></pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
 <p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。 prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
 
   </div>
@@ -168,27 +154,22 @@
 </header>
   <div itemprop="articleBody">
     <p>Typoでのlive search文字化けについては多くのブログで解決策が示されています。</p>
-
 <ul>
 <li><a href="http://www.flatz.jp/articles/2005/12/14/live-search%E3%82%92%E7%9B%B4%E3%81%97%E3%81%9F%E3%82%88%E3%80%82">live searchの文字化けを修正</a></li>
 <li><a href="http://typo.ctrl.jp/articles/2005/11/14/typo2.6.0-release-to-live-search-no-nihongo-bug">Typo2.6.0リリースとLive Searhの日本語バグ</a></li>
 </ul>
-
 <p>最新でもやっぱり文字化けしているわけで。 僕も直してみました。</p>
-
-<pre class="prettyprint"><code>Index: app/views/shared/_search.rhtml
-===================================================================
---- app/views/shared/_search.rhtml      (revision 850)
-+++ app/views/shared/_search.rhtml      (working copy)
-@@ -7,4 +7,4 @@
-     :loading =&gt; &quot;Element.show('search_spinner')&quot;,
-     :complete =&gt; &quot;Element.hide('search_spinner')&quot;,
-     :update =&gt; &quot;search-results&quot;,
--    :with =&gt; &quot;'q=' + escape($F('q'))&quot; -%&gt;
-+    :with =&gt; &quot;'q=' + encodeURIComponent($F('q'))&quot; -%&gt;
-</code></pre>
-
-<p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・） あ、このファイルはテーマにも含まれてますので注意です。 てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・ ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>Index: app/views/shared/_search.rhtml
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>===================================================================
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>--- app/views/shared/_search.rhtml      (revision 850)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>+++ app/views/shared/_search.rhtml      (working copy)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>@@ -7,4 +7,4 @@
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>     :loading =&gt; &#34;Element.show(&#39;search_spinner&#39;)&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>     :complete =&gt; &#34;Element.hide(&#39;search_spinner&#39;)&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>     :update =&gt; &#34;search-results&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>-    :with =&gt; &#34;&#39;q=&#39; + escape($F(&#39;q&#39;))&#34; -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>+    :with =&gt; &#34;&#39;q=&#39; + encodeURIComponent($F(&#39;q&#39;))&#34; -%&gt;
+</span></span></code></pre><p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・） あ、このファイルはテーマにも含まれてますので注意です。 てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・ ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
 
   </div>
 </article>
@@ -215,113 +196,101 @@
 </header>
   <div itemprop="articleBody">
     <p>Mochikitも好きですが、普段はRails使いということもあってprototype.jsを使っています。</p>
-
 <p>そういえばjavascriptのライブラリでOOなもの、ということで初めて出会ったのは <a href="http://jsolait.net">jsolait</a> でした。 当時の印象としては「んー確かにがんばってるんだけど・・・ちょっと大げさっていうか・・・」って感じでした。</p>
-
 <p>そして去年、prototype.jsに出会うわけですが「class-style OO」とうたっている部分がかなりシンプル（すぎ）で衝撃でした。</p>
-
 <p>ただ、やっぱりjavascriptにおいて「継承」というのはやっかいな問題です。 というわけで誰か作ってると思うんですが、より簡単に継承できるライブラリを作ってみました。</p>
-
-<pre class="prettyprint"><code>Class.def = function(definition) {
-  var klass = Class.create();
-  if(definition.__extend__)
-    Class.inherit(klass, definition.__extend__);
-  if(definition.__static__)
-    Object.extend(klass, definition.__static__);
-  if(definition.__include__) {
-    if(definition.__include__.constructor != Array)
-      definition.__include__ = [definition.__include__];
-    definition.__include__.each(function(include){
-      Object.extend(klass.prototype, include);
-    });
-  }
-  [&quot;__static__&quot;,&quot;__extend__&quot;,&quot;__include__&quot;].each(function(n){delete definition[n];}
-  Object.extend(klass.prototype, definition);
-  return klass;
-}    
-
-Class.inherit = function(child, parent) {
-  Object.extend(child, parent);
-  child.__super__ = parent.prototype;
-  var dummy = function(){};
-  dummy.prototype = parent.prototype;
-  child.prototype = new dummy();
-  child.prototype.constructor = child;
-  return child;
-}
-</code></pre>
-
-<p>こんだけです。 使い方はサンプルをみるほうがわかりやすいと思うので、サンプルをどーぞ。</p>
-
-<pre class="prettyprint"><code>var IncludedClass = Class.def({
-  __static__ : {
-    includedMethod : function() {
-      return &quot;includedMethod:&quot;+this.value;
-    }
-  }
-});    
-
-var AClass = Class.def({__include__ : IncludedClass,
-  __static__ : {
-    A : &quot;A static&quot;
-  },
-
-  initialize : function(val) {
-    if(!val) throw &quot;error&quot;;
-    this.val = val;
-    this.klass = &quot;AClass&quot;;
-  },
-
-  inspect : function() {
-    return &quot;&lt; &quot;+this.klass+&quot; : &quot;+this.val+&quot;&gt;&quot;;
-  }
-});
-
-var BClass = Class.def({ __extend__ : AClass,
-  __static__ : {
-    B : &quot;B static&quot;
-  },
-
-  initialize : function(val) {
-    BClass.__super__.initialize.call(this, val);
-    this.klass = &quot;BClass&quot;;
-  }
-});
-
-var CClass = Class.def({ __extend__ : BClass,
-  __static__ : {
-    C : &quot;C static&quot;
-  },
-
-    initialize : function(val) {
-      CClass.__super__.initialize.call(this, val);
-      this.klass = &quot;CClass&quot;;
-    }
-});
-
-var a = new AClass(&quot;aaaaaaa&quot;);
-var b = new BClass(&quot;bbbbbbb&quot;);
-var c = new CClass(&quot;ccccccc&quot;);
-alert(&quot;a inspect:&quot;+a.inspect()); //=&gt; a inspect:
-alert(&quot;b inspect:&quot;+b.inspect()); //=&gt; b inspect:
-alert(&quot;c inspect:&quot;+c.inspect()); //=&gt; c inspect:
-alert(&quot;includedMethod:&quot;+a.includedMethod()); //=&gt; includedMethod:included aaaaaa
-alert(&quot;CClass.A:&quot;+CClass.A); //=&gt; CClass.A:A static
-alert(&quot;CClass.B:&quot;+CClass.B); //=&gt; CClass.B:B static
-alert(&quot;CClass.C:&quot;+CClass.C); //=&gt; CClass.C:C static
-alert(&quot;b.constructor = a.constructor:&quot;+(b.constructor == a.constructor).toString()); //=&gt;b.constructor = a.constructor:false
-alert(&quot;b instanceof BClass:&quot;+(b instanceof BClass).toString()); //=&gt;b instanceof BClass:true
-alert(&quot;b instanceof AClass:&quot;+(b instanceof AClass).toString()); //=&gt;b instanceof AClass:true
-alert(&quot;c instanceof BClass:&quot;+(c instanceof BClass).toString()); //=&gt;c instanceof BClass:true
-alert(&quot;c instanceof AClass:&quot;+(c instanceof AClass).toString()); //=&gt;c instanceof AClass:true&lt;/div&gt;
-</code></pre>
-
-<p>継承の処理がかなり楽になっていると思います。 テキトーに場当たりで単純にnewを使って継承していたりすると</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>Class.def = function(definition) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  var klass = Class.create();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  if(definition.__extend__)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    Class.inherit(klass, definition.__extend__);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  if(definition.__static__)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    Object.extend(klass, definition.__static__);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  if(definition.__include__) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    if(definition.__include__.constructor != Array)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>      definition.__include__ = [definition.__include__];
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    definition.__include__.each(function(include){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>      Object.extend(klass.prototype, include);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    });
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  [&#34;__static__&#34;,&#34;__extend__&#34;,&#34;__include__&#34;].each(function(n){delete definition[n];}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  Object.extend(klass.prototype, definition);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  return klass;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>}    
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>Class.inherit = function(child, parent) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  Object.extend(child, parent);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>  child.__super__ = parent.prototype;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>  var dummy = function(){};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>  dummy.prototype = parent.prototype;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>  child.prototype = new dummy();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>  child.prototype.constructor = child;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  return child;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>}
+</span></span></code></pre><p>こんだけです。 使い方はサンプルをみるほうがわかりやすいと思うので、サンプルをどーぞ。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>var IncludedClass = Class.def({
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  __static__ : {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    includedMethod : function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>      return &#34;includedMethod:&#34;+this.value;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>});    
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>var AClass = Class.def({__include__ : IncludedClass,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  __static__ : {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    A : &#34;A static&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  initialize : function(val) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    if(!val) throw &#34;error&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    this.val = val;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    this.klass = &#34;AClass&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  inspect : function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    return &#34;&lt; &#34;+this.klass+&#34; : &#34;+this.val+&#34;&gt;&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>var BClass = Class.def({ __extend__ : AClass,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  __static__ : {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>    B : &#34;B static&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>  initialize : function(val) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    BClass.__super__.initialize.call(this, val);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    this.klass = &#34;BClass&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>var CClass = Class.def({ __extend__ : BClass,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>  __static__ : {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>    C : &#34;C static&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>    initialize : function(val) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>      CClass.__super__.initialize.call(this, val);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>      this.klass = &#34;CClass&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>var a = new AClass(&#34;aaaaaaa&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>var b = new BClass(&#34;bbbbbbb&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>var c = new CClass(&#34;ccccccc&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>alert(&#34;a inspect:&#34;+a.inspect()); //=&gt; a inspect:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>alert(&#34;b inspect:&#34;+b.inspect()); //=&gt; b inspect:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>alert(&#34;c inspect:&#34;+c.inspect()); //=&gt; c inspect:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>alert(&#34;includedMethod:&#34;+a.includedMethod()); //=&gt; includedMethod:included aaaaaa
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span>alert(&#34;CClass.A:&#34;+CClass.A); //=&gt; CClass.A:A static
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>alert(&#34;CClass.B:&#34;+CClass.B); //=&gt; CClass.B:B static
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>alert(&#34;CClass.C:&#34;+CClass.C); //=&gt; CClass.C:C static
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span>alert(&#34;b.constructor = a.constructor:&#34;+(b.constructor == a.constructor).toString()); //=&gt;b.constructor = a.constructor:false
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58</span><span>alert(&#34;b instanceof BClass:&#34;+(b instanceof BClass).toString()); //=&gt;b instanceof BClass:true
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59</span><span>alert(&#34;b instanceof AClass:&#34;+(b instanceof AClass).toString()); //=&gt;b instanceof AClass:true
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60</span><span>alert(&#34;c instanceof BClass:&#34;+(c instanceof BClass).toString()); //=&gt;c instanceof BClass:true
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61</span><span>alert(&#34;c instanceof AClass:&#34;+(c instanceof AClass).toString()); //=&gt;c instanceof AClass:true&lt;/div&gt;
+</span></span></code></pre><p>継承の処理がかなり楽になっていると思います。 テキトーに場当たりで単純にnewを使って継承していたりすると</p>
 <p>「親クラスのコンストラクタに必須な引数があって、それがないとエラーでるから継承できねーよ、しゃーない適当に引数付けとくか」</p>
-
 <p>ということになったりするもんですが（俺はよくなってますｗ）このライブラリを使えば大丈夫。 また、こんな変な書き方イヤだよ！！って方でも継承の部分はClass.inheritに独立させてあるのでそこだけつかえばオッケーです。</p>
-
 <p>一応動作は確認していますがおかしいところあったら報告していただけるとありがたいです。</p>
 
   </div>

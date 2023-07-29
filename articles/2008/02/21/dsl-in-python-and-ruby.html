@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,177 +73,144 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://d.hatena.ne.jp/kwatch/20080220/1203520081">Python で Rake を真似るとしたら</a> という反応を頂いたので、それにまつわるお話を。</p>
-
 <p>まず、CodeReposにコミットしてあるtasktoolsは <strong>distutils及びsetuptoolsを拡張する</strong> ということを念頭に置いています。ですのである程度distutils.core.Commandの思想というか、インターフェイスを残しています。</p>
-
 <ul>
 <li>タスクをクラスで定義すること</li>
 <li>オプションの定義方法</li>
 <li><code>sub_commands</code> や <code>finalize_options</code> といったメソッド</li>
 </ul>
-
 <p>などなどは元のまんまです。</p>
-
-<hr />
-
+<hr>
 <p>じゃあ、 <code>distutils</code> や <code>setuptools</code> を抜いて好きにRakeをPythonで真似るとしたら、というのが今回メインのお話。最初にこんな感じでコマンドを定義しますよ、というのを出してしまいます。</p>
-
-<pre class="prettyprint"><code>from __future__ import with_statement
-from 今回作成したモジュール import *
-from subprocess import call
-
-# ここからタスク定義
-
-with namespace(&quot;test&quot;):
-
-  @task
-  def build(t, depends = [&quot;test:make&quot;]):
-    &quot;&quot;&quot;builds this modules. &quot;&quot;&quot;
-    call([&quot;ls&quot;])
-    print t.name, &quot;: build done&quot;
-
-  @task
-  def make(t):
-    print &quot;make&quot;
-
-# 実行
-run()
-</code></pre>
-
-<p>Rakeだとこうなる。</p>
-
-<pre class="prettyprint"><code>namespace &quot;test&quot; do
-
-  desc &quot;builds this modules&quot;
-  task &quot;build&quot; =&gt; &quot;make&quot; do |t|
-    sh(&quot;ls&quot;)
-    puts &quot;#{t.name} done.&quot;
-  end
-
-  task &quot;make&quot; do |t|
-    puts &quot;make&quot;
-  end
-
-end
-</code></pre>
-
-<p>Python版もなかなかシンプルで見やすいと思うんですがどうでしょう。あとちょっとtips。さっきの記事だと <code>os.system</code> を使ってますが、 <code>subprocess</code> モジュールの <code>call</code> や <code>check_call</code> のほうが便利じゃないかな、と思います。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>from __future__ import with_statement
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>from 今回作成したモジュール import *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>from subprocess import call
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span># ここからタスク定義
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>with namespace(&#34;test&#34;):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  @task
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  def build(t, depends = [&#34;test:make&#34;]):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    &#34;&#34;&#34;builds this modules. &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    call([&#34;ls&#34;])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    print t.name, &#34;: build done&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  @task
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  def make(t):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    print &#34;make&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span># 実行
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>run()
+</span></span></code></pre><p>Rakeだとこうなる。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>namespace &#34;test&#34; do
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  desc &#34;builds this modules&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  task &#34;build&#34; =&gt; &#34;make&#34; do |t|
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    sh(&#34;ls&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    puts &#34;#{t.name} done.&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  end
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  task &#34;make&#34; do |t|
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    puts &#34;make&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  end
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>end
+</span></span></code></pre><p>Python版もなかなかシンプルで見やすいと思うんですがどうでしょう。あとちょっとtips。さっきの記事だと <code>os.system</code> を使ってますが、 <code>subprocess</code> モジュールの <code>call</code> や <code>check_call</code> のほうが便利じゃないかな、と思います。</p>
 <p>タスクのメタ情報は引数のデフォルト値を使います。ここで <code>@task(depends = [&quot;test:make&quot;])</code> ってしたほうがいいんじゃないの？と思う人もいるかもしれません。真っ当な意見だと思いますし、それがPythonicなやり方と思います。しかしそうするとこうなります。</p>
-
-<pre class="prettyprint"><code>with namespace(&quot;test&quot;):
-
-  @task(depends = [&quot;test:make&quot;])
-  def build(t):
-    &quot;&quot;&quot;builds this modules.  &quot;&quot;&quot;
-    call([&quot;ls&quot;])
-    print t.name, &quot;: build done&quot;
-
-  @task() #&lt;= ここがキモくないですか？
-  def make(t):
-    print &quot;make&quot;
-</code></pre>
-
-<p>Pythonではproperty以外では <code>()</code> をつけないとメソッドが呼び出せません。だから引数が何もない場合は空のカッコがつくわけです(まぁDescriptorでhogehogeすればできるんですがね)。これ、イケてないですよね。というわけで引数のデフォルト値を使います。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>with namespace(&#34;test&#34;):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  @task(depends = [&#34;test:make&#34;])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  def build(t):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    &#34;&#34;&#34;builds this modules.  &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    call([&#34;ls&#34;])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    print t.name, &#34;: build done&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  @task() #&lt;= ここがキモくないですか？
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  def make(t):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    print &#34;make&#34;
+</span></span></code></pre><p>Pythonではproperty以外では <code>()</code> をつけないとメソッドが呼び出せません。だから引数が何もない場合は空のカッコがつくわけです(まぁDescriptorでhogehogeすればできるんですがね)。これ、イケてないですよね。というわけで引数のデフォルト値を使います。</p>
 <p>ではこのタスク定義でタスクを実行するためのコードです。</p>
-
-<pre class="prettyprint"><code>from __future__ import with_statement
-import inspect,new,sys
-from contextlib import contextmanager
-from optparse import OptionParser
-from itertools import *
-
-class _Tasks(dict):
-  def __getitem__(self,key):
-    if key in self: return dict.__getitem__(self, key)
-    _abort(&quot;Error: Unknown task: %s&quot;%key)
-
-class Task(object):
-  def __init__(self, run, name, description, 
-               depends = None, options = None):
-    self._run = new.instancemethod(run, self, self.__class__)
-    self.name = _get_current_ns()+name
-    self.description = description
-    self.depends = depends or []
-    self.options = options or []
-    tasks[self.name] = self
-
-  def run(self):
-    for depend in self.depends:
-      if tasks[depend].run() is False:
-        _abort(&quot;Error: faild %s&quot;%depend)
-    return self._run()
-
-_namespace = []
-tasks = _Tasks()
-
-@contextmanager
-def namespace(name):
-  _namespace.append(name)
-  yield 
-  _namespace.pop() 
-
-def task(f):
-  names, _, _, values = inspect.getargspec(f)
-  Task(f, f.__name__, f.__doc__ or &quot;no description&quot;, **dict(izip(names[1:], values or [])))
-
-def print_tasks():
-  maxlength = max(imap(len, tasks.iterkeys()))
-  for name in sorted(tasks.iterkeys()):
-    print name.ljust(maxlength), &quot;#&quot;, tasks[name].description.strip()
-
-def run():
-  usage = &quot;usage :%prog [options] targets&quot;
-  parser = OptionParser(usage)
-  parser.add_option(&quot;-T&quot;, &quot;--tasks&quot;, action=&quot;store_true&quot;,
-                    dest=&quot;print_tasks&quot;,
-    help=&quot;Display the tasks (matching optional PATTERN) with descriptions, then exit.&quot;)
-  (options, args) = parser.parse_args()
-  if options.print_tasks: _abort(print_tasks())
-  if not args:            _abort(parser.get_usage())
-
-  map(lambda t:t.run(), imap(tasks.__getitem__, args))
-
-def _abort(msg):
-  if msg : print msg
-  sys.exit(1)
-
-def _get_current_ns(): return _namespace and &quot;:&quot;.join(_namespace)+&quot;:&quot; or &quot;&quot;
-</code></pre>
-
-<p>結構短いかな？。一応ちゃんと動きます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>from __future__ import with_statement
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>import inspect,new,sys
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>from contextlib import contextmanager
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>from optparse import OptionParser
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>from itertools import *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>class _Tasks(dict):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  def __getitem__(self,key):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    if key in self: return dict.__getitem__(self, key)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    _abort(&#34;Error: Unknown task: %s&#34;%key)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>class Task(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  def __init__(self, run, name, description, 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>               depends = None, options = None):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    self._run = new.instancemethod(run, self, self.__class__)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    self.name = _get_current_ns()+name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    self.description = description
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>    self.depends = depends or []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    self.options = options or []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    tasks[self.name] = self
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>  def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>    for depend in self.depends:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>      if tasks[depend].run() is False:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>        _abort(&#34;Error: faild %s&#34;%depend)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>    return self._run()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>_namespace = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>tasks = _Tasks()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>@contextmanager
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>def namespace(name):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>  _namespace.append(name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>  yield 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>  _namespace.pop() 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>def task(f):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>  names, _, _, values = inspect.getargspec(f)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>  Task(f, f.__name__, f.__doc__ or &#34;no description&#34;, **dict(izip(names[1:], values or [])))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>def print_tasks():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>  maxlength = max(imap(len, tasks.iterkeys()))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>  for name in sorted(tasks.iterkeys()):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>    print name.ljust(maxlength), &#34;#&#34;, tasks[name].description.strip()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>def run():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>  usage = &#34;usage :%prog [options] targets&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>  parser = OptionParser(usage)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>  parser.add_option(&#34;-T&#34;, &#34;--tasks&#34;, action=&#34;store_true&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>                    dest=&#34;print_tasks&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>    help=&#34;Display the tasks (matching optional PATTERN) with descriptions, then exit.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>  (options, args) = parser.parse_args()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>  if options.print_tasks: _abort(print_tasks())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span>  if not args:            _abort(parser.get_usage())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>  map(lambda t:t.run(), imap(tasks.__getitem__, args))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58</span><span>def _abort(msg):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59</span><span>  if msg : print msg
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60</span><span>  sys.exit(1)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62</span><span>def _get_current_ns(): return _namespace and &#34;:&#34;.join(_namespace)+&#34;:&#34; or &#34;&#34;
+</span></span></code></pre><p>結構短いかな？。一応ちゃんと動きます。</p>
 <p><code>tasks.py -T</code></p>
-
-<pre class="prettyprint"><code>test:build # builds this modules.
-test:make  # no description
-</code></pre>
-
-<p><code>tasks.py test:build</code></p>
-
-<pre class="prettyprint"><code>make
-tasks.py
-test:build : build done
-</code></pre>
-
-<p>うむ。</p>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>test:build # builds this modules.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>test:make  # no description
+</span></span></code></pre><p><code>tasks.py test:build</code></p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>make
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>tasks.py
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>test:build : build done
+</span></span></code></pre><p>うむ。</p>
+<hr>
 <p>結局、Rubyの言語内DSL構築能力は</p>
-
 <ul>
 <li><code>()</code> が省略できる</li>
 <li>ブロック(pythonではデコレータとwith_statementがありますが)</li>
 </ul>
-
 <p>によるものが多いと思っています。ことPythonとの対比では。「シンプルさ」「書きやすさ」なんかは好みかな、と(Rakeの例だとdocstringを持っている分Pythonの方がいい感じさえしてきます)。例えば <code>end</code> ってなんだよ、って言う人にはPythonのほうがウケがいいかもしれませんしそうじゃないかもしれません。</p>
-
 <p>そんなこんなで試しに書いてみたらいい感じだったんで、ちゃんと本格的にPython版Rakeとして開発を続けてみようかなあ。</p>
-
-<hr />
-
+<hr>
 <p>ところで言語内DSLといえばScalaでしょう。Rubyなんてちょろいもんですよ。なんてったってScalaは(ry</p>
 
 
@@ -262,7 +227,7 @@ test:build : build done
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/02/21/dsl-in-python-and-ruby" class="hatena-bookmark-button" data-hatena-bookmark-title="Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/02/21/dsl-in-python-and-ruby" class="hatena-bookmark-button" data-hatena-bookmark-title="Python,Rubyの言語内DSL構築力：PythonでRakeをまねる場合を例に" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

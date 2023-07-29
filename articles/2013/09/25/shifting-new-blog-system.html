@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,34 +73,21 @@
 </header>
   <div itemprop="articleBody">
     <p>放置して久しいこのブログ、やっと重い腰をあげていろいろ手をいれた。</p>
-
 <ul>
 <li>HTML5化</li>
 <li>ブログシステムを入れ替え</li>
 </ul>
-
-<h1>silkylog</h1>
-
+<h1 id="silkylog">silkylog</h1>
 <p>このブログはxreaのレンタルサーバで動かしているのだけど、しばらく見ないうちにxreaもサーバがすごく増えて、新しいサーバではpython2.7.5が使えるようになっていた。</p>
-
 <p>なので自作のwebフレームワーク <a href="https://github.com/yuin/rays">rays</a> を使った新しいブログシステム <a href="https://github.com/yuin/silkylog">silkylog</a> に移行した。silkylogはpython3.3でも動くのでしばらくは安心。これまで使っていたのはpython2系でしか動かないし、かといってpython3対応させる気力も起きないしでどーしたものかと思っていた。</p>
-
 <p>流行に乗ってOctpressとかにしようかなあ、と思いつつせっかく作ったのだしと思って。ただなんとなく悔しかったのでsilkylogにOctpressと同等の完全に静的なサイトを出力できる機能も付けた。</p>
-
 <p>さらにこれまでのDBベースからファイルベースに変更した。Blosxomみたいにファイルを直接検索してもいいんだけどタギングを考慮するとそれはそれでめんどくさいので、インデックス情報のみsqliteで保持するような中途半端なカタチに。</p>
-
 <p>手前味噌ながらraysの機能を余すところなくつかって、シンプルに作れたと思う。</p>
-
-<h1>html5化(デザイン)</h1>
-
+<h1 id="html5">html5化(デザイン)</h1>
 <p>ようやくhtml5に。デザインも見直し。シンプルでよいデザインにできた･･･と思う。cssはscssでまとめた。 レスポンシブルデザインにも対応。コメントはDisqus、シンタックスハイライトはgoogle code prettifyと外部だよりに。</p>
-
 <p>マークアップはreStructuredTextに統一した。普及度を考えるとmarkdownなのだけどやはりmarkdownは表現力が低くて。いろんな方言が乱立してるし、独自に拡張をするしくみに乏しいので使いづらかった。</p>
-
 <p>ここのところ、Pythonかどうかに関わらずドキュメントはsphinxで書いているので、日常的に書いているのはreStructuredTextが圧倒的だし、ディレクティブが簡単に作れるのもよい。</p>
-
-<hr />
-
+<hr>
 <p>ともかく、これでしばらくは手をいれなくてすむ・・・はず。</p>
 
 
@@ -119,7 +104,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2013/09/25/shifting-new-blog-system" class="hatena-bookmark-button" data-hatena-bookmark-title="ブログにいろいろ手をいれた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2013/09/25/shifting-new-blog-system" class="hatena-bookmark-button" data-hatena-bookmark-title="ブログにいろいろ手をいれた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

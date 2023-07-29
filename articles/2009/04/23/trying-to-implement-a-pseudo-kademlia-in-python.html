@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,79 +75,58 @@
 </header>
   <div itemprop="articleBody">
     <p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
-
 <p>Kademliaはいろいろ実装があるので、ソースを読んじゃうと答えみちゃった感じになるかなーと思って、元論文と <a href="http://www.shudo.net/article/Kademlia-20040727/shudo-Kademlia.pdf">首藤様の資料</a> くらいしか見ずに実装してみました。ので、いろいろ間違ってるかも知れませんが･･･。</p>
-
 <p>本家Kademliaとの主な違いは</p>
-
 <ul>
-<li><p>UDPではなくTCPを使っている</p>
-
+<li>
+<p>UDPではなくTCPを使っている</p>
 <ul>
 <li>ローカル環境しかもっていないので、UDPパケットがロスしやすい場合(WAN)を想定して実装するのがめんどくさい。</li>
 <li>よってRPC-IDをつけていない。</li>
 <li>パケットの分割や再送もTCPにおまかせ。</li>
-</ul></li>
-
-<li><p>original publisherから一定時間publishを受けなくてもインデックス情報をexpireしていない</p>
-
+</ul>
+</li>
+<li>
+<p>original publisherから一定時間publishを受けなくてもインデックス情報をexpireしていない</p>
 <ul>
 <li>実装するのは簡単です。</li>
-</ul></li>
-
-<li><p>ノードがネットワークに参加したとき、Index情報を移動させていません</p>
-
+</ul>
+</li>
+<li>
+<p>ノードがネットワークに参加したとき、Index情報を移動させていません</p>
 <ul>
 <li>これも実装は簡単です。</li>
-</ul></li>
 </ul>
-
-<h1>ダウンロード</h1>
-
+</li>
+</ul>
+<h1 id="heading">ダウンロード</h1>
 <p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
-
 <ul>
 <li><a href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
 </ul>
-
-<h1>実装について</h1>
-
+<h1 id="heading-1">実装について</h1>
 <p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
-
 <p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
-
 <p>通信にはjsonを使いました。</p>
-
-<h1>基本的な動かし方</h1>
-
-<pre class="prettyprint"><code>import kademlia_tcp
-kademlia_tcp.DEBUG = True
-n = kademlia_tcp.KademliaNode(&quot;ip address&quot;, port)
-n.join(n)
-remote = kademlia_tcp.ContactNode(&quot;ip address&quot;, port)
-n.join(remote)
-</code></pre>
-
-<p>という感じでネットワークを作れます。DEBUGをセットすると、通信情報など、様々な情報が出力されます。あとは</p>
-
-<pre class="prettyprint"><code>key = n.hash(&quot;key&quot;)
-n.publish(key, &quot;value&quot;)
-n.find_value(key)
-n.ping(other_node)
-n.store(other_node, key, value)
-n.find_node(other_node)
-</code></pre>
-
-<p>というようなメソッドが使えます。</p>
-
-<h1>動かしてみて</h1>
-
+<h1 id="heading-2">基本的な動かし方</h1>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>import kademlia_tcp
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>kademlia_tcp.DEBUG = True
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>n = kademlia_tcp.KademliaNode(&#34;ip address&#34;, port)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>n.join(n)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>remote = kademlia_tcp.ContactNode(&#34;ip address&#34;, port)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>n.join(remote)
+</span></span></code></pre><p>という感じでネットワークを作れます。DEBUGをセットすると、通信情報など、様々な情報が出力されます。あとは</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>key = n.hash(&#34;key&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>n.publish(key, &#34;value&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>n.find_value(key)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>n.ping(other_node)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>n.store(other_node, key, value)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>n.find_node(other_node)
+</span></span></code></pre><p>というようなメソッドが使えます。</p>
+<h1 id="heading-3">動かしてみて</h1>
 <p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
-
 <p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
-
-<h1>というわけで</h1>
-
+<h1 id="heading-4">というわけで</h1>
 <p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
 
 
@@ -166,7 +143,7 @@ n.find_node(other_node)
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python" class="hatena-bookmark-button" data-hatena-bookmark-title="Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2009/04/23/trying-to-implement-a-pseudo-kademlia-in-python" class="hatena-bookmark-button" data-hatena-bookmark-title="Python: 勉強がてらDHT(Kademliaっぽいもの)を実装しました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

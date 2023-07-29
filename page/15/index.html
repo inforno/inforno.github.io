@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,11 +75,8 @@
 </header>
   <div itemprop="articleBody">
     <p>近頃、 <a href="http://d.hatena.ne.jp/yukoba/20071108/p1">JavascriptでOreScript</a> なんてのがちょっとはやっていたりしまして。</p>
-
 <p>OreScript書くのにある程度ちゃんと動くパーサコンビネータがあれば便利かも、とおもったので以前書いたパーサコンビネータをいじってみました。</p>
-
-<h1>変更点</h1>
-
+<h1 id="heading">変更点</h1>
 <ul>
 <li>メソッド名などをHaskellにあわせた</li>
 <li>よくもわるくも、記号含有率をあげた(and -&gt; $に、or -&gt; l に)</li>
@@ -89,51 +84,39 @@
 <li>左再帰(chainl1)をサポートした</li>
 <li>右再帰(chanr1)をサポートした</li>
 </ul>
-
 <p>ということで、そこそこの用途に耐えるものになったと思います。</p>
-
-<h1>ダウンロード</h1>
-
+<h1 id="heading-1">ダウンロード</h1>
 <p>完全にアンドキュメントです。すみません。ただ、ソースは200行くらいなんで見ればわかるかと。というか、HaskellのParsecのマニュアルを読めば基本一緒なので使い方がわかると思います。</p>
-
 <p><a href="/statics/files/parsec0-1-0.js">ダウンロード</a></p>
-
-<h1>サンプル</h1>
-
+<h1 id="heading-2">サンプル</h1>
 <p><a href="http://d.hatena.ne.jp/amachang/20070829/1188400850">id:amachangさんが書いていたような数式パーサ</a> を定義してみましょう。</p>
-
 <p>残念ながらLexerはつくっていないので、空白は受け入れられません。</p>
-
-<pre class="prettyprint"><code>var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){
-  var mul = function(a,b){return a*b;};
-  var div = function(a,b){return a/b;};
-  var add = function(a,b){return a+b;};
-  var sub = function(a,b){return a-b;};
-
-  this.numbers =  many1( chrLike(function(c) { return (c &gt;= '0' &amp;&amp; c &lt;= '9'); }) ) .ret(function(ns){
-                    return parseInt(ns.join(&quot;&quot;));
-                  });
-  this.expr = chainl1(p(&quot;term&quot;), p(&quot;addop&quot;));
-  this.term = chainl1(p(&quot;factor&quot;), p(&quot;mulop&quot;));
-  this.factor = (between(chr(&quot;(&quot;), p(&quot;expr&quot;), chr(&quot;)&quot;))) .l (numbers)
-  this.mulop = (chr(&quot;*&quot;) .retval(mul)) .l (chr(&quot;/&quot;) .retval(div));
-  this.addop = (chr(&quot;+&quot;) .retval(add)) .l (chr(&quot;-&quot;) .retval(sub));
-}});
-
-var test = &quot;100*(100+200)/10&quot;;
-
-var parser = new ExprParser(test);
-var parseResult = parser.expr.parse();
-if(parseResult.success()) {
-  alert(parseResult.result);
-  // =&gt; 3000
-}
-</code></pre>
-
-<p>すごく、Parsecです･･･</p>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  var mul = function(a,b){return a*b;};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  var div = function(a,b){return a/b;};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  var add = function(a,b){return a+b;};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  var sub = function(a,b){return a-b;};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  this.numbers =  many1( chrLike(function(c) { return (c &gt;= &#39;0&#39; &amp;&amp; c &lt;= &#39;9&#39;); }) ) .ret(function(ns){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>                    return parseInt(ns.join(&#34;&#34;));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>                  });
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  this.expr = chainl1(p(&#34;term&#34;), p(&#34;addop&#34;));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  this.term = chainl1(p(&#34;factor&#34;), p(&#34;mulop&#34;));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  this.factor = (between(chr(&#34;(&#34;), p(&#34;expr&#34;), chr(&#34;)&#34;))) .l (numbers)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  this.mulop = (chr(&#34;*&#34;) .retval(mul)) .l (chr(&#34;/&#34;) .retval(div));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  this.addop = (chr(&#34;+&#34;) .retval(add)) .l (chr(&#34;-&#34;) .retval(sub));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>}});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>var test = &#34;100*(100+200)/10&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>var parser = new ExprParser(test);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>var parseResult = parser.expr.parse();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>if(parseResult.success()) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>  alert(parseResult.result);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>  // =&gt; 3000
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>}
+</span></span></code></pre><p>すごく、Parsecです･･･</p>
+<hr>
 <p>こういうのを最近はやりの <a href="http://coderepos.org/share">CodeRepos</a> でやればいいのかなあ。</p>
 
   </div>
@@ -161,133 +144,116 @@ if(parseResult.success()) {
 </header>
   <div itemprop="articleBody">
     <p>Pythonで自分用の小物アプリを結構書き溜めてるんですけど、実はそのほとんどにプラグインシステムみたいなのをつくってたりします。</p>
-
 <p>たとえばファイルの整理自動化みたいなの。ファイルの移動前に処理を追加する、てな部分をプラグインにしてあるわけです。</p>
-
 <p>まぁ機能的にはCPANのClass::Componentっぽいもんですね。ですがそこまで高機能なのはいらないので、シンプルに自分が必要な部分だけまとめてみました。</p>
-
-<pre class="prettyprint"><code>from inspect import getmembers, ismethod
-import types
-
-class Pluggable(object):
-  def __init__(self):
-    self.hooks = {}
-
-  def load(self, *config):
-    self.load_config(*config)
-    self.load_plugins()
-
-  def load_config(self, *config):
-    self.config = []
-    for i in config:
-      if isinstance(i, (&quot;&quot;.__class__, u&quot;&quot;.__class__)):
-        self.config.append((i, {}))
-      else:
-        self.config.append((i[0], len(i) &gt; 1 and i[1] or {}))
-
-  def load_plugins(self):
-    for klass,config in self.config:
-      plugin = None
-      try:
-        plugin = eval(klass)
-      except (NameError, AttributeError),e:
-        names = klass.split(&quot;.&quot;)
-        mod = __import__(&quot;.&quot;.join(names[0:-1]))
-        globals()[names[0]] = mod
-        for name in names[1:-1]: mod = getattr(mod, name)
-        plugin = getattr(mod, names[-1])
-
-      p = plugin(config)
-      make_closure = lambda obj,name: lambda *a, **k: getattr(obj,name)(*a, **k)
-
-      for name, method in ((n,m) for n,m in getmembers(p) if ismethod(m)):
-        if hasattr(method, &quot;__plugin_method__&quot;):
-          setattr(self, name, make_closure(p, name))
-        for hook_type in getattr(method, &quot;__hook_types__&quot;, []):
-          if hook_type not in self.hooks: self.hooks[hook_type] = []
-          self.hooks[hook_type].append(getattr(p, name))
-
-  def _run_hooks(self, dct, f=lambda x:x):
-    result = {}
-    for (name,value) in dct.iteritems():
-      if name not in self.hooks: continue
-      k,a = {}, value
-      if isinstance(value[-1], types.DictType):
-        k,a = value[-1],value[0:-1]
-      result[name] = [m(*a, **k) for m in f(self.hooks[name])]
-    return result
-
-  def run_hooks(self, dct):
-    return self._run_hooks(dct)
-
-  def reverse_run_hooks(self, dct):
-    return self._run_hooks(dct, reversed)
-
-class Plugin(object):
-  def __init__(self, config):
-    self.config = config
-
-method = lambda f: setattr(f, &quot;__plugin_method__&quot;, True) or f
-hook = lambda *args: lambda f: setattr(f, &quot;__hook_types__&quot;, args) or f
-</code></pre>
-
-<p>機能的には</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>from inspect import getmembers, ismethod
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>import types
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>class Pluggable(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  def __init__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    self.hooks = {}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  def load(self, *config):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    self.load_config(*config)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    self.load_plugins()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  def load_config(self, *config):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    self.config = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    for i in config:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>      if isinstance(i, (&#34;&#34;.__class__, u&#34;&#34;.__class__)):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>        self.config.append((i, {}))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>      else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>        self.config.append((i[0], len(i) &gt; 1 and i[1] or {}))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  def load_plugins(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    for klass,config in self.config:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>      plugin = None
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>      try:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>        plugin = eval(klass)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>      except (NameError, AttributeError),e:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>        names = klass.split(&#34;.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>        mod = __import__(&#34;.&#34;.join(names[0:-1]))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>        globals()[names[0]] = mod
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>        for name in names[1:-1]: mod = getattr(mod, name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>        plugin = getattr(mod, names[-1])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>      p = plugin(config)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>      make_closure = lambda obj,name: lambda *a, **k: getattr(obj,name)(*a, **k)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>      for name, method in ((n,m) for n,m in getmembers(p) if ismethod(m)):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>        if hasattr(method, &#34;__plugin_method__&#34;):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>          setattr(self, name, make_closure(p, name))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>        for hook_type in getattr(method, &#34;__hook_types__&#34;, []):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>          if hook_type not in self.hooks: self.hooks[hook_type] = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>          self.hooks[hook_type].append(getattr(p, name))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>  def _run_hooks(self, dct, f=lambda x:x):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>    result = {}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>    for (name,value) in dct.iteritems():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>      if name not in self.hooks: continue
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>      k,a = {}, value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>      if isinstance(value[-1], types.DictType):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>        k,a = value[-1],value[0:-1]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>      result[name] = [m(*a, **k) for m in f(self.hooks[name])]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>    return result
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>  def run_hooks(self, dct):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>    return self._run_hooks(dct)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>  def reverse_run_hooks(self, dct):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>    return self._run_hooks(dct, reversed)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58</span><span>class Plugin(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59</span><span>  def __init__(self, config):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60</span><span>    self.config = config
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62</span><span>method = lambda f: setattr(f, &#34;__plugin_method__&#34;, True) or f
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63</span><span>hook = lambda *args: lambda f: setattr(f, &#34;__hook_types__&#34;, args) or f
+</span></span></code></pre><p>機能的には</p>
 <ul>
 <li>クラスに対して設定とともにメソッドを追加する(setattrします)</li>
 <li>任意のhookの登録と実行</li>
 </ul>
-
 <p>ぐらいです。</p>
-
 <p>使い方は</p>
-
-<pre class="prettyprint"><code>import pluggable
-class People(pluggable.Pluggable):
-  pass
-
-class Hacker(pluggable.Plugin):
-  @pluggable.method
-  def hack(self):
-    print self.config[&quot;msg&quot;]
-
-  @pluggable.hook(&quot;hello&quot;)
-  def hello(self, msg1, msg2, msg3):
-    print &quot;Hello World!!&quot;, msg1, msg2, msg3
-
-class Otaku(pluggable.Plugin):
-  @pluggable.method
-  def niconico(self, msg):
-    print self.config[&quot;msg&quot;], msg
-
-  @pluggable.hook(&quot;hello&quot;)
-  def hello(self, msg1, msg2, msg3):
-    print u&quot;にぱー&quot;, msg1, msg2, msg3
-</code></pre>
-
-<p>みたいにプラグインクラスを作っておいて</p>
-
-<pre class="prettyprint"><code>p = People()
-p.load(
-  (&quot;plugins.Hacker&quot;, {&quot;msg&quot;: &quot;Happy Hacking!&quot;}),
-  (&quot;plugins.Otaku&quot;,  {&quot;msg&quot;: u&quot;ニコ厨ですが&quot;})
-)
-p.hack() #=&gt; Happy Hacking!
-p.niconico(u&quot;なにか？&quot;) #=&gt; ニコ厨ですが なにか？
-p.run_hooks({&quot;hello&quot;:([1,2],{&quot;msg3&quot;:3})})
-#=&gt; Hello World!! 1 2 3
-#=&gt; にぱー 1 2 3
-p.reverse_run_hooks({&quot;hello&quot;:[1,2,3]})
-#=&gt; にぱー 1 2 3
-#=&gt; Hello World!! 1 2 3
-</code></pre>
-
-<p>という感じで使います。あとは設定の部分をyamlなんかに押し出せばオッケーというわけ。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>import pluggable
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>class People(pluggable.Pluggable):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  pass
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>class Hacker(pluggable.Plugin):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  @pluggable.method
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  def hack(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    print self.config[&#34;msg&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  @pluggable.hook(&#34;hello&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  def hello(self, msg1, msg2, msg3):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    print &#34;Hello World!!&#34;, msg1, msg2, msg3
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>class Otaku(pluggable.Plugin):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  @pluggable.method
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  def niconico(self, msg):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    print self.config[&#34;msg&#34;], msg
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>  @pluggable.hook(&#34;hello&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  def hello(self, msg1, msg2, msg3):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    print u&#34;にぱー&#34;, msg1, msg2, msg3
+</span></span></code></pre><p>みたいにプラグインクラスを作っておいて</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>p = People()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>p.load(
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  (&#34;plugins.Hacker&#34;, {&#34;msg&#34;: &#34;Happy Hacking!&#34;}),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  (&#34;plugins.Otaku&#34;,  {&#34;msg&#34;: u&#34;ニコ厨ですが&#34;})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>p.hack() #=&gt; Happy Hacking!
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>p.niconico(u&#34;なにか？&#34;) #=&gt; ニコ厨ですが なにか？
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>p.run_hooks({&#34;hello&#34;:([1,2],{&#34;msg3&#34;:3})})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>#=&gt; Hello World!! 1 2 3
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>#=&gt; にぱー 1 2 3
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>p.reverse_run_hooks({&#34;hello&#34;:[1,2,3]})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>#=&gt; にぱー 1 2 3
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>#=&gt; Hello World!! 1 2 3
+</span></span></code></pre><p>という感じで使います。あとは設定の部分をyamlなんかに押し出せばオッケーというわけ。</p>
 <p>モジュールのインポートは自動でやってくれます。Pythonは地味に動的なimportが面倒だったので、ライブラリにまとめたことでだいぶ手元の小物アプリがすっきりしました。 　</p>
-
-<hr />
-
+<hr>
 <ul>
 <li>2008/01/27 若干修正を加えました。</li>
 </ul>
@@ -315,31 +281,18 @@ p.reverse_run_hooks({&quot;hello&quot;:[1,2,3]})
 </header>
   <div itemprop="articleBody">
     <p>システム開発の話ではありません。</p>
-
 <p>最近、やっぱりというかなんというか初音ミクに刺激されて音楽をもう一回やりたくなったんです。</p>
-
 <p>中学高校と音楽ばっかりやっていたので、大学の４年間やってないくらいで忘れてないだろう、と思ってたんです。</p>
-
 <p>でも、いろいろ忘れているわけですよ、実際。</p>
-
-<hr />
-
+<hr>
 <p>クラシック的な理論を習っていたので、感性優先で作りたいと思っても理論がわかってないと不安になっちゃう。というわけで、現在、和声法とか自由対位法とか復習しています。その次はFMとアナログでの音作りの感触を取り戻すことかな・・・</p>
-
 <p>でもやっぱり基礎の基礎って絶対に忘れないもんだな、と思った。久しく使ってない知識だけど、トニイホロヘハ、ヘロホイニトハ、シミラレソドファ、ファドソレラミシ、これはしっかり覚えていた。</p>
-
-<hr />
-
+<hr>
 <p>知識を保っていくことはほんとに難しい。人間の脳の記憶容量は普通に生きている限りだと無限に近い。storeにはあまり失敗しない。結局retrieveできなくなっていくのが問題だったりする。</p>
-
 <p>それを大学の講義で習って、しばらくして自分用のメモを残すようになった。</p>
-
 <p>今、昔書いた曲の譜面（ソース）をみても何でこういう進行にしたか、わからない。今回、勉強しなおしながらメモを残している。なんか、ドキュメントがないとわかんないやつになっちゃったみたいですごくむなしい。けど、やっぱりメモを残すのが一番効率がいい。記憶はそう簡単に消えない。retrieveする手がかりがあればいい。基礎とか、メモする必要はない。自分が忘れそうなことをうまく見抜いて、残していく。</p>
-
 <p>これは幅広くやろうとしてしまう人の宿命だよなあ。言語にしても、実は自分用メモを見ないとまったく書けない、というレベルになってしまっているものもあるんだよねえ(HaskellとかSmalltalkとか･･･最近はどう書く？orgでコードを見るおかげでそこまでひどくないが)。</p>
-
-<hr />
-
+<hr>
 <p>どう書く？orgと言えば主に <a href="http://ja.doukaku.org/user/82/">Scalaで参戦</a> してるわけですが、ブログでほとんどScalaに言及してないな。まぁ、Scalaの記事とか読みたい人もあんまりいないだろうし、いいか。</p>
 
   </div>

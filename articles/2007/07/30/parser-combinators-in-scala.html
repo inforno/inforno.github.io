@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,54 +71,49 @@
 </header>
   <div itemprop="articleBody">
     <p>Scala 2.6.0-RC1 でscala.util.parsing.combinatorが標準パッケージになりました。というわけでリファレンスとちょっとしたサンプルくらしかなかったのだけど、とりあえず書いてみた。</p>
-
 <p><a href="http://ja.doukaku.org/33/">どう書く?org</a> に投稿した、ExcelライクCSVのパーサ。</p>
-
-<pre class="prettyprint"><code>import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
-import scala.util.parsing.input.CharArrayReader
-import Character.isISOControl
-
-object CSVParser {
- trait Base
- case class Field(s:String) extends Base {
-   override def toString = s
- }
- case class Record(fields: List[Field]) extends Base
- case class File(records :List[Record]) extends Base
-
- def mkString(cs :List[Any]) = cs.mkString(&quot;&quot;)
- class CSVParser extends Parsers {
-   type Elem = Char
-   def notMeta(c:Elem) = c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='&quot;' &amp;&amp; !isISOControl(c)
-
-   lazy val file   = record.*('\n') ^^ File
-   lazy val record = (field|quotedField|nullableField).*(',') ^^ Record
-   lazy val field = chars.+ ^^ {cs =&gt; Field(mkString(cs))}
-   lazy val nullableField = chars.* ^^ {cs =&gt; Field(&quot;&quot;)}
-   lazy val quotedField = '&quot;' ~ (charsInQuote|quoteInQuote).* ~ '&quot;' ^^ {cs =&gt; Field(mkString(cs))}
-   lazy val charsInQuote = elem(&quot;chars in field&quot;, _!='&quot;')
-   lazy val quoteInQuote = repN(2, quote) ^^ {cs =&gt; '&quot;'}
-   lazy val quote  = '&quot;' ^^ success
-   lazy val chars  = elem(&quot;chars&quot;, notMeta)
- }
-}
-
-val data = &quot;&quot;&quot;
-&quot;aaa&quot;,&quot;b
-bb&quot;,&quot;ccc&quot;,zzz,&quot;y&quot;&quot;Y&quot;&quot;y&quot;,xxx
-&quot;&quot;&quot;.trim
-
-(new CSVParser.CSVParser).file(new
-CharArrayReader(data.toCharArray)).map(file =&gt; {
- file.records.map({record =&gt;
-   val fields = record.fields
-   (1 to fields.length).foreach(i =&gt; println(i +&quot; =&gt; &quot; + fields(i-1)))
- })
-})
-</code></pre>
-
-<p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>import scala.util.parsing.combinator.{Parsers, ImplicitConversions, ~, mkTilde}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>import scala.util.parsing.input.CharArrayReader
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>import Character.isISOControl
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>object CSVParser {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span> trait Base
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span> case class Field(s:String) extends Base {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>   override def toString = s
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span> }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span> case class Record(fields: List[Field]) extends Base
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span> case class File(records :List[Record]) extends Base
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span> def mkString(cs :List[Any]) = cs.mkString(&#34;&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span> class CSVParser extends Parsers {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>   type Elem = Char
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>   def notMeta(c:Elem) = c!=&#39;,&#39; &amp;&amp; c!=&#39;\n&#39; &amp;&amp; c!=&#39;&#34;&#39; &amp;&amp; !isISOControl(c)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>   lazy val file   = record.*(&#39;\n&#39;) ^^ File
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>   lazy val record = (field|quotedField|nullableField).*(&#39;,&#39;) ^^ Record
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>   lazy val field = chars.+ ^^ {cs =&gt; Field(mkString(cs))}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>   lazy val nullableField = chars.* ^^ {cs =&gt; Field(&#34;&#34;)}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>   lazy val quotedField = &#39;&#34;&#39; ~ (charsInQuote|quoteInQuote).* ~ &#39;&#34;&#39; ^^ {cs =&gt; Field(mkString(cs))}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>   lazy val charsInQuote = elem(&#34;chars in field&#34;, _!=&#39;&#34;&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>   lazy val quoteInQuote = repN(2, quote) ^^ {cs =&gt; &#39;&#34;&#39;}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>   lazy val quote  = &#39;&#34;&#39; ^^ success
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>   lazy val chars  = elem(&#34;chars&#34;, notMeta)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span> }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>val data = &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>&#34;aaa&#34;,&#34;b
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>bb&#34;,&#34;ccc&#34;,zzz,&#34;y&#34;&#34;Y&#34;&#34;y&#34;,xxx
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>&#34;&#34;&#34;.trim
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>(new CSVParser.CSVParser).file(new
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>CharArrayReader(data.toCharArray)).map(file =&gt; {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span> file.records.map({record =&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>   val fields = record.fields
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>   (1 to fields.length).foreach(i =&gt; println(i +&#34; =&gt; &#34; + fields(i-1)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span> })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>})
+</span></span></code></pre><p>とりあえずこんな感じ。これはダイレクトにParsersクラスを直接継承してるけど、StdTokenParsersってかんじのParserもあるし、StdLexicalってかんじなLexerもあってこれはなかなか。</p>
 <p>時間が出来たらもうちょっといじってみよう。よさげな解説してるサイトがあったら是非教えてください。</p>
 
 
@@ -137,7 +130,7 @@ CharArrayReader(data.toCharArray)).map(file =&gt; {
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/07/30/parser-combinators-in-scala" class="hatena-bookmark-button" data-hatena-bookmark-title="Scalaでパーサコンビネータ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/07/30/parser-combinators-in-scala" class="hatena-bookmark-button" data-hatena-bookmark-title="Scalaでパーサコンビネータ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,73 +75,63 @@
 </header>
   <div itemprop="articleBody">
     <p>先日公開した <a href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが。</p>
-
 <p>GopherLuaはLuaなので、ホスト言語との親和性を重視しております。GolangなのにGoroutine関係のサポートがないとだめでしょ！ということで、とりあえずですが、channelを扱えるようにしました。</p>
-
 <p>これもまたReadmeに書いてありますが、以下のように使います。 selectも使えますし、GolangとLuaの間で縦横無尽にメッセージ通信できます。</p>
-
-<pre class="prettyprint"><code class="language-go">func receiver(ch, quit chan lua.LValue) {
-    L := lua.NewState()
-    defer L.Close()
-    L.SetGlobal(&quot;ch&quot;, lua.LChannel(ch))
-    L.SetGlobal(&quot;quit&quot;, lua.LChannel(quit))
-    if err := L.DoString(`
-    local exit = false
-    while not exit do
-      channel.select(
-        {&quot;|&lt;-&quot;, ch, function(ok, v)
-          if not ok then
-            print(&quot;channel closed&quot;)
-            exit = true
-          else
-            print(&quot;received:&quot;, v)
-          end
-        end},
-        {&quot;|&lt;-&quot;, quit, function(ok, v)
-            print(&quot;quit&quot;)
-            exit = true
-        end}
-      )
-    end
-  `); err != nil {
-        panic(err)
-    }
-}
-
-func sender(ch, quit chan lua.LValue) {
-    L := lua.NewState()
-    defer L.Close()
-    L.SetGlobal(&quot;ch&quot;, lua.LChannel(ch))
-    L.SetGlobal(&quot;quit&quot;, lua.LChannel(quit))
-    if err := L.DoString(`
-    ch:send(&quot;1&quot;)
-    ch:send(&quot;2&quot;)
-  `); err != nil {
-        panic(err)
-    }
-    ch &lt;- lua.LString(&quot;3&quot;)
-    quit &lt;- lua.LTrue
-}
-
-func main() {
-    ch := make(chan lua.LValue)
-    quit := make(chan lua.LValue)
-    go receiver(ch, quit)
-    go sender(ch, quit)
-    time.Sleep(3 * time.Second)
-}
-</code></pre>
-
-<p>こんな感じですね。Luaと同じくState自体はスレッドセーフではないので、goroutineごとにStateをもってChannelで通信します。</p>
-
-<h1>実装について</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">receiver</span>(<span style="color:#a6e22e">ch</span>, <span style="color:#a6e22e">quit</span> <span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LValue</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    <span style="color:#a6e22e">L</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">NewState</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">SetGlobal</span>(<span style="color:#e6db74">&#34;ch&#34;</span>, <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LChannel</span>(<span style="color:#a6e22e">ch</span>))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">SetGlobal</span>(<span style="color:#e6db74">&#34;quit&#34;</span>, <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LChannel</span>(<span style="color:#a6e22e">quit</span>))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">DoString</span>(<span style="color:#e6db74">`
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#e6db74">    local exit = false
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#e6db74">    while not exit do
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span><span style="color:#e6db74">      channel.select(
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#e6db74">        {&#34;|&lt;-&#34;, ch, function(ok, v)
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#e6db74">          if not ok then
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#e6db74">            print(&#34;channel closed&#34;)
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#e6db74">            exit = true
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#e6db74">          else
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#e6db74">            print(&#34;received:&#34;, v)
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#e6db74">          end
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span><span style="color:#e6db74">        end},
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span><span style="color:#e6db74">        {&#34;|&lt;-&#34;, quit, function(ok, v)
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span><span style="color:#e6db74">            print(&#34;quit&#34;)
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span><span style="color:#e6db74">            exit = true
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span><span style="color:#e6db74">        end}
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span><span style="color:#e6db74">      )
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span><span style="color:#e6db74">    end
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span><span style="color:#e6db74">  `</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>        panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">sender</span>(<span style="color:#a6e22e">ch</span>, <span style="color:#a6e22e">quit</span> <span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LValue</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>    <span style="color:#a6e22e">L</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">NewState</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">SetGlobal</span>(<span style="color:#e6db74">&#34;ch&#34;</span>, <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LChannel</span>(<span style="color:#a6e22e">ch</span>))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>    <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">SetGlobal</span>(<span style="color:#e6db74">&#34;quit&#34;</span>, <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LChannel</span>(<span style="color:#a6e22e">quit</span>))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">DoString</span>(<span style="color:#e6db74">`
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span><span style="color:#e6db74">    ch:send(&#34;1&#34;)
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span><span style="color:#e6db74">    ch:send(&#34;2&#34;)
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span><span style="color:#e6db74">  `</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>        panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>    <span style="color:#a6e22e">ch</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LString</span>(<span style="color:#e6db74">&#34;3&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>    <span style="color:#a6e22e">quit</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LTrue</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>    <span style="color:#a6e22e">ch</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LValue</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>    <span style="color:#a6e22e">quit</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LValue</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>    <span style="color:#66d9ef">go</span> <span style="color:#a6e22e">receiver</span>(<span style="color:#a6e22e">ch</span>, <span style="color:#a6e22e">quit</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>    <span style="color:#66d9ef">go</span> <span style="color:#a6e22e">sender</span>(<span style="color:#a6e22e">ch</span>, <span style="color:#a6e22e">quit</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>    <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">3</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>}
+</span></span></code></pre><p>こんな感じですね。Luaと同じくState自体はスレッドセーフではないので、goroutineごとにStateをもってChannelで通信します。</p>
+<h1 id="heading">実装について</h1>
 <p>迷ったんですが、channelは <strong>基本型</strong> として実装しています。 ユーザーデータ型でもよかったんですが、channelはGolangの特徴の一つですし、基本型にしたほうが親和性がよいので。</p>
-
 <p>あと、内部的にはリフレクションなのでそんなに性能はよくないかもしれません。</p>
-
-<h1>よければ使ってみてください</h1>
-
+<h1 id="heading-1">よければ使ってみてください</h1>
 <p>実装してみたものの、正直私は職業プログラマでなく趣味プログラマなのであんまり使うシーンがないです。なんかいい使いどころがあれば使ってみてください。</p>
 
   </div>
@@ -173,130 +161,91 @@ func main() {
 </header>
   <div itemprop="articleBody">
     <p>LuaをGo言語のみで実装した <a href="https://github.com/yuin/gopher-lua">GopherLua</a> を公開しました。</p>
-
 <p>詳しくはGithubのREADMEを見ていただくとして、特徴としては以下になります。</p>
-
 <ul>
-<li><p>Lua5.1ベース</p>
-
+<li>
+<p>Lua5.1ベース</p>
 <ul>
 <li>5.1の機能はほぼ実装済み</li>
-</ul></li>
-
-<li><p>Compiler, VMともに完全にGo言語のみで実装</p></li>
-
-<li><p>引数の受け渡し以外でのスタック操作が不要で使いやすいAPI</p></li>
 </ul>
-
-<h1>なぜ作ろうと思ったか</h1>
-
+</li>
+<li>
+<p>Compiler, VMともに完全にGo言語のみで実装</p>
+</li>
+<li>
+<p>引数の受け渡し以外でのスタック操作が不要で使いやすいAPI</p>
+</li>
+</ul>
+<h1 id="heading">なぜ作ろうと思ったか</h1>
 <p>もともとC言語でものを作るときにはLuaを設定ファイルの代わりとして取り入れていました。Goではあまり拡張言語実装がないので、jsonだったりiniだったりを設定ファイルとして使っていましたが、やっぱり微妙にめんどくさい。変数くらい欲しいなあ･･･とか。</p>
-
 <p>結局、固い言語だけでモノを作るのは難しく、やわらかさが必要になるポイントがあります。そういうところはまず、「設定ファイル」として外だしされます。そしてその設定ファイルがどんどん肥大化したり複雑化したりして･･･(XML地獄とか)。Cに対するLua、PythonやRuby、Javaに対するGroovyなど「固い言語」＋「拡張言語」は自分的に一番しっくりくる構成です。それをGoで実現するために実装してみました。</p>
-
 <p>もうひとつは単純にLuaに興味があったこと。正確にはLuaというよりレジスタ型VMに。スタック型VMは実装したことがあるのですが、レジスタ型で実装してみたかったのです。</p>
-
 <p>最後に、Go言語で処理系を実装してみたかったこと。実行ファイルが吐けるし、速度はそれなりに速いし、Go自体がGCを持っているのでかなり処理系作るのが楽だと思われるのでどんなものかな、と。</p>
-
-<h1>簡単な使い方</h1>
-
+<h1 id="heading-1">簡単な使い方</h1>
 <p>こうして</p>
-
-<pre class="prettyprint"><code class="language-go">import (
-    &quot;github.com/yuin/gopher-lua&quot;
-)
-</code></pre>
-
-<p>こんな感じですね。</p>
-
-<pre class="prettyprint"><code class="language-go">L := lua.NewState()
-defer L.Close()
-if err := L.DoString(`print(&quot;hello&quot;)`); err != nil {
-    panic(err)
-}
-</code></pre>
-
-<p>Go関数をLuaで呼ぶ場合は以下のような感じ。LuaとGoの間の引数と戻り値の受け渡しのみにスタックを使います。</p>
-
-<pre class="prettyprint"><code class="language-go">func Double(L lua.LState) int {
-    lv := L.ToInt(1)             // get argument
-    L.Push(lua.LNumber(lv * 2))  // push result
-    return 1                     // number of results
-}
-
-func main() {
-    L := lua.NewState()
-    defer L.Close()
-    L.SetGlobal(&quot;double&quot;, L.NewFunction(Double)) // Original lua_setglobal uses stack... 
-}
-</code></pre>
-
-<p>あとは <a href="https://github.com/yuin/gopher-lua">README</a> をみていただければ大体分かるかと思います。</p>
-
-<h1>実装について</h1>
-
-<h2>全般の話</h2>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    <span style="color:#e6db74">&#34;github.com/yuin/gopher-lua&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>)
+</span></span></code></pre><p>こんな感じですね。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#a6e22e">L</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">NewState</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span><span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">DoString</span>(<span style="color:#e6db74">`print(&#34;hello&#34;)`</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>    panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>}
+</span></span></code></pre><p>Go関数をLuaで呼ぶ場合は以下のような感じ。LuaとGoの間の引数と戻り値の受け渡しのみにスタックを使います。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Double</span>(<span style="color:#a6e22e">L</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LState</span>) <span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    <span style="color:#a6e22e">lv</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">ToInt</span>(<span style="color:#ae81ff">1</span>)             <span style="color:#75715e">// get argument
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">Push</span>(<span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LNumber</span>(<span style="color:#a6e22e">lv</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">2</span>))  <span style="color:#75715e">// push result
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">1</span>                     <span style="color:#75715e">// number of results
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    <span style="color:#a6e22e">L</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">NewState</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">SetGlobal</span>(<span style="color:#e6db74">&#34;double&#34;</span>, <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">NewFunction</span>(<span style="color:#a6e22e">Double</span>)) <span style="color:#75715e">// Original lua_setglobal uses stack... 
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#75715e"></span>}
+</span></span></code></pre><p>あとは <a href="https://github.com/yuin/gopher-lua">README</a> をみていただければ大体分かるかと思います。</p>
+<h1 id="heading-2">実装について</h1>
+<h2 id="heading-3">全般の話</h2>
 <p>まず、そんなにLua自体のコードは読んでません(おい)。Luaは1パスでコード生成までできる文法で本家はそういう実装ですが、GopherLuaでは</p>
-
 <ol>
 <li>トークナイズ(Lexer, 手書き)</li>
 <li>パース(go-yacc)</li>
 <li>コード生成</li>
 <li>最適化</li>
 </ol>
-
 <p>まったく違うパス構成なので実装は完全に独自実装です。またyaccなのでユーザが文法を簡単に変えられます。</p>
-
 <p>現状最適化はほとんどやっていません。複数JMPをまとめるくらい。</p>
-
 <p>あと、やっぱ三項演算子欲しい･･･。</p>
-
-<h2>データモデルの話</h2>
-
+<h2 id="heading-4">データモデルの話</h2>
 <p>こういう言語を実装する場合はいわゆる共用体のような、1つの型で複数の型を判別できるものが必要となります。Cでは共用体やポインタの下位ビットを使いますが、Goでは以下の選択肢があります。</p>
-
 <ul>
 <li><code>reflect.Value</code></li>
 <li><code>interface</code></li>
 <li><code>unsafe.Pointer</code></li>
 </ul>
-
 <p>GopherLuaでは <code>interface</code> を使っています。 <code>interface</code> は</p>
-
 <ul>
 <li>Go側のAPIを考えたとき一番分かりやすい</li>
 </ul>
-
 <p>という利点がある一方</p>
-
 <ul>
 <li>ネイティブ型をラップした <code>interface</code> の場合、 <code>interface</code> への変換が発生して速度低下を招く</li>
 </ul>
-
 <p>という欠点があります。そこで簡単なベンチマークをしたのですが</p>
-
 <ul>
 <li>単純な例(フィボナッチ計算)では確かに <code>reflect.Value</code> などが速い。</li>
 <li>一方、複雑な例になればそれほど差が無いように見えた</li>
 </ul>
-
 <p>ため <code>interface</code> を採用しました。ただ、プロファイルをとるとかなりの部分が <code>interface</code> への変換に取られているので、ここが(Goが進化して)速くなればGopherLuaも速くなると思います。</p>
-
-<h2>速度の話</h2>
-
+<h2 id="heading-5">速度の話</h2>
 <p>それほどパフォーマンスチューニングはしていませんが、フィボナッチではperlと同じくらいの性能は出ているようです。メモリ確保はそもそも気をつけて減らしているので後は</p>
-
 <ul>
 <li>関数をベタ書きする</li>
 </ul>
-
 <p>くらいかなあ。Goは短い関数をinline化してくれますが、そのinline化はそんなに賢くないのでやっぱりダメですね。ためしにVMの関数コール部分などをベタ書きすると1.2倍くらいの速度になりました。今のところそこまで速度を求めていないので元に戻しましたけど。</p>
-
 <p>やっぱマクロ欲しいなあ･･･</p>
-
-<h1>とりあえず、使えるはずです</h1>
-
+<h1 id="heading-6">とりあえず、使えるはずです</h1>
 <p>Lua5.1のテストは主要なものは通っているので使えるものになっているはずです。設定ファイルのかわりに使うもよし、プラグインの仕組みに使うのもよし。今後はGopherLuaのTableをGoのstructにマッピングするような( <code>json</code> や <code>xml</code> パッケージみたいな)ライブラリとか作りたいなと思っていたりします。</p>
 
   </div>
@@ -322,11 +271,8 @@ func main() {
 </header>
   <div itemprop="articleBody">
     <p>コマンドラインランチャー <a href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.6 をリリースしました。 GitHubの <a href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
-
 <p>v0.9.5からのバージョンアップ方法は同梱ドキュメントの更新履歴を参照してください。</p>
-
 <p>更新点は以下です。</p>
-
 <ul>
 <li><strong>FIXED</strong> : 一部のパスでアイコンが正しく読み込まれない問題を修正</li>
 <li><strong>FIXED</strong> : 一部のパスを読み込んだ際にクラッシュする問題を修正</li>
@@ -334,15 +280,10 @@ func main() {
 <li><strong>IMPROVED</strong> : 単一キーをホットキーに割り当てられるようになった</li>
 <li><strong>NEW</strong> : パス補完とオプション補完でオートコンプリートを有効にする path_autocomplete と option_autocomplete を追加</li>
 </ul>
-
 <p>ようやく重い腰をあげてgccのバージョンアップをしました…。icebergは今までmingw gcc4.5系を使っていて、これWindowsのくせにLP64なんですね。まぁそのおかげで＊nix生まれのライブラリでも割と普通に使えていました。</p>
-
 <p>で4.9にあげたのでWindowsらしくLLP64になったわけで、fltkなんかは平気で <code>long</code> を <code>void*</code> にキャストしてるのでワーニング出まくりでした…。そんなクリティカルな場所はなかったので簡単なパッチ当てて終了。</p>
-
 <p>鬼車も今まで使ってたバージョンは <code>long</code> のポインタキャストがあって落ちるので最新に。</p>
-
 <p>なんやかんやあったけど今のところきちんと動いている気がします。なにか問題ありましたらGithubの <a href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
-
 <p>あと、どうやらicebergはWindows8で動かないっぽいです(Windows7互換モードにすると動く)。 8の環境持ってないのでなんで動かないのかわかりません。コンパイラ変えただけで動くようになってたり…しないかなあ。というわけでWindows8使ってる方、もし互換モードなしで動いたらコメントください。</p>
 
   </div>

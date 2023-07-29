@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,32 +69,27 @@
 </header>
   <div itemprop="articleBody">
     <p>日本人である以上、いくらUTF-8が主権を得てきたといっても文字コード変換というカルマからは逃れられません。Pure Goでの文字コード変換はLLに比べるといろいろめんどくさい。</p>
-
 <p>それに、そのままだと任意の文字コードを指定させるのが難しい。特定の文字コード決め打ちならいいんですけど、全世界の利用者に向けて任意の文字コード設定できるようにする場合とかはさらにめんどくさいし、かといって <code>iconv</code> に依存するのも嫌なのライブラリにしました。</p>
-
-<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/charsetutil" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
-
+<div data-theme="default" data-height="150" data-width="400" data-github="yuin/charsetutil" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script>
 <p>以下のような感じで簡単に文字コードを変換できます。Pythonと同じで <code>encode</code> がUTF-8からUTF-8以外へ、 <code>decode</code> がUTF-8以外からUTF-8へ、です。内部では <code>golang.org/x/net/html/charset</code> を使っているので文字コードの指定もそれに習います。(WHATWGで定義されている名前になります) 。なので <code>cp932</code> などではなく <code>Windows-31J</code> です。</p>
-
-<pre class="prettyprint"><code class="language-go">b, err = EncodeString(&quot;こんにちわ&quot;, &quot;Windows-31J&quot;)
-b, err = Encode(&quot;こんにちわ&quot;, &quot;Windows-31J&quot;)
-b, err = EncodeBytes([]byte(&quot;こんにちわ&quot;), &quot;Windows-31J&quot;)
-b, err = EncodeReader(strings.NewReader(&quot;こんにちわ&quot;), &quot;Windows-31J&quot;)
-b = MustEncodeString(&quot;こんにちわ&quot;, &quot;Windows-31J&quot;)
-b = MustEncode(&quot;こんにちわ&quot;, &quot;Windows-31J&quot;)
-b = MustEncodeBytes([]byte(&quot;こんにちわ&quot;), &quot;Windows-31J&quot;)
-b = MustEncodeReader(strings.NewReader(&quot;こんにちわ&quot;), &quot;Windows-31J&quot;)
-
-s, err = DecodeString(string(source), &quot;Windows-31J&quot;)
-s, err = Decode(source, &quot;Windows-31J&quot;)
-s, err = DecodeBytes(source, &quot;Windows-31J&quot;)
-s, err = DecodeReader(bytes.NewReader(source), &quot;Windows-31J&quot;)
-s = MustDecodeString(string(source), &quot;Windows-31J&quot;)
-s = MustDecode(source, &quot;Windows-31J&quot;)
-s = MustDecodeBytes(source, &quot;Windows-31J&quot;)
-s = MustDecodeReader(bytes.NewReader(source), &quot;Windows-31J&quot;)
-</code></pre>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">EncodeString</span>(<span style="color:#e6db74">&#34;こんにちわ&#34;</span>, <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">Encode</span>(<span style="color:#e6db74">&#34;こんにちわ&#34;</span>, <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">EncodeBytes</span>([]byte(<span style="color:#e6db74">&#34;こんにちわ&#34;</span>), <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">EncodeReader</span>(<span style="color:#a6e22e">strings</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#e6db74">&#34;こんにちわ&#34;</span>), <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#a6e22e">b</span> = <span style="color:#a6e22e">MustEncodeString</span>(<span style="color:#e6db74">&#34;こんにちわ&#34;</span>, <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#a6e22e">b</span> = <span style="color:#a6e22e">MustEncode</span>(<span style="color:#e6db74">&#34;こんにちわ&#34;</span>, <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#a6e22e">b</span> = <span style="color:#a6e22e">MustEncodeBytes</span>([]byte(<span style="color:#e6db74">&#34;こんにちわ&#34;</span>), <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#a6e22e">b</span> = <span style="color:#a6e22e">MustEncodeReader</span>(<span style="color:#a6e22e">strings</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#e6db74">&#34;こんにちわ&#34;</span>), <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#a6e22e">s</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">DecodeString</span>(string(<span style="color:#a6e22e">source</span>), <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#a6e22e">s</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">Decode</span>(<span style="color:#a6e22e">source</span>, <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#a6e22e">s</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">DecodeBytes</span>(<span style="color:#a6e22e">source</span>, <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#a6e22e">s</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">DecodeReader</span>(<span style="color:#a6e22e">bytes</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">source</span>), <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#a6e22e">s</span> = <span style="color:#a6e22e">MustDecodeString</span>(string(<span style="color:#a6e22e">source</span>), <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#a6e22e">s</span> = <span style="color:#a6e22e">MustDecode</span>(<span style="color:#a6e22e">source</span>, <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#a6e22e">s</span> = <span style="color:#a6e22e">MustDecodeBytes</span>(<span style="color:#a6e22e">source</span>, <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span><span style="color:#a6e22e">s</span> = <span style="color:#a6e22e">MustDecodeReader</span>(<span style="color:#a6e22e">bytes</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">source</span>), <span style="color:#e6db74">&#34;Windows-31J&#34;</span>)
+</span></span></code></pre>
 
     <div class="seealso">
       <ul><h3>See Also</h3>
@@ -111,7 +104,7 @@ s = MustDecodeReader(bytes.NewReader(source), &quot;Windows-31J&quot;)
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2016/07/14/go-charsetutil" class="hatena-bookmark-button" data-hatena-bookmark-title="Goで文字コードを手軽に変換するライブラリ作った" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2016/07/14/go-charsetutil" class="hatena-bookmark-button" data-hatena-bookmark-title="Goで文字コードを手軽に変換するライブラリ作った" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

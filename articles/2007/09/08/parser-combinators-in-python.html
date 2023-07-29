@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,56 +71,47 @@
 </header>
   <div itemprop="articleBody">
     <p>ちょっと前にjavascriptで構文解析とかがはやった気がするので、javascriptのリハビリがてらかいてみた。</p>
-
 <p>ググってみると</p>
-
 <ul>
 <li><a href="http://t-code.org/blog/2007/06/jsparsec_javascript.htm">Jsparsec - JavaScriptパーザコンビネータライブラリ</a></li>
 <li><a href="http://d.hatena.ne.jp/bellbind/20060529/114884313">HaskellのMonadをJavaScriptで実装するとしたら</a></li>
 </ul>
-
 <p>あたりがあるのだが、まぁ勉強ということで。javascriptらしく書いてみようかと。</p>
-
 <p>ということで、モナドがどーたらとか難しい話はまぁおいておいて、簡単に値がとりだせますよ、という見栄え重視で作ってみた。基本的な機能しかない。けど拡張するのは簡単。せめて相互再帰くらいは実装したほうがよかったかな。まぁ、こんなの真剣に使う人もいないと思うので、要望があればってことで。ちなみに依存するライブラリはありません。</p>
-
 <p><strong>ダウンロード</strong> ： <a href="/statics/files/parsec.js">Inforno.Parsec</a></p>
-
 <p>たとえばこんな感じにCSVのパーサが定義できる。withを使ってDSLっぽくしてみた。</p>
-
-<pre class="prettyprint"><code>var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
-  this.chars = chrLike(function(c){ return c != '' &amp;&amp; c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='&quot;';});
-  this.quote = chr('&quot;') 
-  this.quoteInQuote = str('&quot;&quot;') .ret(function(){return '&quot;';}); 
-  this.charInQuote  = chrLike(function(c){ return c!='&quot;';});
-  this.quotedField  = quote .and (rep((quoteInQuote) .or (charInQuote))) .and (quote)
-                      .ret(function(q1, cs, q2){
-                        return cs.join(&quot;&quot;);
-                      });
-  this.field        = rep1(chars) .ret(Return.str)
-  this.record       = sep( (field) .or (quotedField), chr(&quot;,&quot;), true) .ret(function(fields) {
-    return {fields: fields};
-  })
-  this.csv          = sep(record, chr(&quot;\n&quot;), true) .and(eof) .ret(function(records) {
-    return {records : records};
-  })
-}});
-
-var testCsv = [
-'&quot;aaa&quot;,&quot;b',
-'bb&quot;,&quot;ccc&quot;,zzz,&quot;y&quot;&quot;Y&quot;&quot;y&quot;,xxx'
-].join(&quot;\n&quot;);
-
-var parser = new CSVParser(testCsv);
-var parseResult = parser.csv.parse()
-if(parseResult.success()) {
-  var records = parseResult.result[0].records;
-  for(var i=0,l=records.length;i&lt;l;i++){
-    alert(&quot;row(&quot;+i+&quot;)    &quot;+records[i].fields);
-  }
-}
-</code></pre>
-
-<p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり 、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  this.chars = chrLike(function(c){ return c != &#39;&#39; &amp;&amp; c!=&#39;,&#39; &amp;&amp; c!=&#39;\n&#39; &amp;&amp; c!=&#39;&#34;&#39;;});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  this.quote = chr(&#39;&#34;&#39;) 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  this.quoteInQuote = str(&#39;&#34;&#34;&#39;) .ret(function(){return &#39;&#34;&#39;;}); 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  this.charInQuote  = chrLike(function(c){ return c!=&#39;&#34;&#39;;});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  this.quotedField  = quote .and (rep((quoteInQuote) .or (charInQuote))) .and (quote)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>                      .ret(function(q1, cs, q2){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>                        return cs.join(&#34;&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>                      });
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  this.field        = rep1(chars) .ret(Return.str)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  this.record       = sep( (field) .or (quotedField), chr(&#34;,&#34;), true) .ret(function(fields) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    return {fields: fields};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  this.csv          = sep(record, chr(&#34;\n&#34;), true) .and(eof) .ret(function(records) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    return {records : records};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>}});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>var testCsv = [
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>&#39;&#34;aaa&#34;,&#34;b&#39;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>&#39;bb&#34;,&#34;ccc&#34;,zzz,&#34;y&#34;&#34;Y&#34;&#34;y&#34;,xxx&#39;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>].join(&#34;\n&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>var parser = new CSVParser(testCsv);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>var parseResult = parser.csv.parse()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>if(parseResult.success()) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>  var records = parseResult.result[0].records;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>  for(var i=0,l=records.length;i&lt;l;i++){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>    alert(&#34;row(&#34;+i+&#34;)    &#34;+records[i].fields);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>}
+</span></span></code></pre><p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり 、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
 
 
     <div class="seealso">
@@ -138,7 +127,7 @@ if(parseResult.success()) {
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/09/08/parser-combinators-in-python" class="hatena-bookmark-button" data-hatena-bookmark-title="Javascriptでパーサジェネレータを書いてみた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/09/08/parser-combinators-in-python" class="hatena-bookmark-button" data-hatena-bookmark-title="Javascriptでパーサジェネレータを書いてみた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

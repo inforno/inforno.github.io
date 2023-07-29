@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -74,73 +72,63 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <h1>更新履歴</h1>
-
+    <h1 id="heading">更新履歴</h1>
 <ul>
-<li><p>2009/02/20 version 1.0.0</p>
-
+<li>
+<p>2009/02/20 version 1.0.0</p>
 <ul>
 <li><code>Renderer</code> と <code>Helper</code> を追加。詳しくはソースファイルヘッダ部分のドキュメントを参照してください。</li>
-</ul></li>
-
-<li><p>2009/02/17 version 0.5.0</p>
-
+</ul>
+</li>
+<li>
+<p>2009/02/17 version 0.5.0</p>
 <ul>
 <li><code>&lt;%= %&gt;</code> で自動的にフィルタを適応できるようになりました。また、 <code>render</code> メソッドが <code>unicode</code> オブジェクトではなく <code>unicode</code> のサブクラス <code>EmbpyString</code> オブジェクトを返すようになりました。filterは <code>EmbpyString</code> オブジェクトをスルーします。これにより2重でfilterが適応されることがなくなります。&lt;%=r %&gt;でフィルターをオフにできます。</li>
-</ul></li>
 </ul>
-
-<pre class="prettyprint"><code>Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# =&gt; &quot;&amp;lt;b&amp;gt;&quot;
-Embpy(&quot;&lt;%=r b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# =&gt; &quot;&lt;b&gt;&quot;
-
-result = Embpy(&quot;&lt;%=r b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# result.__class__ =&gt; EmbpyString
-Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:result})
-# =&gt; &quot;&lt;b&gt;&quot;
-</code></pre>
-
-<ul>
-<li><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</li>
-
-<li><p>2009/02/16 version 0.4.0</p>
-
+</li>
+</ul>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>Embpy(&#34;&lt;%= b %&gt;&#34;, filter=cgi.escape).render({&#34;v&#34;:&#34;&lt;b&gt;&#34;})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span># =&gt; &#34;&amp;lt;b&amp;gt;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>Embpy(&#34;&lt;%=r b %&gt;&#34;, filter=cgi.escape).render({&#34;v&#34;:&#34;&lt;b&gt;&#34;})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span># =&gt; &#34;&lt;b&gt;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>result = Embpy(&#34;&lt;%=r b %&gt;&#34;, filter=cgi.escape).render({&#34;v&#34;:&#34;&lt;b&gt;&#34;})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span># result.__class__ =&gt; EmbpyString
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>Embpy(&#34;&lt;%= b %&gt;&#34;, filter=cgi.escape).render({&#34;v&#34;:result})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span># =&gt; &#34;&lt;b&gt;&#34;
+</span></span></code></pre><ul>
+<li>
+<p><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</p>
+</li>
+<li>
+<p>2009/02/16 version 0.4.0</p>
 <ul>
 <li>パフォーマンス改善</li>
-</ul></li>
-
-<li><p>2009/02/15 version 0.3.0</p>
-
+</ul>
+</li>
+<li>
+<p>2009/02/15 version 0.3.0</p>
 <ul>
 <li><a href="http://wids.net/lab/epy.html">epy</a> の中の人から「end.. orz」という反応をいただいたので、endの代わりに <code>&lt;% %&gt;</code> も使えるようにしました。</li>
-</ul></li>
 </ul>
-
-<pre class="prettyprint"><code>&lt;%- if True: -%&gt;
-   ok
-   &lt;% %&gt;
-</code></pre>
-
-<p>と書けるようになりました。</p>
-
+</li>
+</ul>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>&lt;%- if True: -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>   ok
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>   &lt;% %&gt;
+</span></span></code></pre><p>と書けるようになりました。</p>
 <ul>
-<li>2009/02/14 version 0.2.0<br />
-
+<li>2009/02/14 version 0.2.0
 <ul>
-<li>&rdquo;{&rdquo; と &ldquo;}&ldquo;が辞書リテラルとかぶっていたので、&rdquo;{:&ldquo;と&rdquo;:}&ldquo;に変更しました。</li>
+<li>&ldquo;{&rdquo; と &ldquo;}&ldquo;が辞書リテラルとかぶっていたので、&rdquo;{:&ldquo;と&rdquo;:}&ldquo;に変更しました。</li>
 <li>変換後コードでなく、コンパイル済みcodeオブジェクトをキャッシュするようにしました。</li>
-</ul></li>
 </ul>
-
-<h1>はじめに</h1>
-
+</li>
+</ul>
+<h1 id="heading-1">はじめに</h1>
 <p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
-
 <p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
-
 <p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= &quot;hoge%&gt;&quot;</code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
-
 <ul>
 <li>キャッシュ</li>
 <li>インラインでPythonを書くことも出来る: <code>def format(v) {: return &quot;%4d&quot;%v; :}</code> みたいに。</li>
@@ -148,51 +136,38 @@ Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:resul
 <li>自動的にフィルタを適応。しかも2重でフィルタが適応されない。</li>
 <li>もちろんマルチバイトでも大丈夫。</li>
 </ul>
-
 <p>といったところが特徴ですかね。</p>
-
-<h1>例</h1>
-
+<h1 id="heading-2">例</h1>
 <p>テンプレートはこんな感じにかけます。</p>
-
-<pre class="prettyprint"><code>&lt;%-
-class Hoge(object):
-  def __init__(self):
-    pass
-  end
-end
-hoge = Hoge()
-a = &quot;&lt; title &gt;&quot;
--%&gt;
-&lt;%=r a %&gt;
-&lt;%- def format(v) {: return &quot;%4d&quot;%v; :} -%&gt;
-&lt;%- def format2(v) {: return &quot;%2d&quot;%v; :} -%&gt;
-  &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
-&lt;%- for x in xrange(1,xx): -%&gt;
-&lt;%= format2(x) -%&gt;
-  &lt;%- for y in xrange(1,xx): -%&gt;
-&lt;%= format(x*y) -%&gt;
-  &lt;%- end %&gt;
-&lt;%- end -%&gt;
-</code></pre>
-
-<p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
-
-<pre class="prettyprint"><code>e = embpy.Embpy(codecs.open(&quot;path_to_template&quot;, encoding=&quot;utf8&quot;),
-          cache_path = &quot;path_to_cache_file&quot;,
-          template_globals = {}, filter=cgi.escape)
-print e.render({&quot;xx&quot;: &quot;10&quot;})
-</code></pre>
-
-<h1>ダウンロード</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>&lt;%-
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>class Hoge(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  def __init__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    pass
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  end
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>end
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>hoge = Hoge()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>a = &#34;&lt; title &gt;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>-%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>&lt;%=r a %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>&lt;%- def format(v) {: return &#34;%4d&#34;%v; :} -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>&lt;%- def format2(v) {: return &#34;%2d&#34;%v; :} -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>&lt;%- for x in xrange(1,xx): -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>&lt;%= format2(x) -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  &lt;%- for y in xrange(1,xx): -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>&lt;%= format(x*y) -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  &lt;%- end %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>&lt;%- end -%&gt;
+</span></span></code></pre><p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>e = embpy.Embpy(codecs.open(&#34;path_to_template&#34;, encoding=&#34;utf8&#34;),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>          cache_path = &#34;path_to_cache_file&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>          template_globals = {}, filter=cgi.escape)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>print e.render({&#34;xx&#34;: &#34;10&#34;})
+</span></span></code></pre><h1 id="heading-3">ダウンロード</h1>
 <p><a href="/statics/files/embpy.zip">embpy</a></p>
-
-<h1>コード</h1>
-
+<h1 id="heading-4">コード</h1>
 <p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
-
-<p>あと <code>&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</code> という正規表現は自分的には常套句。&rdquo;で囲まれていて\&ldquo;は&rdquo;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
+<p>あと <code>&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</code> という正規表現は自分的には常套句。&ldquo;で囲まれていて\&ldquo;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
 
 
     <div class="seealso">
@@ -208,7 +183,7 @@ print e.render({&quot;xx&quot;: &quot;10&quot;})
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2009/02/12/the-embedded-python-implementation" class="hatena-bookmark-button" data-hatena-bookmark-title="埋め込みPythonを実装してみました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2009/02/12/the-embedded-python-implementation" class="hatena-bookmark-button" data-hatena-bookmark-title="埋め込みPythonを実装してみました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

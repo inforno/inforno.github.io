@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,337 +75,295 @@
 </header>
   <div itemprop="articleBody">
     <p>Scalaにはご存知のとおり <code>scala.util.parsing.combinator</code> というパーサコンビネータライブラリがある。さらには <code>scala.util.parsing.ast</code> というのもあるわけだけど、これは激しく開発中な感じ。Scalaはバージョンがあがるとこういう開発中ライブラリはごそっと変わったりするので今はおいておく。ちなみに、2.7.1では前のパーサコンビネータは <code>scala.util.parsing.combinatorold</code> といういかにも使いたくない名前にされてしまった。</p>
-
 <p>パーサコンビネータといえば言語処理系だ（そうか？）。というわけで <code>scala.util.parsing.ast</code> は置いておいて、とりあえずASTについてほとんど考える必要がない、簡単なスタック指向言語を実装してみることにする。実行はScala 2.7.1.finalで。</p>
-
-<h1>スタック指向言語とは</h1>
-
+<h1 id="heading">スタック指向言語とは</h1>
 <p>こんなブログを見ている人は、だいたいスタック指向言語を知っているだろうから俺みたいな素人が書いてもなんだけど、一応。 スタック指向言語にはForthやPostScriptやFactorがある。素晴らしく簡単にいうと、 <strong>「とりあえずスタックがあればなんとかなるよね」</strong> という言語だ。</p>
-
 <p>んでスタック使うなら逆ポーランドで書いてあったら、処理も楽だしいいんじゃね、読みにくい？Lispだって慣れてる人は無問題なんだし、慣れの問題じゃね、という感じである。</p>
-
 <p>関数（スタック指向言語ではwordという）もスタックに値をつんで実行すればいい。wordから値を返すときも返したい分だけスタックにつめばいい。というわけで、非常に単純なのである。</p>
-
 <p>今回は <code>Factor</code> ライクなスタック指向言語処理系（インタプリタ）「SimpleFactor」を作ってみることに。文法とかはだいたいFactorと一緒なのでさきにFactorの文法を学んでおくと分かりやすい。</p>
-
-<h1>まずはレクサ</h1>
-
+<h1 id="heading-1">まずはレクサ</h1>
 <p>まずはレクサを作る。サポートするリテラルは文字列、整数値、真偽値で以下のような感じ。</p>
-
 <ul>
 <li>文字列： <code>&quot;hoge&quot;</code></li>
 <li>整数値： <code>10, -10</code></li>
 <li>真偽値： <code>t,f</code></li>
 </ul>
-
 <p>あと、コメントは <code>!</code> から行末までとする。ソースはこんな感じで、ScalaのDSL構築能力を生かしてかなり定義どおりに書ける。</p>
-
-<pre class="prettyprint"><code>import scala.util.parsing.combinator._
-import scala.util.parsing.combinator.syntactical._
-import scala.util.parsing.combinator.lexical._
-import scala.util.parsing.input.CharArrayReader.EofCh
-class Lexer extends StdLexical with ImplicitConversions {
-  override def token: Parser[Token] = 
-    ( string ^^ StringLit
-    | '-' ~&gt; number ^^ { case num =&gt; NumericLit(&quot;-&quot; + num) }
-    | number ^^ NumericLit
-    | EofCh ^^^ EOF
-    | delim
-    | '\&quot;' ~&gt; failure(&quot;Unterminated string&quot;)
-    | rep(chrAny) ^^ checkKeyword
-    | failure(&quot;Illegal character&quot;)
-    )
-
-
-  def number  = zero | (nonzero ~ rep(digit) ^^ {case x ~ y =&gt; mkS(x::y)})
-  def string = '\&quot;' ~&gt; rep(charSeq | chrExcept('\&quot;', '\n', EofCh)) &lt;~ '\&quot;' ^^ {case x =&gt; mkS(x)}
-  def checkKeyword(xs : List[Any]) = {
-    val strRep = mkS(xs)
-    if (reserved contains strRep){ Keyword(strRep) }
-    else if(identiferRe.findFirstIn(strRep) != None  ) { Identifier(strRep) }
-    else {ErrorToken(&quot;Not a Identifier: &quot; + strRep)}
-  }
-
-  override def whitespace: Parser[Any] =
-    rep( whitespaceChar | '!' ~ rep( chrExcept(EofCh, '\n') ))
-  def nonzero = elem(&quot;nonzero digit&quot;, d =&gt; d.isDigit &amp;&amp; d != '0')
-  def zero: Parser[String] = '0' ^^^ &quot;0&quot;
-  def charSeq: Parser[String] =
-    ('\\' ~ '\&quot;' ^^^ &quot;\&quot;&quot; |'\\' ~ '\\' ^^^ &quot;\\&quot; |'\\' ~ '/'  ^^^ &quot;/&quot; |'\\' ~ 'b'  ^^^ &quot;\b&quot; | '\\' ~ '0' ^^^ &quot;&quot;
-    |'\\' ~ 'f'  ^^^ &quot;\f&quot; |'\\' ~ 'n'  ^^^ &quot;\n&quot; |'\\' ~ 'r'  ^^^ &quot;\r&quot; |'\\' ~ 't'  ^^^ &quot;\t&quot;)
-  def identiferRe = &quot;&quot;&quot;^(\w|[^&quot;])+$&quot;&quot;&quot;.r
-  def chrAny = chrExcept(EofCh, ' ', '\n', '\t', '\r', '\&quot;', '!')
-
-  def mkS[A](seq: Seq[A]) = seq mkString &quot;&quot;
-}
-</code></pre>
-
-<p>Scalaで処理系を作る場合はとりあえず <code>StdLexical</code> を継承して拡張すれば、だいたいOK。ここでは <code>Token</code> を返すレクサを定義する。 <code>Keyword</code> や <code>StringLit</code> といった <code>Token</code> を継承したケースクラスは <code>scala.util.parsing.sytax.StdTokens</code> で定義されていて、 <code>StdLexical</code> は <code>StdTokens</code> をMix-inしている。</p>
-
-<h1>抽象構文木をつくる</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>import scala.util.parsing.combinator._
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>import scala.util.parsing.combinator.syntactical._
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>import scala.util.parsing.combinator.lexical._
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>import scala.util.parsing.input.CharArrayReader.EofCh
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>class Lexer extends StdLexical with ImplicitConversions {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  override def token: Parser[Token] = 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    ( string ^^ StringLit
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    | &#39;-&#39; ~&gt; number ^^ { case num =&gt; NumericLit(&#34;-&#34; + num) }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    | number ^^ NumericLit
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    | EofCh ^^^ EOF
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    | delim
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    | &#39;\&#34;&#39; ~&gt; failure(&#34;Unterminated string&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    | rep(chrAny) ^^ checkKeyword
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    | failure(&#34;Illegal character&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  def number  = zero | (nonzero ~ rep(digit) ^^ {case x ~ y =&gt; mkS(x::y)})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>  def string = &#39;\&#34;&#39; ~&gt; rep(charSeq | chrExcept(&#39;\&#34;&#39;, &#39;\n&#39;, EofCh)) &lt;~ &#39;\&#34;&#39; ^^ {case x =&gt; mkS(x)}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  def checkKeyword(xs : List[Any]) = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    val strRep = mkS(xs)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>    if (reserved contains strRep){ Keyword(strRep) }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>    else if(identiferRe.findFirstIn(strRep) != None  ) { Identifier(strRep) }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>    else {ErrorToken(&#34;Not a Identifier: &#34; + strRep)}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>  override def whitespace: Parser[Any] =
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    rep( whitespaceChar | &#39;!&#39; ~ rep( chrExcept(EofCh, &#39;\n&#39;) ))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>  def nonzero = elem(&#34;nonzero digit&#34;, d =&gt; d.isDigit &amp;&amp; d != &#39;0&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>  def zero: Parser[String] = &#39;0&#39; ^^^ &#34;0&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>  def charSeq: Parser[String] =
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    (&#39;\\&#39; ~ &#39;\&#34;&#39; ^^^ &#34;\&#34;&#34; |&#39;\\&#39; ~ &#39;\\&#39; ^^^ &#34;\\&#34; |&#39;\\&#39; ~ &#39;/&#39;  ^^^ &#34;/&#34; |&#39;\\&#39; ~ &#39;b&#39;  ^^^ &#34;\b&#34; | &#39;\\&#39; ~ &#39;0&#39; ^^^ &#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>    |&#39;\\&#39; ~ &#39;f&#39;  ^^^ &#34;\f&#34; |&#39;\\&#39; ~ &#39;n&#39;  ^^^ &#34;\n&#34; |&#39;\\&#39; ~ &#39;r&#39;  ^^^ &#34;\r&#34; |&#39;\\&#39; ~ &#39;t&#39;  ^^^ &#34;\t&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>  def identiferRe = &#34;&#34;&#34;^(\w|[^&#34;])+$&#34;&#34;&#34;.r
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>  def chrAny = chrExcept(EofCh, &#39; &#39;, &#39;\n&#39;, &#39;\t&#39;, &#39;\r&#39;, &#39;\&#34;&#39;, &#39;!&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>  def mkS[A](seq: Seq[A]) = seq mkString &#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>}
+</span></span></code></pre><p>Scalaで処理系を作る場合はとりあえず <code>StdLexical</code> を継承して拡張すれば、だいたいOK。ここでは <code>Token</code> を返すレクサを定義する。 <code>Keyword</code> や <code>StringLit</code> といった <code>Token</code> を継承したケースクラスは <code>scala.util.parsing.sytax.StdTokens</code> で定義されていて、 <code>StdLexical</code> は <code>StdTokens</code> をMix-inしている。</p>
+<h1 id="heading-2">抽象構文木をつくる</h1>
 <p>次に、このトークンの並びから文法を定義して、それに従って抽象構文木を作るわけだけど、スタック指向言語の場合、ここで難しいことはあまりない。</p>
-
 <p>とりあえず、処理(といっても4種類、しかもうち2種類は意味なし）と、抽象構文木をあらわすケースクラスを作る。インタプリタなのでオペコードとかする意味はないけど、こうしとくとVMにしようと思ったとき楽なのでそうした。というよりエミュとかを作ることが好きなので、こういう数値を見ると安心するのである。</p>
-
-<pre class="prettyprint"><code>import scala.util.logging.ConsoleLogger
-import scala.collection.mutable.{Stack, ArrayBuffer, HashMap}
-trait Opecode {
-  final val OP_NOP  : byte = 0x00
-  final val OP_PUSH : byte = 0x01
-  final val OP_CALL : byte = 0x50
-  final val OP_RTN  : byte = 0x51
-}
-
-abstract class Node {
-  type Value
-  val v:Value
-  def value = v
-}
-abstract class NodeValue extends Node
-case class NodeStr(v:String) extends NodeValue { type Value = String }
-case class NodeInt(v:int) extends NodeValue { type Value = int }
-case class NodeBool(v:boolean) extends NodeValue { type Value = boolean }
-case class NodeSymbol(override val v:String) extends NodeStr(v)
-case class NodeQuotation(val v:List[Node]) extends Node{ type Value = List[Node] }
-case class NodeOpe(v:byte, operand:List[Node]) extends Node { type Value = byte }
-case class NodeNamed(v:Named) extends NodeValue with Opecode{ type Value = Named }
-case class NodeProgram(v:List[Node]) extends Node with Opecode{
-  type Value = List[Node]
-  var quotIndex = 0
-  def nextQuotSym = { quotIndex += 1; &quot;quot&quot;+quotIndex }
-
-  def toplevel = {
-    val nullsf = List[NodeSymbol]()
-    val words = new ArrayBuffer[Node]
-    def visitNode(n:Node):List[Node] = n match {
-      case NodeNamed(NamedWord(name, sin, sout, body)) =&gt; 
-         words += NodeNamed(NamedWord(name, sin, sout, body.flatMap(visitNode)))
-         List[Node]()
-      case NodeQuotation(nodes) =&gt; 
-        val name = nextQuotSym
-        words += NodeNamed(NamedWord(name, nullsf, nullsf, nodes.flatMap(visitNode)))
-        List(NodeOpe(OP_PUSH, List(NodeSymbol(name))))
-      case x =&gt; List(x)
-    }
-    value.flatMap(visitNode)
-    words.toList
-  }
-}
-
-abstract class Named(name:String)
-case class NamedWord(name:String, stackin:List[NodeSymbol], stackout:List[NodeSymbol], body:List[Node]) extends Named(name)
-case class NamedNativeWord[T](name:String, stackin:List[NodeSymbol], 
-  stackout:List[NodeSymbol], body:()=&gt;T) extends Named(name)
-class NamedTable extends HashMap[String, Named] {
-}
-</code></pre>
-
-<p><code>Node</code> という抽象クラスを継承して、いろんなノードを定義する。だいたい名前をみてのとおりだけど、わかりにくいところだとこんな感じ。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>import scala.util.logging.ConsoleLogger
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>import scala.collection.mutable.{Stack, ArrayBuffer, HashMap}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>trait Opecode {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  final val OP_NOP  : byte = 0x00
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  final val OP_PUSH : byte = 0x01
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  final val OP_CALL : byte = 0x50
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  final val OP_RTN  : byte = 0x51
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>abstract class Node {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  type Value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  val v:Value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  def value = v
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>abstract class NodeValue extends Node
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>case class NodeStr(v:String) extends NodeValue { type Value = String }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>case class NodeInt(v:int) extends NodeValue { type Value = int }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>case class NodeBool(v:boolean) extends NodeValue { type Value = boolean }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>case class NodeSymbol(override val v:String) extends NodeStr(v)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>case class NodeQuotation(val v:List[Node]) extends Node{ type Value = List[Node] }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>case class NodeOpe(v:byte, operand:List[Node]) extends Node { type Value = byte }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>case class NodeNamed(v:Named) extends NodeValue with Opecode{ type Value = Named }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>case class NodeProgram(v:List[Node]) extends Node with Opecode{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>  type Value = List[Node]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>  var quotIndex = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  def nextQuotSym = { quotIndex += 1; &#34;quot&#34;+quotIndex }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>  def toplevel = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>    val nullsf = List[NodeSymbol]()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>    val words = new ArrayBuffer[Node]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    def visitNode(n:Node):List[Node] = n match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>      case NodeNamed(NamedWord(name, sin, sout, body)) =&gt; 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>         words += NodeNamed(NamedWord(name, sin, sout, body.flatMap(visitNode)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>         List[Node]()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>      case NodeQuotation(nodes) =&gt; 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>        val name = nextQuotSym
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>        words += NodeNamed(NamedWord(name, nullsf, nullsf, nodes.flatMap(visitNode)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>        List(NodeOpe(OP_PUSH, List(NodeSymbol(name))))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>      case x =&gt; List(x)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>    value.flatMap(visitNode)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>    words.toList
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>abstract class Named(name:String)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>case class NamedWord(name:String, stackin:List[NodeSymbol], stackout:List[NodeSymbol], body:List[Node]) extends Named(name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>case class NamedNativeWord[T](name:String, stackin:List[NodeSymbol], 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>  stackout:List[NodeSymbol], body:()=&gt;T) extends Named(name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>class NamedTable extends HashMap[String, Named] {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>}
+</span></span></code></pre><p><code>Node</code> という抽象クラスを継承して、いろんなノードを定義する。だいたい名前をみてのとおりだけど、わかりにくいところだとこんな感じ。</p>
 <ul>
 <li>NodeNamed：名前付けされた値への参照</li>
 <li>NodeSymbol：word名</li>
 <li>NodeQuotation：無名関数(quotationという)</li>
 <li>NodeProgram：プログラム全体</li>
 </ul>
-
 <p><code>Named</code> は名前付けされた値なわけだけど、今回変数にあたるものはないので、wordのみがコレにあたる。 <code>NamedWord</code> がSimpleFactorで書かれたふつーのword、 <code>NamedNativeWord</code> はいわゆる組み込みwordでScalaで書いたものをあらわす。 <code>NamedTable</code> はその対応を保存する単なるハッシュマップ。</p>
-
 <p>さて、ではこいつらを使って構文木を作って実行する。</p>
-
-<pre class="prettyprint"><code>class SimpleFactorInterp extends StdTokenParsers with ImplicitConversions with Opecode{
-  type Tokens = Lexer
-  val lexical = new Tokens
-  lexical.reserved ++= List(&quot;t&quot;, &quot;f&quot;, &quot;(&quot;, &quot;)&quot;, &quot;[&quot;, &quot;]&quot;, &quot;:&quot;, &quot;;&quot;, &quot;--&quot;)
-  lexical.delimiters ++= List(&quot;\n&quot;, &quot; &quot;, &quot;\t&quot;)
-  import lexical.{NumericLit, StringLit, Keyword, Identifier}
-
-  def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }
-  def lWord       = &quot;:&quot; ~ lSymbol ~ &quot;(&quot; ~ rep(lSymbol) ~ &quot;--&quot; ~ rep(lSymbol) ~ &quot;)&quot; ~ rep(lExpr) ~ &quot;;&quot; ^^ 
-                        { case &quot;:&quot; ~ name ~ &quot;(&quot; ~ sin ~ &quot;--&quot; ~ sout ~ &quot;)&quot; ~ body ~ &quot;;&quot; =&gt;
-                            NodeNamed(NamedWord(name.value, sin, sout, body+NodeOpe(OP_RTN, List[Node]()))) }
-  def lExpr:Parser[Node] = (lString | lNumber | lBool | lInvokeWord | lQuotation)
-  def lString     = accept(&quot;string&quot;, { case StringLit(n)  =&gt;  NodeOpe(OP_PUSH, List(NodeStr(n))) })
-  def lNumber     = accept(&quot;number&quot;, { case NumericLit(n) =&gt;  NodeOpe(OP_PUSH, List(NodeInt(n.toInt))) })
-  def lBool       = accept(&quot;boolean&quot;,{ case Keyword(&quot;t&quot;)  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(true)))
-                                       case Keyword(&quot;f&quot;)  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(false)))  })
-  def lInvokeWord    = accept(&quot;symbol&quot;, { case Identifier(n) =&gt; NodeOpe(OP_CALL, List(NodeSymbol(n))) })
-  def lQuotation      = &quot;[&quot; ~&gt; rep(lExpr) &lt;~ &quot;]&quot; ^^ { case expr =&gt; NodeQuotation(expr+NodeOpe(OP_RTN, List[Node]())) }
-
-  def lSymbol        = accept(&quot;symbol&quot;, { case Identifier(n) =&gt; NodeSymbol(n) })
-
-  protected val stack = new Stack[Node]
-  protected var namedTable = new NamedTable
-
-  def parse(input: String) = 
-    phrase(program)(new lexical.Scanner(input)) match {
-      case Success(programNode, _) =&gt; initTopLevel(programNode.toplevel)
-      case x                       =&gt; error(x.toString)
-    }
-
-  def initTopLevel(toplevelNodes:List[Node]) = {
-    def sl(v:String) = v.split(&quot; &quot;).map(NodeSymbol).toList
-    def nword[T](n:String, sin:String, sout:String, m:()=&gt;T) =
-      (n, NamedNativeWord(n, sl(sin), sl(sout), m))
-    namedTable ++= List(
-      nword(&quot;drop&quot;, &quot;x&quot;, &quot;&quot;, ()=&gt;{ pop }),
-      nword(&quot;dup&quot;, &quot;x&quot;, &quot;x x&quot;, ()=&gt;{ val v = pop; npush(v,v) }),
-      nword(&quot;rotate&quot;, &quot;x y z&quot;, &quot;y z x&quot;, ()=&gt; npop(3) match {
-        case List(x, y, z) =&gt; npush(y, z, x)
-      }),
-      nword(&quot;swap&quot;, &quot;x y&quot;, &quot;y x&quot;, ()=&gt; npop(2) match {
-        case List(x, y) =&gt; npush(y, x)
-      }),
-
-      nword(&quot;+&quot;, &quot;x y&quot;, &quot;z&quot;, ()=&gt;{ iArI2(_+_) }),
-      nword(&quot;-&quot;, &quot;x y&quot;, &quot;z&quot;, ()=&gt;{ iArI2(_-_) }),
-      nword(&quot;*&quot;, &quot;x y&quot;, &quot;z&quot;, ()=&gt;{ iArI2(_*_) }),
-      nword(&quot;/&quot;, &quot;x y&quot;, &quot;z&quot;, ()=&gt;{ iArI2(_/_) }),
-
-      nword(&quot;&gt;&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_&gt;_) }),
-      nword(&quot;&lt;&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_&lt;_) }),
-      nword(&quot;==&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_==_) }),
-      nword(&quot;&gt;=&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_&gt;=_) }),
-      nword(&quot;&lt;=&quot;, &quot;x y&quot;, &quot;?&quot;, ()=&gt;{ ilB2(_&lt;=_) }),
-
-      nword(&quot;not&quot;, &quot;?&quot;, &quot;?&quot;, ()=&gt; pop match {
-        case NodeBool(v) =&gt; push(NodeBool(!v))
-      }),
-      nword(&quot;and&quot;, &quot;? ?&quot;, &quot;?&quot;, ()=&gt; (pop, pop) match {
-        case (NodeBool(true), NodeBool(true)) =&gt; push(NodeBool(true))
-        case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(false))
-      }),
-      nword(&quot;or&quot;, &quot;? ?&quot;, &quot;?&quot;, ()=&gt; (pop, pop) match {
-        case (NodeBool(false), NodeBool(false)) =&gt; push(NodeBool(false))
-        case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(true))
-      }),
-
-      nword(&quot;.&quot;, &quot;obj&quot;, &quot;&quot;, ()=&gt;{ println(pop.value) }),
-      nword(&quot;call&quot;, &quot;quot&quot;, &quot;&quot;, ()=&gt; pop match {
-        case NodeSymbol(qname) =&gt; callWord(qname)
-      }),
-
-      nword(&quot;if&quot;, &quot;? quot quot&quot;, &quot;&quot;, ()=&gt; (pop, pop, pop) match {
-        case (_, NodeSymbol(qname), NodeBool(true))   =&gt; callWord(qname)
-        case (NodeSymbol(qname),  _, NodeBool(false)) =&gt; callWord(qname)
-      }),
-
-      nword(&quot;string&gt;number&quot;, &quot;str&quot;, &quot;x&quot;, ()=&gt; pop match {
-        case NodeStr(str) =&gt; push(NodeInt(str.toInt))
-      }),
-      nword(&quot;&gt;string&quot;, &quot;obj&quot;, &quot;str&quot;, ()=&gt; { push(NodeStr(pop.value.toString)) })
-
-    )
-    toplevelNodes.foreach { 
-      case NodeNamed(n@NamedWord(name, _, _, _)) =&gt; namedTable(name) = n
-      case _ =&gt; ()
-    }
-  }
-
-  def evaluate(input:String, args:Array[String]) = {
-    parse(input)
-    args.map(NodeStr).foreach(push _)
-    callWord(&quot;main&quot;)
-  }
-
-  def callWord(wordName:String):unit = 
-    namedTable(wordName.ensuring(namedTable.contains _, &quot;word '&quot;+wordName+&quot;' is not defined.&quot;)) match {
-      case NamedNativeWord(_, sin, sout, body) =&gt; try { 
-          body()
-        } catch {
-          case e =&gt; wordError(wordName, sin, sout)
-                    throw e
-        }
-      case NamedWord(_, sin, sout, body) =&gt; 
-        body foreach { 
-          case NodeOpe(OP_PUSH, List(v, _*)) =&gt; push(v)
-          case NodeOpe(OP_CALL, List(NodeSymbol(name), _*)) =&gt; 
-            try {
-              callWord(name)
-            }catch {
-              case e =&gt; wordError(wordName, sin, sout)
-                        throw e
-            }
-          case NodeOpe(OP_RTN, _) =&gt; ()
-        }
-    }
-
-  def npop(n:int):List[Node] = (1 to n).map(x=&gt;pop).reverse.toList
-  def npush(ns:Node*) = ns.reverse.foreach(push(_))
-
-  def iArI2(f:(int,int)=&gt;int) = (pop, pop) match {
-    case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeInt(f(v2,v1)))
-  }
-  def ilB2(f:(int,int)=&gt;boolean) = (pop, pop) match {
-    case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeBool(f(v2,v1)))
-  }
-  def wordError(name:String, sin:List[NodeSymbol], sout:List[NodeSymbol]) = {
-    printf(&quot;word '%s' ( %s -- %s ).\n&quot;, name, sin.map(_.value).mkString(&quot; &quot;),
-                                              sout.map(_.value).mkString(&quot; &quot;))
-  }
-  def push(a:Node) = stack.push(a)
-  def pop = stack.pop
-
-}
-</code></pre>
-
-<p>はじめの方でプログラムの文法を定義し、 <code>Token</code> から <code>Node</code> のリストへ変換し、 <code>NodeProgram</code> にする。処理の簡単さのため、プログラムはwordから構成されていて、プログラム開始時にはmain wordから実行が開始されるとするので</p>
-
-<pre class="prettyprint"><code>def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }
-</code></pre>
-
-<p>wordは</p>
-
-<pre class="prettyprint"><code>: add ( x y -- z )
- +
-;
-</code></pre>
-
-<p>という感じに定義するので <code>lWord</code> の定義になっている。ほとんどそのまま書いた感じだ。 <code>( x y -- z )</code> の部分はスタックエフェクトといって、このwordがスタックにどのような影響を与えるのかを記述している。あくまで説明であって本質的な意味はない。 <code>( x y -- z )</code> ならスタックから2個取り出されて、結果が1個詰まれるのだな、ということがわかる。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1</span><span>class SimpleFactorInterp extends StdTokenParsers with ImplicitConversions with Opecode{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2</span><span>  type Tokens = Lexer
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3</span><span>  val lexical = new Tokens
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4</span><span>  lexical.reserved ++= List(&#34;t&#34;, &#34;f&#34;, &#34;(&#34;, &#34;)&#34;, &#34;[&#34;, &#34;]&#34;, &#34;:&#34;, &#34;;&#34;, &#34;--&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5</span><span>  lexical.delimiters ++= List(&#34;\n&#34;, &#34; &#34;, &#34;\t&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6</span><span>  import lexical.{NumericLit, StringLit, Keyword, Identifier}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8</span><span>  def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9</span><span>  def lWord       = &#34;:&#34; ~ lSymbol ~ &#34;(&#34; ~ rep(lSymbol) ~ &#34;--&#34; ~ rep(lSymbol) ~ &#34;)&#34; ~ rep(lExpr) ~ &#34;;&#34; ^^ 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10</span><span>                        { case &#34;:&#34; ~ name ~ &#34;(&#34; ~ sin ~ &#34;--&#34; ~ sout ~ &#34;)&#34; ~ body ~ &#34;;&#34; =&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11</span><span>                            NodeNamed(NamedWord(name.value, sin, sout, body+NodeOpe(OP_RTN, List[Node]()))) }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12</span><span>  def lExpr:Parser[Node] = (lString | lNumber | lBool | lInvokeWord | lQuotation)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13</span><span>  def lString     = accept(&#34;string&#34;, { case StringLit(n)  =&gt;  NodeOpe(OP_PUSH, List(NodeStr(n))) })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14</span><span>  def lNumber     = accept(&#34;number&#34;, { case NumericLit(n) =&gt;  NodeOpe(OP_PUSH, List(NodeInt(n.toInt))) })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15</span><span>  def lBool       = accept(&#34;boolean&#34;,{ case Keyword(&#34;t&#34;)  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(true)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16</span><span>                                       case Keyword(&#34;f&#34;)  =&gt;  NodeOpe(OP_PUSH, List(NodeBool(false)))  })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17</span><span>  def lInvokeWord    = accept(&#34;symbol&#34;, { case Identifier(n) =&gt; NodeOpe(OP_CALL, List(NodeSymbol(n))) })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18</span><span>  def lQuotation      = &#34;[&#34; ~&gt; rep(lExpr) &lt;~ &#34;]&#34; ^^ { case expr =&gt; NodeQuotation(expr+NodeOpe(OP_RTN, List[Node]())) }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20</span><span>  def lSymbol        = accept(&#34;symbol&#34;, { case Identifier(n) =&gt; NodeSymbol(n) })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22</span><span>  protected val stack = new Stack[Node]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23</span><span>  protected var namedTable = new NamedTable
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25</span><span>  def parse(input: String) = 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26</span><span>    phrase(program)(new lexical.Scanner(input)) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27</span><span>      case Success(programNode, _) =&gt; initTopLevel(programNode.toplevel)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28</span><span>      case x                       =&gt; error(x.toString)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31</span><span>  def initTopLevel(toplevelNodes:List[Node]) = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32</span><span>    def sl(v:String) = v.split(&#34; &#34;).map(NodeSymbol).toList
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33</span><span>    def nword[T](n:String, sin:String, sout:String, m:()=&gt;T) =
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34</span><span>      (n, NamedNativeWord(n, sl(sin), sl(sout), m))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35</span><span>    namedTable ++= List(
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36</span><span>      nword(&#34;drop&#34;, &#34;x&#34;, &#34;&#34;, ()=&gt;{ pop }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37</span><span>      nword(&#34;dup&#34;, &#34;x&#34;, &#34;x x&#34;, ()=&gt;{ val v = pop; npush(v,v) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38</span><span>      nword(&#34;rotate&#34;, &#34;x y z&#34;, &#34;y z x&#34;, ()=&gt; npop(3) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39</span><span>        case List(x, y, z) =&gt; npush(y, z, x)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40</span><span>      }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41</span><span>      nword(&#34;swap&#34;, &#34;x y&#34;, &#34;y x&#34;, ()=&gt; npop(2) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42</span><span>        case List(x, y) =&gt; npush(y, x)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43</span><span>      }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45</span><span>      nword(&#34;+&#34;, &#34;x y&#34;, &#34;z&#34;, ()=&gt;{ iArI2(_+_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46</span><span>      nword(&#34;-&#34;, &#34;x y&#34;, &#34;z&#34;, ()=&gt;{ iArI2(_-_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47</span><span>      nword(&#34;*&#34;, &#34;x y&#34;, &#34;z&#34;, ()=&gt;{ iArI2(_*_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48</span><span>      nword(&#34;/&#34;, &#34;x y&#34;, &#34;z&#34;, ()=&gt;{ iArI2(_/_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50</span><span>      nword(&#34;&gt;&#34;, &#34;x y&#34;, &#34;?&#34;, ()=&gt;{ ilB2(_&gt;_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51</span><span>      nword(&#34;&lt;&#34;, &#34;x y&#34;, &#34;?&#34;, ()=&gt;{ ilB2(_&lt;_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52</span><span>      nword(&#34;==&#34;, &#34;x y&#34;, &#34;?&#34;, ()=&gt;{ ilB2(_==_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53</span><span>      nword(&#34;&gt;=&#34;, &#34;x y&#34;, &#34;?&#34;, ()=&gt;{ ilB2(_&gt;=_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54</span><span>      nword(&#34;&lt;=&#34;, &#34;x y&#34;, &#34;?&#34;, ()=&gt;{ ilB2(_&lt;=_) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56</span><span>      nword(&#34;not&#34;, &#34;?&#34;, &#34;?&#34;, ()=&gt; pop match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57</span><span>        case NodeBool(v) =&gt; push(NodeBool(!v))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58</span><span>      }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59</span><span>      nword(&#34;and&#34;, &#34;? ?&#34;, &#34;?&#34;, ()=&gt; (pop, pop) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60</span><span>        case (NodeBool(true), NodeBool(true)) =&gt; push(NodeBool(true))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61</span><span>        case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(false))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62</span><span>      }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63</span><span>      nword(&#34;or&#34;, &#34;? ?&#34;, &#34;?&#34;, ()=&gt; (pop, pop) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64</span><span>        case (NodeBool(false), NodeBool(false)) =&gt; push(NodeBool(false))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65</span><span>        case (NodeBool(_), NodeBool(_)) =&gt; push(NodeBool(true))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66</span><span>      }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68</span><span>      nword(&#34;.&#34;, &#34;obj&#34;, &#34;&#34;, ()=&gt;{ println(pop.value) }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69</span><span>      nword(&#34;call&#34;, &#34;quot&#34;, &#34;&#34;, ()=&gt; pop match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70</span><span>        case NodeSymbol(qname) =&gt; callWord(qname)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71</span><span>      }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73</span><span>      nword(&#34;if&#34;, &#34;? quot quot&#34;, &#34;&#34;, ()=&gt; (pop, pop, pop) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74</span><span>        case (_, NodeSymbol(qname), NodeBool(true))   =&gt; callWord(qname)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75</span><span>        case (NodeSymbol(qname),  _, NodeBool(false)) =&gt; callWord(qname)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76</span><span>      }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78</span><span>      nword(&#34;string&gt;number&#34;, &#34;str&#34;, &#34;x&#34;, ()=&gt; pop match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79</span><span>        case NodeStr(str) =&gt; push(NodeInt(str.toInt))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80</span><span>      }),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81</span><span>      nword(&#34;&gt;string&#34;, &#34;obj&#34;, &#34;str&#34;, ()=&gt; { push(NodeStr(pop.value.toString)) })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83</span><span>    )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84</span><span>    toplevelNodes.foreach { 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85</span><span>      case NodeNamed(n@NamedWord(name, _, _, _)) =&gt; namedTable(name) = n
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86</span><span>      case _ =&gt; ()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90</span><span>  def evaluate(input:String, args:Array[String]) = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91</span><span>    parse(input)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92</span><span>    args.map(NodeStr).foreach(push _)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93</span><span>    callWord(&#34;main&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96</span><span>  def callWord(wordName:String):unit = 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97</span><span>    namedTable(wordName.ensuring(namedTable.contains _, &#34;word &#39;&#34;+wordName+&#34;&#39; is not defined.&#34;)) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98</span><span>      case NamedNativeWord(_, sin, sout, body) =&gt; try { 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99</span><span>          body()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100</span><span>        } catch {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101</span><span>          case e =&gt; wordError(wordName, sin, sout)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102</span><span>                    throw e
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103</span><span>        }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104</span><span>      case NamedWord(_, sin, sout, body) =&gt; 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105</span><span>        body foreach { 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106</span><span>          case NodeOpe(OP_PUSH, List(v, _*)) =&gt; push(v)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107</span><span>          case NodeOpe(OP_CALL, List(NodeSymbol(name), _*)) =&gt; 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108</span><span>            try {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109</span><span>              callWord(name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110</span><span>            }catch {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111</span><span>              case e =&gt; wordError(wordName, sin, sout)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112</span><span>                        throw e
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113</span><span>            }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114</span><span>          case NodeOpe(OP_RTN, _) =&gt; ()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115</span><span>        }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118</span><span>  def npop(n:int):List[Node] = (1 to n).map(x=&gt;pop).reverse.toList
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119</span><span>  def npush(ns:Node*) = ns.reverse.foreach(push(_))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121</span><span>  def iArI2(f:(int,int)=&gt;int) = (pop, pop) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122</span><span>    case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeInt(f(v2,v1)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124</span><span>  def ilB2(f:(int,int)=&gt;boolean) = (pop, pop) match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125</span><span>    case (NodeInt(v1), NodeInt(v2)) =&gt; push(NodeBool(f(v2,v1)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127</span><span>  def wordError(name:String, sin:List[NodeSymbol], sout:List[NodeSymbol]) = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128</span><span>    printf(&#34;word &#39;%s&#39; ( %s -- %s ).\n&#34;, name, sin.map(_.value).mkString(&#34; &#34;),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129</span><span>                                              sout.map(_.value).mkString(&#34; &#34;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131</span><span>  def push(a:Node) = stack.push(a)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132</span><span>  def pop = stack.pop
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134</span><span>}
+</span></span></code></pre><p>はじめの方でプログラムの文法を定義し、 <code>Token</code> から <code>Node</code> のリストへ変換し、 <code>NodeProgram</code> にする。処理の簡単さのため、プログラムはwordから構成されていて、プログラム開始時にはmain wordから実行が開始されるとするので</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def program     = rep(lWord) ^^ { case nodes =&gt; NodeProgram(nodes) }
+</span></span></code></pre><p>wordは</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>: add ( x y -- z )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span> +
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>;
+</span></span></code></pre><p>という感じに定義するので <code>lWord</code> の定義になっている。ほとんどそのまま書いた感じだ。 <code>( x y -- z )</code> の部分はスタックエフェクトといって、このwordがスタックにどのような影響を与えるのかを記述している。あくまで説明であって本質的な意味はない。 <code>( x y -- z )</code> ならスタックから2個取り出されて、結果が1個詰まれるのだな、ということがわかる。</p>
 <p>あとは自明なので省略。</p>
-
-<h1>実行</h1>
-
+<h1 id="heading-3">実行</h1>
 <p>そんなこんなでソースコードから <code>NodeProgram</code> が作れるようになった。次に <code>NodeProgram</code> からTOPレベル環境を作る。</p>
-
 <p>ここでは、 <code>NodeProgram</code> に含まれるquotationを(実行する際の）簡単さのためNamedWordに変換し、変換後のNamedWordの呼び出しに変換する。組み込みwordもここで定義している。これはこの部分で定義すると、クロージャになるため定義が簡単だから( <code>pop</code> や <code>push</code> といった <code>SimpleFactorInterp</code> のメソッドがそのまま書ける)である。また、パターンマッチを活用することで非常に直感的に書けていることが見て取れるかと。やっぱりパターンマッチ最高だわぁ･･･。そして出揃ったTOPレベルのwordを <code>NamedTable</code> にマッピングし、TOPレベル環境の作成が完了する。</p>
-
 <p>あとは <code>main</code> wordを呼び出すだけ。</p>
-
-<h1>サンプルコード</h1>
-
+<h1 id="heading-4">サンプルコード</h1>
 <p>こんな感じ。サンプルでは10の階乗を計算している。</p>
-
-<pre class="prettyprint"><code>object SimpleFactor extends ConsoleLogger{
-  def main(args: Array[String]) = {
-    log(&quot;Starting SimpleFactor.&quot;)
-    log(&quot;-&quot;*40)
-    val ip = new SimpleFactorInterp
-    ip.evaluate(&quot;&quot;&quot;
-! Performs a factorial calculation.
-: main ( str -- ) 
-string&gt;number fact .
-;
-
-: fact ( x -- y ) dup factit ;
-
-: factit ( x y -- z )
-  dup 1 &lt;=
-    [ drop ]
-    [ 1 - dup rotate * swap factit ] if
-;
-
-    &quot;&quot;&quot;, args)
-  }
-}
-
-SimpleFactor.main(Array(&quot;10&quot;))
-</code></pre>
-
-<p>ここで使っているwordを簡単に説明すると</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>object SimpleFactor extends ConsoleLogger{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  def main(args: Array[String]) = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    log(&#34;Starting SimpleFactor.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    log(&#34;-&#34;*40)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    val ip = new SimpleFactorInterp
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    ip.evaluate(&#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>! Performs a factorial calculation.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>: main ( str -- ) 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>string&gt;number fact .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>: fact ( x -- y ) dup factit ;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>: factit ( x y -- z )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  dup 1 &lt;=
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    [ drop ]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    [ 1 - dup rotate * swap factit ] if
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    &#34;&#34;&#34;, args)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>SimpleFactor.main(Array(&#34;10&#34;))
+</span></span></code></pre><p>ここで使っているwordを簡単に説明すると</p>
 <ul>
 <li>`string&gt;number`:スタックからpopし、文字列を数値に変換してpushする</li>
 <li>`*`: スタックから2個popし、掛けたものをpushする</li>
@@ -420,9 +376,7 @@ SimpleFactor.main(Array(&quot;10&quot;))
 <li>`swap`:「x y」というスタックのトップ部分を「y x」に入れ替える</li>
 <li>`if`:「真偽値 真のとき実行するquotation 偽のとき実行するquotation」というスタックのトップ部分から条件を判定しquotationを実行する</li>
 </ul>
-
 <p>てな感じ。これだけの命令でもちゃんとプログラムが書けて、条件分岐、ループが実現できるのはスタック指向言語を知らない人から見ると面白い部分かも。 <code>3 fact</code> なら</p>
-
 <ul>
 <li>[ 3 3 ] : fact内 <code>dup</code></li>
 <li>[ 3 3 3 ] : factit内 <code>dup</code></li>
@@ -439,15 +393,10 @@ SimpleFactor.main(Array(&quot;10&quot;))
 <li>[ 6 2 ] : <code>swap</code></li>
 <li>factitに戻る</li>
 </ul>
-
 <p>こんな感じで計算される。</p>
-
 <p>またLispのS式とマクロによる拡張性は名高いと思うが、スタック指向言語も単純に空白で区切られたwordが並んでいる、という点で非常に自己拡張性が高い。こういう変態的(?)な部分も魅力の一つ。</p>
-
 <p>ForthはSUNのOpen Firmware、Firefox4で採用が予定されているJavascriptの処理系Tamarinの中など、今でもあまり表には見えてこない部分で使用されているので、これを機会にスタック指向言語を嗜んでみては。Forthは基本だけど、今なら注目され始めている(？)Factorかなあ。</p>
-
-<h1>簡単に作れます</h1>
-
+<h1 id="heading-5">簡単に作れます</h1>
 <p>というわけでScalaで簡単なスタック指向言語処理系を作ってみたわけだけど、非常に簡単。さくっと作れる。 <code>scala.util.parsing.ast</code> ができたら、またなんか処理系を試し書きしてみようかな。 　 　</p>
 
 
@@ -464,7 +413,7 @@ SimpleFactor.main(Array(&quot;10&quot;))
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala" class="hatena-bookmark-button" data-hatena-bookmark-title="Scalaでスタック指向言語をサクッと実装する" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/05/17/simple-stack-oriented-language-implemented-using-scala" class="hatena-bookmark-button" data-hatena-bookmark-title="Scalaでスタック指向言語をサクッと実装する" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

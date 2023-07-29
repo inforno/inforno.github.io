@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,13 +69,9 @@
 </header>
   <div itemprop="articleBody">
     <p>たまには実用的なものをつくろうと思って、Go+Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。</p>
-
-<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
-
+<div data-theme="default" data-height="150" data-width="400" data-github="yuin/golbot" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script>
 <p>チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。</p>
-
 <p>特徴は以下です。</p>
-
 <ul>
 <li>Goなので置けば動く</li>
 <li>それでいてLuaでスクリプトを書ける</li>
@@ -85,85 +79,72 @@
 <li>HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる</li>
 <li>定期ジョブも流せる</li>
 </ul>
-
-<pre class="prettyprint"><code class="language-lua">function main()
-  local bot = golbot.newbot(&quot;Slack&quot;, { token = &quot;xxxxx&quot; })
-
-  bot:respond([[\s*(\d+)\s*\+\s*(\d+)\s*]], function(m, e) -- 3
-    bot:say(e.target, tostring(tonumber(m[2]) + tonumber(m[3])))
-  end)
-
-  bot:serve(function(msg)
-    if msg.type == &quot;say&quot; then
-      bot:say(msg.channel, msg.message)
-      respond(msg, true)
-    end
-  end)
-end
-</code></pre>
-
-<p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
-
-<pre class="prettyprint"><code class="language-lua">function main()
-  bot:respond([[deploy]], function(m, e)
-    bot:say(e.target, &quot;accepted&quot;)
-    goworker({target=e.target, type=&quot;deploy&quot;})
-  end)
-
-  bot:serve(function(msg)
-    if msg.type == &quot;say&quot; then
-      bot:say(msg.target, msg.message)
-    end
-  end)
-end
-
-function worker(msg)
-  if msg.type == &quot;deploy&quot; then
-    do_deploy()
-    notifymain({type=&quot;say&quot;, target=msg.target, message=&quot;your deployment has been completed&quot;})
-  end
-end
-</code></pre>
-
-<p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  <span style="color:#66d9ef">local</span> bot <span style="color:#f92672">=</span> golbot.newbot(<span style="color:#e6db74">&#34;Slack&#34;</span>, { token <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;xxxxx&#34;</span> })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  bot:respond(<span style="color:#e6db74">[[\s*(\d+)\s*\+\s*(\d+)\s*]]</span>, <span style="color:#66d9ef">function</span>(m, e) <span style="color:#75715e">-- 3</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    bot:say(e.target, tostring(tonumber(m[<span style="color:#ae81ff">2</span>]) <span style="color:#f92672">+</span> tonumber(m[<span style="color:#ae81ff">3</span>])))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  <span style="color:#66d9ef">end</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  bot:serve(<span style="color:#66d9ef">function</span>(msg)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#66d9ef">if</span> msg.type <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;say&#34;</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>      bot:say(msg.channel, msg.message)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>      respond(msg, <span style="color:#66d9ef">true</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  <span style="color:#66d9ef">end</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#66d9ef">end</span>
+</span></span></code></pre><p>こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  bot:respond(<span style="color:#e6db74">[[deploy]]</span>, <span style="color:#66d9ef">function</span>(m, e)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    bot:say(e.target, <span style="color:#e6db74">&#34;accepted&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    goworker({target<span style="color:#f92672">=</span>e.target, type<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;deploy&#34;</span>})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  <span style="color:#66d9ef">end</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  bot:serve(<span style="color:#66d9ef">function</span>(msg)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    <span style="color:#66d9ef">if</span> msg.type <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;say&#34;</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>      bot:say(msg.target, msg.message)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  <span style="color:#66d9ef">end</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">worker</span>(msg)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  <span style="color:#66d9ef">if</span> msg.type <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;deploy&#34;</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    do_deploy()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    notifymain({type<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;say&#34;</span>, target<span style="color:#f92672">=</span>msg.target, message<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your deployment has been completed&#34;</span>})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span><span style="color:#66d9ef">end</span>
+</span></span></code></pre><p>このように <code>goworker</code> でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは <code>notifymain</code> でメインGroutineにメッセージをおくることができます。</p>
 <p>HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。</p>
-
-<pre class="prettyprint"><code class="language-lua">function http(r)
-  if r.method == &quot;POST&quot; and r.URL.path == &quot;/webhook&quot; then
-    local data = assert(json.decode(r:readbody()))
-    local message = data.item.message.message
-    local user = data.item.message.from.name
-    local room = data.item.room.name
-
-    local ret = {
-      message = &quot;hello! from webhook&quot;,
-      message_format = &quot;html&quot;
-    }
-
-    return 200, headers, json.encode(ret)
-  end
-  return 400, headers, json.encode({result=&quot;not found&quot;})
-end
-</code></pre>
-
-<p>定期ジョブは以下のような感じ。</p>
-
-<pre class="prettyprint"><code class="language-lua">function main()
-  golbot.newbot(&quot;Null&quot;, { 
-    http = &quot;0.0.0.0:6669&quot; ,
-    crons = {
-      { &quot;0 * * * * * &quot;, &quot;job1&quot;}
-    }
-  }):serve(function() end)
-end
-
-function job1()
-  print &quot;hello!&quot;
-end
-</code></pre>
-
-<p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">http</span>(r)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  <span style="color:#66d9ef">if</span> r.method <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;POST&#34;</span> <span style="color:#f92672">and</span> r.URL.path <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;/webhook&#34;</span> <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    <span style="color:#66d9ef">local</span> data <span style="color:#f92672">=</span> assert(json.decode(r:readbody()))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    <span style="color:#66d9ef">local</span> message <span style="color:#f92672">=</span> data.item.message.message
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    <span style="color:#66d9ef">local</span> user <span style="color:#f92672">=</span> data.item.message.from.name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    <span style="color:#66d9ef">local</span> room <span style="color:#f92672">=</span> data.item.room.name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    <span style="color:#66d9ef">local</span> ret <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>      message <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;hello! from webhook&#34;</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>      message_format <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;html&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">200</span>, headers, json.encode(ret)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  <span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">400</span>, headers, json.encode({result<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;not found&#34;</span>})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#66d9ef">end</span>
+</span></span></code></pre><p>定期ジョブは以下のような感じ。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">main</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  golbot.newbot(<span style="color:#e6db74">&#34;Null&#34;</span>, { 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    http <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;0.0.0.0:6669&#34;</span> ,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    crons <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>      { <span style="color:#e6db74">&#34;0 * * * * * &#34;</span>, <span style="color:#e6db74">&#34;job1&#34;</span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  }):serve(<span style="color:#66d9ef">function</span>() <span style="color:#66d9ef">end</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">job1</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  print <span style="color:#e6db74">&#34;hello!&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#66d9ef">end</span>
+</span></span></code></pre><p>チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。</p>
 
 
     <div class="seealso">
@@ -179,7 +160,7 @@ end
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2016/07/28/golbot" class="hatena-bookmark-button" data-hatena-bookmark-title="Go&#43;Luaのチャットボットフレームワークを作った" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2016/07/28/golbot" class="hatena-bookmark-button" data-hatena-bookmark-title="Go&#43;Luaのチャットボットフレームワークを作った" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

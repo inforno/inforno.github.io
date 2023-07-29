@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,11 +75,8 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules">以前紹介したPython版Rakeもどき</a> を改良してCodeReposに突っ込みました。まだ100行くらいです。自分では一番使っている自作モジュールなのでそろそろまとめようと思っていたのです。</p>
-
 <p><a href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.p"><a href="http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py">http://coderepos.org/share/browser/lang/python/tasktools/trunk/tasktools.py</a></a></p>
-
-<h1>改良点</h1>
-
+<h1 id="heading">改良点</h1>
 <ul>
 <li><code>setuptools</code> があるときはそっちを使うようにした。</li>
 <li><code>use_without_standard</code> メソッドによって <code>distutils</code> 標準タスクを消すことができる。これによって <code>--help-commands</code> の画面がすっきりする。また、この場合名前空間のセパレータに <code>:</code> を用いるようになった。</li>
@@ -90,153 +85,121 @@
 <li><code>--help-commands</code> で表示されるコマンドの並び順をソートするようにした。</li>
 <li><code>--help-commands</code> でサブコマンドを一覧表示するようにした。</li>
 </ul>
-
-<h1>使用方法</h1>
-
+<h1 id="heading-1">使用方法</h1>
 <p>以前書いたのとほとんど同じなんですが、まとめなおしておきます。</p>
-
-<h2>tasktoolsとは？</h2>
-
+<h2 id="tasktools">tasktoolsとは？</h2>
 <p><code>distutils</code> および <code>setuptools</code> を拡張してextra commandを簡単に作成するためのユーティリティです。RubyにおけるRakeのようなものです。ビルド機能がほしい場合は <code>distutils</code> , <code>setuptools</code> の標準ビルド機能、もしくは <code>SCons</code> と組み合わせるとハッピーになれます。</p>
-
 <p>ちなみに、 <code>tasktools</code> というのは同じく <code>distutils</code> の拡張である <code>setuptools</code> の命名規則に習っています。 <code>task</code> 機能を強化するから <code>tasktools</code> です。</p>
-
-<h2>チュートリアル</h2>
-
+<h2 id="heading-2">チュートリアル</h2>
 <p>典型的な <code>tasktools</code> の使い方です。</p>
-
 <p>まず <code>tasks.py</code> というファイルを作成します。典型的には以下の様になります。</p>
-
-<pre class="prettyprint"><code>from __future__ import with_statement
-from tasktools import *
-
-global_description(u&quot;&quot;&quot;
-サンプルタスクファイルです。
-&quot;&quot;&quot;)
-
-use_without_standard() # distutilsの標準コマンドを使用しないことを宣言します。
-load_path(&quot;./tasks&quot;) # &quot;./tasks&quot;以下のtasks.pyを再帰的に読み込みます
-
-
-with namespace(&quot;file&quot;) as ns:
-  class mktmpfile(Task):
-    u&quot;&quot;&quot;一時ファイルを作成します。
-    &quot;&quot;&quot;
-    user_options = [(&quot;path=&quot;, &quot;p&quot;, u&quot;作成するパスです&quot;)]
-    def run(self):
-      print &quot;create %s&quot;%self.path
-
-    def finalize_options(self):
-      if not self.path: self.path = &quot;/tmp/tmp.txt&quot;
-
-  class mklogfile(Task):
-    u&quot;&quot;&quot;ログファイルを作成します。
-    &quot;&quot;&quot;
-    def run(self):
-      print &quot;create log file&quot;
-
-  class init(Task):
-    u&quot;&quot;&quot;ファイルを初期化します。
-    &quot;&quot;&quot;
-    def run(self):
-      pass
-
-    sub_commands = [(&quot;file:mktmpfile&quot;, None),
-                    (&quot;file:mklogfile&quot;, None)]
-
-if __name__ == &quot;__main__&quot;:
-  run()
-</code></pre>
-
-<p>では <code>python tasks.py --help-commands</code> と実行してみましょう</p>
-
-<pre class="prettyprint"><code>############################################################
-
-サンプルタスクファイルです。
-
-############################################################
-
-Commands:
-  file:init        ファイルを初期化します。
-        sub commands:
-                file:mktmpfile
-                file:mklogfile
-  file:mklogfile   ログファイルを作成します。
-  file:mktmpfile   一時ファイルを作成します。
-
-usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: tasks.py --help [cmd1 cmd2 ...]
-  or: tasks.py --help-commands
-  or: tasks.py cmd --help
-</code></pre>
-
-<p>この様に <code>global_description</code> で設定した説明と、定義したタスクの一覧が表示されます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>from __future__ import with_statement
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>from tasktools import *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>global_description(u&#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>サンプルタスクファイルです。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>&#34;&#34;&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>use_without_standard() # distutilsの標準コマンドを使用しないことを宣言します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>load_path(&#34;./tasks&#34;) # &#34;./tasks&#34;以下のtasks.pyを再帰的に読み込みます
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>with namespace(&#34;file&#34;) as ns:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  class mktmpfile(Task):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    u&#34;&#34;&#34;一時ファイルを作成します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    user_options = [(&#34;path=&#34;, &#34;p&#34;, u&#34;作成するパスです&#34;)]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>      print &#34;create %s&#34;%self.path
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    def finalize_options(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>      if not self.path: self.path = &#34;/tmp/tmp.txt&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>  class mklogfile(Task):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>    u&#34;&#34;&#34;ログファイルを作成します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>    &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>    def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>      print &#34;create log file&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>  class init(Task):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>    u&#34;&#34;&#34;ファイルを初期化します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>      pass
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>    sub_commands = [(&#34;file:mktmpfile&#34;, None),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>                    (&#34;file:mklogfile&#34;, None)]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>if __name__ == &#34;__main__&#34;:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>  run()
+</span></span></code></pre><p>では <code>python tasks.py --help-commands</code> と実行してみましょう</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>############################################################
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>サンプルタスクファイルです。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>############################################################
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>Commands:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  file:init        ファイルを初期化します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>        sub commands:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>                file:mktmpfile
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>                file:mklogfile
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  file:mklogfile   ログファイルを作成します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  file:mktmpfile   一時ファイルを作成します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  or: tasks.py --help [cmd1 cmd2 ...]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>  or: tasks.py --help-commands
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  or: tasks.py cmd --help
+</span></span></code></pre><p>この様に <code>global_description</code> で設定した説明と、定義したタスクの一覧が表示されます。</p>
 <p>次に <code>./tasks/tasks.py</code> を作成してみます。</p>
-
-<pre class="prettyprint"><code>from __future__ import with_statement
-from tasktools import *
-
-use_without_standard()
-with namespace(&quot;subs&quot;) as ns:
-  class test1(Task):
-    u&quot;&quot;&quot;サブディレクトリで定義されたタスクです
-    &quot;&quot;&quot;
-    def run(self):
-      print &quot;sub test&quot;
-
-if __name__ == &quot;__main__&quot;:
-  run()
-</code></pre>
-
-<p>このファイルは <code>./tasks.py</code> で <code>load_path(&quot;./tasks&quot;)</code> と宣言しているので <code>./tasks.py</code> を実行すると自動的に読み込まれます。 もう一度 <code>python tasks.py --help-commands</code> と実行してみましょう</p>
-
-<pre class="prettyprint"><code>############################################################
-
-サンプルタスクファイルです。
-
-############################################################
-
-Commands:
-  file:init        ファイルを初期化します。
-        sub commands:
-                file:mktmpfile
-                file:mklogfile
-  file:mklogfile   ログファイルを作成します。
-  file:mktmpfile   一時ファイルを作成します。
-  subs:test1       サブディレクトリで定義されたタスクです
-
-usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: tasks.py --help [cmd1 cmd2 ...]
-  or: tasks.py --help-commands
-  or: tasks.py cmd --help
-</code></pre>
-
-<p>確かに <code>subs:test1</code> コマンドが追加されています。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>from __future__ import with_statement
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>from tasktools import *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>use_without_standard()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>with namespace(&#34;subs&#34;) as ns:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  class test1(Task):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    u&#34;&#34;&#34;サブディレクトリで定義されたタスクです
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>      print &#34;sub test&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>if __name__ == &#34;__main__&#34;:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  run()
+</span></span></code></pre><p>このファイルは <code>./tasks.py</code> で <code>load_path(&quot;./tasks&quot;)</code> と宣言しているので <code>./tasks.py</code> を実行すると自動的に読み込まれます。 もう一度 <code>python tasks.py --help-commands</code> と実行してみましょう</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>############################################################
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>サンプルタスクファイルです。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>############################################################
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>Commands:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  file:init        ファイルを初期化します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>        sub commands:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>                file:mktmpfile
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>                file:mklogfile
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  file:mklogfile   ログファイルを作成します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  file:mktmpfile   一時ファイルを作成します。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  subs:test1       サブディレクトリで定義されたタスクです
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>usage: tasks.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>  or: tasks.py --help [cmd1 cmd2 ...]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  or: tasks.py --help-commands
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>  or: tasks.py cmd --help
+</span></span></code></pre><p>確かに <code>subs:test1</code> コマンドが追加されています。</p>
 <p>ではタスクを実行してみましょう。 <code>python tasks.py file:init</code> を実行してみます。</p>
-
-<pre class="prettyprint"><code>running file:init
-running file:mktmpfile
-create /tmp/tmp.txt
-running file:mklogfile
-create log file
-</code></pre>
-
-<p>おお、実行されましたね。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>running file:init
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>running file:mktmpfile
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>create /tmp/tmp.txt
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>running file:mklogfile
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>create log file
+</span></span></code></pre><p>おお、実行されましたね。</p>
 <p>user_optionsを定義しているタスクではオプションも渡せます。 <code>python tasks.py file:mktmpfile --path=/tmp/change.txt</code> を実行してみましょう。</p>
-
-<pre class="prettyprint"><code>running file:mktmpfile
-create /tmp/change.txt
-</code></pre>
-
-<p>ちゃんとオプションが渡されていますね。</p>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>running file:mktmpfile
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>create /tmp/change.txt
+</span></span></code></pre><p>ちゃんとオプションが渡されていますね。</p>
+<hr>
 <p>こんな感じです。distutilsの独自コマンドに関する説明は <a href="http://www.python.jp/doc/2.4/dist/node79.html">46 新しいDistutilsコマンドの作成</a> を参照してください。正直使えないページですが･･･。一応説明しておくとinitialize_optionsはuser_optionsの定義から自動生成するようになっています。また <code>distutils.core.Command</code> を継承しているのでこのクラスの機能も使えます。</p>
-
 <p>せっかくCodereposに突っ込んだのでバグなんかが見つかったらガンガン直しちゃってください。</p>
 
   </div>
@@ -262,29 +225,23 @@ create /tmp/change.txt
 </header>
   <div itemprop="articleBody">
     <p>ScalaにはStreamという無限リストがあるんだけど、微妙に使いづらい、というか分かりづらい。Haskellでいうcycleはどうだ、とかよく忘れるのでメモ。</p>
-
-<pre class="prettyprint"><code>def repeat[T](a:T) = Stream.const(a)
-def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
-def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
-def replicate[T](n:int, elem:T) = Stream.make(n, elem)
-</code></pre>
-
-<p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
-
-<pre class="prettyprint"><code>repeat(1) take 10 print
-// =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
-
-cycle(1 to 4) take 10 print
-// =&gt; 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, Stream.empty
-
-iterate((x:int)=&gt;x+1, 0) take 10 print
-// =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
-
-replicate(3, 1) take 10 print
-// =&gt; 1, 1, 1, Stream.empty
-</code></pre>
-
-<p>うんうん。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def repeat[T](a:T) = Stream.const(a)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>def replicate[T](n:int, elem:T) = Stream.make(n, elem)
+</span></span></code></pre><p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>repeat(1) take 10 print
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>// =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>cycle(1 to 4) take 10 print
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>// =&gt; 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, Stream.empty
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>iterate((x:int)=&gt;x+1, 0) take 10 print
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>// =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>replicate(3, 1) take 10 print
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>// =&gt; 1, 1, 1, Stream.empty
+</span></span></code></pre><p>うんうん。</p>
 
   </div>
 </article>
@@ -309,11 +266,8 @@ replicate(3, 1) take 10 print
 </header>
   <div itemprop="articleBody">
     <p>コレだけはガチ。続きは書くかもしれないけど、たぶん書かない。</p>
-
-<hr />
-
+<hr>
 <p>P.S</p>
-
 <p>Schemeが好きです。Gaucheが好きです。でもういんどうずだとGaucheさんはちょっとアレなので、社内ソフトがWindowsしか対応してないとか、データ保護ソフトがWindowsしか対応してないとか、社内システムがIE限定だとか、ういんどうずを使わざるを得ない人には使えません。Pythonサイコー</p>
 
   </div>

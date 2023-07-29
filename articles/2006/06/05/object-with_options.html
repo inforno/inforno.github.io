@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,19 +73,14 @@
 </header>
   <div itemprop="articleBody">
     <p>個人的にActiveSupportが大好きなわけですが。</p>
-
 <p>1.1で追加されたwith_optionsがRouting以外でどーもカッコいい使いどころがなーとおもっていたんですが</p>
-
-<pre class="prettyprint"><code>with_options(:if =&gt; :validate_password?) do |me|
-me.validates_format_of :password #...
-me.validates_length_of :password # ...
-me.validates_confirmation_of :password #...
-me.validates_presence_of :password#...
-end
-</code></pre>
-
-<p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>with_options(:if =&gt; :validate_password?) do |me|
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>me.validates_format_of :password #...
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>me.validates_length_of :password # ...
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>me.validates_confirmation_of :password #...
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>me.validates_presence_of :password#...
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>end
+</span></span></code></pre><p>こんなキモイ使い方があった。もちろん、ActiveRecordのバリデーション。よくあるパターンで、パスワードはハッシュで保存しあって、createしたときやパスワード変更したときはバリデーションするんだけどそれ以外はしない、みたいなとき。</p>
 <p>まぁ、やっぱり一番カッコいいのはto_procなんですけど。</p>
 
 
@@ -101,7 +94,7 @@ end
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/06/05/object-with_options" class="hatena-bookmark-button" data-hatena-bookmark-title="ActiveSupportのObject#with_optionsの使いどころ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/06/05/object-with_options" class="hatena-bookmark-button" data-hatena-bookmark-title="ActiveSupportのObject#with_optionsの使いどころ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,61 +73,35 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="/articles/2007/01/17/windows-development-environment-for-keyboard-loving-programmers">こちら</a> にも書いたとおり、Windowsではコマンドライン型ランチャーのcraftlaunchとexplorer.exeを連携させて使ってます。</p>
-
 <p>最前面のディレクトリ（アクティブなディレクトリ）に対して、キーボードで、Linuxと同じ感覚でmkdirとかrmとかしたいなー、ってのを実現してみました。</p>
-
 <p>今まではC言語で作った自前のライブラリで処理していたんですが、COMを使ったものに書き直しました。同様の目的にはAHKが使えるんですが、やっぱり使い慣れた言語でいろいろコマンドを作りたかったのでCOM＋Javascriptにしてみました。もちろん、COMなのでRubyでもPerlでもPythonでも同様の実装が作れます。</p>
-
 <p>craftlaunchを前提にしてますが、コマンドライン型のランチャーならなんでも適応できる方法だと思います。explorerを使っていてもキーボードだけでmkdir,rm,mvなんかが実行できちゃって、非常に便利です。</p>
-
 <ul>
 <li><a href="/statics/files/explorehelper.zip">ダウンロード</a></li>
 </ul>
-
 <p>簡単なコマンドラインランチャーもどきも同梱してますので、現在コマンドライン型ランチャーをいれていない人でも試せます。</p>
-
 <p>以下readmeからの転載です。</p>
-
-<h1>利用方法</h1>
-
+<h1 id="heading">利用方法</h1>
 <p>explorehelper.wsf,explorehelper.js,getadir.exeは同じフォルダになければ なりません。</p>
-
-<pre class="prettyprint"><code>explorehelper.wsf [command] [args]
-</code></pre>
-
-<p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、 ctrl-eなどにショートカット登録しておくと良いでしょう。すると、 mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
-
-<h1>それぞれのファイルについて</h1>
-
-<h2>simple_launcher.exe</h2>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>explorehelper.wsf [command] [args]
+</span></span></code></pre><p>のように実行します。craftlaunchの場合はexplorhelper.wsfをコマンド登録し、 ctrl-eなどにショートカット登録しておくと良いでしょう。すると、 mkdirと入力→ctrl+eで最前面のフォルダに、フォルダを作成できます。</p>
+<h1 id="heading-1">それぞれのファイルについて</h1>
+<h2 id="simple-launcherexe">simple_launcher.exe</h2>
 <p>コマンドライン型ランチャーを導入していない方でも試せるように、AHKで作った 簡単なランチャーを同梱してあります。ただしこのランチャーは</p>
-
 <ul>
 <li>ホットキー（有効化）はalt+space</li>
 <li>コマンド実行はctrl+e</li>
 </ul>
-
 <p>に固定されています。つまり</p>
-
 <p>「起動」→(「alt+space」でアクティブに)→「command入力」→「ctrl+e」で実行</p>
-
 <p>という操作になります。気にいった人はちゃんとしたコマンドライン型ランチャー の導入をオススメします。</p>
-
-<h2>getahwnd.exe</h2>
-
+<h2 id="getahwndexe">getahwnd.exe</h2>
 <p>最前面のExplorer.exeのウインドウハンドルを出力するだけのプログラムです。</p>
-
-<h2>explorehelper.js</h2>
-
+<h2 id="explorehelperjs">explorehelper.js</h2>
 <p>JscriptによるCOMに対するヘルパーです。</p>
-
-<h2>explorehelper.wsf</h2>
-
+<h2 id="explorehelperwsf">explorehelper.wsf</h2>
 <p>Jscriptによるカスタムコマンドが定義されたファイルです。このファイルを編集 することによってcommandが自由に追加できます。</p>
-
-<h1>ビルトインコマンド</h1>
-
+<h1 id="heading-2">ビルトインコマンド</h1>
 <ul>
 <li>mv</li>
 <li>mkdir</li>
@@ -140,58 +112,73 @@
 <li>ls : -x, -s, -tオプションのみ受け付けます。つまりフォルダ内をソートします。</li>
 <li>verbs : 右クリックメニューを出します。shift+F10と同じ効果です。</li>
 </ul>
-
 <p>説明の無いものはUnixのそれから類推してください。</p>
-
-<h1>カスタムコマンドの追加について</h1>
-
+<h1 id="heading-3">カスタムコマンドの追加について</h1>
 <p>explorehelper.wsfを編集することによってcommandが自由に追加できます。</p>
-
-<pre class="prettyprint"><code>var procs = {
-  mv : function() {
-    var path = get_dir_and_focused_item_path();
-    var name = InputBox(&quot;新しい名前を入力してください。&quot;, path.item._base_name());
-    if(name) get_dir_and_focused_item().item.Name = name;
-  }._item_proc()._auto_win_activate(),
-
-  mkdir : function() {
-    var path = get_dir_and_focused_item_path();
-    var name = InputBox(&quot;フォルダ名を入力してください。&quot;);
-    if(name) fs().GetFolder(path.win).SubFolders.Add(name);
-  }._auto_win_activate(),
-  .
-  .
-  .
-  .
-</code></pre>
-
-<p>commandは上記のように、procオブジェクトのプロパティとして定義されます。その際、 command名がキー、値は引数なしの関数になります。キーに大文字は使用できません。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>var procs = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  mv : function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    var path = get_dir_and_focused_item_path();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    var name = InputBox(&#34;新しい名前を入力してください。&#34;, path.item._base_name());
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    if(name) get_dir_and_focused_item().item.Name = name;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  }._item_proc()._auto_win_activate(),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  mkdir : function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    var path = get_dir_and_focused_item_path();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    var name = InputBox(&#34;フォルダ名を入力してください。&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    if(name) fs().GetFolder(path.win).SubFolders.Add(name);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  }._auto_win_activate(),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  .
+</span></span></code></pre><p>commandは上記のように、procオブジェクトのプロパティとして定義されます。その際、 command名がキー、値は引数なしの関数になります。キーに大文字は使用できません。</p>
 <p>commandを定義する際にはexplorehelper.jsで定義されたヘルパを使用することができます。 カスタムcommandを定義しようとする人は当然、JScript(Javascript)が理解できる人 だと思いますので、ヘルパの詳細はexplorehelper.jsを見てください。ここではリスト のみ紹介します。</p>
-
 <ul>
-<li>InputBox : 入力フォームを表示します。</li>
-<li>MessageBox : メッセージを表示します。</li>
-<li>Confirm : 確認フォームを表示します。</li>
-<li>shell : Shell.Applicationオブジェクト返します。</li>
-<li>wscript_shell : WScript.Shellオブジェクトを返します。</li>
-<li>fs : Scripting.FileSystemObjectを返します。</li>
-<li>win_activate : ディレクトリをアクティブにします。SendKeysする前に実行します。</li>
-<li>get_dir_and_focused_item : アクティブなディレクトリと選択されているアイテムを返します。</li>
-<li>get_dir_and_focused_item_lst : アクティブなディレクトリと選択されているアイテムのリストを返します。</li>
-<li>get_dir_and_focused_item_path : アクティブなディレクトリと選択されているアイテムのパスを返します。</li>
-<li>get_dir_and_focused_item_path_lst : アクティブなディレクトリと選択されているアイテムのパスのリストを返します。</li>
-<li>$wsh_args : argsを格納した配列です。</li>
-
-<li><p>Function.prototype._item_proc : アイテムに対する手続きであることを宣言します。アイテムを選択していない場合、処理が実行されなくなります。</p></li>
-
-<li><p>Function.prototype._auto_win_activate : 手続きを終了後、ウインドウをアクティブにします。 　 　 　</p></li>
+<li>
+<p>InputBox : 入力フォームを表示します。</p>
+</li>
+<li>
+<p>MessageBox : メッセージを表示します。</p>
+</li>
+<li>
+<p>Confirm : 確認フォームを表示します。</p>
+</li>
+<li>
+<p>shell : Shell.Applicationオブジェクト返します。</p>
+</li>
+<li>
+<p>wscript_shell : WScript.Shellオブジェクトを返します。</p>
+</li>
+<li>
+<p>fs : Scripting.FileSystemObjectを返します。</p>
+</li>
+<li>
+<p>win_activate : ディレクトリをアクティブにします。SendKeysする前に実行します。</p>
+</li>
+<li>
+<p>get_dir_and_focused_item : アクティブなディレクトリと選択されているアイテムを返します。</p>
+</li>
+<li>
+<p>get_dir_and_focused_item_lst : アクティブなディレクトリと選択されているアイテムのリストを返します。</p>
+</li>
+<li>
+<p>get_dir_and_focused_item_path : アクティブなディレクトリと選択されているアイテムのパスを返します。</p>
+</li>
+<li>
+<p>get_dir_and_focused_item_path_lst : アクティブなディレクトリと選択されているアイテムのパスのリストを返します。</p>
+</li>
+<li>
+<p>$wsh_args : argsを格納した配列です。</p>
+</li>
+<li>
+<p>Function.prototype._item_proc : アイテムに対する手続きであることを宣言します。アイテムを選択していない場合、処理が実行されなくなります。</p>
+</li>
+<li>
+<p>Function.prototype._auto_win_activate : 手続きを終了後、ウインドウをアクティブにします。 　 　 　</p>
+</li>
 </ul>
-
-<hr />
-
+<hr>
 <p>こんな感じです。COMなら大概なんでもできるので、便利です。しかもJScriptとexeなのでUSBメモリなどにいれて持ち運べますので、俺ポータビリティもそこそこあります。</p>
-
 <p>また、いかにAHKスクリプトが簡単でも、普段使い慣れた言語でかけるほうが落ち着きます。AHKなんかをみてると、完全なDSLというのは俺的に扱うのがめんどくさくて（覚える熱意があればいいんだろうけど、趣味で使うものにそれほどの情熱がでるかというと・・・）なじみにくいようだ。Rakeみたいな言語内DSLがいいよね、やっぱ。ああ、2007年はRubyの年になるんでしょうかねえ。</p>
 
 
@@ -208,7 +195,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers" class="hatena-bookmark-button" data-hatena-bookmark-title="コマンドライン型ランチャーとexplorerの連携" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/02/24/collaboration-of-the-explorer-and-keyboard-app-launchers" class="hatena-bookmark-button" data-hatena-bookmark-title="コマンドライン型ランチャーとexplorerの連携" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

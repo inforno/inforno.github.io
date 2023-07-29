@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,17 +69,11 @@
 </header>
   <div itemprop="articleBody">
     <p>コマンドラインランチャー <a href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.7 をリリースしました。 GitHubの <a href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
-
 <p>今回からLinuxに対応しました。私は普段、ほぼWindowsがホストでVirtualbox上のUbuntuで開発を行っておりそこではLaunchyを使ってお茶をにごして？いたのです。がやはり慣れているicebergを使いたいと思っていたのでがんばって対応してみました。</p>
-
 <p>Macを使っている人はそもそもAlfredなどを使っているでしょうけど、Windowsだと私と同じかたちの人も多いのではないかと思います。ぜひ使ってみてください。Linuxのコマンドラインランチャーでmigemo対応しているものはなかなか無いのではないでしょうか。</p>
-
 <p>icebergはQtやGTKではなくfltkというミニマリストなGUIフレームワークなのでGUI以外の機能はほとんどフレームワークにありません。かといって、ここでQtやGTKに依存するのも癪だったのでLinuxではアイコンのルックアップなどを自分で実装したんですが結構しんどかったですね･･･。ただ、あらかじめマルチプラットフォームを視野にいれたつくりにしてあったので、ゴリゴリ書いていくだけで動くのは動いたのでよかったです。</p>
-
 <p>内部的にはfltkのバージョンもあげました。これでWindows8以降でも互換モードなしで動いたりしないかなあ、と思っているのですが、いかんせん実機をもっていないのでどうにも。次はWindows10にすると思うので結局Windows8系は確認できないまま終わりそうです。</p>
-
 <p>あと、ここまできたらなんでMacに対応しないんだ、となりそうですが単純に私がMacを持っていないからです。それに、icebergはMacの文化に合わない気がします。ただ、icebergは作者の私が一番の愛用者であるソフトなのでもし私がMacを手に入れることがあったら、対応すると思います。まぁイケてる会社のプログラマーに転職でもしないとMacを使うようなことはないと思いますが。</p>
-
 <p>なにか問題ありましたらGithubの <a href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
 
 
@@ -96,7 +88,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2015/11/19/iceberg-0-9-7-released" class="hatena-bookmark-button" data-hatena-bookmark-title="icebergのLinux対応版 v0.9.7リリース" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2015/11/19/iceberg-0-9-7-released" class="hatena-bookmark-button" data-hatena-bookmark-title="icebergのLinux対応版 v0.9.7リリース" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

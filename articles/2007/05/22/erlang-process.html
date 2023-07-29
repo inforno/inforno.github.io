@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,15 +69,10 @@
 </header>
   <div itemprop="articleBody">
     <p>via <a href="http://d.hatena.ne.jp/methane/2007051">Erlangの強さ</a></p>
-
 <p>最近（でもないか・・・）Erlangが話題になっていて、趣味プログラマーになったとはいえ、ちょっと触ってみたいなあと思いつつ、時間ないなあと思いつつ。</p>
-
 <p>んで話題のErlangのプロセスなんだけど、microthreadだろうなあ、と思っていたけどそれであってるっぽい。あんま詳しくないんでアレですが。詳しくは <a href="http://www.erlang.org/ml-archive/erlang-questions/200104/msg00072.html">コチラ</a> 。</p>
-
 <p>Erlangのプロセスについてはmethaneさんがおっしゃてる通りだと思う。要はこれを使いやすい形で言語仕様にとりこんでるあたりがErlangの良さなんだよなあ。</p>
-
 <p>たとえばPythonでもyieldがあるのでmicrothreadは可能で（Stackless Pythonまである)、Erlangのプロセスっぽいこともやろうと思えば可能じゃないか、って感じなんだけどあくまでやればできる、って感じだと思う。</p>
-
 <p>というわけでmicrothreadを用いたプログラミングに対するある意味DSL的な言語ではないのかなあ、というのが今のところの印象。パッと見た感じその他は魅力的な部分があまり見当たらなかった。かといって機能が足りてないわけでもぜんぜんないので、microthreadや分散のメリットが前面にでるならガンガンつかってもいいと思ってたりするのです。</p>
 
 
@@ -90,7 +83,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/05/22/erlang-process" class="hatena-bookmark-button" data-hatena-bookmark-title="Erlangのプロセス" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/05/22/erlang-process" class="hatena-bookmark-button" data-hatena-bookmark-title="Erlangのプロセス" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

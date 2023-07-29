@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,82 +69,76 @@
 </header>
   <div itemprop="articleBody">
     <p>Python3も3.3になり性能も向上して、移行が順調に進んできているように見える。それを考慮して最近Python3系と2系の互換性確保を見直した。</p>
-
 <p>ひとことでいうと「Python3中心」にした。</p>
-
-<h1>今までの手法</h1>
-
+<h1 id="heading">今までの手法</h1>
 <p>基本的に3系と2系の互換性確保は「単一ソースコード」でやっていてそれは今も変わらず。</p>
-
 <p>で、今までは <strong>Python3とPython2の中間</strong> のコードを書いていた。組み込みの関数のリネームなどはしない、というような(例えば <code>zip</code> を <code>izip</code> で上書いてしまうとか)。ただこの手法だといざPython2系のサポートをdropする場合に処理的にもコード的にも無駄が多くなる。</p>
-
-<h1>今の手法</h1>
-
+<h1 id="heading-1">今の手法</h1>
 <p><a href="https://github.com/yuin/rays">rays</a> の <a href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> では以下のような方針とした。</p>
-
 <ul>
-<li>Python3中心。<br />
-
+<li>Python3中心。
 <ul>
 <li>Python3の時に効率的に動作する</li>
 <li>Python2のサポートドロップ時にソース修正が容易</li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
 <p>なのでガンガンPython2の関数はPython3に置き換える。( <code>map</code> を <code>imap</code> にしてしまうなど ) 大まかには <a href="https://github.com/yuin/rays/blob/master/src/rays/compat.py">compat.py</a> のコメント通り以下のようなコーディング。</p>
-
 <ul>
-<li>文字列は <code>str</code> と <code>bytes</code> を使う。</li>
-<li><code>range</code> , <code>map</code> , <code>zip</code> などはイテレータを返すものとする。</li>
-<li>コレクションの列挙は <code>iter_items</code> などの関数を通す。</li>
-<li><code>iterator.next()</code> の代わりに <code>next</code> 関数を使う。</li>
-
-<li><p>クラスは <code>object</code> の代わりに <code>compatobject</code> を継承する。</p>
-
+<li>
+<p>文字列は <code>str</code> と <code>bytes</code> を使う。</p>
+</li>
+<li>
+<p><code>range</code> , <code>map</code> , <code>zip</code> などはイテレータを返すものとする。</p>
+</li>
+<li>
+<p>コレクションの列挙は <code>iter_items</code> などの関数を通す。</p>
+</li>
+<li>
+<p><code>iterator.next()</code> の代わりに <code>next</code> 関数を使う。</p>
+</li>
+<li>
+<p>クラスは <code>object</code> の代わりに <code>compatobject</code> を継承する。</p>
 <ul>
 <li><code>__str__</code> , <code>__nonzero__</code> , <code>__cmp__</code> など廃止・仕様変更されたメソッドは Python3の仕様で実装する。 <code>compatobject</code> が Python2の場合は自動で変換する。</li>
-</ul></li>
-
-<li><p>リネームされたモジュールのimportは <code>compat_import</code> メソッドを使う。</p>
-
+</ul>
+</li>
+<li>
+<p>リネームされたモジュールのimportは <code>compat_import</code> メソッドを使う。</p>
 <ul>
-<li>例: <code>compat_import(py2=&quot;email.MIMEMultipart&quot;, py3=&quot;email.mime.multipart&quot;)</code><br />
-
+<li>例: <code>compat_import(py2=&quot;email.MIMEMultipart&quot;, py3=&quot;email.mime.multipart&quot;)</code>
 <ul>
 <li>このようにするとPython2でも <code>email.mime.multipart</code> でアクセスできる。</li>
-</ul></li>
-</ul></li>
-
-<li><p><code>urllib</code> は複雑にリネームされているので、 python2用 <code>urllib</code> を作ってしまう。</p>
-
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>urllib</code> は複雑にリネームされているので、 python2用 <code>urllib</code> を作ってしまう。</p>
 <ul>
 <li>Python2でも普通に <code>import urllib.request</code> のように書ける</li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
 <p>キモは <code>compat_import</code> かなと。</p>
-
 <p>そうすると、以下のような感じでほぼPython3のみ対象としたのと同じソースコードになる。Python2サポートdrop時は単純なソースコード置換でいけるはず。</p>
-
-<pre class="prettyprint"><code>import urllib.request
-compat_import(py2=&quot;cookielib&quot;, py3=&quot;http.cookiejar&quot;)
-
-class Html(compatobject):
-  def __init__(self, text):
-    if isinstance(text, bytes):
-      text = text.decode(&quot;utf8&quot;)
-    self.text = text
-
-  def __str__(self):
-    return self.text
-
-cookie_jar = http.cookiejar.MozillaCookieJar()
-handlers = [urllib.request.HTTPCookieProcessor(cookie_jar)]
-opener = urllib.request.build_opener(*handlers)
-html = Html(opener.open(&quot;http://www.google.co.jp/&quot;).read())
-</code></pre>
-
-<p>ソースコードの寿命をのばすためにもボチボチこの方針で書き変えていくつもり。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>import urllib.request
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>compat_import(py2=&#34;cookielib&#34;, py3=&#34;http.cookiejar&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>class Html(compatobject):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  def __init__(self, text):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    if isinstance(text, bytes):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>      text = text.decode(&#34;utf8&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    self.text = text
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  def __str__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    return self.text
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>cookie_jar = http.cookiejar.MozillaCookieJar()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>handlers = [urllib.request.HTTPCookieProcessor(cookie_jar)]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>opener = urllib.request.build_opener(*handlers)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>html = Html(opener.open(&#34;http://www.google.co.jp/&#34;).read())
+</span></span></code></pre><p>ソースコードの寿命をのばすためにもボチボチこの方針で書き変えていくつもり。</p>
 
 
     <div class="seealso">
@@ -162,7 +154,7 @@ html = Html(opener.open(&quot;http://www.google.co.jp/&quot;).read())
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2013/10/09/python3-python2-compat" class="hatena-bookmark-button" data-hatena-bookmark-title="Python3 &amp; 2互換性確保の見直し" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2013/10/09/python3-python2-compat" class="hatena-bookmark-button" data-hatena-bookmark-title="Python3 &amp; 2互換性確保の見直し" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

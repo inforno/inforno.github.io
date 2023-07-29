@@ -16,78 +16,55 @@
       <title>Go言語用のObject mapper generatorを書いた </title>
       <link>http://inforno.net/articles/2023/07/22/object-mapper-written-in-go</link>
       <description>&lt;p&gt;Go言語で構造体と構造体をマッピングする、いわゆるObject mapperを生成するCLIを書きました。&lt;/p&gt;
-
-&lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/sesame&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
-&lt;h2&gt;経緯&lt;/h2&gt;
-
-&lt;p&gt;READMEに書いてる通りですが、いわゆるClean architectureなど多層構造のアプリケーションではどうしても
-似たようなオブジェクトを定義せざるを得ないことがあります。&lt;/p&gt;
-
-&lt;p&gt;特にキツい(?)のがgRPCを採用した場合ですね。 &lt;code&gt;protoc&lt;/code&gt;が吐く構造体は完全に&lt;code&gt;protobuf&lt;/code&gt;に依存したものになっており
-ある程度層をまたいで同じオブジェクトを持っていくのは許容しよう、と割り切ってもこれをいわゆるドメイン層に
-そのままもっていくのは結構ハードルが高いのではないかと思います。&lt;/p&gt;
-
+&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/sesame&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;
+&lt;h2 id=&#34;heading&#34;&gt;経緯&lt;/h2&gt;
+&lt;p&gt;READMEに書いてる通りですが、いわゆるClean architectureなど多層構造のアプリケーションではどうしても似たようなオブジェクトを定義せざるを得ないことがあります。&lt;/p&gt;
+&lt;p&gt;特にキツい(?)のがgRPCを採用した場合ですね。 &lt;code&gt;protoc&lt;/code&gt;が吐く構造体は完全に&lt;code&gt;protobuf&lt;/code&gt;に依存したものになっておりある程度層をまたいで同じオブジェクトを持っていくのは許容しよう、と割り切ってもこれをいわゆるドメイン層にそのままもっていくのは結構ハードルが高いのではないかと思います。&lt;/p&gt;
 &lt;p&gt;＃あと、&lt;code&gt;gogo/protobuf&lt;/code&gt; 亡き今、protoc-gen-goが非標準命名規則でソースコードを出力するのもキモチワルイ。。。&lt;/p&gt;
-
-&lt;p&gt;WEB上にいっぱいあるGo &#43; gRPCのクリーンアーキテクチャサンプル的なものでもここはかならず似たオブジェクトに
-詰め替えています。GoにはJavaにおけるDTOのような歴史はあまりないですし、アーキテクチャ上必要なことなんだから
-手で書くべき、という人もいますがとはいっても項目数が多くなってくるとつらいですよね。&lt;/p&gt;
-
+&lt;p&gt;WEB上にいっぱいあるGo &#43; gRPCのクリーンアーキテクチャサンプル的なものでもここはかならず似たオブジェクトに詰め替えています。GoにはJavaにおけるDTOのような歴史はあまりないですし、アーキテクチャ上必要なことなんだから手で書くべき、という人もいますがとはいっても項目数が多くなってくるとつらいですよね。&lt;/p&gt;
 &lt;p&gt;これをある程度自動で詰め替えるライブラリはリフレクションを使ったものはそれなりにあるのですが、経験上&lt;/p&gt;
-
 &lt;ul&gt;
 &lt;li&gt;リフレクションを使ったものはデバッグがつらい
-
 &lt;ul&gt;
 &lt;li&gt;項目が多くなってきたときに、1つだけなんかマッピングされてない！というときになんでマッピングされてないの？
 というのがわかりづらい&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
 &lt;li&gt;性能が微妙
-
 &lt;ul&gt;
 &lt;li&gt;いくらGoのリフレクションが早いといってもリフレクション使わないコードよりは当たり前だが遅い&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
 &lt;/ul&gt;
-
+&lt;/li&gt;
+&lt;/ul&gt;
 &lt;p&gt;ということで、コード生成してくれるタイプのものが欲しかったんですがいいのが無かったので書いた、という次第です。&lt;/p&gt;
-
-&lt;h2&gt;できること&lt;/h2&gt;
-
+&lt;h2 id=&#34;heading-1&#34;&gt;できること&lt;/h2&gt;
 &lt;p&gt;構造体と構造体をマッピングするインタフェースと実装を生成できます。マッピング定義はYAMLに記載、結構柔軟に定義できます。
 ネストしたものも再帰的にマッピングできます。&lt;/p&gt;
-
 &lt;ul&gt;
 &lt;li&gt;例: &lt;code&gt;string&lt;/code&gt;と&lt;code&gt;time.Time&lt;/code&gt;をマッピングするものを登録しておけば自動的にこれらのフィールドを持つ構造体を変換可能&lt;/li&gt;
 &lt;/ul&gt;
-
-&lt;p&gt;比較的にきれいな(自分的には)インタフェースを吐くので最悪、このツール使うのやめようとなってもインタフェースに対する実装を
-自分で書けばよいだけです。生成するソースはこんな感じ&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;package mapper
-
-import (
-    pkg00002 &amp;quot;time&amp;quot;
-
-    pkg00001 &amp;quot;example.com/testmod/domain&amp;quot;
-    pkg00000 &amp;quot;example.com/testmod/model&amp;quot;
-)
-
-type TodoMapperHelper interface {
-    ModelToEntity(*pkg00000.TodoModel, *pkg00001.Todo) error
-    EntityToModel(*pkg00001.Todo, *pkg00000.TodoModel) error
-}
-
-type TodoMapper interface {
-    ModelToEntity(*pkg00000.TodoModel) (*pkg00001.Todo, error)
-    EntityToModel(*pkg00001.Todo) (*pkg00000.TodoModel, error)
-}
-
-// ... (TodoMapper default implementation)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Goでの構造体のマッピング、結構どうにかしたいと思いつつとりあえず全部手でやってました、という人も多いと思うので
-もしよければ使ってみてください。&lt;/p&gt;
+&lt;p&gt;比較的にきれいな(自分的には)インタフェースを吐くので最悪、このツール使うのやめようとなってもインタフェースに対する実装を自分で書けばよいだけです。生成するソースはこんな感じ&lt;/p&gt;
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;package&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;mapper&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;import&lt;/span&gt; (
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00002&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;time&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00001&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;example.com/testmod/domain&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00000&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;example.com/testmod/model&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8&lt;/span&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TodoMapperHelper&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;interface&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;11&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;ModelToEntity&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00000&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;TodoModel&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00001&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Todo&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;error&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;12&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;EntityToModel&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00001&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Todo&lt;/span&gt;, &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00000&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;TodoModel&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;error&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;13&lt;/span&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;14&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;15&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;TodoMapper&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;interface&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;16&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;ModelToEntity&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00000&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;TodoModel&lt;/span&gt;) (&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00001&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Todo&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;error&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;17&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;EntityToModel&lt;/span&gt;(&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00001&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Todo&lt;/span&gt;) (&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pkg00000&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;TodoModel&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;error&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;18&lt;/span&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;19&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;20&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// ... (TodoMapper default implementation)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Goでの構造体のマッピング、結構どうにかしたいと思いつつとりあえず全部手でやってました、という人も多いと思うのでもしよければ使ってみてください。&lt;/p&gt;
 </description>
       
       <category>golang</category>
@@ -100,47 +77,28 @@ type TodoMapper interface {
       <title>Go言語でCommonMarkパーサを実装した、またCommonMarkについて </title>
       <link>http://inforno.net/articles/2019/04/27/commonmark-parser-written-in-go</link>
       <description>&lt;p&gt;GoでCommonMarkのパーサを実装しました。&lt;/p&gt;
-
-&lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/goldmark&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
+&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/goldmark&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;
 &lt;p&gt;分かりやすいASTに変換＋拡張が容易、そこそこ速い実装になっています。&lt;/p&gt;
-
 &lt;p&gt;&lt;strong&gt;めちゃくちゃしんどかったです。&lt;/strong&gt;&lt;/p&gt;
-
-&lt;h2&gt;経緯&lt;/h2&gt;
-
+&lt;h2 id=&#34;heading&#34;&gt;経緯&lt;/h2&gt;
 &lt;p&gt;Go言語のMarkdownパーサといえば&lt;a href=&#34;https://github.com/russross/blackfriday/tree/v2&#34;&gt;blackfriday&lt;/a&gt;ですが、
 拡張するための機構がないのでさくっと自前でMarkdownパーサを書くか、と思い立ちました。&lt;/p&gt;
-
-&lt;p&gt;そこで「そういえばCommonMarkなんてもんがあったな」と思い出しせっかくならCommonMark準拠にするかと
-おもってCommonMarkの仕様を読み始めました。&lt;/p&gt;
-
+&lt;p&gt;そこで「そういえばCommonMarkなんてもんがあったな」と思い出しせっかくならCommonMark準拠にするかとおもってCommonMarkの仕様を読み始めました。&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;え、なにこれは…&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;Markdownで出来ることなんてrestructuredTextなどほかのマークアップ言語に比べれば
-わずかなものです。しかし、たかがそれだけを実装するために凄まじく複雑な仕様
-が定義されているのでした。&lt;/p&gt;
-
+&lt;p&gt;Markdownで出来ることなんてrestructuredTextなどほかのマークアップ言語に比べればわずかなものです。しかし、たかがそれだけを実装するために凄まじく複雑な仕様が定義されているのでした。&lt;/p&gt;
 &lt;p&gt;以下、CommonMarkに寄せられた声です。&lt;/p&gt;
-
-&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;commonmarkのlistの仕様複雑すぎて死んでいる&lt;/p&gt;&amp;mdash; tkr (@kgtkr) &lt;a href=&#34;https://twitter.com/kgtkr/status/1111140801621286913?ref_src=twsrc%5Etfw&#34;&gt;2019年3月28日&lt;/a&gt;&lt;/blockquote&gt;
-&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;う〜ん、CommonMark難しすぎる！w&lt;/p&gt;&amp;mdash; らぃと (@lightnet328) &lt;a href=&#34;https://twitter.com/lightnet328/status/1099352824750587909?ref_src=twsrc%5Etfw&#34;&gt;2019年2月23日&lt;/a&gt;&lt;/blockquote&gt;
-&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;質問：&lt;br&gt;CommonMarkのパーザの実装を試みていますが、仕様が絶望的です。どうしたらいいでしょうか？&lt;br&gt;&lt;br&gt;回答：&lt;br&gt;もっとテキトーにパーザを実装して、そのパーザの動作を以て“新しいMarkdown方言”であると定めましょう！&lt;a href=&#34;https://twitter.com/hashtag/Markdown?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#Markdown&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt;&lt;/p&gt;&amp;mdash; ZR-TeXnobabbler🤔 (@zr_tex8r) &lt;a href=&#34;https://twitter.com/zr_tex8r/status/1057951517859209217?ref_src=twsrc%5Etfw&#34;&gt;2018年11月1日&lt;/a&gt;&lt;/blockquote&gt;
-&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;皆さんには是非 CommonMark Spec を読んで絶望してほしい．&lt;/p&gt;&amp;mdash; 画力・博士号・油田 (@bd_gfngfn) &lt;a href=&#34;https://twitter.com/bd_gfngfn/status/1057689153561710592?ref_src=twsrc%5Etfw&#34;&gt;2018年10月31日&lt;/a&gt;&lt;/blockquote&gt;
-&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
+&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;commonmarkのlistの仕様複雑すぎて死んでいる&lt;/p&gt;&amp;mdash; tkr (@kgtkr) &lt;a href=&#34;https://twitter.com/kgtkr/status/1111140801621286913?ref_src=twsrc%5Etfw&#34;&gt;2019年3月28日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;
+&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;う〜ん、CommonMark難しすぎる！w&lt;/p&gt;&amp;mdash; らぃと (@lightnet328) &lt;a href=&#34;https://twitter.com/lightnet328/status/1099352824750587909?ref_src=twsrc%5Etfw&#34;&gt;2019年2月23日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;
+&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;質問：&lt;br&gt;CommonMarkのパーザの実装を試みていますが、仕様が絶望的です。どうしたらいいでしょうか？&lt;br&gt;&lt;br&gt;回答：&lt;br&gt;もっとテキトーにパーザを実装して、そのパーザの動作を以て“新しいMarkdown方言”であると定めましょう！&lt;a href=&#34;https://twitter.com/hashtag/Markdown?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#Markdown&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt; &lt;a href=&#34;https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;amp;ref_src=twsrc%5Etfw&#34;&gt;#うわぁ&lt;/a&gt;&lt;/p&gt;&amp;mdash; ZR-TeXnobabbler🤔 (@zr_tex8r) &lt;a href=&#34;https://twitter.com/zr_tex8r/status/1057951517859209217?ref_src=twsrc%5Etfw&#34;&gt;2018年11月1日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;
+&lt;blockquote class=&#34;twitter-tweet&#34; data-lang=&#34;ja&#34;&gt;&lt;p lang=&#34;ja&#34; dir=&#34;ltr&#34;&gt;皆さんには是非 CommonMark Spec を読んで絶望してほしい．&lt;/p&gt;&amp;mdash; 画力・博士号・油田 (@bd_gfngfn) &lt;a href=&#34;https://twitter.com/bd_gfngfn/status/1057689153561710592?ref_src=twsrc%5Etfw&#34;&gt;2018年10月31日&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;
 &lt;p&gt;しまいには、CommonMarkの中心人物自体が「えらいもん作ってしまった・・・」となっています。&lt;/p&gt;
-
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&#34;https://talk.commonmark.org/t/beyond-markdown/2787&#34;&gt;Beyond Markdown&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
-
 &lt;blockquote&gt;
 &lt;p&gt;There are 17 principles governing emphasis , for example, and these rules still
 leave cases undecided. The rules for list items and HTML blocks are also
@@ -148,55 +106,35 @@ very complex. All of these rules lead to unexpected results sometimes, and they
 make writing a parser for CommonMark a complex affair.
 I despair, at times, of getting to a spec that is worth calling 1.0.&lt;/p&gt;
 &lt;/blockquote&gt;
-
 &lt;p&gt;私も仕様を読んだ段階で「これはヤバい」と感じたのですがここで引くのも悔しかったので作り切りました。&lt;/p&gt;
-
-&lt;h2&gt;CommonMarkについて思うところ&lt;/h2&gt;
-
+&lt;h2 id=&#34;commonmark&#34;&gt;CommonMarkについて思うところ&lt;/h2&gt;
 &lt;p&gt;正直なところ、これが世に広まるってどうなの、と思います。&lt;/p&gt;
-
 &lt;p&gt;そもそもなんでMarkdownが軽量マークアップ言語の中でこれだけ広く使われるようになったのかというと&lt;/p&gt;
-
 &lt;ul&gt;
 &lt;li&gt;書き手としての書きやすさ&lt;/li&gt;
 &lt;li&gt;実装者としての実装しやすさ&lt;/li&gt;
 &lt;/ul&gt;
-
 &lt;p&gt;つまり、「書き手の適当さ」と「実装側の適当さ」がいい具合に噛み合ったからだと思っています。
 書き手はそれなりに適当に書けるし、実装するにしても仕様が適当なので、適当に実装してもMarkdown
 対応であると言うことができました。&lt;/p&gt;
-
 &lt;p&gt;それによってあらゆる言語、さまざまなタイプの実装が生まれそれが至るところで使われることになり
 Markdownは広まっていったのです。&lt;/p&gt;
-
-&lt;p&gt;それに対して、CommonMarkはあまりに実装するのがしんどすぎます。さらにはそれだけしんどい思いを
-しても出来ること自体は少ないのです。テーブルさえ使えないのです。&lt;/p&gt;
-
+&lt;p&gt;それに対して、CommonMarkはあまりに実装するのがしんどすぎます。さらにはそれだけしんどい思いをしても出来ること自体は少ないのです。テーブルさえ使えないのです。&lt;/p&gt;
 &lt;p&gt;その実装の難しさからCommonMark対応のパーサはいわゆるMarkdownパーサと比べるとわずかしかありません。
 CommonMarkにかかわっている人の中には「それが何の問題ですか？」という人さえいます。
 「CとJSで参照実装提供してるじゃん。ブラウザはC動かないからJSも用意してある。それ以外の言語は
 C実装のバインディング作ればいいだけでしょ。実装なんて1個あればいいんだよ」なんて感じです。&lt;/p&gt;
-
-&lt;p&gt;CommonMarkはオリジナルのMarkdown作者から「Markdownの名前は使うな」と言われてCommonMarkという名前
-になったという経緯があります。&lt;/p&gt;
-
-&lt;p&gt;Markdownを冠していないのであれば、perlの神正規表現で実装されたオリジナルのMarkdown.plの動きにでき
-るだけ寄せようとするのではなく、もっと仕様をシンプルにする方向に動いて欲しかったです。&lt;/p&gt;
-
-&lt;h2&gt;CommonMarkパーサを実装したい人に向けて&lt;/h2&gt;
-
-&lt;p&gt;とにかく、CommonMarkに準拠するのは難しい。ということでいるかいないかわからない、CommonMarkパーサを
-これから書こうと言う人に気づきを共有しておきます。&lt;/p&gt;
-
+&lt;p&gt;CommonMarkはオリジナルのMarkdown作者から「Markdownの名前は使うな」と言われてCommonMarkという名前になったという経緯があります。&lt;/p&gt;
+&lt;p&gt;Markdownを冠していないのであれば、perlの神正規表現で実装されたオリジナルのMarkdown.plの動きにできるだけ寄せようとするのではなく、もっと仕様をシンプルにする方向に動いて欲しかったです。&lt;/p&gt;
+&lt;h2 id=&#34;commonmark-1&#34;&gt;CommonMarkパーサを実装したい人に向けて&lt;/h2&gt;
+&lt;p&gt;とにかく、CommonMarkに準拠するのは難しい。ということでいるかいないかわからない、CommonMarkパーサをこれから書こうと言う人に気づきを共有しておきます。&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;いわゆるプログラミング言語やXML, JSONなどのパースとは全く別物です。そういうものはもともと
 「パースしやすいように」という視点で文法が作られてますが、CommonMarkはそんなことはありません。
 pegベースのパーサもあるので無理じゃないですがいわゆるLL,LRやLALRのような方法では厳しいです。&lt;/li&gt;
 &lt;li&gt;Markdownはいうなれば「行志向」なので業単位を基本としましょう。&lt;/li&gt;
 &lt;li&gt;「lazy continuation」はかなり曲者です。&lt;/li&gt;
-&lt;li&gt;仕様策定者自身が &lt;a href=&#34;https://talk.commonmark.org/t/beyond-markdown/2787&#34;&gt;Beyond Markdown&lt;/a&gt; で述べている
-部分は間違いなくしんどいです。特に強調は自分で考えるのは諦めましょう。素直に参照実装と同じ
-アルゴリズムで実装するより他にspec testを通すのは難しいです。&lt;/li&gt;
+&lt;li&gt;仕様策定者自身が &lt;a href=&#34;https://talk.commonmark.org/t/beyond-markdown/2787&#34;&gt;Beyond Markdown&lt;/a&gt; で述べている部分は間違いなくしんどいです。特に強調は自分で考えるのは諦めましょう。素直に参照実装と同じアルゴリズムで実装するより他にspec testを通すのは難しいです。&lt;/li&gt;
 &lt;li&gt;タブが本来のタブの意味でつかわれる点に注意。つまりタブ文字の位置によりタブは
 1文字分、2文字分、3文字分、4文字分、いずれの文字幅にもなりえます。&lt;/li&gt;
 &lt;li&gt;とにかく折れない心が大事です。CommonMarkとMarkdownは別物です。覚悟してかかりましょう。&lt;/li&gt;
@@ -219,28 +157,20 @@ pegベースのパーサもあるので無理じゃないですがいわゆるLL
       <title>batの中にbashスクリフﾟトを埋め込む方法 </title>
       <link>http://inforno.net/articles/2017/02/15/bash-script-in-bat</link>
       <description>&lt;p&gt;相変わらずメインのマシンはWindowsなのですが、batファイルのもろもろがいつまでも覚えられず、bashスクリプトで書きたいなあ、ということでbatファイルにbashスクリプトを埋め込むことにしました。 Cでつくった自作用ツールがあるため、Windowsにはかならずmsys2をいれているのでbashは絶対あるんですよね。&lt;/p&gt;
-
 &lt;p&gt;その他の言語を埋め込む方法は&lt;/p&gt;
-
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&#34;http://qiita.com/snipsnipsnip/items/50e4ca88e3ce3f8cffda&#34;&gt;Windowsでshebangもどき、またはバッチにスクリプトを埋め込む方法&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
-
 &lt;p&gt;が詳しいです。&lt;/p&gt;
-
-&lt;h1&gt;シェルスクリプトをバッチファイルに埋め込む&lt;/h1&gt;
-
+&lt;h1 id=&#34;heading&#34;&gt;シェルスクリプトをバッチファイルに埋め込む&lt;/h1&gt;
 &lt;p&gt;以下のようにすると、バッチファイルにシェルスクリプト(bashスクリプト)を埋め込むことにできます。拡張子 &lt;code&gt;.bat&lt;/code&gt; で保存すると &lt;code&gt;cmd.exe&lt;/code&gt; からもmsys2の &lt;code&gt;bash.exe&lt;/code&gt; からも起動できます。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code&gt;:rem () { &amp;lt;&amp;lt;&#39;#__CO__&#39;
-@bash  &amp;quot;%~f0&amp;quot; %* &amp;amp; exit /b
-#__CO__
-}
-
-echo 以下普通にシェルスクリプト
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、&lt;code&gt;:&lt;/code&gt; コマンドやらをうまく利用して埋め込んでいます。&lt;/p&gt;
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;1&lt;/span&gt;&lt;span&gt;:rem () { &amp;lt;&amp;lt;&amp;#39;#__CO__&amp;#39;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;2&lt;/span&gt;&lt;span&gt;@bash  &amp;#34;%~f0&amp;#34; %* &amp;amp; exit /b
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;3&lt;/span&gt;&lt;span&gt;#__CO__
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;4&lt;/span&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;5&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;6&lt;/span&gt;&lt;span&gt;echo 以下普通にシェルスクリプト
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、&lt;code&gt;:&lt;/code&gt; コマンドやらをうまく利用して埋め込んでいます。&lt;/p&gt;
 </description>
       
       <category>bash</category>
@@ -255,140 +185,97 @@ echo 以下普通にシェルスクリプト
       <title>Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた </title>
       <link>http://inforno.net/articles/2016/12/16/gopher-lua-plugins-in-go18</link>
       <description>&lt;p&gt;&lt;a href=&#34;http://qiita.com/advent-calendar/2016/go&#34;&gt;Go Advent Calendar 2016&lt;/a&gt; 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。&lt;/p&gt;
-
 &lt;p&gt;さて、Go1.8では待望？のShared Libraryのロードが可能になります。 &lt;a href=&#34;https://tip.golang.org/pkg/plugin/&#34;&gt;pluginパッケージ&lt;/a&gt; を使います。&lt;/p&gt;
-
 &lt;p&gt;Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。&lt;/p&gt;
-
 &lt;p&gt;Advent Calendar 2の &lt;a href=&#34;http://qiita.com/qt-luigi/items/47a7913145fc747da0c7&#34;&gt;qt-luigiさんのネタ&lt;/a&gt; と被ってしまったのですが実戦的に使ってみました、ということで許してください。&lt;/p&gt;
-
-&lt;h1&gt;プラグインの作成とコンパイル&lt;/h1&gt;
-
+&lt;h1 id=&#34;heading&#34;&gt;プラグインの作成とコンパイル&lt;/h1&gt;
 &lt;p&gt;マニュアルページにあるとおり、以下のようになります。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;package main
-
-// // No C code needed.
-import &amp;quot;C&amp;quot;
-
-import &amp;quot;fmt&amp;quot;
-
-var V int
-
-func F() { fmt.Printf(&amp;quot;Hello, number %d\n&amp;quot;, V) }
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;ポイントは&lt;/p&gt;
-
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;package&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// // No C code needed.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;import&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;C&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;import&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;fmt&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;var&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;V&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;F&lt;/span&gt;() { &lt;span style=&#34;color:#a6e22e&#34;&gt;fmt&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Printf&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Hello, number %d\n&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;V&lt;/span&gt;) }
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;ポイントは&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Cのコードはないが、 &lt;code&gt;import &amp;quot;C&amp;quot;&lt;/code&gt; が必要&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;package&lt;/code&gt; は &lt;code&gt;main&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-
 &lt;p&gt;という２点です。コンパイルは&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;$ go build -buildmode=plugin -o plugin.so plugin.go
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;でOK。簡単ですね。これで &lt;code&gt;plugin.so&lt;/code&gt; が生成されます。&lt;/p&gt;
-
-&lt;h1&gt;プラグインのロード&lt;/h1&gt;
-
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;1&lt;/span&gt;&lt;span&gt;$ go build -buildmode&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;plugin -o plugin.so plugin.go
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;でOK。簡単ですね。これで &lt;code&gt;plugin.so&lt;/code&gt; が生成されます。&lt;/p&gt;
+&lt;h1 id=&#34;heading-1&#34;&gt;プラグインのロード&lt;/h1&gt;
 &lt;p&gt;これまたマニュアルページどおりですが&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;p, err := plugin.Open(&amp;quot;plugin.so&amp;quot;)
-if err != nil {
-    panic(err)
-}
-v, err := p.Lookup(&amp;quot;V&amp;quot;)
-if err != nil {
-    panic(err)
-}
-f, err := p.Lookup(&amp;quot;F&amp;quot;)
-if err != nil {
-    panic(err)
-}
-*v.(*int) = 7
-f.(func())() // prints &amp;quot;Hello, number 7&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;のように非常に直感的に使えます。&lt;/p&gt;
-
-&lt;h1&gt;GopherLuaで使ってみた&lt;/h1&gt;
-
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;p&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;plugin&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Open&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;plugin.so&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;nil&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3&lt;/span&gt;&lt;span&gt;    panic(&lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4&lt;/span&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;v&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;p&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Lookup&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;V&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;nil&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7&lt;/span&gt;&lt;span&gt;    panic(&lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8&lt;/span&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;f&lt;/span&gt;, &lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;p&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Lookup&lt;/span&gt;(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;F&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;nil&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;11&lt;/span&gt;&lt;span&gt;    panic(&lt;span style=&#34;color:#a6e22e&#34;&gt;err&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;12&lt;/span&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;13&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;v&lt;/span&gt;.(&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;) = &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;14&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;f&lt;/span&gt;.(&lt;span style=&#34;color:#66d9ef&#34;&gt;func&lt;/span&gt;())() &lt;span style=&#34;color:#75715e&#34;&gt;// prints &amp;#34;Hello, number 7&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;のように非常に直感的に使えます。&lt;/p&gt;
+&lt;h1 id=&#34;gopherlua&#34;&gt;GopherLuaで使ってみた&lt;/h1&gt;
 &lt;p&gt;拙作のPure GoによるLua実装 &lt;a href=&#34;https://github.com/yuin/gopher-lua&#34;&gt;GopherLua&lt;/a&gt; ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。&lt;/p&gt;
-
 &lt;p&gt;そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。&lt;/p&gt;
-
 &lt;p&gt;こちらは &lt;a href=&#34;https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins&#34;&gt;feature-exp-go1.8pluginsブランチ&lt;/a&gt; で実際に動かせます。プラグイン部分のコミットは &lt;a href=&#34;https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b&#34;&gt;571b031&lt;/a&gt; です。&lt;/p&gt;
-
 &lt;p&gt;まずプラグイン側から。Luaのお作法通りです。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-go&#34;&gt;package main
-
-import (
-    &amp;quot;C&amp;quot;
-    &amp;quot;github.com/yuin/gopher-lua&amp;quot;
-)
-
-func Add(L *lua.LState) int {
-    v1 := L.CheckInt(1)
-    v2 := L.CheckInt(2)
-    L.Push(lua.LNumber(v1 &#43; v2))
-    return 1
-}
-
-func LuaOpenPlugin(L *lua.LState) int {
-    L.Push(
-        L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
-            &amp;quot;add&amp;quot;: Add,
-        }))
-    return 1
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;C実装のLuaでは &lt;code&gt;luaopen_共有ライブラリファイル名&lt;/code&gt; が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。&lt;/p&gt;
-
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;package&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;import&lt;/span&gt; (
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;C&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;github.com/yuin/gopher-lua&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6&lt;/span&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;Add&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;L&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;lua&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;LState&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;v1&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;L&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;CheckInt&lt;/span&gt;(&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;v2&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;L&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;CheckInt&lt;/span&gt;(&lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;11&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;L&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Push&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;lua&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;LNumber&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;v1&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;&#43;&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;v2&lt;/span&gt;))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;12&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;13&lt;/span&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;14&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;15&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;LuaOpenPlugin&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;L&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;lua&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;LState&lt;/span&gt;) &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;16&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;L&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Push&lt;/span&gt;(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;17&lt;/span&gt;&lt;span&gt;        &lt;span style=&#34;color:#a6e22e&#34;&gt;L&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;SetFuncs&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;L&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;NewTable&lt;/span&gt;(), &lt;span style=&#34;color:#66d9ef&#34;&gt;map&lt;/span&gt;[&lt;span style=&#34;color:#66d9ef&#34;&gt;string&lt;/span&gt;]&lt;span style=&#34;color:#a6e22e&#34;&gt;lua&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;LGFunction&lt;/span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;18&lt;/span&gt;&lt;span&gt;            &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;add&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;Add&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;19&lt;/span&gt;&lt;span&gt;        }))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;20&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;21&lt;/span&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;C実装のLuaでは &lt;code&gt;luaopen_共有ライブラリファイル名&lt;/code&gt; が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。&lt;/p&gt;
 &lt;p&gt;こいつをコンパイルして・・・&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-bash&#34;&gt;$ cd /home/yuin/tmp/plugin
-$ go build -buildmode=plugin -o plugin.so plugin.go
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;こうじゃ&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code&gt;$ glua
-&amp;gt; package.cpath = package.cpath .. &amp;quot;;&amp;quot; .. &amp;quot;/home/yuin/tmp/plugin/?.so&amp;quot;
-&amp;gt; adder = require(&amp;quot;plugin&amp;quot;)
-&amp;gt; print(adder.add(1, 2))
-3
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;おおおおおおおおおおおおお&lt;/p&gt;
-
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;1&lt;/span&gt;&lt;span&gt;$ cd /home/yuin/tmp/plugin
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;2&lt;/span&gt;&lt;span&gt;$ go build -buildmode&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;plugin -o plugin.so plugin.go
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;こうじゃ&lt;/p&gt;
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;1&lt;/span&gt;&lt;span&gt;$ glua
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;2&lt;/span&gt;&lt;span&gt;&amp;gt; package.cpath = package.cpath .. &amp;#34;;&amp;#34; .. &amp;#34;/home/yuin/tmp/plugin/?.so&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;3&lt;/span&gt;&lt;span&gt;&amp;gt; adder = require(&amp;#34;plugin&amp;#34;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;4&lt;/span&gt;&lt;span&gt;&amp;gt; print(adder.add(1, 2))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;5&lt;/span&gt;&lt;span&gt;3
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;おおおおおおおおおおおおお&lt;/p&gt;
 &lt;p&gt;普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code&gt;&amp;lt;string&amp;gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;package.loadlib&lt;/code&gt; も実装しました。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code&gt;$ glua
-&amp;gt; print(package.loadlib(&amp;quot;/home/yuin/tmp/plugin/notfound&amp;quot;, &amp;quot;foo&amp;quot;))
-nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
-&amp;gt; print(package.loadlib(&amp;quot;/home/yuin/tmp/plugin/plugin.so&amp;quot;, &amp;quot;foo&amp;quot;))
-nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
-&amp;gt; print(package.loadlib(&amp;quot;/home/yuin/tmp/plugin/plugin.so&amp;quot;, &amp;quot;LuaOpenPlugin&amp;quot;))
-function: 0xc4200c9840
-&amp;gt; 
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;完璧ですね。&lt;/p&gt;
-
-&lt;h1&gt;pluginパッケージ、使えそうですが・・・&lt;/h1&gt;
-
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;1&lt;/span&gt;&lt;span&gt;&amp;lt;&lt;span style=&#34;color:#66d9ef&#34;&gt;string&lt;/span&gt;&amp;gt;:&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;plugin&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;Open&lt;/span&gt;: &lt;span style=&#34;color:#a6e22e&#34;&gt;plugin&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;was&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;built&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;with&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;a&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;different&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;version&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;of&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;package&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;github&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;com&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;yuin&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;/&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;gopher&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;lua&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;package.loadlib&lt;/code&gt; も実装しました。&lt;/p&gt;
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;1&lt;/span&gt;&lt;span&gt;$ glua
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;2&lt;/span&gt;&lt;span&gt;&amp;gt; print(package.loadlib(&amp;#34;/home/yuin/tmp/plugin/notfound&amp;#34;, &amp;#34;foo&amp;#34;))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;3&lt;/span&gt;&lt;span&gt;nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;4&lt;/span&gt;&lt;span&gt;&amp;gt; print(package.loadlib(&amp;#34;/home/yuin/tmp/plugin/plugin.so&amp;#34;, &amp;#34;foo&amp;#34;))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;5&lt;/span&gt;&lt;span&gt;nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;6&lt;/span&gt;&lt;span&gt;&amp;gt; print(package.loadlib(&amp;#34;/home/yuin/tmp/plugin/plugin.so&amp;#34;, &amp;#34;LuaOpenPlugin&amp;#34;))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;7&lt;/span&gt;&lt;span&gt;function: 0xc4200c9840
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;8&lt;/span&gt;&lt;span&gt;&amp;gt; 
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;完璧ですね。&lt;/p&gt;
+&lt;h1 id=&#34;plugin&#34;&gt;pluginパッケージ、使えそうですが・・・&lt;/h1&gt;
 &lt;p&gt;少なくとも、Linuxでは &lt;code&gt;plugin&lt;/code&gt; パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。&lt;/p&gt;
-
 &lt;p&gt;Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。&lt;/p&gt;
 </description>
       
@@ -404,13 +291,9 @@ function: 0xc4200c9840
       <title>Go&#43;Luaのチャットボットフレームワークを作った </title>
       <link>http://inforno.net/articles/2016/07/28/golbot</link>
       <description>&lt;p&gt;たまには実用的なものをつくろうと思って、Go&#43;Luaで置くだけで動くチャットボットを作ってみました。Slack, IRC, Hipchatをサポートしています。&lt;/p&gt;
-
-&lt;p&gt;&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/golbot&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
+&lt;div data-theme=&#34;default&#34; data-height=&#34;150&#34; data-width=&#34;400&#34; data-github=&#34;yuin/golbot&#34; class=&#34;github-card&#34;&gt;&lt;/div&gt;&lt;script src=&#34;http://lab.lepture.com/github-cards/widget.js&#34;&gt;&lt;/script&gt;
 &lt;p&gt;チャットボットといえばHubotだと思いますが、もっとさくっと動かしたいという方におすすめです。置けばうごきます。&lt;/p&gt;
-
 &lt;p&gt;特徴は以下です。&lt;/p&gt;
-
 &lt;ul&gt;
 &lt;li&gt;Goなので置けば動く&lt;/li&gt;
 &lt;li&gt;それでいてLuaでスクリプトを書ける&lt;/li&gt;
@@ -418,85 +301,72 @@ function: 0xc4200c9840
 &lt;li&gt;HTTP(S)サーバ機能があるのでWEBHOOKも一緒に作れる&lt;/li&gt;
 &lt;li&gt;定期ジョブも流せる&lt;/li&gt;
 &lt;/ul&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-lua&#34;&gt;function main()
-  local bot = golbot.newbot(&amp;quot;Slack&amp;quot;, { token = &amp;quot;xxxxx&amp;quot; })
-
-  bot:respond([[\s*(\d&#43;)\s*\&#43;\s*(\d&#43;)\s*]], function(m, e) -- 3
-    bot:say(e.target, tostring(tonumber(m[2]) &#43; tonumber(m[3])))
-  end)
-
-  bot:serve(function(msg)
-    if msg.type == &amp;quot;say&amp;quot; then
-      bot:say(msg.channel, msg.message)
-      respond(msg, true)
-    end
-  end)
-end
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-lua&#34;&gt;function main()
-  bot:respond([[deploy]], function(m, e)
-    bot:say(e.target, &amp;quot;accepted&amp;quot;)
-    goworker({target=e.target, type=&amp;quot;deploy&amp;quot;})
-  end)
-
-  bot:serve(function(msg)
-    if msg.type == &amp;quot;say&amp;quot; then
-      bot:say(msg.target, msg.message)
-    end
-  end)
-end
-
-function worker(msg)
-  if msg.type == &amp;quot;deploy&amp;quot; then
-    do_deploy()
-    notifymain({type=&amp;quot;say&amp;quot;, target=msg.target, message=&amp;quot;your deployment has been completed&amp;quot;})
-  end
-end
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは &lt;code&gt;notifymain&lt;/code&gt; でメインGroutineにメッセージをおくることができます。&lt;/p&gt;
-
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;local&lt;/span&gt; bot &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; golbot.newbot(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Slack&amp;#34;&lt;/span&gt;, { token &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;xxxxx&amp;#34;&lt;/span&gt; })
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4&lt;/span&gt;&lt;span&gt;  bot:respond(&lt;span style=&#34;color:#e6db74&#34;&gt;[[\s*(\d&#43;)\s*\&#43;\s*(\d&#43;)\s*]]&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt;(m, e) &lt;span style=&#34;color:#75715e&#34;&gt;-- 3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5&lt;/span&gt;&lt;span&gt;    bot:say(e.target, tostring(tonumber(m[&lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;]) &lt;span style=&#34;color:#f92672&#34;&gt;&#43;&lt;/span&gt; tonumber(m[&lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;])))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8&lt;/span&gt;&lt;span&gt;  bot:serve(&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt;(msg)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; msg.type &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;say&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10&lt;/span&gt;&lt;span&gt;      bot:say(msg.channel, msg.message)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;11&lt;/span&gt;&lt;span&gt;      respond(msg, &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;12&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;13&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;14&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;こんな感じのよくあるAPIです。特徴的なのがworkerの仕組みで&lt;/p&gt;
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2&lt;/span&gt;&lt;span&gt;  bot:respond(&lt;span style=&#34;color:#e6db74&#34;&gt;[[deploy]]&lt;/span&gt;, &lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt;(m, e)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3&lt;/span&gt;&lt;span&gt;    bot:say(e.target, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;accepted&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4&lt;/span&gt;&lt;span&gt;    goworker({target&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;e.target, type&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;deploy&amp;#34;&lt;/span&gt;})
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7&lt;/span&gt;&lt;span&gt;  bot:serve(&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt;(msg)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; msg.type &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;say&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9&lt;/span&gt;&lt;span&gt;      bot:say(msg.target, msg.message)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;11&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;12&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;13&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;14&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;worker&lt;/span&gt;(msg)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;15&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; msg.type &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;deploy&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;16&lt;/span&gt;&lt;span&gt;    do_deploy()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;17&lt;/span&gt;&lt;span&gt;    notifymain({type&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;say&amp;#34;&lt;/span&gt;, target&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;msg.target, message&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;your deployment has been completed&amp;#34;&lt;/span&gt;})
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;18&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;19&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;このように &lt;code&gt;goworker&lt;/code&gt; でLuaからGoroutineをつくって重い処理などをWorkerで実行することができます。Workerからは &lt;code&gt;notifymain&lt;/code&gt; でメインGroutineにメッセージをおくることができます。&lt;/p&gt;
 &lt;p&gt;HTTPサーバ機能では以下のような関数を定義するだけで簡単にWEBHOOKが作れます。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-lua&#34;&gt;function http(r)
-  if r.method == &amp;quot;POST&amp;quot; and r.URL.path == &amp;quot;/webhook&amp;quot; then
-    local data = assert(json.decode(r:readbody()))
-    local message = data.item.message.message
-    local user = data.item.message.from.name
-    local room = data.item.room.name
-
-    local ret = {
-      message = &amp;quot;hello! from webhook&amp;quot;,
-      message_format = &amp;quot;html&amp;quot;
-    }
-
-    return 200, headers, json.encode(ret)
-  end
-  return 400, headers, json.encode({result=&amp;quot;not found&amp;quot;})
-end
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;定期ジョブは以下のような感じ。&lt;/p&gt;
-
-&lt;pre class=&#34;prettyprint&#34;&gt;&lt;code class=&#34;language-lua&#34;&gt;function main()
-  golbot.newbot(&amp;quot;Null&amp;quot;, { 
-    http = &amp;quot;0.0.0.0:6669&amp;quot; ,
-    crons = {
-      { &amp;quot;0 * * * * * &amp;quot;, &amp;quot;job1&amp;quot;}
-    }
-  }):serve(function() end)
-end
-
-function job1()
-  print &amp;quot;hello!&amp;quot;
-end
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。&lt;/p&gt;
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;http&lt;/span&gt;(r)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;if&lt;/span&gt; r.method &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;POST&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#f92672&#34;&gt;and&lt;/span&gt; r.URL.path &lt;span style=&#34;color:#f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;/webhook&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;local&lt;/span&gt; data &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; assert(json.decode(r:readbody()))
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;local&lt;/span&gt; message &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; data.item.message.message
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;local&lt;/span&gt; user &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; data.item.message.from.name
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;local&lt;/span&gt; room &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; data.item.room.name
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;local&lt;/span&gt; ret &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9&lt;/span&gt;&lt;span&gt;      message &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;hello! from webhook&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10&lt;/span&gt;&lt;span&gt;      message_format &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;html&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;11&lt;/span&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;12&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;13&lt;/span&gt;&lt;span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;200&lt;/span&gt;, headers, json.encode(ret)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;14&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;15&lt;/span&gt;&lt;span&gt;  &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;400&lt;/span&gt;, headers, json.encode({result&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;not found&amp;#34;&lt;/span&gt;})
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;16&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;定期ジョブは以下のような感じ。&lt;/p&gt;
+&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;&#34;&gt;&lt;code&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 1&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 2&lt;/span&gt;&lt;span&gt;  golbot.newbot(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;Null&amp;#34;&lt;/span&gt;, { 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 3&lt;/span&gt;&lt;span&gt;    http &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;0.0.0.0:6669&amp;#34;&lt;/span&gt; ,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 4&lt;/span&gt;&lt;span&gt;    crons &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 5&lt;/span&gt;&lt;span&gt;      { &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;0 * * * * * &amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;job1&amp;#34;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 6&lt;/span&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 7&lt;/span&gt;&lt;span&gt;  }):serve(&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt;() &lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 8&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt; 9&lt;/span&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;10&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;function&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;job1&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;11&lt;/span&gt;&lt;span&gt;  print &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;hello!&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span style=&#34;white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f&#34;&gt;12&lt;/span&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;end&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;チャットボットのためだけにNode.jsとnpmはちょっと・・・という場合にぜひ。&lt;/p&gt;
 </description>
       
       <category>golang</category>

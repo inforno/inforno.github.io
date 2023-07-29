@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,67 +71,53 @@
 </header>
   <div itemprop="articleBody">
     <p>でましたね。 <a href="http://prototypejs.org/2007/8/15/prototype-1-6-0-release-candidat">Prototype 1.6.0 release candidate</a></p>
-
 <p>WEB界隈から離れてしばらくたちますが、またいつWEB界隈に戻るかわからないので一応追ってます。</p>
-
 <p>1.6ではついにClass周りに手が入りました。Prototype.jsといえばシンプルすぎるClass周りとプロパティをコピーするというなんちゃって継承がウリ（？）だったわけですが、1.6からは違います。もう <a href="http://inforno.net/articles/2006/01/24/inheritance-in-prototype-with-ease">オレオレクラス定義ライブラリ</a> をわざわざ使わなくても大丈夫。</p>
-
 <p>公式にも例がありますが、こんな感じでちゃんと継承できるようになりました。</p>
-
-<pre class="prettyprint"><code>var Animal = Class.create({
-  initialize: function(name) {
-    this.name = name;
-  },
-  eat: function() {
-    return this.say(&quot;Yum!&quot;);
-  },
-  say: function(message) {
-    return this.name + &quot;: &quot; + message;
-  }
-});
-
-var Eatable = {
-  eaten : function() {
-    return this.say(&quot;help me!!!&quot;);
-  }
-}
-
-var Mouse = Class.create(Animal, {
-});
-//syntax sugar for Object.extend
-Class.mixin(Mouse.prototype, Eatable);
-
-// subclass that augments a method
-var Cat = Class.create(Animal, {
-  eat: function($super, food) {
-    if (food instanceof Mouse) return [food.eaten(),$super()].join(&quot;\n&quot;);
-    else return this.say(&quot;Yuk! I only eat mice.&quot;);
-  }
-});
-
-var a = new Cat(&quot;Tama&quot;);
-alert(a.eat(new Mouse(&quot;Nezumy mouse&quot;)));
-</code></pre>
-
-<p>単にプロトタイプチェーンをつなげるだけではなくて、オーバライドされたメソッドの引数名を取得して（toStringしてgrepですね)、$superだった場合、自動的に親クラスのメソッドを$superとして渡してくれます。地味に便利。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>var Animal = Class.create({
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  initialize: function(name) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    this.name = name;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  eat: function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    return this.say(&#34;Yum!&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  say: function(message) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    return this.name + &#34;: &#34; + message;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>var Eatable = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  eaten : function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    return this.say(&#34;help me!!!&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>var Mouse = Class.create(Animal, {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>//syntax sugar for Object.extend
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>Class.mixin(Mouse.prototype, Eatable);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>// subclass that augments a method
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>var Cat = Class.create(Animal, {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  eat: function($super, food) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>    if (food instanceof Mouse) return [food.eaten(),$super()].join(&#34;\n&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    else return this.say(&#34;Yuk! I only eat mice.&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>var a = new Cat(&#34;Tama&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>alert(a.eat(new Mouse(&#34;Nezumy mouse&#34;)));
+</span></span></code></pre><p>単にプロトタイプチェーンをつなげるだけではなくて、オーバライドされたメソッドの引数名を取得して（toStringしてgrepですね)、$superだった場合、自動的に親クラスのメソッドを$superとして渡してくれます。地味に便利。</p>
 <p>あとはsyntax sugarとしてClass.mixinがあります。まぁObject.extendなんですが、こっちの方がわかりやすいですよね。 　</p>
-
 <p>　</p>
-
 <p>　 そのほかもいっぱい機能が追加れさてれてますね。個人的には <code>document.observe(&quot;contentloaded&quot;, function() { ... })</code> て感じでサポートされたDOM完了時点でのイベントと、</p>
-
-<pre class="prettyprint"><code>$(&quot;container&quot;).observe(&quot;titleChanged&quot;, function(event) {
-  this.highlight({ duration: 0.5 });
-});
-
-$(&quot;title&quot;).fire(&quot;titleChanged&quot;);
-</code></pre>
-
-<p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>$(&#34;container&#34;).observe(&#34;titleChanged&#34;, function(event) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  this.highlight({ duration: 0.5 });
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>$(&#34;title&#34;).fire(&#34;titleChanged&#34;);
+</span></span></code></pre><p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
+<hr>
 <p>資格の勉強とかもそろそろしなきゃなー、と思いつつ、Scalaでパーサコンビネータライブラリがついたので、Schemeの処理系でも実装したいなあ、と思い始めてる今日この頃。</p>
 
 
@@ -150,7 +134,7 @@ $(&quot;title&quot;).fire(&quot;titleChanged&quot;);
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/08/23/prototype160-rc" class="hatena-bookmark-button" data-hatena-bookmark-title="Prototype 1.6.0 RC" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/08/23/prototype160-rc" class="hatena-bookmark-button" data-hatena-bookmark-title="Prototype 1.6.0 RC" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

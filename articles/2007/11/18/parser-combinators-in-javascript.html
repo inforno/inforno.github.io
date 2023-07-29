@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,11 +73,8 @@
 </header>
   <div itemprop="articleBody">
     <p>近頃、 <a href="http://d.hatena.ne.jp/yukoba/20071108/p1">JavascriptでOreScript</a> なんてのがちょっとはやっていたりしまして。</p>
-
 <p>OreScript書くのにある程度ちゃんと動くパーサコンビネータがあれば便利かも、とおもったので以前書いたパーサコンビネータをいじってみました。</p>
-
-<h1>変更点</h1>
-
+<h1 id="heading">変更点</h1>
 <ul>
 <li>メソッド名などをHaskellにあわせた</li>
 <li>よくもわるくも、記号含有率をあげた(and -&gt; $に、or -&gt; l に)</li>
@@ -87,51 +82,39 @@
 <li>左再帰(chainl1)をサポートした</li>
 <li>右再帰(chanr1)をサポートした</li>
 </ul>
-
 <p>ということで、そこそこの用途に耐えるものになったと思います。</p>
-
-<h1>ダウンロード</h1>
-
+<h1 id="heading-1">ダウンロード</h1>
 <p>完全にアンドキュメントです。すみません。ただ、ソースは200行くらいなんで見ればわかるかと。というか、HaskellのParsecのマニュアルを読めば基本一緒なので使い方がわかると思います。</p>
-
 <p><a href="/statics/files/parsec0-1-0.js">ダウンロード</a></p>
-
-<h1>サンプル</h1>
-
+<h1 id="heading-2">サンプル</h1>
 <p><a href="http://d.hatena.ne.jp/amachang/20070829/1188400850">id:amachangさんが書いていたような数式パーサ</a> を定義してみましょう。</p>
-
 <p>残念ながらLexerはつくっていないので、空白は受け入れられません。</p>
-
-<pre class="prettyprint"><code>var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){
-  var mul = function(a,b){return a*b;};
-  var div = function(a,b){return a/b;};
-  var add = function(a,b){return a+b;};
-  var sub = function(a,b){return a-b;};
-
-  this.numbers =  many1( chrLike(function(c) { return (c &gt;= '0' &amp;&amp; c &lt;= '9'); }) ) .ret(function(ns){
-                    return parseInt(ns.join(&quot;&quot;));
-                  });
-  this.expr = chainl1(p(&quot;term&quot;), p(&quot;addop&quot;));
-  this.term = chainl1(p(&quot;factor&quot;), p(&quot;mulop&quot;));
-  this.factor = (between(chr(&quot;(&quot;), p(&quot;expr&quot;), chr(&quot;)&quot;))) .l (numbers)
-  this.mulop = (chr(&quot;*&quot;) .retval(mul)) .l (chr(&quot;/&quot;) .retval(div));
-  this.addop = (chr(&quot;+&quot;) .retval(add)) .l (chr(&quot;-&quot;) .retval(sub));
-}});
-
-var test = &quot;100*(100+200)/10&quot;;
-
-var parser = new ExprParser(test);
-var parseResult = parser.expr.parse();
-if(parseResult.success()) {
-  alert(parseResult.result);
-  // =&gt; 3000
-}
-</code></pre>
-
-<p>すごく、Parsecです･･･</p>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>var ExprParser = Inforno.Parsec.Parsers.define(function(){with(this){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  var mul = function(a,b){return a*b;};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  var div = function(a,b){return a/b;};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  var add = function(a,b){return a+b;};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  var sub = function(a,b){return a-b;};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  this.numbers =  many1( chrLike(function(c) { return (c &gt;= &#39;0&#39; &amp;&amp; c &lt;= &#39;9&#39;); }) ) .ret(function(ns){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>                    return parseInt(ns.join(&#34;&#34;));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>                  });
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  this.expr = chainl1(p(&#34;term&#34;), p(&#34;addop&#34;));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  this.term = chainl1(p(&#34;factor&#34;), p(&#34;mulop&#34;));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  this.factor = (between(chr(&#34;(&#34;), p(&#34;expr&#34;), chr(&#34;)&#34;))) .l (numbers)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  this.mulop = (chr(&#34;*&#34;) .retval(mul)) .l (chr(&#34;/&#34;) .retval(div));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  this.addop = (chr(&#34;+&#34;) .retval(add)) .l (chr(&#34;-&#34;) .retval(sub));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>}});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>var test = &#34;100*(100+200)/10&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>var parser = new ExprParser(test);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>var parseResult = parser.expr.parse();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>if(parseResult.success()) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>  alert(parseResult.result);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>  // =&gt; 3000
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>}
+</span></span></code></pre><p>すごく、Parsecです･･･</p>
+<hr>
 <p>こういうのを最近はやりの <a href="http://coderepos.org/share">CodeRepos</a> でやればいいのかなあ。</p>
 
 
@@ -148,7 +131,7 @@ if(parseResult.success()) {
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/11/18/parser-combinators-in-javascript" class="hatena-bookmark-button" data-hatena-bookmark-title="OreScriptがはやってるならパーサコンビネータの需要もあるのかな？" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/11/18/parser-combinators-in-javascript" class="hatena-bookmark-button" data-hatena-bookmark-title="OreScriptがはやってるならパーサコンビネータの需要もあるのかな？" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

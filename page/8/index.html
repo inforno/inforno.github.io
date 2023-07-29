@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -79,79 +77,58 @@
 </header>
   <div itemprop="articleBody">
     <p>前々から一度じっくり勉強しないとなぁと思っていたDHTまわりの勉強がてらKademliaっぽいものをPythonで実装してみました。</p>
-
 <p>Kademliaはいろいろ実装があるので、ソースを読んじゃうと答えみちゃった感じになるかなーと思って、元論文と <a href="http://www.shudo.net/article/Kademlia-20040727/shudo-Kademlia.pdf">首藤様の資料</a> くらいしか見ずに実装してみました。ので、いろいろ間違ってるかも知れませんが･･･。</p>
-
 <p>本家Kademliaとの主な違いは</p>
-
 <ul>
-<li><p>UDPではなくTCPを使っている</p>
-
+<li>
+<p>UDPではなくTCPを使っている</p>
 <ul>
 <li>ローカル環境しかもっていないので、UDPパケットがロスしやすい場合(WAN)を想定して実装するのがめんどくさい。</li>
 <li>よってRPC-IDをつけていない。</li>
 <li>パケットの分割や再送もTCPにおまかせ。</li>
-</ul></li>
-
-<li><p>original publisherから一定時間publishを受けなくてもインデックス情報をexpireしていない</p>
-
+</ul>
+</li>
+<li>
+<p>original publisherから一定時間publishを受けなくてもインデックス情報をexpireしていない</p>
 <ul>
 <li>実装するのは簡単です。</li>
-</ul></li>
-
-<li><p>ノードがネットワークに参加したとき、Index情報を移動させていません</p>
-
+</ul>
+</li>
+<li>
+<p>ノードがネットワークに参加したとき、Index情報を移動させていません</p>
 <ul>
 <li>これも実装は簡単です。</li>
-</ul></li>
 </ul>
-
-<h1>ダウンロード</h1>
-
+</li>
+</ul>
+<h1 id="heading">ダウンロード</h1>
 <p>適当なのですが、置いておけば誰かの役に立つこともなきにしもあらず、かもしれないので置いておきます。jsonつかっているので2.6以上で動きます。</p>
-
 <ul>
 <li><a href="/statics/files/kademlia_tcp.zip">kademlia_tcp.zip</a></li>
 </ul>
-
-<h1>実装について</h1>
-
+<h1 id="heading-1">実装について</h1>
 <p>以前Chordもちょっと実装したことがあるのですが、やっぱりいろんなソフトで採用されているだけあって、Kademliaはかなり実装が楽ですね。論文読んで素直に実装すれば動きます。</p>
-
 <p>えーと、内部についてはmultiprocessing使えよとか、TCPサーバを自前で書くって標準ライブラリにあるだろ、とか、twisted,eventlet使えよとか、スレッド周り適当じゃね？とかまぁいろいろあるんですが分かりやすさ重視ということで。</p>
-
 <p>通信にはjsonを使いました。</p>
-
-<h1>基本的な動かし方</h1>
-
-<pre class="prettyprint"><code>import kademlia_tcp
-kademlia_tcp.DEBUG = True
-n = kademlia_tcp.KademliaNode(&quot;ip address&quot;, port)
-n.join(n)
-remote = kademlia_tcp.ContactNode(&quot;ip address&quot;, port)
-n.join(remote)
-</code></pre>
-
-<p>という感じでネットワークを作れます。DEBUGをセットすると、通信情報など、様々な情報が出力されます。あとは</p>
-
-<pre class="prettyprint"><code>key = n.hash(&quot;key&quot;)
-n.publish(key, &quot;value&quot;)
-n.find_value(key)
-n.ping(other_node)
-n.store(other_node, key, value)
-n.find_node(other_node)
-</code></pre>
-
-<p>というようなメソッドが使えます。</p>
-
-<h1>動かしてみて</h1>
-
+<h1 id="heading-2">基本的な動かし方</h1>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>import kademlia_tcp
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>kademlia_tcp.DEBUG = True
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>n = kademlia_tcp.KademliaNode(&#34;ip address&#34;, port)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>n.join(n)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>remote = kademlia_tcp.ContactNode(&#34;ip address&#34;, port)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>n.join(remote)
+</span></span></code></pre><p>という感じでネットワークを作れます。DEBUGをセットすると、通信情報など、様々な情報が出力されます。あとは</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>key = n.hash(&#34;key&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>n.publish(key, &#34;value&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>n.find_value(key)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>n.ping(other_node)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>n.store(other_node, key, value)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>n.find_node(other_node)
+</span></span></code></pre><p>というようなメソッドが使えます。</p>
+<h1 id="heading-3">動かしてみて</h1>
 <p>ローカル環境でですが、100ノードほどで動かしてみました。元論文以外には特にchurnの対策はしてないのですが、そこそこ耐性があるんですね。3スレッド、0.1秒間隔で参加と脱退を繰り返したのですがちゃんとpublishしたものが取得できました。もうちょっとchurn対策をすればかなり使えそうだな、と感じました。</p>
-
 <p>ルート探索は今回はTCPなのですが、そもそもKademliaは反復的探索なのでこの部分はやはりUDPにしてしかるべき、だなとも思いました。現実的にはルート探索などではUDPを使って、FIND_VALUE(値の取得)ではTCPにするなどの併用が一番現実的っぽいかなあ、とも感じました。</p>
-
-<h1>というわけで</h1>
-
+<h1 id="heading-4">というわけで</h1>
 <p>P2P実装楽しいですね。実際のマシンで実験できる環境があればもっと楽しいんでしょうけど。</p>
 
   </div>
@@ -180,73 +157,63 @@ n.find_node(other_node)
 </div>
 </header>
   <div itemprop="articleBody">
-    <h1>更新履歴</h1>
-
+    <h1 id="heading">更新履歴</h1>
 <ul>
-<li><p>2009/02/20 version 1.0.0</p>
-
+<li>
+<p>2009/02/20 version 1.0.0</p>
 <ul>
 <li><code>Renderer</code> と <code>Helper</code> を追加。詳しくはソースファイルヘッダ部分のドキュメントを参照してください。</li>
-</ul></li>
-
-<li><p>2009/02/17 version 0.5.0</p>
-
+</ul>
+</li>
+<li>
+<p>2009/02/17 version 0.5.0</p>
 <ul>
 <li><code>&lt;%= %&gt;</code> で自動的にフィルタを適応できるようになりました。また、 <code>render</code> メソッドが <code>unicode</code> オブジェクトではなく <code>unicode</code> のサブクラス <code>EmbpyString</code> オブジェクトを返すようになりました。filterは <code>EmbpyString</code> オブジェクトをスルーします。これにより2重でfilterが適応されることがなくなります。&lt;%=r %&gt;でフィルターをオフにできます。</li>
-</ul></li>
 </ul>
-
-<pre class="prettyprint"><code>Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# =&gt; &quot;&amp;lt;b&amp;gt;&quot;
-Embpy(&quot;&lt;%=r b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# =&gt; &quot;&lt;b&gt;&quot;
-
-result = Embpy(&quot;&lt;%=r b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:&quot;&lt;b&gt;&quot;})
-# result.__class__ =&gt; EmbpyString
-Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:result})
-# =&gt; &quot;&lt;b&gt;&quot;
-</code></pre>
-
-<ul>
-<li><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</li>
-
-<li><p>2009/02/16 version 0.4.0</p>
-
+</li>
+</ul>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>Embpy(&#34;&lt;%= b %&gt;&#34;, filter=cgi.escape).render({&#34;v&#34;:&#34;&lt;b&gt;&#34;})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span># =&gt; &#34;&amp;lt;b&amp;gt;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>Embpy(&#34;&lt;%=r b %&gt;&#34;, filter=cgi.escape).render({&#34;v&#34;:&#34;&lt;b&gt;&#34;})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span># =&gt; &#34;&lt;b&gt;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>result = Embpy(&#34;&lt;%=r b %&gt;&#34;, filter=cgi.escape).render({&#34;v&#34;:&#34;&lt;b&gt;&#34;})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span># result.__class__ =&gt; EmbpyString
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>Embpy(&#34;&lt;%= b %&gt;&#34;, filter=cgi.escape).render({&#34;v&#34;:result})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span># =&gt; &#34;&lt;b&gt;&#34;
+</span></span></code></pre><ul>
+<li>
+<p><code>re.Scanner</code> の <code>scan</code> メソッドがスレッドセーフだったのでインスタンスをモジュールグローバルにしました。また、 <code>re.Scanner</code> インスタンスの初期化をLazyにしました。このことにより <code>re.Scanner</code> インスタンスの生成数が減り、さらにキャッシュのみの利用時にはインスタンスを生成しないのでパフォーマンスが向上しました。</p>
+</li>
+<li>
+<p>2009/02/16 version 0.4.0</p>
 <ul>
 <li>パフォーマンス改善</li>
-</ul></li>
-
-<li><p>2009/02/15 version 0.3.0</p>
-
+</ul>
+</li>
+<li>
+<p>2009/02/15 version 0.3.0</p>
 <ul>
 <li><a href="http://wids.net/lab/epy.html">epy</a> の中の人から「end.. orz」という反応をいただいたので、endの代わりに <code>&lt;% %&gt;</code> も使えるようにしました。</li>
-</ul></li>
 </ul>
-
-<pre class="prettyprint"><code>&lt;%- if True: -%&gt;
-   ok
-   &lt;% %&gt;
-</code></pre>
-
-<p>と書けるようになりました。</p>
-
+</li>
+</ul>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>&lt;%- if True: -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>   ok
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>   &lt;% %&gt;
+</span></span></code></pre><p>と書けるようになりました。</p>
 <ul>
-<li>2009/02/14 version 0.2.0<br />
-
+<li>2009/02/14 version 0.2.0
 <ul>
-<li>&rdquo;{&rdquo; と &ldquo;}&ldquo;が辞書リテラルとかぶっていたので、&rdquo;{:&ldquo;と&rdquo;:}&ldquo;に変更しました。</li>
+<li>&ldquo;{&rdquo; と &ldquo;}&ldquo;が辞書リテラルとかぶっていたので、&rdquo;{:&ldquo;と&rdquo;:}&ldquo;に変更しました。</li>
 <li>変換後コードでなく、コンパイル済みcodeオブジェクトをキャッシュするようにしました。</li>
-</ul></li>
 </ul>
-
-<h1>はじめに</h1>
-
+</li>
+</ul>
+<h1 id="heading-1">はじめに</h1>
 <p>このブログはweb.pyで作られており、テンプレートエンジンもweb.py標準のものを使っています。でもこのweb.pyのテンプレートエンジン、罠が多い。なので他のテンプレートエンジンに置き換えようかなあ、とか思ってました。</p>
-
 <p>んで個人的にはわざわざテンプレート用に文法覚えるのはめんどいので、埋め込み形式でコードが短くて軽そうなのはないかと探したところ、 <a href="http://wids.net/lab/epy.html">epy</a> がヒット。</p>
-
 <p>ただ、この実装 <code>%&gt;</code> が文字列の中にあると動かなかったり( <code>a= &quot;hoge%&gt;&quot;</code> みたいな)、コードの短さゆえに割り切っている部分が多いので同じくらい短いコードでもうちょっと高機能版を実装してみました。以前紹介した <code>re.Scanner</code> を活用すれば、見やすいコードで短く実装できました。</p>
-
 <ul>
 <li>キャッシュ</li>
 <li>インラインでPythonを書くことも出来る: <code>def format(v) {: return &quot;%4d&quot;%v; :}</code> みたいに。</li>
@@ -254,51 +221,38 @@ Embpy(&quot;&lt;%= b %&gt;&quot;, filter=cgi.escape).render({&quot;v&quot;:resul
 <li>自動的にフィルタを適応。しかも2重でフィルタが適応されない。</li>
 <li>もちろんマルチバイトでも大丈夫。</li>
 </ul>
-
 <p>といったところが特徴ですかね。</p>
-
-<h1>例</h1>
-
+<h1 id="heading-2">例</h1>
 <p>テンプレートはこんな感じにかけます。</p>
-
-<pre class="prettyprint"><code>&lt;%-
-class Hoge(object):
-  def __init__(self):
-    pass
-  end
-end
-hoge = Hoge()
-a = &quot;&lt; title &gt;&quot;
--%&gt;
-&lt;%=r a %&gt;
-&lt;%- def format(v) {: return &quot;%4d&quot;%v; :} -%&gt;
-&lt;%- def format2(v) {: return &quot;%2d&quot;%v; :} -%&gt;
-  &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
-&lt;%- for x in xrange(1,xx): -%&gt;
-&lt;%= format2(x) -%&gt;
-  &lt;%- for y in xrange(1,xx): -%&gt;
-&lt;%= format(x*y) -%&gt;
-  &lt;%- end %&gt;
-&lt;%- end -%&gt;
-</code></pre>
-
-<p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
-
-<pre class="prettyprint"><code>e = embpy.Embpy(codecs.open(&quot;path_to_template&quot;, encoding=&quot;utf8&quot;),
-          cache_path = &quot;path_to_cache_file&quot;,
-          template_globals = {}, filter=cgi.escape)
-print e.render({&quot;xx&quot;: &quot;10&quot;})
-</code></pre>
-
-<h1>ダウンロード</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>&lt;%-
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>class Hoge(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  def __init__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    pass
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  end
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>end
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>hoge = Hoge()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>a = &#34;&lt; title &gt;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>-%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>&lt;%=r a %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>&lt;%- def format(v) {: return &#34;%4d&#34;%v; :} -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>&lt;%- def format2(v) {: return &#34;%2d&#34;%v; :} -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  &lt;% for y in xrange(1,xx):%&gt;&lt;%= format(y) %&gt;&lt;% end %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>&lt;%- for x in xrange(1,xx): -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>&lt;%= format2(x) -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  &lt;%- for y in xrange(1,xx): -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>&lt;%= format(x*y) -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  &lt;%- end %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>&lt;%- end -%&gt;
+</span></span></code></pre><p>んでこんな感じに使います。第1引数にはファイルではなく文字列も渡せます。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>e = embpy.Embpy(codecs.open(&#34;path_to_template&#34;, encoding=&#34;utf8&#34;),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>          cache_path = &#34;path_to_cache_file&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>          template_globals = {}, filter=cgi.escape)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>print e.render({&#34;xx&#34;: &#34;10&#34;})
+</span></span></code></pre><h1 id="heading-3">ダウンロード</h1>
 <p><a href="/statics/files/embpy.zip">embpy</a></p>
-
-<h1>コード</h1>
-
+<h1 id="heading-4">コード</h1>
 <p>先読みはいらないので、 <code>re.Scanner</code> で一発。</p>
-
-<p>あと <code>&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</code> という正規表現は自分的には常套句。&rdquo;で囲まれていて\&ldquo;は&rdquo;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
+<p>あと <code>&quot;(((?&lt;=\\)&quot;)|[^&quot;])\*((?&lt;!\\)&quot;)&quot;</code> という正規表現は自分的には常套句。&ldquo;で囲まれていて\&ldquo;は&quot;自身を表す、というよくある文字列の仕様に使える正規表現です。</p>
 
   </div>
 </article>
@@ -325,86 +279,58 @@ print e.render({&quot;xx&quot;: &quot;10&quot;})
 </header>
   <div itemprop="articleBody">
     <p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
-
 <p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
-
 <p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
-
-<h1>Pythonをインストール</h1>
-
+<h1 id="python">Pythonをインストール</h1>
 <p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
-
-<pre class="prettyprint"><code>mkdir -p ~/root/usr/local/src
-cd ~/root/usr/local/src
-wget http://www.python.org/ftp/python/2.5.4/Python-2.5.4.tgz
-tar zxvf Python-2.5.4.tgz
-cd Python-2.5.4
-./configure --prefix=~/root/usr/local
-make
-make install
-</code></pre>
-
-<p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
-
-<h1>hashlibをインストール</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>mkdir -p ~/root/usr/local/src
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>cd ~/root/usr/local/src
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>wget http://www.python.org/ftp/python/2.5.4/Python-2.5.4.tgz
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>tar zxvf Python-2.5.4.tgz
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>cd Python-2.5.4
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>./configure --prefix=~/root/usr/local
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>make
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>make install
+</span></span></code></pre><p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
+<h1 id="hashlib">hashlibをインストール</h1>
 <p>なんで、自前でhashlibを単体でいれます。</p>
-
-<pre class="prettyprint"><code>cd ~/root/usr/local/src
-wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
-tar zxvf hashlib-20081119.tar.gz
-cd hashlib-20081119
-vi setup.py
-</code></pre>
-
-<p>はい、 <code>setup.py</code> を編集しましょう。普通にbuildするとこれでも <code>md5</code> が入りません。</p>
-
-<pre class="prettyprint"><code>105　　 if (ssl_inc_dir and
-106　　　　 ssl_lib is not None and
-107　　　　 openssl_ver &gt;= 0x00907000):
-108
-109　　　　 print 'Using OpenSSL version 0x%08x from' % openssl_ver
-110　　　　 print ' Headers:\t', ssl_inc_dir
-111　　　　 print ' Library:\t', ssl_lib
-112
-113　　　　 # The _hashlib module wraps optimized implementations
-114　　　　 # of hash functions from the OpenSSL library.
-115　　　　 exts.append( Extension('_hashlib', ['_hashopenssl.c'],
-116　　　　　　　　　　　　　　　　include_dirs = [ ssl_inc_dir ],
-117　　　　　　　　　　　　　　　　library_dirs = [ os.path.dirname(ssl_lib) ],
-118　　　　　　　　　　　　　　　　libraries = osNameLibsMap[os.name]) )
-119　　 exts.append( Extension('_sha', ['shamodule.c']) )　　　　　　　　　
-120　　 exts.append( Extension('_md5',　　　　　　　　　　　　　　　　　　
-121　　　　　　　　　　 sources = ['md5module.c', 'md5.c'],
-122　　　　　　　　　　 depends = ['md5.h']) )
-</code></pre>
-
-<p>119-120あたり、強制的に <code>_md5</code> を入れるようにします。あとは</p>
-
-<pre class="prettyprint"><code>~/root/usr/local/bin/python setup.py build
-~/root/usr/local/bin/python setup.py install
-</code></pre>
-
-<p>で <code>hashlib</code> が入ります。</p>
-
-<h1>easy_installをインストール</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>cd ~/root/usr/local/src
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>tar zxvf hashlib-20081119.tar.gz
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>cd hashlib-20081119
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>vi setup.py
+</span></span></code></pre><p>はい、 <code>setup.py</code> を編集しましょう。普通にbuildするとこれでも <code>md5</code> が入りません。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#ae81ff">105</span><span style="color:#960050;background-color:#1e0010">　　</span> <span style="color:#66d9ef">if</span> (ssl_inc_dir and
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#ae81ff">106</span><span style="color:#960050;background-color:#1e0010">　　　　</span> ssl_lib <span style="color:#66d9ef">is</span> not <span style="color:#a6e22e">None</span> and
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#ae81ff">107</span><span style="color:#960050;background-color:#1e0010">　　　　</span> openssl_ver <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0x00907000</span>):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#ae81ff">108</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#ae81ff">109</span><span style="color:#960050;background-color:#1e0010">　　　　</span> print <span style="color:#e6db74">&#39;Using OpenSSL version 0x%08x from&#39;</span> <span style="color:#f92672">%</span> openssl_ver
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#ae81ff">110</span><span style="color:#960050;background-color:#1e0010">　　　　</span> print <span style="color:#e6db74">&#39; Headers:</span><span style="color:#ae81ff">\t</span><span style="color:#e6db74">&#39;</span>, ssl_inc_dir
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#ae81ff">111</span><span style="color:#960050;background-color:#1e0010">　　　　</span> print <span style="color:#e6db74">&#39; Library:</span><span style="color:#ae81ff">\t</span><span style="color:#e6db74">&#39;</span>, ssl_lib
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#ae81ff">112</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span><span style="color:#ae81ff">113</span><span style="color:#960050;background-color:#1e0010">　　　　</span> <span style="color:#f92672">#</span> <span style="color:#a6e22e">The</span> _hashlib <span style="color:#f92672">module</span> wraps optimized implementations
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#ae81ff">114</span><span style="color:#960050;background-color:#1e0010">　　　　</span> <span style="color:#f92672">#</span> of hash functions from the <span style="color:#a6e22e">OpenSSL</span> library.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#ae81ff">115</span><span style="color:#960050;background-color:#1e0010">　　　　</span> exts.<span style="color:#a6e22e">append</span>( <span style="color:#a6e22e">Extension</span>(<span style="color:#e6db74">&#39;_hashlib&#39;</span>, [<span style="color:#e6db74">&#39;_hashopenssl.c&#39;</span>],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#ae81ff">116</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　　　　　　　</span>include_dirs <span style="color:#f92672">=</span> [ ssl_inc_dir ],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#ae81ff">117</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　　　　　　　</span>library_dirs <span style="color:#f92672">=</span> [ os.path.<span style="color:#a6e22e">dirname</span>(ssl_lib) ],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#ae81ff">118</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　　　　　　　</span>libraries <span style="color:#f92672">=</span> osNameLibsMap[os.name]) )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#ae81ff">119</span><span style="color:#960050;background-color:#1e0010">　　</span> exts.<span style="color:#a6e22e">append</span>( <span style="color:#a6e22e">Extension</span>(<span style="color:#e6db74">&#39;_sha&#39;</span>, [<span style="color:#e6db74">&#39;shamodule.c&#39;</span>]) )<span style="color:#960050;background-color:#1e0010">　　　　　　　　　</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#ae81ff">120</span><span style="color:#960050;background-color:#1e0010">　　</span> exts.<span style="color:#a6e22e">append</span>( <span style="color:#a6e22e">Extension</span>(<span style="color:#e6db74">&#39;_md5&#39;</span>,<span style="color:#960050;background-color:#1e0010">　　　　　　　　　　　　　　　　　　</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span><span style="color:#ae81ff">121</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　</span> sources <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;md5module.c&#39;</span>, <span style="color:#e6db74">&#39;md5.c&#39;</span>],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span><span style="color:#ae81ff">122</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　</span> depends <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;md5.h&#39;</span>]) )
+</span></span></code></pre><p>119-120あたり、強制的に <code>_md5</code> を入れるようにします。あとは</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>~/root/usr/local/bin/python setup.py build
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>~/root/usr/local/bin/python setup.py install
+</span></span></code></pre><p>で <code>hashlib</code> が入ります。</p>
+<h1 id="easy-install">easy_installをインストール</h1>
 <p>これで <code>md5</code> が使えるようになったので</p>
-
-<pre class="prettyprint"><code>cd ~/root/usr/local/src
-wget http://peak.telecommunity.com/dist/ez_setup.py
-~/root/usr/local/bin/python ez_setup.py
-</code></pre>
-
-<p>これで無事 <code>easy_install</code> が入ります。あとは</p>
-
-<pre class="prettyprint"><code>~/root/usr/local/bin/easy_install -U -Z MySQL_Python
-</code></pre>
-
-<p>てな感じで必要なモジュールを入れていきましょう。</p>
-
-<h1>というわけで</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>cd ~/root/usr/local/src
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>wget http://peak.telecommunity.com/dist/ez_setup.py
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>~/root/usr/local/bin/python ez_setup.py
+</span></span></code></pre><p>これで無事 <code>easy_install</code> が入ります。あとは</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>~/root/usr/local/bin/easy_install -U -Z MySQL_Python
+</span></span></code></pre><p>てな感じで必要なモジュールを入れていきましょう。</p>
+<h1 id="heading">というわけで</h1>
 <p>わりと普通にxreaでPythonが使えています。</p>
 
   </div>

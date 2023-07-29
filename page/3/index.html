@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,370 +71,307 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://qiita.com/advent-calendar/2015/go3">Go Advent Calendar 2015 その3</a> 11日目です。その3まであるなんてGo大人気ですね。</p>
-
 <p>Gopherというのはいろいろな人がいてLLからGoへ、という方も多いかと思います。</p>
-
 <p>LLではそもそも全てがオブジェクトだったりで話題になりませんが、よりマシンに近く<s>変態的に</s>速度を重視される方が多いC++では例えば仮想関数や実行時キャストのコストが議論になります。
 Goにおいてこういう多態性はインタフェースで表現されます。結論からいうと、 <strong>Goのインタフェースにもそれなりのコストがあります。</strong> なので極限までパフォーマンスを要求される場合には <strong>例えばインターフェースを使わない</strong> というも選択肢に入ってくるのではないかと思います。</p>
-
-<h1>Go言語におけるインタフェースの内部表現</h1>
-
+<h1 id="go">Go言語におけるインタフェースの内部表現</h1>
 <p>さて、Goはブートストラップ化(言語処理系をその言語自身で実装する)を進めており、1.5ではGoのコンパイラ、ランタイムはほぼほぼGoで実装されています。ということはインターフェースもGoで実装されているはずですね。</p>
-
 <p>Goのインタフェースは２個のポインタを持った <code>struct</code> です。例えば、 <code>reflect/value.go</code> では以下のようなコードがあります。</p>
-
 <p><a href="https://raw.githubusercontent.com/golang/go/master/src/reflect/value.go">reflect/value.go</a> :</p>
-
-<pre class="prettyprint"><code class="language-go">// emptyInterface is the header for an interface{} value.
-type emptyInterface struct {
-    typ  *rtype
-    word unsafe.Pointer
-}
-
-// nonEmptyInterface is the header for a interface value with methods.
-type nonEmptyInterface struct {
-    // see ../runtime/iface.go:/Itab
-    itab *struct {
-        ityp   *rtype // static interface type
-        typ    *rtype // dynamic concrete type
-        link   unsafe.Pointer
-        bad    int32
-        unused int32
-        fun    [100000]unsafe.Pointer // method table
-    }
-    word unsafe.Pointer
-}
-</code></pre>
-
-<p>コメントに書かれているように実態は <code>runtime/iface.go</code> ですがこちらのほうが簡略化されていてわかりやすいでしょう。1個目のポインタは 「空のインタフェース( <code>iterface{}</code> )」(これを <code>eface</code> という)の場合、型情報、そうでない場合(これを <code>iface</code> という)の場合 <code>itab</code> と呼ばれるC++における仮想テーブルのようなものです。2個目に値が格納されます。2個目はどちらもポインタであることに注意してください。</p>
-
-<h1>インターフェース経由のメソッド呼び出し</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#75715e">// emptyInterface is the header for an interface{} value.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">emptyInterface</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    <span style="color:#a6e22e">typ</span>  <span style="color:#f92672">*</span><span style="color:#a6e22e">rtype</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    <span style="color:#a6e22e">word</span> <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#75715e">// nonEmptyInterface is the header for a interface value with methods.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">nonEmptyInterface</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#75715e">// see ../runtime/iface.go:/Itab
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">itab</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>        <span style="color:#a6e22e">ityp</span>   <span style="color:#f92672">*</span><span style="color:#a6e22e">rtype</span> <span style="color:#75715e">// static interface type
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">typ</span>    <span style="color:#f92672">*</span><span style="color:#a6e22e">rtype</span> <span style="color:#75715e">// dynamic concrete type
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#75715e"></span>        <span style="color:#a6e22e">link</span>   <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>        <span style="color:#a6e22e">bad</span>    <span style="color:#66d9ef">int32</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>        <span style="color:#a6e22e">unused</span> <span style="color:#66d9ef">int32</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>        <span style="color:#a6e22e">fun</span>    [<span style="color:#ae81ff">100000</span>]<span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span> <span style="color:#75715e">// method table
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>    <span style="color:#a6e22e">word</span> <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>}
+</span></span></code></pre><p>コメントに書かれているように実態は <code>runtime/iface.go</code> ですがこちらのほうが簡略化されていてわかりやすいでしょう。1個目のポインタは 「空のインタフェース( <code>iterface{}</code> )」(これを <code>eface</code> という)の場合、型情報、そうでない場合(これを <code>iface</code> という)の場合 <code>itab</code> と呼ばれるC++における仮想テーブルのようなものです。2個目に値が格納されます。2個目はどちらもポインタであることに注意してください。</p>
+<h1 id="heading">インターフェース経由のメソッド呼び出し</h1>
 <p>ここで、インターフェースを使用するとどの程度パフォーマンスペナルティがあるのか、様々なケースで見てみます。</p>
-
 <p>まずは、直接メソッドを呼び出すのと、インタフェース経由で呼び出す場合の違いを見てみましょう。</p>
-
-<pre class="prettyprint"><code class="language-go">type MyError struct{}
-func (e *MyError) Error() string { return &quot;error&quot; }
-
-func BenchmarkNoInterface(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        err := &amp;MyError{}
-        err.Error()
-    }
-}
-
-func BenchmarkInterface(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        var err error = &amp;MyError{}
-        err.Error()     
-    }
-}
-</code></pre>
-
-<p>結果は以下のようになります。10倍程度遅くなります。単位が単位なので微々たる違いですが極限までパフォーマンスを追求したい場合は考慮しておいたほうがいいかもしれませんね。</p>
-
-<pre class="prettyprint"><code class="language-bash">BenchmarkNoInterface    2000000000               0.73 ns/op
-BenchmarkInterface      200000000                9.56 ns/op
-</code></pre>
-
-<p>しかし実はこの中には <code>*MyError</code> を <code>error</code> インタフェースに変換するコストも含まれていて、そのコストを除くと5倍くらいの遅さです。次はそのインタフェースへの変換コストを詳しく見ていこうと思います。</p>
-
-<h1>インターフェースへの変換コスト(非ポインタ型)</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">MyError</span> <span style="color:#66d9ef">struct</span>{}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">e</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">MyError</span>) <span style="color:#a6e22e">Error</span>() <span style="color:#66d9ef">string</span> { <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;error&#34;</span> }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkNoInterface</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>        <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">MyError</span>{}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>        <span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkInterface</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>        <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span> = <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">MyError</span>{}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>        <span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>()     
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>}
+</span></span></code></pre><p>結果は以下のようになります。10倍程度遅くなります。単位が単位なので微々たる違いですが極限までパフォーマンスを追求したい場合は考慮しておいたほうがいいかもしれませんね。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>BenchmarkNoInterface    <span style="color:#ae81ff">2000000000</span>               0.73 ns/op
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>BenchmarkInterface      <span style="color:#ae81ff">200000000</span>                9.56 ns/op
+</span></span></code></pre><p>しかし実はこの中には <code>*MyError</code> を <code>error</code> インタフェースに変換するコストも含まれていて、そのコストを除くと5倍くらいの遅さです。次はそのインタフェースへの変換コストを詳しく見ていこうと思います。</p>
+<h1 id="heading-1">インターフェースへの変換コスト(非ポインタ型)</h1>
 <p>Goにおけるインタフェースの変換時はC++におけるキャストよりも複雑なことが発生します。</p>
-
 <p>Goでは「なんでも」を表すために <code>interface{}</code> を使いますね。 <code>int</code> などの組み込み型かつ非ポインタ型を <code>interface{}</code> として処理するとなにが起こるでしょうか？以下のようにフィボナッチを計算させてみます。</p>
-
-<pre class="prettyprint"><code class="language-go">func IntFibNoInterface(n int) int {
-    if n &lt; 2 {
-        return n
-    }
-    return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
-}
-
-func IntFibInterface(o interface{}) interface{} {
-    n := o.(int)
-    if n &lt; 2 {
-        return o
-    }
-    return IntFibInterface(n-1).(int) + IntFibInterface(n-2).(int)
-}
-
-func BenchmarkNoInterface(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        IntFibNoInterface(20)
-    }
-}
-
-func BenchmarkInterface(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        IntFibInterface(20)
-    }
-}
-</code></pre>
-
-<p>結果は以下。40 - 50倍くらいおそくなりますね。これを見ると気軽にインタフェースを使いたくなくなるかもしれません。</p>
-
-<pre class="prettyprint"><code class="language-bash">BenchmarkNoInterface       30000             57938 ns/op               0 B/op          0 allocs/op
-BenchmarkInterface           500           2448250 ns/op          525376 B/op      32836 allocs/op
-</code></pre>
-
-<p>はじめに書いたように、インタフェースは <strong>ポインタとして値を保持します</strong> 。 そのためコード上アロケートしていなくても、内部的に <code>int</code> をアロケートしそこに値をコピーせねばなりません。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">n</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">+</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibInterface</span>(<span style="color:#a6e22e">o</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">interface</span>{} {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">o</span>.(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">o</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">IntFibInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>).(<span style="color:#66d9ef">int</span>) <span style="color:#f92672">+</span> <span style="color:#a6e22e">IntFibInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>).(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkNoInterface</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>        <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkInterface</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>        <span style="color:#a6e22e">IntFibInterface</span>(<span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>}
+</span></span></code></pre><p>結果は以下。40 - 50倍くらいおそくなりますね。これを見ると気軽にインタフェースを使いたくなくなるかもしれません。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>BenchmarkNoInterface       <span style="color:#ae81ff">30000</span>             <span style="color:#ae81ff">57938</span> ns/op               <span style="color:#ae81ff">0</span> B/op          <span style="color:#ae81ff">0</span> allocs/op
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>BenchmarkInterface           <span style="color:#ae81ff">500</span>           <span style="color:#ae81ff">2448250</span> ns/op          <span style="color:#ae81ff">525376</span> B/op      <span style="color:#ae81ff">32836</span> allocs/op
+</span></span></code></pre><p>はじめに書いたように、インタフェースは <strong>ポインタとして値を保持します</strong> 。 そのためコード上アロケートしていなくても、内部的に <code>int</code> をアロケートしそこに値をコピーせねばなりません。</p>
 <p>どのような処理が実行されたか、プロファイルを見てみましょう。</p>
-
-<pre class="prettyprint"><code class="language-bash">1.46s of 1.46s total (  100%)
-Showing top 20 nodes out of 35 (cum &gt;= 0.01s)
-      flat  flat%   sum%        cum   cum%
-     0.37s 25.34% 25.34%      0.68s 46.58%  runtime.mallocgc
-     0.26s 17.81% 43.15%      1.44s 98.63%  12.IntFibInterface
-     0.20s 13.70% 56.85%      0.20s 13.70%  runtime.memmove
-     0.16s 10.96% 67.81%      0.16s 10.96%  runtime.mSpan_Sweep.func1
-     0.12s  8.22% 76.03%      0.96s 65.75%  runtime.convT2E
-     0.11s  7.53% 83.56%      0.31s 21.23%  runtime.typedmemmove
-     0.10s  6.85% 90.41%      0.26s 17.81%  runtime.heapBitsSweepSpan
-     0.05s  3.42% 93.84%      0.22s 15.07%  runtime.assertE2T
-     0.02s  1.37% 95.21%      0.70s 47.95%  runtime.newobject
-     0.02s  1.37% 96.58%      0.02s  1.37%  runtime.prefetchnta
-     0.01s  0.68% 97.26%      0.01s  0.68%  runtime.(*gcControllerState).findRunnableGCWorker
-     0.01s  0.68% 97.95%      0.01s  0.68%  runtime.lock
-     0.01s  0.68% 98.63%      0.01s  0.68%  runtime.mSpanList_InsertBack
-     0.01s  0.68% 99.32%      0.01s  0.68%  runtime.xadd64
-     0.01s  0.68%   100%      0.01s  0.68%  runtime.xchg
-         0     0%   100%      1.44s 98.63%  12.BenchmarkInterface
-         0     0%   100%      0.01s  0.68%  runtime.GC
-         0     0%   100%      0.01s  0.68%  runtime.deductSweepCredit
-         0     0%   100%      0.01s  0.68%  runtime.gc
-         0     0%   100%      0.01s  0.68%  runtime.gc.func4
-</code></pre>
-
-<h1>非ポインタ型のインターフェースへの変換コスト</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>1.46s of 1.46s total <span style="color:#f92672">(</span>  100%<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>Showing top <span style="color:#ae81ff">20</span> nodes out of <span style="color:#ae81ff">35</span> <span style="color:#f92672">(</span>cum &gt;<span style="color:#f92672">=</span> 0.01s<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>      flat  flat%   sum%        cum   cum%
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>     0.37s 25.34% 25.34%      0.68s 46.58%  runtime.mallocgc
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>     0.26s 17.81% 43.15%      1.44s 98.63%  12.IntFibInterface
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>     0.20s 13.70% 56.85%      0.20s 13.70%  runtime.memmove
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>     0.16s 10.96% 67.81%      0.16s 10.96%  runtime.mSpan_Sweep.func1
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>     0.12s  8.22% 76.03%      0.96s 65.75%  runtime.convT2E
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>     0.11s  7.53% 83.56%      0.31s 21.23%  runtime.typedmemmove
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>     0.10s  6.85% 90.41%      0.26s 17.81%  runtime.heapBitsSweepSpan
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>     0.05s  3.42% 93.84%      0.22s 15.07%  runtime.assertE2T
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>     0.02s  1.37% 95.21%      0.70s 47.95%  runtime.newobject
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>     0.02s  1.37% 96.58%      0.02s  1.37%  runtime.prefetchnta
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>     0.01s  0.68% 97.26%      0.01s  0.68%  runtime.<span style="color:#f92672">(</span>*gcControllerState<span style="color:#f92672">)</span>.findRunnableGCWorker
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>     0.01s  0.68% 97.95%      0.01s  0.68%  runtime.lock
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>     0.01s  0.68% 98.63%      0.01s  0.68%  runtime.mSpanList_InsertBack
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>     0.01s  0.68% 99.32%      0.01s  0.68%  runtime.xadd64
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>     0.01s  0.68%   100%      0.01s  0.68%  runtime.xchg
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      1.44s 98.63%  12.BenchmarkInterface
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.01s  0.68%  runtime.GC
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.01s  0.68%  runtime.deductSweepCredit
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.01s  0.68%  runtime.gc
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.01s  0.68%  runtime.gc.func4
+</span></span></code></pre><h1 id="heading-2">非ポインタ型のインターフェースへの変換コスト</h1>
 <p>では、ということで自分でアロケーションしてみましょう。 <code>int</code> ではなく <code>*int</code> を使ってみます。</p>
-
-<pre class="prettyprint"><code class="language-go">func IntFibNoInterface(n int) int {
-    if n &lt; 2 {
-        return n
-    }
-    return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
-}
-
-func IntFibPointer(i *int) *int {
-    n := *i
-    if n &lt; 2 {
-        return i
-    }
-    a1 := new(int)
-    *a1 = n - 1
-    a2 := new(int)
-    *a2 = n - 2
-    v1 := IntFibPointer(a1)
-    v2 := IntFibPointer(a2)
-    ret := new(int)
-    *ret = *v1 + *v2
-    return ret
-}
-
-func IntFibInterface(o interface{}) interface{} {
-    n := *(o.(*int))
-    if n &lt; 2 {
-        return o
-    }
-    a1 := new(int)
-    *a1 = n - 1
-    a2 := new(int)
-    *a2 = n - 2
-    v1 := IntFibInterface(a1).(*int)
-    v2 := IntFibInterface(a2).(*int)
-    ret := new(int)
-    *ret = *v1 + *v2
-    return ret
-}
-
-func BenchmarkNoInterface(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        IntFibNoInterface(20)
-    }
-}
-
-func BenchmarkPointer(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        a := new(int)
-        *a = 20
-        IntFibPointer(a)
-    }
-}
-
-func BenchmarkInterface(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        a := new(int)
-        *a = 20
-        IntFibInterface(a)
-    }
-}
-</code></pre>
-
-<p>結果は以下のようになります。20-30倍というところでしょうか。こちらのほうがコードだけ見ると遅そうですが、なんと <code>int</code> を使った場合より速いのです。そして、インタフェースへの変換コストは少ない、ということがわかります。</p>
-
-<pre class="prettyprint"><code class="language-bash">BenchmarkNoInterface       30000             55558 ns/op               0 B/op          0 allocs/op
-BenchmarkPointer            1000           1297598 ns/op          525376 B/op      32836 allocs/op
-BenchmarkInterface          1000           1357172 ns/op          525376 B/op      32836 allocs/op
-</code></pre>
-
-<pre class="prettyprint"><code class="language-bash">1.54s of 1.54s total (  100%)
-Showing top 20 nodes out of 37 (cum &gt;= 0.01s)
-      flat  flat%   sum%        cum   cum%
-     0.75s 48.70% 48.70%      1.24s 80.52%  runtime.mallocgc
-     0.22s 14.29% 62.99%      0.22s 14.29%  runtime.mSpan_Sweep.func1
-     0.16s 10.39% 73.38%      0.38s 24.68%  runtime.heapBitsSweepSpan
-     0.14s  9.09% 82.47%      1.38s 89.61%  runtime.newobject
-     0.11s  7.14% 89.61%      1.49s 96.75%  12.IntFibInterface
-     0.08s  5.19% 94.81%      0.08s  5.19%  runtime.prefetchnta
-     0.02s  1.30% 96.10%      0.02s  1.30%  runtime.heapBitsForObject
-     0.01s  0.65% 96.75%      0.01s  0.65%  runtime.(*bucket).mp
-     0.01s  0.65% 97.40%      0.01s  0.65%  runtime.atomicload64
-     0.01s  0.65% 98.05%      0.41s 26.62%  runtime.mCentral_CacheSpan
-     0.01s  0.65% 98.70%      0.03s  1.95%  runtime.scanblock
-     0.01s  0.65% 99.35%      0.01s  0.65%  runtime.schedule
-     0.01s  0.65%   100%      0.01s  0.65%  runtime.xchg
-         0     0%   100%      1.49s 96.75%  12.BenchmarkInterface
-         0     0%   100%      0.04s  2.60%  runtime.backgroundgc
-         0     0%   100%      0.01s  0.65%  runtime.deductSweepCredit
-         0     0%   100%      0.04s  2.60%  runtime.gc
-         0     0%   100%      0.02s  1.30%  runtime.gc.func1
-         0     0%   100%      0.01s  0.65%  runtime.gc.func3
-         0     0%   100%      0.01s  0.65%  runtime.gc.func4
-</code></pre>
-
-<h1>非ポインタ型とポインタ型の違いは？</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">n</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">+</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibPointer</span>(<span style="color:#a6e22e">i</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">int</span>) <span style="color:#f92672">*</span><span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">i</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">i</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    <span style="color:#a6e22e">a1</span> <span style="color:#f92672">:=</span> new(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    <span style="color:#f92672">*</span><span style="color:#a6e22e">a1</span> = <span style="color:#a6e22e">n</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    <span style="color:#a6e22e">a2</span> <span style="color:#f92672">:=</span> new(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    <span style="color:#f92672">*</span><span style="color:#a6e22e">a2</span> = <span style="color:#a6e22e">n</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    <span style="color:#a6e22e">v1</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">IntFibPointer</span>(<span style="color:#a6e22e">a1</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>    <span style="color:#a6e22e">v2</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">IntFibPointer</span>(<span style="color:#a6e22e">a2</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    <span style="color:#a6e22e">ret</span> <span style="color:#f92672">:=</span> new(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    <span style="color:#f92672">*</span><span style="color:#a6e22e">ret</span> = <span style="color:#f92672">*</span><span style="color:#a6e22e">v1</span> <span style="color:#f92672">+</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">v2</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">ret</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibInterface</span>(<span style="color:#a6e22e">o</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">interface</span>{} {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>    <span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">*</span>(<span style="color:#a6e22e">o</span>.(<span style="color:#f92672">*</span><span style="color:#66d9ef">int</span>))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">o</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>    <span style="color:#a6e22e">a1</span> <span style="color:#f92672">:=</span> new(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>    <span style="color:#f92672">*</span><span style="color:#a6e22e">a1</span> = <span style="color:#a6e22e">n</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    <span style="color:#a6e22e">a2</span> <span style="color:#f92672">:=</span> new(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    <span style="color:#f92672">*</span><span style="color:#a6e22e">a2</span> = <span style="color:#a6e22e">n</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>    <span style="color:#a6e22e">v1</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">IntFibInterface</span>(<span style="color:#a6e22e">a1</span>).(<span style="color:#f92672">*</span><span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>    <span style="color:#a6e22e">v2</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">IntFibInterface</span>(<span style="color:#a6e22e">a2</span>).(<span style="color:#f92672">*</span><span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>    <span style="color:#a6e22e">ret</span> <span style="color:#f92672">:=</span> new(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>    <span style="color:#f92672">*</span><span style="color:#a6e22e">ret</span> = <span style="color:#f92672">*</span><span style="color:#a6e22e">v1</span> <span style="color:#f92672">+</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">v2</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">ret</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkNoInterface</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>        <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkPointer</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>        <span style="color:#a6e22e">a</span> <span style="color:#f92672">:=</span> new(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>        <span style="color:#f92672">*</span><span style="color:#a6e22e">a</span> = <span style="color:#ae81ff">20</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>        <span style="color:#a6e22e">IntFibPointer</span>(<span style="color:#a6e22e">a</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkInterface</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>        <span style="color:#a6e22e">a</span> <span style="color:#f92672">:=</span> new(<span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span>        <span style="color:#f92672">*</span><span style="color:#a6e22e">a</span> = <span style="color:#ae81ff">20</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58</span><span>        <span style="color:#a6e22e">IntFibInterface</span>(<span style="color:#a6e22e">a</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60</span><span>}
+</span></span></code></pre><p>結果は以下のようになります。20-30倍というところでしょうか。こちらのほうがコードだけ見ると遅そうですが、なんと <code>int</code> を使った場合より速いのです。そして、インタフェースへの変換コストは少ない、ということがわかります。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>BenchmarkNoInterface       <span style="color:#ae81ff">30000</span>             <span style="color:#ae81ff">55558</span> ns/op               <span style="color:#ae81ff">0</span> B/op          <span style="color:#ae81ff">0</span> allocs/op
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>BenchmarkPointer            <span style="color:#ae81ff">1000</span>           <span style="color:#ae81ff">1297598</span> ns/op          <span style="color:#ae81ff">525376</span> B/op      <span style="color:#ae81ff">32836</span> allocs/op
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>BenchmarkInterface          <span style="color:#ae81ff">1000</span>           <span style="color:#ae81ff">1357172</span> ns/op          <span style="color:#ae81ff">525376</span> B/op      <span style="color:#ae81ff">32836</span> allocs/op
+</span></span></code></pre><pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>1.54s of 1.54s total <span style="color:#f92672">(</span>  100%<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>Showing top <span style="color:#ae81ff">20</span> nodes out of <span style="color:#ae81ff">37</span> <span style="color:#f92672">(</span>cum &gt;<span style="color:#f92672">=</span> 0.01s<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>      flat  flat%   sum%        cum   cum%
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>     0.75s 48.70% 48.70%      1.24s 80.52%  runtime.mallocgc
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>     0.22s 14.29% 62.99%      0.22s 14.29%  runtime.mSpan_Sweep.func1
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>     0.16s 10.39% 73.38%      0.38s 24.68%  runtime.heapBitsSweepSpan
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>     0.14s  9.09% 82.47%      1.38s 89.61%  runtime.newobject
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>     0.11s  7.14% 89.61%      1.49s 96.75%  12.IntFibInterface
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>     0.08s  5.19% 94.81%      0.08s  5.19%  runtime.prefetchnta
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>     0.02s  1.30% 96.10%      0.02s  1.30%  runtime.heapBitsForObject
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>     0.01s  0.65% 96.75%      0.01s  0.65%  runtime.<span style="color:#f92672">(</span>*bucket<span style="color:#f92672">)</span>.mp
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>     0.01s  0.65% 97.40%      0.01s  0.65%  runtime.atomicload64
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>     0.01s  0.65% 98.05%      0.41s 26.62%  runtime.mCentral_CacheSpan
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>     0.01s  0.65% 98.70%      0.03s  1.95%  runtime.scanblock
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>     0.01s  0.65% 99.35%      0.01s  0.65%  runtime.schedule
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>     0.01s  0.65%   100%      0.01s  0.65%  runtime.xchg
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      1.49s 96.75%  12.BenchmarkInterface
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.04s  2.60%  runtime.backgroundgc
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.01s  0.65%  runtime.deductSweepCredit
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.04s  2.60%  runtime.gc
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.02s  1.30%  runtime.gc.func1
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.01s  0.65%  runtime.gc.func3
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>         <span style="color:#ae81ff">0</span>     0%   100%      0.01s  0.65%  runtime.gc.func4
+</span></span></code></pre><h1 id="heading-3">非ポインタ型とポインタ型の違いは？</h1>
 <p>プロファイルをみるとわかりますが、 <code>runtime.convT2E</code> , <code>runtime.assertE2T</code> が非ポインタ型の場合重荷になっています。ここまで「ポインタ型」「非ポインタ型」という曖昧な表現をしていましたが、正確には これは <code>isdirectiface</code> という関数の結果が <code>true</code> かどうかです。これによりインターフェス変換の処理が変わります。</p>
-
-<pre class="prettyprint"><code class="language-go">// Can this type be stored directly in an interface word?
-// Yes, if the representation is a single pointer.
-func isdirectiface(t *Type) bool {
-    switch t.Etype {
-    case TPTR32,
-        TPTR64,
-        TCHAN,
-        TMAP,
-        TFUNC,
-        TUNSAFEPTR:
-        return true
-
-        // Array of 1 direct iface type can be direct.
-    case TARRAY:
-        return t.Bound == 1 &amp;&amp; isdirectiface(t.Type)
-
-        // Struct with 1 field of direct iface type can be direct.
-    case TSTRUCT:
-        return t.Type != nil &amp;&amp; t.Type.Down == nil &amp;&amp; isdirectiface(t.Type.Type)
-    }
-
-    return false
-}
-</code></pre>
-
-<p>これが <code>false</code> になるオブジェクトをインタフェースとして利用する際は注意です。</p>
-
-<h1>時にはインタフェースを使わない、という選択も</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#75715e">// Can this type be stored directly in an interface word?
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#75715e">// Yes, if the representation is a single pointer.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">isdirectiface</span>(<span style="color:#a6e22e">t</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Type</span>) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    <span style="color:#66d9ef">switch</span> <span style="color:#a6e22e">t</span>.<span style="color:#a6e22e">Etype</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">TPTR32</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>        <span style="color:#a6e22e">TPTR64</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>        <span style="color:#a6e22e">TCHAN</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>        <span style="color:#a6e22e">TMAP</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>        <span style="color:#a6e22e">TFUNC</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>        <span style="color:#a6e22e">TUNSAFEPTR</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>        <span style="color:#75715e">// Array of 1 direct iface type can be direct.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">TARRAY</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">t</span>.<span style="color:#a6e22e">Bound</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">isdirectiface</span>(<span style="color:#a6e22e">t</span>.<span style="color:#a6e22e">Type</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>        <span style="color:#75715e">// Struct with 1 field of direct iface type can be direct.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">TSTRUCT</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">t</span>.<span style="color:#a6e22e">Type</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">t</span>.<span style="color:#a6e22e">Type</span>.<span style="color:#a6e22e">Down</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">isdirectiface</span>(<span style="color:#a6e22e">t</span>.<span style="color:#a6e22e">Type</span>.<span style="color:#a6e22e">Type</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>}
+</span></span></code></pre><p>これが <code>false</code> になるオブジェクトをインタフェースとして利用する際は注意です。</p>
+<h1 id="heading-4">時にはインタフェースを使わない、という選択も</h1>
 <p>以上のことから、特に性能が必要な場合、インタフェースを使わず擬似共用体(Goに共用体はないので)のような実装をしたほうがよい場合が出てきます。フィボナッチの例を <code>struct</code> で書いてみましょう。</p>
-
-<pre class="prettyprint"><code class="language-go">const (
-    TypeInt int = iota
-    TypeBool
-)
-
-type Object struct {
-    Type      int
-    IntValue  int
-    BoolValue bool
-}
-
-func IntFibNoInterface(n int) int {
-    if n &lt; 2 {
-        return n
-    }
-    return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
-}
-
-func IntFibStruct(o Object) Object {
-    if o.IntValue &lt; 2 {
-        return o
-    }
-    return Object{TypeInt,
-        IntFibStruct(Object{TypeInt, o.IntValue - 1, false}).IntValue +
-            IntFibStruct(Object{TypeInt, o.IntValue - 2, false}).IntValue,
-        false}
-}                                                               
-
-func BenchmarkNoInterface(b *testing.B) {                       
-    for i := 0; i &lt; b.N; i++ {
-        IntFibNoInterface(20)
-    }
-}
-
-func BenchmarkStruct(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        IntFibStruct(Object{TypeInt, 20, false})
-    }  
-}
-</code></pre>
-
-<p>速度ですが、インタフェースを使うより断然早く、2-3倍程度しか遅くなりません。当たり前ですが、暗黙的なメモリアロケーションも発生しません。</p>
-
-<pre class="prettyprint"><code class="language-bash">BenchmarkNoInterface       30000             58491 ns/op               0 B/op          0 allocs/op
-BenchmarkStruct            10000            139924 ns/op               0 B/op          0 allocs/op
-</code></pre>
-
-<p><code>reflect</code> を使えば・・・というのもありますが、結局 <code>reflect.ValueOf</code> の引数が <code>interface{}</code> なので素直に使うと <code>interface{}</code> の場合と同様の遅さです。</p>
-
-<pre class="prettyprint"><code class="language-go">func IntFibNoInterface(n int) int {
-    if n &lt; 2 {
-        return n
-    }
-    return IntFibNoInterface(n-1) + IntFibNoInterface(n-2)
-}
-
-func IntFibReflect(r reflect.Value) reflect.Value {
-    n := r.Int()
-    if n &lt; 2 {
-        return r
-    }     
-    return reflect.ValueOf(IntFibReflect(reflect.ValueOf(n-1)).Int() + IntFibReflect(reflect.ValueOf(n-2)).Int())
-}                         
-
-func BenchmarkNoInterface(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        IntFibNoInterface(20)
-    }     
-}         
-
-func BenchmarkReflect(b *testing.B) {
-    for i := 0; i &lt; b.N; i++ {
-        IntFibReflect(reflect.ValueOf(20))
-    }                        
-}         
-</code></pre>
-
-<pre class="prettyprint"><code class="language-bash">BenchmarkNoInterface       30000             56238 ns/op               0 B/op          0 allocs/op
-BenchmarkReflect            1000           2271026 ns/op          525376 B/op      32836 allocs/op
-</code></pre>
-
-<h1>ちなみにGopherLuaでは</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">const</span> (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    <span style="color:#a6e22e">TypeInt</span> <span style="color:#66d9ef">int</span> = <span style="color:#66d9ef">iota</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    <span style="color:#a6e22e">TypeBool</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Object</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    <span style="color:#a6e22e">Type</span>      <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    <span style="color:#a6e22e">IntValue</span>  <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#a6e22e">BoolValue</span> <span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">n</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">+</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibStruct</span>(<span style="color:#a6e22e">o</span> <span style="color:#a6e22e">Object</span>) <span style="color:#a6e22e">Object</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">o</span>.<span style="color:#a6e22e">IntValue</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">o</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">Object</span>{<span style="color:#a6e22e">TypeInt</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>        <span style="color:#a6e22e">IntFibStruct</span>(<span style="color:#a6e22e">Object</span>{<span style="color:#a6e22e">TypeInt</span>, <span style="color:#a6e22e">o</span>.<span style="color:#a6e22e">IntValue</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#66d9ef">false</span>}).<span style="color:#a6e22e">IntValue</span> <span style="color:#f92672">+</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>            <span style="color:#a6e22e">IntFibStruct</span>(<span style="color:#a6e22e">Object</span>{<span style="color:#a6e22e">TypeInt</span>, <span style="color:#a6e22e">o</span>.<span style="color:#a6e22e">IntValue</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">2</span>, <span style="color:#66d9ef">false</span>}).<span style="color:#a6e22e">IntValue</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>        <span style="color:#66d9ef">false</span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>}                                                               
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkNoInterface</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {                       
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>        <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkStruct</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>        <span style="color:#a6e22e">IntFibStruct</span>(<span style="color:#a6e22e">Object</span>{<span style="color:#a6e22e">TypeInt</span>, <span style="color:#ae81ff">20</span>, <span style="color:#66d9ef">false</span>})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>    }  
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>}
+</span></span></code></pre><p>速度ですが、インタフェースを使うより断然早く、2-3倍程度しか遅くなりません。当たり前ですが、暗黙的なメモリアロケーションも発生しません。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>BenchmarkNoInterface       <span style="color:#ae81ff">30000</span>             <span style="color:#ae81ff">58491</span> ns/op               <span style="color:#ae81ff">0</span> B/op          <span style="color:#ae81ff">0</span> allocs/op
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>BenchmarkStruct            <span style="color:#ae81ff">10000</span>            <span style="color:#ae81ff">139924</span> ns/op               <span style="color:#ae81ff">0</span> B/op          <span style="color:#ae81ff">0</span> allocs/op
+</span></span></code></pre><p><code>reflect</code> を使えば・・・というのもありますが、結局 <code>reflect.ValueOf</code> の引数が <code>interface{}</code> なので素直に使うと <code>interface{}</code> の場合と同様の遅さです。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">n</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">+</span> <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">IntFibReflect</span>(<span style="color:#a6e22e">r</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Value</span>) <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Value</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">Int</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &lt; <span style="color:#ae81ff">2</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">r</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    }     
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">ValueOf</span>(<span style="color:#a6e22e">IntFibReflect</span>(<span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">ValueOf</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)).<span style="color:#a6e22e">Int</span>() <span style="color:#f92672">+</span> <span style="color:#a6e22e">IntFibReflect</span>(<span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">ValueOf</span>(<span style="color:#a6e22e">n</span><span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>)).<span style="color:#a6e22e">Int</span>())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>}                         
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkNoInterface</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>        <span style="color:#a6e22e">IntFibNoInterface</span>(<span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    }     
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>}         
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">BenchmarkReflect</span>(<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">testing</span>.<span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">N</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>        <span style="color:#a6e22e">IntFibReflect</span>(<span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">ValueOf</span>(<span style="color:#ae81ff">20</span>))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>    }                        
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>}         
+</span></span></code></pre><pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>BenchmarkNoInterface       <span style="color:#ae81ff">30000</span>             <span style="color:#ae81ff">56238</span> ns/op               <span style="color:#ae81ff">0</span> B/op          <span style="color:#ae81ff">0</span> allocs/op
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>BenchmarkReflect            <span style="color:#ae81ff">1000</span>           <span style="color:#ae81ff">2271026</span> ns/op          <span style="color:#ae81ff">525376</span> B/op      <span style="color:#ae81ff">32836</span> allocs/op
+</span></span></code></pre><h1 id="gopherlua">ちなみにGopherLuaでは</h1>
 <p>拙作のGo言語によるLua実装 <a href="https://github.com/yuin/gopher-lua">GopherLua</a> では一番おそい、非ポインタ型をインタフェースとして使う実装になっています。なのでGopherLuaはおそらく現在でもGo上で動くスクリプト言語としては最速の部類ですがさらに速くしようと思えばできたのかもなあと思っています(まぁこの例ほど言語実装は単純ではないし、擬似共用体にするにしてもサイズが大きくなるので、速くなるかどうかはやってみないとなんともいえないのですが。あとサイズがおおきくなるのでスタック型のAPIにするよりないでしょうね)。</p>
-
 <p>これは使い易さや実装のし易さやメモリ効率、そして「Goらしさ」とのトレードオフだと思っています。私は、とにかく使い易いものがほしかったので一番使い易く、そして実装が楽なものを選びました。</p>
-
 <p>とはいえ、特に数値型をインタフェースに変換する負荷を軽減するために、独自のアロケータを実装しています。これは一定数の <code>float64</code> をまとめてアロケートすることでインタフェース変換コストを減らしています。かなり強引なのですが興味のある方は <a href="https://github.com/yuin/gopher-lua/blob/master/alloc.go">gopher-lua/alloc.go</a> をご参照ください。</p>
-
-<h1>最後に</h1>
-
+<h1 id="heading-5">最後に</h1>
 <p>インタフェースはGoで中心的な役割を果たしていますが、時に大幅なパフォーマンス劣化を起こす可能性があります。 特に、非ポインタ型を <code>interface{}</code> などとして引数に渡す場合が要注意です。</p>
-
 <p><a href="http://qiita.com/advent-calendar/2015/go3">Go Advent Calendar 2015 その3</a> 12日目は <a href="http://qiita.com/Ladicle">Ladicle</a> さんです。</p>
 
   </div>
@@ -462,17 +397,11 @@ BenchmarkReflect            1000           2271026 ns/op          525376 B/op   
 </header>
   <div itemprop="articleBody">
     <p>コマンドラインランチャー <a href="http://yuin.github.io/iceberg/">iceberg</a> のv0.9.7 をリリースしました。 GitHubの <a href="https://github.com/yuin/iceberg/releases">リリース一覧</a> よりダウンロードできます。</p>
-
 <p>今回からLinuxに対応しました。私は普段、ほぼWindowsがホストでVirtualbox上のUbuntuで開発を行っておりそこではLaunchyを使ってお茶をにごして？いたのです。がやはり慣れているicebergを使いたいと思っていたのでがんばって対応してみました。</p>
-
 <p>Macを使っている人はそもそもAlfredなどを使っているでしょうけど、Windowsだと私と同じかたちの人も多いのではないかと思います。ぜひ使ってみてください。Linuxのコマンドラインランチャーでmigemo対応しているものはなかなか無いのではないでしょうか。</p>
-
 <p>icebergはQtやGTKではなくfltkというミニマリストなGUIフレームワークなのでGUI以外の機能はほとんどフレームワークにありません。かといって、ここでQtやGTKに依存するのも癪だったのでLinuxではアイコンのルックアップなどを自分で実装したんですが結構しんどかったですね･･･。ただ、あらかじめマルチプラットフォームを視野にいれたつくりにしてあったので、ゴリゴリ書いていくだけで動くのは動いたのでよかったです。</p>
-
 <p>内部的にはfltkのバージョンもあげました。これでWindows8以降でも互換モードなしで動いたりしないかなあ、と思っているのですが、いかんせん実機をもっていないのでどうにも。次はWindows10にすると思うので結局Windows8系は確認できないまま終わりそうです。</p>
-
 <p>あと、ここまできたらなんでMacに対応しないんだ、となりそうですが単純に私がMacを持っていないからです。それに、icebergはMacの文化に合わない気がします。ただ、icebergは作者の私が一番の愛用者であるソフトなのでもし私がMacを手に入れることがあったら、対応すると思います。まぁイケてる会社のプログラマーに転職でもしないとMacを使うようなことはないと思いますが。</p>
-
 <p>なにか問題ありましたらGithubの <a href="https://github.com/yuin/iceberg/issues">Issues</a> までどうぞ。</p>
 
   </div>
@@ -502,50 +431,44 @@ BenchmarkReflect            1000           2271026 ns/op          525376 B/op   
 </header>
   <div itemprop="articleBody">
     <p><a href="https://github.com/yuin/gopher-lua">GopherLua</a> で設定ファイルを書くためのライブラリを書きました。設定ファイル以外にも使えますけど。</p>
-
-<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/gluamapper" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
-
+<div data-theme="default" data-height="150" data-width="400" data-github="yuin/gluamapper" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script>
 <p>モノとしてはGopherLuaのテーブルをGoの構造体にマップしてくれます。といっても、内部動作的にはHashicorpの <a href="https://github.com/mitchellh/mapstructure">mapstructure</a> を使っているだけだったりします。一度GopherLuaのテーブルを <code>map[string]interface{}</code> に変換してあげて、あとはmapstructureにおまかせ。</p>
-
 <p>ただ、一般的なLuaの命名規則とGoの命名規則が違うので名前を変換する関数が指定できます。デフォルトでは <code>snake_case</code> を <code>CamelCase</code> に変換します。</p>
-
-<pre class="prettyprint"><code class="language-go">type Role struct {
-    Name string
-}
-
-type Person struct {
-    Name      string
-    Age       int
-    WorkPlace string
-    Role      []*Role
-}
-
-L := lua.NewState()
-if err := L.DoString(`
-person = {
-  name = &quot;Michel&quot;,
-  age  = &quot;31&quot;, -- weakly input
-  work_place = &quot;San Jose&quot;,
-  role = {
-    {
-      name = &quot;Administrator&quot;
-    },
-    {
-      name = &quot;Operator&quot;
-    }
-  }
-}
-`); err != nil {
-    panic(err)
-}
-var person Person
-if err := gluamapper.Map(L.GetGlobal(&quot;person&quot;).(*lua.LTable), &amp;person); err != nil {
-    panic(err)
-}
-fmt.Printf(&quot;%s %d&quot;, person.Name, person.Age)
-</code></pre>
-
-<p>のように非常に簡単にLuaを設定ファイルとして使うことができます。Luaは可読性が高く、JSONと異なりコメントが書けて、YAMLよりも簡単に値を変数化できるので設定ファイルにすると便利です(なんでも出来てしまう、というのがネックと言えばネックですが)。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Role</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    <span style="color:#a6e22e">Name</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Person</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    <span style="color:#a6e22e">Name</span>      <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    <span style="color:#a6e22e">Age</span>       <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    <span style="color:#a6e22e">WorkPlace</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#a6e22e">Role</span>      []<span style="color:#f92672">*</span><span style="color:#a6e22e">Role</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#a6e22e">L</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">NewState</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">DoString</span>(<span style="color:#e6db74">`
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#e6db74">person = {
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#e6db74">  name = &#34;Michel&#34;,
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#e6db74">  age  = &#34;31&#34;, -- weakly input
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span><span style="color:#e6db74">  work_place = &#34;San Jose&#34;,
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span><span style="color:#e6db74">  role = {
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span><span style="color:#e6db74">    {
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span><span style="color:#e6db74">      name = &#34;Administrator&#34;
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span><span style="color:#e6db74">    },
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span><span style="color:#e6db74">    {
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span><span style="color:#e6db74">      name = &#34;Operator&#34;
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span><span style="color:#e6db74">    }
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span><span style="color:#e6db74">  }
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span><span style="color:#e6db74">}
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span><span style="color:#e6db74">`</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">person</span> <span style="color:#a6e22e">Person</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gluamapper</span>.<span style="color:#a6e22e">Map</span>(<span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">GetGlobal</span>(<span style="color:#e6db74">&#34;person&#34;</span>).(<span style="color:#f92672">*</span><span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LTable</span>), <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">person</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;%s %d&#34;</span>, <span style="color:#a6e22e">person</span>.<span style="color:#a6e22e">Name</span>, <span style="color:#a6e22e">person</span>.<span style="color:#a6e22e">Age</span>)
+</span></span></code></pre><p>のように非常に簡単にLuaを設定ファイルとして使うことができます。Luaは可読性が高く、JSONと異なりコメントが書けて、YAMLよりも簡単に値を変数化できるので設定ファイルにすると便利です(なんでも出来てしまう、というのがネックと言えばネックですが)。</p>
 
   </div>
 </article>

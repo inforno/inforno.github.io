@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,49 +75,32 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://d.hatena.ne.jp/odz/20061125/1164433815">coLinux で Emacs の kill-ring の内容をWindowsのクリップボードと同期する</a> とか <a href="http://d.hatena.ne.jp/naoya/20061125/1164466544">coLinux 上の Emacs の kill-ring の内容をWindowsのクリップボードと同期する by Perl</a> から。</p>
-
 <p>上記のサイトのをもってきて.vimrcをちょろっと書けばいいんだけど、テキストを受信するサーバーは常時立ち上げていそうで、スクリプトだとなんとなくアレなので、exeがいいなあ。簡単にできそうなので、とりあえず探すよりは作ってみるメソッド。</p>
-
-<h1>ファイル一式</h1>
-
+<h1 id="heading">ファイル一式</h1>
 <p><a href="/statics/files/clsync.zip">clsync.zip</a></p>
-
 <p>内容は</p>
-
 <ul>
 <li>clipboard_server.exe：Windows側で実行するサーバー</li>
 <li>clipboard_server.ini：サーバーのポートの設定</li>
 <li>clsync.py：vmware側におくクライアントスクリプト</li>
 </ul>
-
-<h1>使い方など</h1>
-
+<h1 id="heading-1">使い方など</h1>
 <p>Windows側ではclipboard_server.iniで適当にポートを設定して（当然外部から見えないやつを）、clipboard_server.exeを起動しておいてください。タスクトレイにアイコンが表示されてますので、そこから終了できます。</p>
-
 <p>vmware上のLinuxですが、まずnkfがインストールされている必要があります。すみません、クライアント側手抜きするために使っています。そしてclsync.pyをパスの通ったところにおきます。clsync.pyにはホストのWindows側で動いてるサーバーのポートとIPを設定する箇所があるので、適宜書き換えます。またポートとIPはオプションでも渡せます（詳しくはclsync.py -hで）。</p>
-
 <p>あとは</p>
-
-<pre class="prettyprint"><code>function! SyncClipboard()
-  let cliptext = substitute(getreg(), &quot;'&quot;, &quot;'\&quot;'\&quot;'&quot;, 'g')
-  let cmd = &quot;echo '&quot; . cliptext . &quot;' | clsync.py&quot;
-  call system(cmd)
-endfunction
-nmap ,c :call SyncClipboard()&lt;CR&gt;
-</code></pre>
-
-<p>こんな感じなのを.vimrcに追加すればOK。最後にyankしたものが,cでホストのWindowsのクリップボードに送られます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>function! SyncClipboard()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  let cliptext = substitute(getreg(), &#34;&#39;&#34;, &#34;&#39;\&#34;&#39;\&#34;&#39;&#34;, &#39;g&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>  let cmd = &#34;echo &#39;&#34; . cliptext . &#34;&#39; | clsync.py&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  call system(cmd)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>endfunction
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>nmap ,c :call SyncClipboard()&lt;CR&gt;
+</span></span></code></pre><p>こんな感じなのを.vimrcに追加すればOK。最後にyankしたものが,cでホストのWindowsのクリップボードに送られます。</p>
 <p>追記： っとよく考えたらvmw copyとまったく一緒。.vimrcのclsync.pyの部分をvmw copyに置き換えれば同じように動作する。ただ、vmwの説明には</p>
-
 <blockquote>
 <p>コピーするテキストに改行コード以外の非 ASCII 文字を含めることはできません。 ゲストおよびホスト OS によっては、キャリッジリターンの付与・除去が行われ ます。 コピー可能なテキストの最大長は約 65,000 バイトです。</p>
 </blockquote>
-
 <p>ってある。 今回作ったモノの場合はnkfをかませているのでもちろんいつでも日本語オーケー。 それ以上は深くみてないけど、UTF-8だと日本語でもvmw copyしても問題なさそうだ。EUC-JPの「ほげほげ」とかいう内容のtest.txtをvmw copy test.txtとかするとダメだった。</p>
-
 <p>ま、というわけで、 cat test.txt | nkf -w | vmw copyで万事解決なんだけど。</p>
-
 <p>というわけでこのツールは使われないまま終わる（笑 coLinuxはよく知らないけど、coLinuxにこういうホストOSへのクリップボードコピーコマンドがないなら、coLinuxでは役に立つかも。</p>
 
 
@@ -136,7 +117,7 @@ nmap ,c :call SyncClipboard()&lt;CR&gt;
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/11/28/sync-clipboards-between-windows-and-vmware" class="hatena-bookmark-button" data-hatena-bookmark-title="vimでvmwareとWindowsのクリップボードを同期する" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/11/28/sync-clipboards-between-windows-and-vmware" class="hatena-bookmark-button" data-hatena-bookmark-title="vimでvmwareとWindowsのクリップボードを同期する" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

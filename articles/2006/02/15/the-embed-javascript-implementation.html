@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,66 +75,54 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://d.hatena.ne.jp/naoya/20060207/1139305280">naoyaさん</a> のJemplateの記事に触発されて埋め込みjavascriptを実装してみました。</p>
-
 <p>同様の実装として <a href="http://ajax-pages.sourceforge.net/">Ajax Pages</a> があるのですが、よりシンプルに実装してみました。コードにして50行。</p>
-
 <p><a href="/statics/files/lyase_view.zip">サンプルファイルダウンロード</a></p>
-
 <p>これは今作っているフレームワークの一部です。シンプルですがわりと使えるかと。 実際の動作はサンプルファイルを見ていただくとして</p>
-
 <p>lyase_view.jsの説明どおり</p>
-
-<pre class="prettyprint"><code>/*
- *   using innerHTML
- *   -------------
- *   //in HTML
- *   &lt;textarea id=&quot;template&quot; style=&quot;display:none&quot;&gt;
- *     The value of x is:&lt; %= context.x%&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:&quot;template&quot;}, {x : 10}));
- *
- *   using a template file
- *   -------------
- *   //in /template.jhtml
- *   The value of x is:&lt; %= context.x%&gt;
- *   //code
- *   document.write(Lyase.View.render({file:&quot;/template.jhtml&quot;}, {x : 10}));
- *
- *   Of course, you can embed more complex codes.
- *   //in HTML, with prototype.js
- *   &lt;textarea id=&quot;template&quot; style=&quot;display:none&quot;&gt;
- *     &lt; % context.list.each(function(pair){%&gt;
- *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
- *     &lt; % }) %&gt;
- *   &lt;/textarea&gt;
- *   //code
- *   document.write(Lyase.View.render({element:&quot;template&quot;},
- *     {list :[{name : &quot;x&quot;, value : 10}, {name : &quot;y&quot;, value : 20}]}));
- */
-</code></pre>
-
-<p>こんな感じでjavascriptのコードが読み込めます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>/*
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span> *   using innerHTML
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span> *   -------------
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span> *   //in HTML
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span> *   &lt;textarea id=&#34;template&#34; style=&#34;display:none&#34;&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span> *     The value of x is:&lt; %= context.x%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span> *   &lt;/textarea&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span> *   //code
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span> *   document.write(Lyase.View.render({element:&#34;template&#34;}, {x : 10}));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span> *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span> *   using a template file
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span> *   -------------
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span> *   //in /template.jhtml
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span> *   The value of x is:&lt; %= context.x%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span> *   //code
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span> *   document.write(Lyase.View.render({file:&#34;/template.jhtml&#34;}, {x : 10}));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span> *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span> *   Of course, you can embed more complex codes.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span> *   //in HTML, with prototype.js
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span> *   &lt;textarea id=&#34;template&#34; style=&#34;display:none&#34;&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span> *     &lt; % context.list.each(function(pair){%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span> *          The value of &lt; %= pair.name %&gt; is: &lt; %= pair.value%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span> *     &lt; % }) %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span> *   &lt;/textarea&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span> *   //code
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span> *   document.write(Lyase.View.render({element:&#34;template&#34;},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span> *     {list :[{name : &#34;x&#34;, value : 10}, {name : &#34;y&#34;, value : 20}]}));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span> */
+</span></span></code></pre><p>こんな感じでjavascriptのコードが読み込めます。</p>
 <p>また</p>
-
-<pre class="prettyprint"><code>&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
- この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
-
-
-以下のようにクロージャも問題なく使用できます。
-
-&lt; % var c = &quot;,&quot; %&gt;
-&lt; % context.list.each(function(num){ %&gt;
-  &lt; %= num+c %&gt;
-
-&lt; % })%&gt;
-
-&lt; %= render({file :&quot;./sample2.jhtml&quot;}, context)%&gt; &lt;!--ココに注目--!&gt;
-</code></pre>
-
-<p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>&lt;h1&gt;&lt; %= context.title %&gt;&lt;/h1&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span> この文章はLyase.Viewを使用して&lt; %= context.fileName %&gt;の内容を表示しています。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>以下のようにクロージャも問題なく使用できます。
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>&lt; % var c = &#34;,&#34; %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>&lt; % context.list.each(function(num){ %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  &lt; %= num+c %&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>&lt; % })%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>&lt; %= render({file :&#34;./sample2.jhtml&#34;}, context)%&gt; &lt;!--ココに注目--!&gt;
+</span></span></code></pre><p>このようにテンプレート内で別のテンプレートを呼び出すことも可能です。</p>
 <p>テンプレートには文字列、textareaなどのinnerHTML、テンプレートファイルが使用できます。 prototype.jsのAjax.Updaterあたりをハックすれば結構使えるものになるんじゃないかなあ、と思ってみたり。</p>
 
 
@@ -153,7 +139,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation" class="hatena-bookmark-button" data-hatena-bookmark-title="埋め込みjavascriptを実装してみました。" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation" class="hatena-bookmark-button" data-hatena-bookmark-title="埋め込みjavascriptを実装してみました。" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

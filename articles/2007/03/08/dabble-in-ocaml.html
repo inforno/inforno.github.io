@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,66 +69,46 @@
 </header>
   <div itemprop="articleBody">
     <p>週末に引越し、ということで本なんかを送ってしまいました。</p>
-
 <p>読む本が無いので、前から手を出そうと思っていたOCamlに手を出してみました。</p>
-
-<h1>導入</h1>
-
+<h1 id="heading">導入</h1>
 <p>とりあえずDebianにaptで放り込む。</p>
-
-<pre class="prettyprint"><code>libcamomile-ocaml-data                          install
-libcamomile-ocaml-dev                           install
-libequeue-ocaml                                 install
-libequeue-ocaml-dev                             install
-libextlib-ocaml-dev                             install
-libfileutils-ocaml-dev                          install
-libocamlnet-ocaml                               install
-libocamlnet-ocaml-dev                           install
-libpcre-ocaml                                   install
-libpcre-ocaml-dev                               install
-ocaml                                           install
-ocaml-base                                      install
-ocaml-base-nox                                  install
-ocaml-findlib                                   install
-ocaml-interp                                    install
-ocaml-nox                                       install
-</code></pre>
-
-<p>こんな感じ。どうやらfindlibというライブラリが重要らしい。パッケージ管理系のライブラリなんですけど。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>libcamomile-ocaml-data                          install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>libcamomile-ocaml-dev                           install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>libequeue-ocaml                                 install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>libequeue-ocaml-dev                             install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>libextlib-ocaml-dev                             install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>libfileutils-ocaml-dev                          install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>libocamlnet-ocaml                               install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>libocamlnet-ocaml-dev                           install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>libpcre-ocaml                                   install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>libpcre-ocaml-dev                               install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>ocaml                                           install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>ocaml-base                                      install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>ocaml-base-nox                                  install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>ocaml-findlib                                   install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>ocaml-interp                                    install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>ocaml-nox                                       install
+</span></span></code></pre><p>こんな感じ。どうやらfindlibというライブラリが重要らしい。パッケージ管理系のライブラリなんですけど。</p>
 <p>んでテンプレ的なのはこんな感じにしてみた。</p>
-
-<pre class="prettyprint"><code>#use &quot;topfind&quot;
-#camlp4o
-#require &quot;camlp4.extend&quot;
-#require &quot;extlib&quot;
-#require &quot;camomile&quot;
-
-open ExtLib
-</code></pre>
-
-<h1>練習</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>#use &#34;topfind&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>#camlp4o
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>#require &#34;camlp4.extend&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>#require &#34;extlib&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>#require &#34;camomile&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>open ExtLib
+</span></span></code></pre><h1 id="heading-1">練習</h1>
 <p><a href="http://min-caml.sourceforge.net/index2.html">超特急: 一時間でわかるML超入門</a> を見てから、 <a href="http://www.sato.kuis.kyoto-u.ac.jp/~igarashi/class/isle4/mltext/ocaml.html">Objective Caml 入門</a> を読みながら、書いてみた。</p>
-
 <p>普通に書きやすい。練習問題は・・・。なんていうか、SICP。普通に関数型言語として使うところまでやってみた。</p>
-
-<h1>日本語</h1>
-
+<h1 id="heading-2">日本語</h1>
 <p>EUCとUTFは大丈夫っぽい。ここらへんはCamomileというモジュールを使うらしい。とりあえず</p>
-
-<pre class="prettyprint"><code>module Encoding = CamomileLibrary.Default.Camomile.CharEncoding
-module Enc = Encoding.Make (CamomileLibrary.UTF8)
-let unicode s = Enc.decode (Encoding.of_name &quot;jauto&quot;) s;;
-let decode t n = Enc.encode (Encoding.of_name n) t;;
-</code></pre>
-
-<p>などとPythonみたいな関数を定義してみた。 <code>jauto</code> でエンコーディングは自動的に判別してくれるらしい。コードをEUCで書いてUTF-8のコンソールに出力してみる。うんうん、ちゃんと日本語いけてる。ただ、UTF-8で書いたファイルで <code>unicode &quot;ああああ&quot;</code> ってしたら当然 <code>&quot;ああああ&quot;</code> のままだと思うんだけど、ダメだった。なんでなんだろう。詳しい人いたら教えて欲しいです。</p>
-
-<h1>今までの感想</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#f92672">module</span> <span style="color:#a6e22e">Encoding</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">CamomileLibrary</span>.<span style="color:#a6e22e">Default</span>.<span style="color:#a6e22e">Camomile</span>.<span style="color:#a6e22e">CharEncoding</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span><span style="color:#f92672">module</span> <span style="color:#a6e22e">Enc</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">Encoding</span>.<span style="color:#a6e22e">Make</span> (<span style="color:#a6e22e">CamomileLibrary</span>.<span style="color:#a6e22e">UTF8</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>let unicode s <span style="color:#f92672">=</span> <span style="color:#a6e22e">Enc</span>.decode (<span style="color:#a6e22e">Encoding</span>.of_name <span style="color:#e6db74">&#34;jauto&#34;</span>) s;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>let decode t n <span style="color:#f92672">=</span> <span style="color:#a6e22e">Enc</span>.encode (<span style="color:#a6e22e">Encoding</span>.of_name n) t;;
+</span></span></code></pre><p>などとPythonみたいな関数を定義してみた。 <code>jauto</code> でエンコーディングは自動的に判別してくれるらしい。コードをEUCで書いてUTF-8のコンソールに出力してみる。うんうん、ちゃんと日本語いけてる。ただ、UTF-8で書いたファイルで <code>unicode &quot;ああああ&quot;</code> ってしたら当然 <code>&quot;ああああ&quot;</code> のままだと思うんだけど、ダメだった。なんでなんだろう。詳しい人いたら教えて欲しいです。</p>
+<h1 id="heading-3">今までの感想</h1>
 <p>結構いい。モジュールシステムなんかはきっちりしてんなー、と思いました。オブジェクトシステムなんかが特徴だと思うんだけど、まだ触ってないんですよねえ。てゆーか詳しく解説しているところがすくないんで、どーしようかなあ。</p>
-
 <p>あと、インタプリタの <code>#require &quot;camomile&quot;</code> みたいなのって、ネイティブコンパイラだとエラーになるんだけどこういうもんなんだろうか。つまりどっちか選びなさい、ってことでいいのかなあ・・・。ネイティブコンパイラでは無視してくれると一番ありがたいような気がするけど・・・</p>
 
 
@@ -141,7 +119,7 @@ let decode t n = Enc.encode (Encoding.of_name n) t;;
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/03/08/dabble-in-ocaml" class="hatena-bookmark-button" data-hatena-bookmark-title="OCamlに手を出す" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/03/08/dabble-in-ocaml" class="hatena-bookmark-button" data-hatena-bookmark-title="OCamlに手を出す" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

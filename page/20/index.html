@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -79,50 +77,31 @@
 </header>
   <div itemprop="articleBody">
     <p>時間があればちょっとずつ続けてます。</p>
-
 <p>とりあえず画面がでるようにはなりました。速度は全然追いつかないですけど。</p>
-
-<p><img src="/statics/files/pynes0.jpg" alt="image" /></p>
-
-<h1>CPU</h1>
-
+<p><img src="/statics/files/pynes0.jpg" alt="image"></p>
+<h1 id="cpu">CPU</h1>
 <p>基本的には変化なし。細かいバグが多くて大変・・・・</p>
-
 <p>わずかでも速くしたいところなので、あまり構造を壊さず速度を上げられないかな、と思ってPrefetch cueを実装してみました。Prefetch cueはCPUの非常に基本的な最適化で、基本的故に単純、実装しても負荷になることはないだろう、ってことですな。</p>
-
 <p>エミュレーターでは（とくにPythonでは)ハードウェアでいうメモリが遅いうんぬんとは別の理由で、メモリアクセスはかなり重い処理になります。</p>
-
-<pre class="prettyprint"><code>def memory(self, addr):
-  if addr &lt; &quot;RAMの範囲&quot;:
-    self.ram[addr]
-  elif addr &lt; &quot;メモリマップドIOの範囲&quot;:
-    self.io.read(addr)
-  #else:
-  # .
-  # .
-  # .
-</code></pre>
-
-<p>さらにページングされている場合、C言語ならポインタでいけるんですけど、Pythonではそうはいかないので、いちいち長ったらしく書くか、ページング用にメソッドを書いてそれをはさむことになります。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def memory(self, addr):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  if addr &lt; &#34;RAMの範囲&#34;:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    self.ram[addr]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  elif addr &lt; &#34;メモリマップドIOの範囲&#34;:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    self.io.read(addr)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>  #else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>  # .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>  # .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>  # .
+</span></span></code></pre><p>さらにページングされている場合、C言語ならポインタでいけるんですけど、Pythonではそうはいかないので、いちいち長ったらしく書くか、ページング用にメソッドを書いてそれをはさむことになります。</p>
 <p>そう、関数の呼び出しが非常に多い部分なのです。実際、profileモジュールでデータを取ってみてもメモリ読み込み書き込みが結構なウェイトをしめてました。</p>
-
 <p>そこでPrefetch用のクラスを作って、別スレッドで現在のPC+いくらかをとるようにしてみました。これは現在のオペコードを実行している間に実行されます。これで次のオペコードを実行する前にオペコードとオペランドを取得でき、メモリ読み込み関数を呼ぶ回数が減ります。ただし、本物のPrefetch cueと同じでジャンプ命令が多いとあんまり効果がありません。</p>
-
 <p>Prefetch-cueを入れてみると、まぁコードの内容によりますが、psycoを入れて1frame 0.075くらいまではいきました。PPUをいれると全然なんですけど（笑</p>
-
-<h1>PPU</h1>
-
+<h1 id="ppu">PPU</h1>
 <p>なんとか表示できるまでにきました。正直つらいです（笑　特にスクロールに関しては <a href="http://nesdev.parodius.com/loopyppu.zip">loopyの文書</a> の文書が重要、ということをしらなかったのではじめはサッパリでした。</p>
-
 <p>描画部分は <a href="http://www.pygame.org/">pygame</a> です。pygameで描画する場合、更新したRectだけupdateするってのが常套手段なわけですが、エミュの場合はどうも・・・。というわけで今は毎回全体を描画しています。これも結構重い処理になるなあ。</p>
-
 <p>ほとんどスクロールしないゲームの場合、もしかしたら32x32くらいに区切ってスプライトが動いたところだけ更新するようにしたら、結構軽いのかもなあ。</p>
-
-<hr />
-
+<hr>
 <p>というわけで、PPUをつめてパッド入力あたりを書けばマッパー0のゲームなら動き出しそうな感じがします。ちなみにマッパーは全然です。とりあえずPythonで書いてみることが目的なので実際に使うことは想定して無いですし。</p>
-
 <p>卒論の試問会も終わり、家探しの旅も終わり、つかの間の落ち着きが戻ってきました。なんか資格とかをとらないといけないらしいので、それをちょっとずつ勉強しつつ、こっちもちょっとずつ進めていきたいなーと思ってます。</p>
 
   </div>
@@ -156,104 +135,62 @@
 </header>
   <div itemprop="articleBody">
     <p>そういえば、こういうサイトに定番っぽい開発環境を書いたのがないので、自己紹介？も兼ねて晒してみます。</p>
-
 <p>開発はだいたいWindows上のvmware(Debian)でやってます。ただし、そこは定番どころばっかりなのでパス。まぁvim+screen+zshです。puttyでつないでますよ。sambaでマウントしてますよ。ええ。それぞれ結構設定しまくっていて、グローバルなSVNサーバーにおいてあります。</p>
-
-<h1>Windowsでの開発環境</h1>
-
+<h1 id="windows">Windowsでの開発環境</h1>
 <p>あんまりWindowsは好きではないけど、Macよりは好きだったりする。というわけでWindows。普段使いのOSでもあるので、主に自分用の小物を書くことが多いです。怠け者なので、自動化できるものはすぐプログラムに置き換えちゃいます。でも言語は結構様々。もとから言語にこだわらず、一番適しているものを使う主義なので小物が多いにもかかわらず、言語は結構多いのかも。</p>
-
 <p>今のところ、だいたい</p>
-
 <ul>
 <li>それなりのGUIが必要なアプリ:Delphi6</li>
 <li>一枚ウインドウがあるくらいのGUIアプリ:Python(wxWidgets)</li>
 <li>GUIがなく、立ち上がりの速さや軽さが欲しいもの：C(MinGW)</li>
 <li>それ以外の小物:Python</li>
 </ul>
-
 <p>という感じで適材適所。</p>
-
 <p>Linuxではまったく定番な感じ（定番が自分にしっくりきた）だったけど、Windowsにはキーボード派の定番ってのは少ない気がするので、結構独特なのかも。方針は</p>
-
 <ul>
 <li>キーボードで操作しやすいように。</li>
 <li>なるべくlinuxと同じような感覚（←これ重要)で。</li>
 </ul>
-
 <p>感覚なので一緒じゃなくてもいいのです。</p>
-
-<h2>gvim</h2>
-
+<h2 id="gvim">gvim</h2>
 <p>開発はほとんどこいつです。Delphi以外は。Linuxのvimと同じ設定ファイルを共有してます。俺はvimがなくちゃ生きていけない人間なので、USBメモリにいれてもち運べるようにしてあります。</p>
-
-<h2>Firefox</h2>
-
+<h2 id="firefox">Firefox</h2>
 <p>ブラウザはこいつ。ただし <a href="http://portablefirefox.mozdev.org/">PortableFirefox</a> です。これもUSBメモリにいれて持ち運べるように。学校にいってもUSBメモリをさすだけで普段の環境。拡張も結構つっこんでます。</p>
-
-<h2><a href="http://d.hatena.ne.jp/cogma">cltc</a></h2>
-
+<h2 id="cltchttpdhatenanejpcogma"><a href="http://d.hatena.ne.jp/cogma">cltc</a></h2>
 <p>タスク切り替えが便利になるソフト。こんな感じで表示されます。インクリメンタル検索での選択や、カーソルキーでの選択ができます。</p>
-
-<p><a href="http://inforno.net/statics/files/cltc.jpg"><img src="http://inforno.net/statics/files/cltc.thumbnail.jpg" alt="image" /></a></p>
-
+<p><a href="http://inforno.net/statics/files/cltc.jpg"><img src="http://inforno.net/statics/files/cltc.thumbnail.jpg" alt="image"></a></p>
 <p>windowsでタスク切り替えというと`Alt+TAB`ですが、これ非常に使いづらい。そこでこのソフト。ここでキモになるのがキー設定で</p>
-
 <ul>
 <li><code>Ctrl+Shift+z</code> で起動</li>
 <li><code>Ctrl+j</code> と <code>Ctrl+k</code> でタスクを選択</li>
 </ul>
-
 <p>という風に設定しています。俺と同じLinux開発環境の人は分かるでしょう（笑</p>
-
 <p><code>Ctrl+z` がscreenのエスケープで</code>jk`` はvim。これだけでかなりLinuxと同じ感覚でタスクが選べるようになります。</p>
-
-<h2>MigemizeExplorer</h2>
-
+<h2 id="migemizeexplorer">MigemizeExplorer</h2>
 <p>こりゃ定番。説明不要ですよねえ。超便利。</p>
-
-<h2><a href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h2>
-
+<h2 id="craftlaunchhttpwwwvectorcojpmagazinesoftnews030820n0308201htm"><a href="http://www.vector.co.jp/magazine/softnews/030820/n0308201.htm">craftlaunch</a></h2>
 <p>これがないと始まらない。コマンド型ランチャー。craftlanuchラブ。こいつはデスクトップ用と持ち運び用（USBメモリに入れる用）の2個も用意してます。起動用ホットキーはeclipseなんてもんは使ってないので <code>Ctrl+Space</code> です。</p>
-
 <p>俺の場合はほぼ全ての作業の起点がこのソフト。ランチャーとしてのソフト起動から簡易シェルとしてまで大活躍。中でもオススメなのはexplorer.exe(windows標準のシェル)+craftlaunchの連携。</p>
-
 <p>craftlaunchというと「<a href="http://www.h5.dion.ne.jp/~akt/">あふ</a>」との連携が有名ですが、俺はあえてexplorer.exeと連携してます。というのも、なにぶん普段使いのOSですから、マルチメディアのファイルなんかも多いわけです。重くてもプレビューが見れたりするのは便利なもんです。日本語のファイル名だし、ファイラーつかってもファイル選択するのがめんどくさいもんです。</p>
-
 <p>どうやって連携してるかというと、基本的に小物アプリ＋ショートカットキー。この使い方をはじめるきっかけになったのは「せっかくcraftlaunchからキーボードだけでフォルダ開けるんだから、ホームポジションで楽にキーボードだけで閉じたいなあ」という思い。</p>
-
 <p><code>ctrl+space</code>,<code>ctrl+[</code></p>
-
 <p>の2ステップでウインドウが閉じられます。ctrlは押しっぱなしでいいので非常に軽快に閉じられます。鉄の小指を持つemacs使いの人ならなおのことでしょう（笑</p>
-
-<h2>その他の連携</h2>
-
+<h2 id="heading">その他の連携</h2>
 <p><strong>フォルダの新規作成</strong></p>
-
 <p>windowのexplorerの不満はフォルダを作るのがめんどくさいことですよね。キーボードなら<code>Alt+F W F</code> でしょうか。というわけでfiniのような自作コマンドで対応してます。超テキトーなのですが、あげておきます。</p>
-
 <p><a href="/statics/files/amkdir.zip">amkdir.zip</a></p>
-
 <p>こいつを <code>ctrl+n</code>にショートカットとして割り当ててあります。すると・・・  craftlaunchでフォルダを開く→MigemizeExplorerで快適にフォルダをたどる→「フォルダつくりてえ」→<code>ctrl+space</code>フォルダ名入力<code>ctrl+n</code>という感じになるわけで、結構ハッピーです。</p>
-
 <p><strong>コンソール</strong></p>
-
 <p>おなじような感じで、表示されているフォルダをカレントディレクトリとしてcmd.exeを起動するものもつくってあります。ほとんどつかわないけど。</p>
-
-<hr />
-
+<hr>
 <p>以上のような、変なWindowsで日々暮らしています。cltcでブラウザやvim、コンソールを行き来しながらIDEはあんまり使わないでガリガリ書いています。  まぁ、だいたいvmware上のLinuxにいるんですけど（笑  まとめると</p>
-
 <ul>
 <li>cltcで<code>ctrl+z</code>に<code>ctrl+j,k</code> 。快適ですよ。</li>
 <li>MigemizeExplorerはWindows標準装備になればいいのに。</li>
 <li>craftlaunchはあふと連携してもいいけど、explorerと連携してもハッピーですよ。</li>
 </ul>
-
 <p>という感じです。</p>
-
-<hr />
-
+<hr>
 <p>エミュレーターのほうはあのあとCPUを若干チューニングして、1フレーム0.1はキリました。今はPPUを書いてるんですが、そろそろ就職に備えて家を探さないといけません。京都と関東を行き来するのはいろいろこたえます。移動中はシグマリオンのPocketSchemeでSchemeでも書いて暇つぶしです。</p>
 
   </div>
@@ -285,178 +222,140 @@
 </header>
   <div itemprop="articleBody">
     <p>実は既に結構挫折気味。</p>
-
 <p>やっぱりPythonではちょっと厳しいかもしれない。</p>
-
 <p>とりあえず一番ややこしいPPU周りの情報を調べて、ちょろちょろ書き始めたあたりでいったんCPU部分のパフォーマンスを調べてみました。</p>
-
 <p>かなり厳しいものがあります。CPU部分のコードはPython的な書き方で書いてたんですが、これじゃ話にならない。まず、アクセサなんてものはつかっちゃいけないのだ。</p>
-
 <p>以下環境はOS:WinXP,CPU:Athlon64 3000+,Memory:1G,Python2.4です。</p>
-
-<h1>CPUのレジスタ関連の実装</h1>
-
+<h1 id="cpu">CPUのレジスタ関連の実装</h1>
 <p>NESのCPUである6502のレジスタはPCは16bit、それ以外は8bit。8bitの値なんてものはCならunsigned charで一発なんだけど、Pythonにはそんなものない。足し算したらどんどん大きくなるし、引き算したらどんどん小さくなる。ので</p>
-
-<pre class="prettyprint"><code>class Py6502(object):
-  def __init__(self):
-    self.A = 0
-    self.X = 0
-    self.Y = 0
-    self.PC = 0
-    #  .
-    #  .
-    #  .
-</code></pre>
-
-<p>見たいなクラスにするとして、足し算するときなどは必ず <code>self.A = (self.A + x) &amp; 0xff</code> みたいにして8bitに収めないといけない。ここで</p>
-
-<pre class="prettyprint"><code>def _create_n_bit_property(name, mask):
-  rname = &quot;_&quot;+name
-  result = {
-    name:property(lambda self: getattr(self, rname),
-                  lambda self,v : setattr(self, rname, v &amp; mask),
-                  )
-  }
-  return result
-
-class ForceNbitType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    names = classdict.get(&quot;__16bit__&quot;)
-    for name in names:
-      classdict.update(_create_n_bit_property(name, 0xffff))
-    names = classdict.get(&quot;__8bit__&quot;)
-    for name in names:
-      classdict.update(_create_n_bit_property(name, 0xff))
-    cls = type.__new__(cls, class_name, class_bases, classdict)
-    return cls
-</code></pre>
-
-<p>のようなmetaclassをつくって</p>
-
-<pre class="prettyprint"><code>class Py6502(object):
-  __metaclass__ = ForceNbitType
-  __8bit__ : &quot;A&quot;, &quot;X&quot;, &quot;Y&quot;
-  __16bit__ : &quot;PC&quot;,
-  def __init__(self):
-    self._A = 0
-    self._X = 0
-    self._Y = 0
-    self._PC = 0
-    #  .
-    #  .
-    #  .
-</code></pre>
-
-<p>とすれば <code>self.A += 10</code> とかしてもちゃんと8bitに収まる。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>class Py6502(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  def __init__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    self.A = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>    self.X = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    self.Y = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>    self.PC = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>    #  .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>    #  .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>    #  .
+</span></span></code></pre><p>見たいなクラスにするとして、足し算するときなどは必ず <code>self.A = (self.A + x) &amp; 0xff</code> みたいにして8bitに収めないといけない。ここで</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>def _create_n_bit_property(name, mask):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  rname = &#34;_&#34;+name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  result = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    name:property(lambda self: getattr(self, rname),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>                  lambda self,v : setattr(self, rname, v &amp; mask),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>                  )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  return result
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>class ForceNbitType(type):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  def __new__(cls, class_name, class_bases, classdict):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    names = classdict.get(&#34;__16bit__&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    for name in names:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>      classdict.update(_create_n_bit_property(name, 0xffff))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    names = classdict.get(&#34;__8bit__&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    for name in names:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>      classdict.update(_create_n_bit_property(name, 0xff))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>    cls = type.__new__(cls, class_name, class_bases, classdict)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    return cls
+</span></span></code></pre><p>のようなmetaclassをつくって</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>class Py6502(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  __metaclass__ = ForceNbitType
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  __8bit__ : &#34;A&#34;, &#34;X&#34;, &#34;Y&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  __16bit__ : &#34;PC&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  def __init__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    self._A = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    self._X = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    self._Y = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    self._PC = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    #  .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    #  .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    #  .
+</span></span></code></pre><p>とすれば <code>self.A += 10</code> とかしてもちゃんと8bitに収まる。</p>
 <p>非常に上手くかけるんですが、こんなのやってらんない。遅すぎる。1Frame分(28000サイクル程度)の実行に0.5秒（笑</p>
-
-<h1>getattr</h1>
-
+<h1 id="getattr">getattr</h1>
 <p><code>getattr</code> は遅い。 <code>getattr</code>の真価は第3引数でdefault値が指定できること（だと思う）。今回のように確実に属性が存在することが分かっているなら<code>self.__getattribute__(name)</code>を使うと結構違ってくる。ちなみにPythonのソースではこんな感じ。</p>
-
-<pre class="prettyprint"><code>static PyObject *
-slot_tp_getattro(PyObject *self, PyObject *name)
-{
-    static PyObject *getattribute_str = NULL;
-    return call_method(self, &quot;__getattribute__&quot;, &amp;getattribute_str,
-                       &quot;(O)&quot;, name);
-}
-
-static PyObject *
-slot_tp_getattr_hook(PyObject *self, PyObject *name)
-{
-    PyTypeObject *tp = self-&gt;ob_type;
-    PyObject *getattr, *getattribute, *res;
-    static PyObject *getattribute_str = NULL;
-    static PyObject *getattr_str = NULL;
-
-    if (getattr_str == NULL) {
-            getattr_str = PyString_InternFromString(&quot;__getattr__&quot;);
-            if (getattr_str == NULL)
-                    return NULL;
-    }
-    if (getattribute_str == NULL) {
-            getattribute_str =
-                    PyString_InternFromString(&quot;__getattribute__&quot;);
-            if (getattribute_str == NULL)
-                    return NULL;
-    }
-    getattr = _PyType_Lookup(tp, getattr_str);
-    if (getattr == NULL) {
-            /* No __getattr__ hook: use a simpler dispatcher */
-            tp-&gt;tp_getattro = slot_tp_getattro;
-            return slot_tp_getattro(self, name);
-    }
-    getattribute = _PyType_Lookup(tp, getattribute_str);
-    if (getattribute == NULL ||
-        (getattribute-&gt;ob_type == &amp;PyWrapperDescr_Type &amp;&amp;
-         ((PyWrapperDescrObject *)getattribute)-&gt;d_wrapped ==
-         (void *)PyObject_GenericGetAttr))
-            res = PyObject_GenericGetAttr(self, name);
-    else
-            res = PyObject_CallFunction(getattribute, &quot;OO&quot;, self, name);
-    if (res == NULL &amp;&amp; PyErr_ExceptionMatches(PyExc_AttributeError)) {
-            PyErr_Clear();
-            res = PyObject_CallFunction(getattr, &quot;OO&quot;, self, name);
-    }
-    return res;
-}
-</code></pre>
-
-<p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
-
-<h1>実行ループ</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>static PyObject *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>slot_tp_getattro(PyObject *self, PyObject *name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    static PyObject *getattribute_str = NULL;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    return call_method(self, &#34;__getattribute__&#34;, &amp;getattribute_str,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>                       &#34;(O)&#34;, name);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>static PyObject *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>slot_tp_getattr_hook(PyObject *self, PyObject *name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    PyTypeObject *tp = self-&gt;ob_type;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    PyObject *getattr, *getattribute, *res;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    static PyObject *getattribute_str = NULL;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    static PyObject *getattr_str = NULL;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    if (getattr_str == NULL) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>            getattr_str = PyString_InternFromString(&#34;__getattr__&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>            if (getattr_str == NULL)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>                    return NULL;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>    if (getattribute_str == NULL) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>            getattribute_str =
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>                    PyString_InternFromString(&#34;__getattribute__&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>            if (getattribute_str == NULL)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>                    return NULL;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    getattr = _PyType_Lookup(tp, getattr_str);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>    if (getattr == NULL) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>            /* No __getattr__ hook: use a simpler dispatcher */
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>            tp-&gt;tp_getattro = slot_tp_getattro;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>            return slot_tp_getattro(self, name);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>    getattribute = _PyType_Lookup(tp, getattribute_str);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>    if (getattribute == NULL ||
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>        (getattribute-&gt;ob_type == &amp;PyWrapperDescr_Type &amp;&amp;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>         ((PyWrapperDescrObject *)getattribute)-&gt;d_wrapped ==
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>         (void *)PyObject_GenericGetAttr))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>            res = PyObject_GenericGetAttr(self, name);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>    else
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>            res = PyObject_CallFunction(getattribute, &#34;OO&#34;, self, name);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>    if (res == NULL &amp;&amp; PyErr_ExceptionMatches(PyExc_AttributeError)) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>            PyErr_Clear();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>            res = PyObject_CallFunction(getattr, &#34;OO&#34;, self, name);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>    return res;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>}
+</span></span></code></pre><p>上が <code>__getattribute__</code> 、下が <code>getattr</code> 。ま、こんなことやったって関数呼び出しのオーバーヘッドが一番ツライのでgetterは使わず、setterは必要があるときだけ使うように。これで結構はやくなる。</p>
+<h1 id="heading">実行ループ</h1>
 <p>CPUのエミュレータなんてのはだいたい同じようなパターンで割り込みを除いて簡単に書くと</p>
-
-<pre class="prettyprint"><code>def step_execute(self, clocks):
-  while (self.passed_clocks &lt; clocks):
-    opecode = read()# opecodeを取得
-    # 実行
-    count = CLOCK[opecode] # 実行に必要なクロック数を取得
-    self.passed_clocks += count
-  self.passed_clocks -= clocks
-</code></pre>
-
-<p>なんてのになるわけで、ここが激しくループするわけで。ここはガリガリにちょっとでも節約できるものは節約。</p>
-
-<pre class="prettyprint"><code>def step_execute(self, clocks):
-  read = self.memory.read
-  get_method_by_opecode = self.get_method_by_opecode
-  while (self.passed_clocks &lt; clocks):
-    old = self._PC; self._PC += 1; self._PC &amp;= 0xffff
-    opecode = read(old)
-    method = get_method_by_opecode(opecode)
-    count = method()
-    count = count != None and count or CYCLES[opecode]
-    self.passed_clocks += count
-  self.passed_clocks -= clocks
-</code></pre>
-
-<p>javascriptで <code>.</code> (ドット)演算が遅いとかいうのは最近（？）よく言われていることで、それはPythonにも当然当てはまる。なのでループ前にだせるものはローカルに出しておく。（これが簡単にできるのがRubyよりもPythonがいい部分だよなあ）</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def step_execute(self, clocks):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  while (self.passed_clocks &lt; clocks):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    opecode = read()# opecodeを取得
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>    # 実行
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    count = CLOCK[opecode] # 実行に必要なクロック数を取得
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>    self.passed_clocks += count
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>  self.passed_clocks -= clocks
+</span></span></code></pre><p>なんてのになるわけで、ここが激しくループするわけで。ここはガリガリにちょっとでも節約できるものは節約。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>def step_execute(self, clocks):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  read = self.memory.read
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  get_method_by_opecode = self.get_method_by_opecode
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  while (self.passed_clocks &lt; clocks):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    old = self._PC; self._PC += 1; self._PC &amp;= 0xffff
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    opecode = read(old)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    method = get_method_by_opecode(opecode)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    count = method()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    count = count != None and count or CYCLES[opecode]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    self.passed_clocks += count
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  self.passed_clocks -= clocks
+</span></span></code></pre><p>javascriptで <code>.</code> (ドット)演算が遅いとかいうのは最近（？）よく言われていることで、それはPythonにも当然当てはまる。なのでループ前にだせるものはローカルに出しておく。（これが簡単にできるのがRubyよりもPythonがいい部分だよなあ）</p>
 <p>あと、実行の部分。ここはCなら関数テーブルかswitch(コンパイラによるけど大差ないと思う）になるんだけど、あいにくPythonにはswitchがないので関数テーブル的なものか <code>if opecode == 0x01: ... elif opecode == 0x02:... elif...</code> かになる。</p>
-
 <p>関数テーブル的なものは</p>
-
-<pre class="prettyprint"><code>def ope_0x01(self):
-  #code
-def ope_0x02(self):
-  #code
-
-self.__getattribute__(&quot;ope_&quot;+hex(opecode))()
-</code></pre>
-
-<p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
-
-<h1>結局</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def ope_0x01(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  #code
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>def ope_0x02(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  #code
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>self.__getattribute__(&#34;ope_&#34;+hex(opecode))()
+</span></span></code></pre><p>となる。両方やってみたところ、大差はなかったので、関数テーブル的なほうに。</p>
+<h1 id="heading-1">結局</h1>
 <p>そんな感じでいじってみてかつpsycoを入れて1Frame:0.15程度（PPUやAPUは中身がないので、最後までつくったらもっと遅くなる）。ほかにもいじれそうなところはあって、そこをいじれば0.1は切れそうな感じがしてます。</p>
-
 <p>けど、そこまでやるとPythonである意味がないのも確か。ぶっちゃけ、エミュレータは確実にCが向いている。Javaで書かれているエミュレータもレジスタの値をセットするたびに A &amp; 0xff みたいなことをやっていて、どーもめんどくさい。</p>
-
 <p>じゃぁLLでエミュレーターを書く意味ってなんだ、というと・・・うーん（笑　自己満足以外なにもないでしょうねえ。というわけで自己満足のために、今後もヒマができれば、ちょっとづつ書き進めてみようかなあ。</p>
 
   </div>

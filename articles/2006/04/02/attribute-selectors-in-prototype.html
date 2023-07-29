@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,20 +71,15 @@
 </header>
   <div itemprop="articleBody">
     <p>これはかなり嬉しい機能だなあ。 最近Prototype.jsの$$で属性セレクタが使用できるようになりました。</p>
-
 <p>どんな風にかけるのか、コードをテストから引っ張ってきてみました。</p>
-
-<pre class="prettyprint"><code>$$('a[href=&quot;http://inforno.net/#&quot;]')
-$$('a[class~=internal]')
-$$('*[xml:lang|=&quot;es&quot;]')
-$$('*[xml:lang|=&quot;ES&quot;]')
-$$('a[href!=#]')
-$$('div[style] p[id] strong')
-$$('a[class~=external][href=&quot;http://inforno.net/#&quot;]')
-</code></pre>
-
-<p>こんな感じです。 値はクオートしてもしなくても大丈夫っぽいですね。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>$$(&#39;a[href=&#34;http://inforno.net/#&#34;]&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>$$(&#39;a[class~=internal]&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>$$(&#39;*[xml:lang|=&#34;es&#34;]&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>$$(&#39;*[xml:lang|=&#34;ES&#34;]&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>$$(&#39;a[href!=#]&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>$$(&#39;div[style] p[id] strong&#39;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>$$(&#39;a[class~=external][href=&#34;http://inforno.net/#&#34;]&#39;)
+</span></span></code></pre><p>こんな感じです。 値はクオートしてもしなくても大丈夫っぽいですね。</p>
 <p>すばらすい。inputに対する操作なんかで特に便利。今までちょっとボタン操作するためだけに、そのボタンにIDふったりクラスふったりしてたんですけど$$(&rsquo;#hoge input[type=submit]&rsquo;)でいけるんだなあ。そんなにパフォーマンスに気をつかわなくて良いページでは使ってみよう。</p>
 
 
@@ -103,7 +96,7 @@ $$('a[class~=external][href=&quot;http://inforno.net/#&quot;]')
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/04/02/attribute-selectors-in-prototype" class="hatena-bookmark-button" data-hatena-bookmark-title="$$で属性セレクタ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/04/02/attribute-selectors-in-prototype" class="hatena-bookmark-button" data-hatena-bookmark-title="$$で属性セレクタ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

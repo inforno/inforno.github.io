@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,35 +71,20 @@
 </header>
   <div itemprop="articleBody">
     <p>via <a href="http://hamasta.g.hatena.ne.jp/hamasta/20070526/p">雑誌記事　「日本のプログラマーの未来時給」を見て人生ｵﾜﾀ＼(＾o＾)／</a></p>
-
 <p>プログラマの未来自給は651円らしい。</p>
-
 <p>個人的には「そういう職業なんだろうなあ」という感じ。</p>
-
-<h1>プログラマとミュージシャン</h1>
-
+<h1 id="heading">プログラマとミュージシャン</h1>
 <p>音楽をやっていたせいか、どうもプログラマとミュージシャンを重ねてしまう。</p>
-
 <p>一般的にプログラマというと、プログラミング言語でなにか書く人。音楽でいうと楽器のプレーヤー。</p>
-
 <p>ギターやってるなら、ベースもOKっていう人も多いはず。ついでにピアノなんかもできたり。もっといっぱい、ドラムもたたけるし、バイオリンもひけまっせ、みたいな人もいるかもしれない。そういう人はあんまりいないから目立つけど、実際はギターとベースくらいがいいところかなあ、と。プログラミング言語でもそうだと思う。</p>
-
 <p>こういう幅広さで有名な人もいれば、その手の演奏者として名をはせる人もいるだろう。ギターがすげー人とか。Perlのすげーハッカーとか。</p>
-
 <p>また、演奏者の中でも楽譜を見て演奏するだけの人もいれば、自分で曲を書く人もいる。プログラマでも確実にある程度の規模の設計をできる人はどれだけいる？10秒程度の音楽なんて誰でもつくれる。5分くらいのいい曲、かけるだろうか？</p>
-
 <p>常に動向をおっているだろうか？小室哲也は嫌いな人もいるだろうが、あの流行への敏感さ、流行を生み出す力はすごいと思う。それでいてある程度の中心がある。「俺はこういう音楽が好きだから、これだけでいいんだ」ってなるのは当然否定しない。、でも最低限、聞いてみるくらいはしたほうがいいと思う。自分の好きな音楽に対しても新しいアプローチとかができると思う。俺はCやってるし、別にHaskellはやっててもどうでもいいよ、もしくはHaskellの存在なんて知りもしないプログラマがほとんどだろう。</p>
-
 <p>基礎は固めているだろうか？「カッコいいから」って自己流でギター始めた人はどれくらいいるだろ。もちろんそれで上手くなる人もいる。そういう人は天才だからほっておいて問題ない。でも大体の人は変な癖がついて、よくない方向へいってしまう。ギターはバイオリンより入りやすい。適当にコードをならせばそれっぽくなる。でも、バイオリンと同じくらい奥が深いものだ。LLはCとかアセンブラより入りやすく、ちょっとやればそれっぽい物が作れる。でも奥深さは相当なもんだと思う。</p>
-
-<hr />
-
+<hr>
 <p>結局、活躍しているミュージシャンはほんの一握りだ。たくさんの若者が音楽に魅せられて、バンド組んだりしてプロ目指してみちゃったりする。結局、スタジオ付のプレーヤーになるのが関の山で、平凡なプレーヤーとして終わる。しかも、いまやプレーヤーの代わりにはコンピュータがいて、それを上手く操れるやつのほうがえらかったりする。スタジオの録音のエンジニアとかになったほうがまだいいわけだ。プログラマよりSE。</p>
-
 <p>さらにたちの悪いことに、一般ユーザーはそんな名演奏者を求めていなかったりするのだ。実際、喜んで打ち込みのJ-POPを聞いてるでしょ？（ちなみに俺はそれが悪いなんてぜんぜん言わない）。ドラムなんて名演奏者が一発で叩いたほうが速いに決まってる。でも誰かに打ち込ませたほうが安いし、ユーザーも満足なんだよ。PGでもそれは同じで、一般ユーザーは動けばそれで満足なのだ。だいたい、そのサイトがXHTML validかなんて誰が気にする？</p>
-
-<hr />
-
+<hr>
 <p>有名なプログラマーや技術者はその数少ない売れてるミュージシャンだと思う。これは名曲だ！といわしめる曲とか、もしくは新しい音楽のジャンルを作るような革新さえ起こしそうな、そんな人たちだと思う。そういう人はやっぱりお金も貰えるだろうし、ある程度自由もきくと思う。でもやっぱり、音楽学校を出た人が全員一線級のプロになれないように、多くの人、情報系を出た人でさえそのような才能を持った人はすくない。ホントは熱いロックをやりたくてもそれをやる自由もなくJ-POPのバックでやったりするんだろう。プログラマって、つくづくそんなジャンルの職業なんじゃないかなあ、と思う。きっとこういう音楽に似た部分が俺をプログラミングに引き込んだんだろうな。</p>
 
 
@@ -118,7 +101,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/05/29/programmers-and-musicians" class="hatena-bookmark-button" data-hatena-bookmark-title="プログラマの給与未来自給はそんなもんかも：プログラマとミュージシャン" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/05/29/programmers-and-musicians" class="hatena-bookmark-button" data-hatena-bookmark-title="プログラマの給与未来自給はそんなもんかも：プログラマとミュージシャン" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

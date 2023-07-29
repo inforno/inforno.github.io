@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -76,85 +74,70 @@
 </div>
 </header>
   <div itemprop="articleBody">
-    <p>nil.to_sが&rdquo;nil&rdquo;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。 Rubyより関数志向での開発がしやすくて楽しいですよねえ。</p>
-
+    <p>nil.to_sが&quot;nil&quot;になるような言語は(ry というのは置いといて、まだまだPythonをリハビリ中。 Rubyより関数志向での開発がしやすくて楽しいですよねえ。</p>
 <p>リハビリを兼ねてweb.pyで個人的なツールを作ってます。web.pyはシンプルで軽いので、個人用途（非公開でツールとして使う）だったらレンタルサーバーでCGIとして動作させても問題なさそうです。(XREAでは簡単なものなら負荷率0ptでした。Railsとかならいれるだけでダメなんで、素晴らしい)</p>
-
 <p>そこで、scriptaculousのAjax.InPlaceEditorを使っているわけですが、困ったことがひとつ。InPlace___Editor___なわけで、値を当然入力します。でその値がサーバー側でバリデーションエラーな時どうしたもんかと。</p>
-
 <p>理想的な動作としては</p>
-
 <ul>
 <li>エラーをユーザーに通知する</li>
 <li>サブミットする前の値のままtextareaを表示しておく</li>
 </ul>
-
 <p>なんですが、コンストラクタの中のoptionsあたりをのぞいてもそれらしきオプションはなさげ。</p>
-
 <p>ということでとりあえず場当たり的に書いてみたものが以下。</p>
-
-<pre class="prettyprint"><code>(function(){
-Ajax.RollbackableInPlaceEditor = Class.create();
-var dummy = function(){};
-dummy.prototype = Ajax.InPlaceEditor.prototype;
-Ajax.RollbackableInPlaceEditor.prototype = new dummy;
-Ajax.RollbackableInPlaceEditor.prototype.constructor = Ajax.RollbackableInPlaceEditor;
-})();
-Object.extend(Ajax.RollbackableInPlaceEditor.prototype, {
-  initialize : function(element, url, options) {
-    var self = this;
-    options = Object.extend({
-      callback: function(form) {
-        self.oldValue = self.editField.value;
-        return Form.serialize(form);
-      },
-      onFailure : Prototype.emptyFunction
-    }, options || {});
-    Ajax.InPlaceEditor.prototype.initialize.apply(this, [element, url, options]);
-  },
-  onclickCancel: function() {
-    this.onComplete();
-    this.element.innerHTML = this._oldInnerHTML;
-    this.element.show();
-    return false;
-  },
-  onComplete: function(transport) {
-    this.leaveEditMode();
-    if(transport &amp;&amp; !Ajax.Base.prototype.responseIsSuccess.call({transport:transport})) {
-      this.options.onFailure.bind(this)(transport, this.element);
-      return this.enterEditMode();
-    }else {
-      this.oldValue = null;
-    }
-    this.options.onComplete.bind(this)(transport, this.element);
-  },
-  onFailure: function(transport) {
-    return false;
-  },
-  getText : function() {
-     if(this.oldValue != null &amp;&amp; this.oldValue != undefined){var v = this.oldValue; this.oldValue = null; return v;}
-    this._oldInnerHTML = this.element.innerHTML;
-    return this.element.innerHTML;
-  }
-});
-</code></pre>
-
-<p>サーバー側でエラーがあったときは適当に500とか406とかでレスポンスを返せばオッケーです。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>(function(){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>Ajax.RollbackableInPlaceEditor = Class.create();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>var dummy = function(){};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>dummy.prototype = Ajax.InPlaceEditor.prototype;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>Ajax.RollbackableInPlaceEditor.prototype = new dummy;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>Ajax.RollbackableInPlaceEditor.prototype.constructor = Ajax.RollbackableInPlaceEditor;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>})();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>Object.extend(Ajax.RollbackableInPlaceEditor.prototype, {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  initialize : function(element, url, options) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    var self = this;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    options = Object.extend({
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>      callback: function(form) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>        self.oldValue = self.editField.value;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>        return Form.serialize(form);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>      },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>      onFailure : Prototype.emptyFunction
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    }, options || {});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>    Ajax.InPlaceEditor.prototype.initialize.apply(this, [element, url, options]);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  onclickCancel: function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    this.onComplete();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>    this.element.innerHTML = this._oldInnerHTML;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>    this.element.show();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>    return false;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  onComplete: function(transport) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>    this.leaveEditMode();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    if(transport &amp;&amp; !Ajax.Base.prototype.responseIsSuccess.call({transport:transport})) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>      this.options.onFailure.bind(this)(transport, this.element);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>      return this.enterEditMode();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    }else {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>      this.oldValue = null;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>    this.options.onComplete.bind(this)(transport, this.element);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>  onFailure: function(transport) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>    return false;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>  getText : function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>     if(this.oldValue != null &amp;&amp; this.oldValue != undefined){var v = this.oldValue; this.oldValue = null; return v;}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>    this._oldInnerHTML = this.element.innerHTML;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>    return this.element.innerHTML;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>});
+</span></span></code></pre><p>サーバー側でエラーがあったときは適当に500とか406とかでレスポンスを返せばオッケーです。</p>
 <p>なのでサーバー側ではたとえばweb.pyなら</p>
-
-<pre class="prettyprint"><code># errors = ['データが長すぎます。']　など
-if len(errors) != 0:
-  web.header(&quot;Content-Type&quot;, &quot;text/javascript&quot;), 
-  web.ctx[&quot;status&quot;] = &quot;406 Not Acceptable&quot;
-  print &quot;&quot;.join([&quot;alert('&quot;, &quot;\n&quot;.join(errors), &quot;');&quot;])
-  return 
-</code></pre>
-
-<p>とすればエラーになって（エラーメッセージがアラートされる）、サブミットした内容のままで再度編集できます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span># errors = [&#39;データが長すぎます。&#39;]　など
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>if len(errors) != 0:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>  web.header(&#34;Content-Type&#34;, &#34;text/javascript&#34;), 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  web.ctx[&#34;status&#34;] = &#34;406 Not Acceptable&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>  print &#34;&#34;.join([&#34;alert(&#39;&#34;, &#34;\n&#34;.join(errors), &#34;&#39;);&#34;])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>  return 
+</span></span></code></pre><p>とすればエラーになって（エラーメッセージがアラートされる）、サブミットした内容のままで再度編集できます。</p>
 <p>豆知識ですが、以上のようにサーバー側でtext/javascriptでレスポンスを返すとprototype.jsでは自動的にjavascriptとして評価してくれます。</p>
-
 <p>うーむ、まさに場当たり的。いろいろまずそうだけど、まぁ動いてるっぽいし気にしないことにしとこう・・・・</p>
 
 
@@ -171,7 +154,7 @@ if len(errors) != 0:
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/09/23/validation-failed-on-inplaceeditor-fields" class="hatena-bookmark-button" data-hatena-bookmark-title="Ajax.InPlaceEditorでバリデーションに引っかかったら" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/09/23/validation-failed-on-inplaceeditor-fields" class="hatena-bookmark-button" data-hatena-bookmark-title="Ajax.InPlaceEditorでバリデーションに引っかかったら" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

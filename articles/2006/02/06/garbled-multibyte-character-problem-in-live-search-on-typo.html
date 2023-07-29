@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,27 +73,22 @@
 </header>
   <div itemprop="articleBody">
     <p>Typoでのlive search文字化けについては多くのブログで解決策が示されています。</p>
-
 <ul>
 <li><a href="http://www.flatz.jp/articles/2005/12/14/live-search%E3%82%92%E7%9B%B4%E3%81%97%E3%81%9F%E3%82%88%E3%80%82">live searchの文字化けを修正</a></li>
 <li><a href="http://typo.ctrl.jp/articles/2005/11/14/typo2.6.0-release-to-live-search-no-nihongo-bug">Typo2.6.0リリースとLive Searhの日本語バグ</a></li>
 </ul>
-
 <p>最新でもやっぱり文字化けしているわけで。 僕も直してみました。</p>
-
-<pre class="prettyprint"><code>Index: app/views/shared/_search.rhtml
-===================================================================
---- app/views/shared/_search.rhtml      (revision 850)
-+++ app/views/shared/_search.rhtml      (working copy)
-@@ -7,4 +7,4 @@
-     :loading =&gt; &quot;Element.show('search_spinner')&quot;,
-     :complete =&gt; &quot;Element.hide('search_spinner')&quot;,
-     :update =&gt; &quot;search-results&quot;,
--    :with =&gt; &quot;'q=' + escape($F('q'))&quot; -%&gt;
-+    :with =&gt; &quot;'q=' + encodeURIComponent($F('q'))&quot; -%&gt;
-</code></pre>
-
-<p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・） あ、このファイルはテーマにも含まれてますので注意です。 てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・ ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>Index: app/views/shared/_search.rhtml
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>===================================================================
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>--- app/views/shared/_search.rhtml      (revision 850)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>+++ app/views/shared/_search.rhtml      (working copy)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>@@ -7,4 +7,4 @@
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>     :loading =&gt; &#34;Element.show(&#39;search_spinner&#39;)&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>     :complete =&gt; &#34;Element.hide(&#39;search_spinner&#39;)&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>     :update =&gt; &#34;search-results&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>-    :with =&gt; &#34;&#39;q=&#39; + escape($F(&#39;q&#39;))&#34; -%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>+    :with =&gt; &#34;&#39;q=&#39; + encodeURIComponent($F(&#39;q&#39;))&#34; -%&gt;
+</span></span></code></pre><p>という感じで1行直せばイケルはずです。（ブラウザはあまり確認してませんが・・・） あ、このファイルはテーマにも含まれてますので注意です。 てゆーかなんでencodeURIComponentじゃなくてescapeなんだろ・・・ ただこの方式だとキャッシュを再構築しないとダメなんでちょっとイヤだなー・・・。</p>
 
 
     <div class="seealso">
@@ -111,7 +104,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/02/06/garbled-multibyte-character-problem-in-live-search-on-typo" class="hatena-bookmark-button" data-hatena-bookmark-title="Typoでlive search文字化け" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/02/06/garbled-multibyte-character-problem-in-live-search-on-typo" class="hatena-bookmark-button" data-hatena-bookmark-title="Typoでlive search文字化け" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,50 +75,31 @@
 </header>
   <div itemprop="articleBody">
     <p>時間があればちょっとずつ続けてます。</p>
-
 <p>とりあえず画面がでるようにはなりました。速度は全然追いつかないですけど。</p>
-
-<p><img src="/statics/files/pynes0.jpg" alt="image" /></p>
-
-<h1>CPU</h1>
-
+<p><img src="/statics/files/pynes0.jpg" alt="image"></p>
+<h1 id="cpu">CPU</h1>
 <p>基本的には変化なし。細かいバグが多くて大変・・・・</p>
-
 <p>わずかでも速くしたいところなので、あまり構造を壊さず速度を上げられないかな、と思ってPrefetch cueを実装してみました。Prefetch cueはCPUの非常に基本的な最適化で、基本的故に単純、実装しても負荷になることはないだろう、ってことですな。</p>
-
 <p>エミュレーターでは（とくにPythonでは)ハードウェアでいうメモリが遅いうんぬんとは別の理由で、メモリアクセスはかなり重い処理になります。</p>
-
-<pre class="prettyprint"><code>def memory(self, addr):
-  if addr &lt; &quot;RAMの範囲&quot;:
-    self.ram[addr]
-  elif addr &lt; &quot;メモリマップドIOの範囲&quot;:
-    self.io.read(addr)
-  #else:
-  # .
-  # .
-  # .
-</code></pre>
-
-<p>さらにページングされている場合、C言語ならポインタでいけるんですけど、Pythonではそうはいかないので、いちいち長ったらしく書くか、ページング用にメソッドを書いてそれをはさむことになります。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def memory(self, addr):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  if addr &lt; &#34;RAMの範囲&#34;:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    self.ram[addr]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  elif addr &lt; &#34;メモリマップドIOの範囲&#34;:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    self.io.read(addr)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>  #else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>  # .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>  # .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>  # .
+</span></span></code></pre><p>さらにページングされている場合、C言語ならポインタでいけるんですけど、Pythonではそうはいかないので、いちいち長ったらしく書くか、ページング用にメソッドを書いてそれをはさむことになります。</p>
 <p>そう、関数の呼び出しが非常に多い部分なのです。実際、profileモジュールでデータを取ってみてもメモリ読み込み書き込みが結構なウェイトをしめてました。</p>
-
 <p>そこでPrefetch用のクラスを作って、別スレッドで現在のPC+いくらかをとるようにしてみました。これは現在のオペコードを実行している間に実行されます。これで次のオペコードを実行する前にオペコードとオペランドを取得でき、メモリ読み込み関数を呼ぶ回数が減ります。ただし、本物のPrefetch cueと同じでジャンプ命令が多いとあんまり効果がありません。</p>
-
 <p>Prefetch-cueを入れてみると、まぁコードの内容によりますが、psycoを入れて1frame 0.075くらいまではいきました。PPUをいれると全然なんですけど（笑</p>
-
-<h1>PPU</h1>
-
+<h1 id="ppu">PPU</h1>
 <p>なんとか表示できるまでにきました。正直つらいです（笑　特にスクロールに関しては <a href="http://nesdev.parodius.com/loopyppu.zip">loopyの文書</a> の文書が重要、ということをしらなかったのではじめはサッパリでした。</p>
-
 <p>描画部分は <a href="http://www.pygame.org/">pygame</a> です。pygameで描画する場合、更新したRectだけupdateするってのが常套手段なわけですが、エミュの場合はどうも・・・。というわけで今は毎回全体を描画しています。これも結構重い処理になるなあ。</p>
-
 <p>ほとんどスクロールしないゲームの場合、もしかしたら32x32くらいに区切ってスプライトが動いたところだけ更新するようにしたら、結構軽いのかもなあ。</p>
-
-<hr />
-
+<hr>
 <p>というわけで、PPUをつめてパッド入力あたりを書けばマッパー0のゲームなら動き出しそうな感じがします。ちなみにマッパーは全然です。とりあえずPythonで書いてみることが目的なので実際に使うことは想定して無いですし。</p>
-
 <p>卒論の試問会も終わり、家探しの旅も終わり、つかの間の落ち着きが戻ってきました。なんか資格とかをとらないといけないらしいので、それをちょっとずつ勉強しつつ、こっちもちょっとずつ進めていきたいなーと思ってます。</p>
 
 
@@ -137,7 +116,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/01/31/nes-emulator-development-with-python-3" class="hatena-bookmark-button" data-hatena-bookmark-title="PythonによるNESエミュレータ開発3" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/01/31/nes-emulator-development-with-python-3" class="hatena-bookmark-button" data-hatena-bookmark-title="PythonによるNESエミュレータ開発3" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,80 +71,63 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://inforno.net/articles/2006/03/12/element-methods-in-prototype">以前のエントリー</a> でprototype.js1.5のElement.Methodsについて書きました。 前回はいいところをプッシュして書いたんですが、皆さんご存じの通り問題児でもあります。</p>
-
 <p>Element.Methodsの問題点</p>
-
 <ul>
 <li>elementを拡張するかしないかが選択できない。</li>
 <li>プロトタイプチェーンがつながっていない。</li>
 <li>document.createElementが考慮されていない。</li>
 </ul>
-
 <p>■elementを拡張するかしないかが選択できない。</p>
-
 <p>まずわかりやすくこれから。elementは取得された時に拡張されるわけですが、当然パフォーマンスに影響があります。使いたくない人もいるでしょう。しかし、Element.extendによる拡張は$にも$$にも組み込まれていて選択できません。メソッドを置き換えて回避は可能ですが、組み込まれている、ということを考慮すると当然extendされている、ということを前提としたライブラリも出てくるでしょう。となった場合にやっかいです。別名のメソッドを定義してもいいですが・・・やっぱり$って名前がいいよね！（何</p>
-
 <p>■プロトタイプチェーンがつながっていない。</p>
-
 <p>これは当然の問題。Element.extendは文字通りelementにElement.Methodsのメソッドをコピーしているだけ。しかも一回取得すると、_extendedというフラグが立って次回からはもうextendされない（パフォーマンスを考慮してのこと）。つまり Element.Methodsへのメソッド追加が反映されない、メソッドの内容変更も反映されない。 　つまり、恐らく$か$$されるだろう、window.onloadイベント前にElement.Methodsへのメソッド追加を完了させ、それ以降変化させない、という事に注意しないといけない。</p>
-
 <p>ではなぜプロトタイプチェーンがつながっていないのだろうか。Elementは拡張できないんだろうか。これはYesでありNoです。 まず、このElement.Methodsによる害をある程度押さえ込むことのできるソースを示します。 これはFirefoxなどMozilla系、safari、Operaで有効です。</p>
-
-<pre class="prettyprint"><code>(function() {
-if(!window.HTMLElement) window.HTMLElement = document.createElement(&quot;xxx&quot;).constructor;
-if(window.HTMLElement) {
-    var methods = Element.Methods, property;
-    var bind = function(name, method) {
-      HTMLElement.prototype[name] = function(){
-        Array.prototype.unshift.call(arguments, this);
-        return method.apply(null, arguments) || this;
-      }
-    }
-    for (property in methods) {
-      var value = methods[property];
-      if (typeof value == 'function') bind(property, value);
-    }
-    HTMLElement.prototype._extended = true;
-}
-
-})();
-</code></pre>
-
-<p>このコードを <strong>最後に(window.onloadの直前で)実行すれば</strong> OKです（scriptaculousとかもElement.Methodsを拡張するので、その拡張が終わった後）。 これでelementがプロトタイプチェーンでつながっているブラウザでは$による負荷を軽減できます。$(&ldquo;test&rdquo;).show()とかも実行できますし、引数操作によるパフォーマンス低下がいやならElement.show(&ldquo;test&rdquo;)と実行すれば良いだけです。しかも地味にreturn method.apply(null, arguments) || this;とすることによって$(&ldquo;test&rdquo;).update(&ldquo;hogehoge&rdquo;).show()とか書けるようにもしてみました（笑</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>(function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>if(!window.HTMLElement) window.HTMLElement = document.createElement(&#34;xxx&#34;).constructor;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>if(window.HTMLElement) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    var methods = Element.Methods, property;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    var bind = function(name, method) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>      HTMLElement.prototype[name] = function(){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>        Array.prototype.unshift.call(arguments, this);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>        return method.apply(null, arguments) || this;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>      }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    for (property in methods) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>      var value = methods[property];
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>      if (typeof value == &#39;function&#39;) bind(property, value);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    HTMLElement.prototype._extended = true;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>})();
+</span></span></code></pre><p>このコードを <strong>最後に(window.onloadの直前で)実行すれば</strong> OKです（scriptaculousとかもElement.Methodsを拡張するので、その拡張が終わった後）。 これでelementがプロトタイプチェーンでつながっているブラウザでは$による負荷を軽減できます。$(&ldquo;test&rdquo;).show()とかも実行できますし、引数操作によるパフォーマンス低下がいやならElement.show(&ldquo;test&rdquo;)と実行すれば良いだけです。しかも地味にreturn method.apply(null, arguments) || this;とすることによって$(&ldquo;test&rdquo;).update(&ldquo;hogehoge&rdquo;).show()とか書けるようにもしてみました（笑</p>
 <p>しかしIEはどうしようもありません。 <strong>そもそもIEはelementがプロトタイプチェーンをもっていません。</strong> document.createElement (&ldquo;div&rdquo;).constructorとやってもprototypeとやってもundefinedと抜かす強敵です。これは昔から対策が考えられていますが、つまるところElement.Methodsと同様にコピーするだけです。それをhtcをつかってみたり、コンストラクタを擬似的に作ってみたり、とかっていう方法で実装しているだけです。なのでElement prototypingしようと思うとIEでは現状これが限界です。</p>
-
 <p>■　document.createElementが考慮されていない。</p>
-
 <p>先ほど示したソースでelementがプロトタイプチェーンをもつブラウザでは当然document.createElementで作成した elementもElement.Methodsのメソッドが実行できます。しかしIEではそれができません。この document.createElementも考慮して先ほどのElement.Methods対策ソースを改良しましょう。</p>
-
-<pre class="prettyprint"><code>(function() {
-if(!window.HTMLElement) window.HTMLElement = document.createElement(&quot;xxx&quot;).constructor;
-if(window.HTMLElement) {
-    var methods = Element.Methods, property;
-    var bind = function(name, method) {
-      HTMLElement.prototype[name] = function(){
-        Array.prototype.unshift.call(arguments, this);
-        return method.apply(null, arguments) || this;
-      }
-    }
-    for (property in methods) {
-      var value = methods[property];
-      if (typeof value == 'function') bind(property, value);
-    }
-    HTMLElement.prototype._extended = true;
-}else {
-  document._createElement = document.createElement;
-  document.createElement = function(tag){
-    return Element.extend(document._createElement(tag));
-  }
-}
-
-})();
-</code></pre>
-
-<p>赤色で示した部分が追加部分です。これでIEでもdocument.createElementした後に直接Element.Methodsのメソッドが実行できます。何度も言いますがパフォーマンス低下がいやな人はこの追加部分を省いてください。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>(function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>if(!window.HTMLElement) window.HTMLElement = document.createElement(&#34;xxx&#34;).constructor;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>if(window.HTMLElement) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    var methods = Element.Methods, property;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    var bind = function(name, method) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>      HTMLElement.prototype[name] = function(){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>        Array.prototype.unshift.call(arguments, this);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>        return method.apply(null, arguments) || this;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>      }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    for (property in methods) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>      var value = methods[property];
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>      if (typeof value == &#39;function&#39;) bind(property, value);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    HTMLElement.prototype._extended = true;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>}else {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>  document._createElement = document.createElement;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  document.createElement = function(tag){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    return Element.extend(document._createElement(tag));
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>})();
+</span></span></code></pre><p>赤色で示した部分が追加部分です。これでIEでもdocument.createElementした後に直接Element.Methodsのメソッドが実行できます。何度も言いますがパフォーマンス低下がいやな人はこの追加部分を省いてください。</p>
 <p>というわけで今回はElement.Methodsの問題への対応策を示してみました。要はIEがelementがプロトタイプチェーンを持つようにしてくれれば万事解決なわけなんですよね。でも結局IE7でも実装されていないようで、なかなか・・・</p>
 
 
@@ -163,7 +144,7 @@ if(window.HTMLElement) {
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements" class="hatena-bookmark-button" data-hatena-bookmark-title="続Element.Methods。問題とちょっと改良" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/03/22/point-out-problems-of-element-methods-and-offer-suggestions-for-improvements" class="hatena-bookmark-button" data-hatena-bookmark-title="続Element.Methods。問題とちょっと改良" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

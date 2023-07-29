@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,78 +71,55 @@
 </header>
   <div itemprop="articleBody">
     <p>Go言語で構造体と構造体をマッピングする、いわゆるObject mapperを生成するCLIを書きました。</p>
-
-<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/sesame" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
-
-<h2>経緯</h2>
-
-<p>READMEに書いてる通りですが、いわゆるClean architectureなど多層構造のアプリケーションではどうしても
-似たようなオブジェクトを定義せざるを得ないことがあります。</p>
-
-<p>特にキツい(?)のがgRPCを採用した場合ですね。 <code>protoc</code>が吐く構造体は完全に<code>protobuf</code>に依存したものになっており
-ある程度層をまたいで同じオブジェクトを持っていくのは許容しよう、と割り切ってもこれをいわゆるドメイン層に
-そのままもっていくのは結構ハードルが高いのではないかと思います。</p>
-
+<div data-theme="default" data-height="150" data-width="400" data-github="yuin/sesame" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script>
+<h2 id="heading">経緯</h2>
+<p>READMEに書いてる通りですが、いわゆるClean architectureなど多層構造のアプリケーションではどうしても似たようなオブジェクトを定義せざるを得ないことがあります。</p>
+<p>特にキツい(?)のがgRPCを採用した場合ですね。 <code>protoc</code>が吐く構造体は完全に<code>protobuf</code>に依存したものになっておりある程度層をまたいで同じオブジェクトを持っていくのは許容しよう、と割り切ってもこれをいわゆるドメイン層にそのままもっていくのは結構ハードルが高いのではないかと思います。</p>
 <p>＃あと、<code>gogo/protobuf</code> 亡き今、protoc-gen-goが非標準命名規則でソースコードを出力するのもキモチワルイ。。。</p>
-
-<p>WEB上にいっぱいあるGo + gRPCのクリーンアーキテクチャサンプル的なものでもここはかならず似たオブジェクトに
-詰め替えています。GoにはJavaにおけるDTOのような歴史はあまりないですし、アーキテクチャ上必要なことなんだから
-手で書くべき、という人もいますがとはいっても項目数が多くなってくるとつらいですよね。</p>
-
+<p>WEB上にいっぱいあるGo + gRPCのクリーンアーキテクチャサンプル的なものでもここはかならず似たオブジェクトに詰め替えています。GoにはJavaにおけるDTOのような歴史はあまりないですし、アーキテクチャ上必要なことなんだから手で書くべき、という人もいますがとはいっても項目数が多くなってくるとつらいですよね。</p>
 <p>これをある程度自動で詰め替えるライブラリはリフレクションを使ったものはそれなりにあるのですが、経験上</p>
-
 <ul>
 <li>リフレクションを使ったものはデバッグがつらい
-
 <ul>
 <li>項目が多くなってきたときに、1つだけなんかマッピングされてない！というときになんでマッピングされてないの？
 というのがわかりづらい</li>
-</ul></li>
+</ul>
+</li>
 <li>性能が微妙
-
 <ul>
 <li>いくらGoのリフレクションが早いといってもリフレクション使わないコードよりは当たり前だが遅い</li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
 <p>ということで、コード生成してくれるタイプのものが欲しかったんですがいいのが無かったので書いた、という次第です。</p>
-
-<h2>できること</h2>
-
+<h2 id="heading-1">できること</h2>
 <p>構造体と構造体をマッピングするインタフェースと実装を生成できます。マッピング定義はYAMLに記載、結構柔軟に定義できます。
 ネストしたものも再帰的にマッピングできます。</p>
-
 <ul>
 <li>例: <code>string</code>と<code>time.Time</code>をマッピングするものを登録しておけば自動的にこれらのフィールドを持つ構造体を変換可能</li>
 </ul>
-
-<p>比較的にきれいな(自分的には)インタフェースを吐くので最悪、このツール使うのやめようとなってもインタフェースに対する実装を
-自分で書けばよいだけです。生成するソースはこんな感じ</p>
-
-<pre class="prettyprint"><code class="language-go">package mapper
-
-import (
-    pkg00002 &quot;time&quot;
-
-    pkg00001 &quot;example.com/testmod/domain&quot;
-    pkg00000 &quot;example.com/testmod/model&quot;
-)
-
-type TodoMapperHelper interface {
-    ModelToEntity(*pkg00000.TodoModel, *pkg00001.Todo) error
-    EntityToModel(*pkg00001.Todo, *pkg00000.TodoModel) error
-}
-
-type TodoMapper interface {
-    ModelToEntity(*pkg00000.TodoModel) (*pkg00001.Todo, error)
-    EntityToModel(*pkg00001.Todo) (*pkg00000.TodoModel, error)
-}
-
-// ... (TodoMapper default implementation)
-</code></pre>
-
-<p>Goでの構造体のマッピング、結構どうにかしたいと思いつつとりあえず全部手でやってました、という人も多いと思うので
-もしよければ使ってみてください。</p>
+<p>比較的にきれいな(自分的には)インタフェースを吐くので最悪、このツール使うのやめようとなってもインタフェースに対する実装を自分で書けばよいだけです。生成するソースはこんな感じ</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">mapper</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    <span style="color:#a6e22e">pkg00002</span> <span style="color:#e6db74">&#34;time&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    <span style="color:#a6e22e">pkg00001</span> <span style="color:#e6db74">&#34;example.com/testmod/domain&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    <span style="color:#a6e22e">pkg00000</span> <span style="color:#e6db74">&#34;example.com/testmod/model&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">TodoMapperHelper</span> <span style="color:#66d9ef">interface</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    <span style="color:#a6e22e">ModelToEntity</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">pkg00000</span>.<span style="color:#a6e22e">TodoModel</span>, <span style="color:#f92672">*</span><span style="color:#a6e22e">pkg00001</span>.<span style="color:#a6e22e">Todo</span>) <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    <span style="color:#a6e22e">EntityToModel</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">pkg00001</span>.<span style="color:#a6e22e">Todo</span>, <span style="color:#f92672">*</span><span style="color:#a6e22e">pkg00000</span>.<span style="color:#a6e22e">TodoModel</span>) <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">TodoMapper</span> <span style="color:#66d9ef">interface</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    <span style="color:#a6e22e">ModelToEntity</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">pkg00000</span>.<span style="color:#a6e22e">TodoModel</span>) (<span style="color:#f92672">*</span><span style="color:#a6e22e">pkg00001</span>.<span style="color:#a6e22e">Todo</span>, <span style="color:#66d9ef">error</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    <span style="color:#a6e22e">EntityToModel</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">pkg00001</span>.<span style="color:#a6e22e">Todo</span>) (<span style="color:#f92672">*</span><span style="color:#a6e22e">pkg00000</span>.<span style="color:#a6e22e">TodoModel</span>, <span style="color:#66d9ef">error</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span><span style="color:#75715e">// ... (TodoMapper default implementation)
+</span></span></span></code></pre><p>Goでの構造体のマッピング、結構どうにかしたいと思いつつとりあえず全部手でやってました、という人も多いと思うのでもしよければ使ってみてください。</p>
 
   </div>
 </article>
@@ -175,47 +150,28 @@ type TodoMapper interface {
 </header>
   <div itemprop="articleBody">
     <p>GoでCommonMarkのパーサを実装しました。</p>
-
-<p><div data-theme="default" data-height="150" data-width="400" data-github="yuin/goldmark" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script></p>
-
+<div data-theme="default" data-height="150" data-width="400" data-github="yuin/goldmark" class="github-card"></div><script src="http://lab.lepture.com/github-cards/widget.js"></script>
 <p>分かりやすいASTに変換＋拡張が容易、そこそこ速い実装になっています。</p>
-
 <p><strong>めちゃくちゃしんどかったです。</strong></p>
-
-<h2>経緯</h2>
-
+<h2 id="heading">経緯</h2>
 <p>Go言語のMarkdownパーサといえば<a href="https://github.com/russross/blackfriday/tree/v2">blackfriday</a>ですが、
 拡張するための機構がないのでさくっと自前でMarkdownパーサを書くか、と思い立ちました。</p>
-
-<p>そこで「そういえばCommonMarkなんてもんがあったな」と思い出しせっかくならCommonMark準拠にするかと
-おもってCommonMarkの仕様を読み始めました。</p>
-
+<p>そこで「そういえばCommonMarkなんてもんがあったな」と思い出しせっかくならCommonMark準拠にするかとおもってCommonMarkの仕様を読み始めました。</p>
 <p><strong>え、なにこれは…</strong></p>
-
-<p>Markdownで出来ることなんてrestructuredTextなどほかのマークアップ言語に比べれば
-わずかなものです。しかし、たかがそれだけを実装するために凄まじく複雑な仕様
-が定義されているのでした。</p>
-
+<p>Markdownで出来ることなんてrestructuredTextなどほかのマークアップ言語に比べればわずかなものです。しかし、たかがそれだけを実装するために凄まじく複雑な仕様が定義されているのでした。</p>
 <p>以下、CommonMarkに寄せられた声です。</p>
-
-<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">commonmarkのlistの仕様複雑すぎて死んでいる</p>&mdash; tkr (@kgtkr) <a href="https://twitter.com/kgtkr/status/1111140801621286913?ref_src=twsrc%5Etfw">2019年3月28日</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
-
-<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">う〜ん、CommonMark難しすぎる！w</p>&mdash; らぃと (@lightnet328) <a href="https://twitter.com/lightnet328/status/1099352824750587909?ref_src=twsrc%5Etfw">2019年2月23日</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
-
-<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">質問：<br>CommonMarkのパーザの実装を試みていますが、仕様が絶望的です。どうしたらいいでしょうか？<br><br>回答：<br>もっとテキトーにパーザを実装して、そのパーザの動作を以て“新しいMarkdown方言”であると定めましょう！<a href="https://twitter.com/hashtag/Markdown?src=hash&amp;ref_src=twsrc%5Etfw">#Markdown</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a></p>&mdash; ZR-TeXnobabbler🤔 (@zr_tex8r) <a href="https://twitter.com/zr_tex8r/status/1057951517859209217?ref_src=twsrc%5Etfw">2018年11月1日</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
-
-<p><blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">皆さんには是非 CommonMark Spec を読んで絶望してほしい．</p>&mdash; 画力・博士号・油田 (@bd_gfngfn) <a href="https://twitter.com/bd_gfngfn/status/1057689153561710592?ref_src=twsrc%5Etfw">2018年10月31日</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
-
+<blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">commonmarkのlistの仕様複雑すぎて死んでいる</p>&mdash; tkr (@kgtkr) <a href="https://twitter.com/kgtkr/status/1111140801621286913?ref_src=twsrc%5Etfw">2019年3月28日</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">う〜ん、CommonMark難しすぎる！w</p>&mdash; らぃと (@lightnet328) <a href="https://twitter.com/lightnet328/status/1099352824750587909?ref_src=twsrc%5Etfw">2019年2月23日</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">質問：<br>CommonMarkのパーザの実装を試みていますが、仕様が絶望的です。どうしたらいいでしょうか？<br><br>回答：<br>もっとテキトーにパーザを実装して、そのパーザの動作を以て“新しいMarkdown方言”であると定めましょう！<a href="https://twitter.com/hashtag/Markdown?src=hash&amp;ref_src=twsrc%5Etfw">#Markdown</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a> <a href="https://twitter.com/hashtag/%E3%81%86%E3%82%8F%E3%81%81?src=hash&amp;ref_src=twsrc%5Etfw">#うわぁ</a></p>&mdash; ZR-TeXnobabbler🤔 (@zr_tex8r) <a href="https://twitter.com/zr_tex8r/status/1057951517859209217?ref_src=twsrc%5Etfw">2018年11月1日</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<blockquote class="twitter-tweet" data-lang="ja"><p lang="ja" dir="ltr">皆さんには是非 CommonMark Spec を読んで絶望してほしい．</p>&mdash; 画力・博士号・油田 (@bd_gfngfn) <a href="https://twitter.com/bd_gfngfn/status/1057689153561710592?ref_src=twsrc%5Etfw">2018年10月31日</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 <p>しまいには、CommonMarkの中心人物自体が「えらいもん作ってしまった・・・」となっています。</p>
-
 <ul>
 <li><a href="https://talk.commonmark.org/t/beyond-markdown/2787">Beyond Markdown</a></li>
 </ul>
-
 <blockquote>
 <p>There are 17 principles governing emphasis , for example, and these rules still
 leave cases undecided. The rules for list items and HTML blocks are also
@@ -223,55 +179,35 @@ very complex. All of these rules lead to unexpected results sometimes, and they
 make writing a parser for CommonMark a complex affair.
 I despair, at times, of getting to a spec that is worth calling 1.0.</p>
 </blockquote>
-
 <p>私も仕様を読んだ段階で「これはヤバい」と感じたのですがここで引くのも悔しかったので作り切りました。</p>
-
-<h2>CommonMarkについて思うところ</h2>
-
+<h2 id="commonmark">CommonMarkについて思うところ</h2>
 <p>正直なところ、これが世に広まるってどうなの、と思います。</p>
-
 <p>そもそもなんでMarkdownが軽量マークアップ言語の中でこれだけ広く使われるようになったのかというと</p>
-
 <ul>
 <li>書き手としての書きやすさ</li>
 <li>実装者としての実装しやすさ</li>
 </ul>
-
 <p>つまり、「書き手の適当さ」と「実装側の適当さ」がいい具合に噛み合ったからだと思っています。
 書き手はそれなりに適当に書けるし、実装するにしても仕様が適当なので、適当に実装してもMarkdown
 対応であると言うことができました。</p>
-
 <p>それによってあらゆる言語、さまざまなタイプの実装が生まれそれが至るところで使われることになり
 Markdownは広まっていったのです。</p>
-
-<p>それに対して、CommonMarkはあまりに実装するのがしんどすぎます。さらにはそれだけしんどい思いを
-しても出来ること自体は少ないのです。テーブルさえ使えないのです。</p>
-
+<p>それに対して、CommonMarkはあまりに実装するのがしんどすぎます。さらにはそれだけしんどい思いをしても出来ること自体は少ないのです。テーブルさえ使えないのです。</p>
 <p>その実装の難しさからCommonMark対応のパーサはいわゆるMarkdownパーサと比べるとわずかしかありません。
 CommonMarkにかかわっている人の中には「それが何の問題ですか？」という人さえいます。
 「CとJSで参照実装提供してるじゃん。ブラウザはC動かないからJSも用意してある。それ以外の言語は
 C実装のバインディング作ればいいだけでしょ。実装なんて1個あればいいんだよ」なんて感じです。</p>
-
-<p>CommonMarkはオリジナルのMarkdown作者から「Markdownの名前は使うな」と言われてCommonMarkという名前
-になったという経緯があります。</p>
-
-<p>Markdownを冠していないのであれば、perlの神正規表現で実装されたオリジナルのMarkdown.plの動きにでき
-るだけ寄せようとするのではなく、もっと仕様をシンプルにする方向に動いて欲しかったです。</p>
-
-<h2>CommonMarkパーサを実装したい人に向けて</h2>
-
-<p>とにかく、CommonMarkに準拠するのは難しい。ということでいるかいないかわからない、CommonMarkパーサを
-これから書こうと言う人に気づきを共有しておきます。</p>
-
+<p>CommonMarkはオリジナルのMarkdown作者から「Markdownの名前は使うな」と言われてCommonMarkという名前になったという経緯があります。</p>
+<p>Markdownを冠していないのであれば、perlの神正規表現で実装されたオリジナルのMarkdown.plの動きにできるだけ寄せようとするのではなく、もっと仕様をシンプルにする方向に動いて欲しかったです。</p>
+<h2 id="commonmark-1">CommonMarkパーサを実装したい人に向けて</h2>
+<p>とにかく、CommonMarkに準拠するのは難しい。ということでいるかいないかわからない、CommonMarkパーサをこれから書こうと言う人に気づきを共有しておきます。</p>
 <ul>
 <li>いわゆるプログラミング言語やXML, JSONなどのパースとは全く別物です。そういうものはもともと
 「パースしやすいように」という視点で文法が作られてますが、CommonMarkはそんなことはありません。
 pegベースのパーサもあるので無理じゃないですがいわゆるLL,LRやLALRのような方法では厳しいです。</li>
 <li>Markdownはいうなれば「行志向」なので業単位を基本としましょう。</li>
 <li>「lazy continuation」はかなり曲者です。</li>
-<li>仕様策定者自身が <a href="https://talk.commonmark.org/t/beyond-markdown/2787">Beyond Markdown</a> で述べている
-部分は間違いなくしんどいです。特に強調は自分で考えるのは諦めましょう。素直に参照実装と同じ
-アルゴリズムで実装するより他にspec testを通すのは難しいです。</li>
+<li>仕様策定者自身が <a href="https://talk.commonmark.org/t/beyond-markdown/2787">Beyond Markdown</a> で述べている部分は間違いなくしんどいです。特に強調は自分で考えるのは諦めましょう。素直に参照実装と同じアルゴリズムで実装するより他にspec testを通すのは難しいです。</li>
 <li>タブが本来のタブの意味でつかわれる点に注意。つまりタブ文字の位置によりタブは
 1文字分、2文字分、3文字分、4文字分、いずれの文字幅にもなりえます。</li>
 <li>とにかく折れない心が大事です。CommonMarkとMarkdownは別物です。覚悟してかかりましょう。</li>
@@ -302,28 +238,20 @@ pegベースのパーサもあるので無理じゃないですがいわゆるLL
 </header>
   <div itemprop="articleBody">
     <p>相変わらずメインのマシンはWindowsなのですが、batファイルのもろもろがいつまでも覚えられず、bashスクリプトで書きたいなあ、ということでbatファイルにbashスクリプトを埋め込むことにしました。 Cでつくった自作用ツールがあるため、Windowsにはかならずmsys2をいれているのでbashは絶対あるんですよね。</p>
-
 <p>その他の言語を埋め込む方法は</p>
-
 <ul>
 <li><a href="http://qiita.com/snipsnipsnip/items/50e4ca88e3ce3f8cffda">Windowsでshebangもどき、またはバッチにスクリプトを埋め込む方法</a></li>
 </ul>
-
 <p>が詳しいです。</p>
-
-<h1>シェルスクリプトをバッチファイルに埋め込む</h1>
-
+<h1 id="heading">シェルスクリプトをバッチファイルに埋め込む</h1>
 <p>以下のようにすると、バッチファイルにシェルスクリプト(bashスクリプト)を埋め込むことにできます。拡張子 <code>.bat</code> で保存すると <code>cmd.exe</code> からもmsys2の <code>bash.exe</code> からも起動できます。</p>
-
-<pre class="prettyprint"><code>:rem () { &lt;&lt;'#__CO__'
-@bash  &quot;%~f0&quot; %* &amp; exit /b
-#__CO__
-}
-
-echo 以下普通にシェルスクリプト
-</code></pre>
-
-<p>仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、<code>:</code> コマンドやらをうまく利用して埋め込んでいます。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>:rem () { &lt;&lt;&#39;#__CO__&#39;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>@bash  &#34;%~f0&#34; %* &amp; exit /b
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>#__CO__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>echo 以下普通にシェルスクリプト
+</span></span></code></pre><p>仕組みはバッチファイルのコメントやら、bashのヒアドキュメントやら、<code>:</code> コマンドやらをうまく利用して埋め込んでいます。</p>
 
   </div>
 </article>

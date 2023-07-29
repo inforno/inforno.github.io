@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,135 +69,112 @@
 </header>
   <div itemprop="articleBody">
     <p>Pythonの練習がてら、アクセサの生成をやってみる。どうせ探したらいっぱいコードが転がってるだろうし、練習にはうってつけかな、と。</p>
-
 <p>まず、ダメそうだけど、Rubyをやってる人からするとこうかきたい、というコード。</p>
-
-<pre class="prettyprint"><code>class Test(Accessor):
-  attr_accessor(&quot;__test&quot;, &quot;__test2&quot;, &quot;test3&quot;, &quot;_test4&quot;)
-
-  def __init__(self):
-    self.__test = &quot;test_value&quot;
-    self.__test2 = &quot;test2_value&quot;
-    self.test3 = &quot;test3_value&quot;
-    self._test4 = &quot;test4_value&quot;
-</code></pre>
-
-<p>こんな感じ。まぁ、絶対にダメそうだ（笑 でも組み込みとはいえ、classmethodやstaticmethodみたいなのもあるから無理やりにならできるのかもしれない。</p>
-
-<pre class="prettyprint"><code>def test():
-  print sys._getframe(1).f_code.co_name
-
-class Test:
-  test()
-
-#=&gt; 文字列&quot;Test&quot;を出力
-</code></pre>
-
-<p>こんな感じで呼び出しもとのクラス名は取得できる。ならevalすれば、というところなのだが予想通り</p>
-
-<pre class="prettyprint"><code>def test():
-  exec &quot;cls = %s&quot; % sys._getframe(1).f_code.co_name
-
-class Test:
-  test()
-
-#=&gt; NameError: name 'Test' is not defined
-</code></pre>
-
-<p>この時点ではクラスオブジェクトの生成が完了していないので無理なようだ。Rubyのようにはいかない。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>class Test(Accessor):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  attr_accessor(&#34;__test&#34;, &#34;__test2&#34;, &#34;test3&#34;, &#34;_test4&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  def __init__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    self.__test = &#34;test_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>    self.__test2 = &#34;test2_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>    self.test3 = &#34;test3_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>    self._test4 = &#34;test4_value&#34;
+</span></span></code></pre><p>こんな感じ。まぁ、絶対にダメそうだ（笑 でも組み込みとはいえ、classmethodやstaticmethodみたいなのもあるから無理やりにならできるのかもしれない。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def test():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  print sys._getframe(1).f_code.co_name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>class Test:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>  test()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>#=&gt; 文字列&#34;Test&#34;を出力
+</span></span></code></pre><p>こんな感じで呼び出しもとのクラス名は取得できる。ならevalすれば、というところなのだが予想通り</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def test():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  exec &#34;cls = %s&#34; % sys._getframe(1).f_code.co_name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>class Test:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>  test()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>#=&gt; NameError: name &#39;Test&#39; is not defined
+</span></span></code></pre><p>この時点ではクラスオブジェクトの生成が完了していないので無理なようだ。Rubyのようにはいかない。</p>
 <p>結局のところ__metaclass__を使うことになる。 マニュアルにもズバリ &gt; メタクラスは限りない潜在的利用価値を持っています。これまで試されてきたアイデアには、ログ記録、インタフェースのチェック、自動デリゲーション、 <strong>自動プロパティ生成</strong> 、プロキシ、フレームワーク、そして自動リソースロック／同期といったものがあります。</p>
-
 <p>と書いてあるのだ。</p>
-
 <ul>
 <li>後からもアクセサを追加したい(メソッドとしても独立させたい)</li>
 <li>当然、読み出しと書き込み、そして両方を行えるインターフェイス</li>
 <li>オーバーライドはできないとまずい</li>
 </ul>
-
 <p>というアクセサ生成としては至極当たり前なことを考えつつ、コードを書いてみる。</p>
-
-<pre class="prettyprint"><code># vim: fileencoding=utf-8
-from itertools import * 
-
-def property_accessor(cls, *names): 
-  map(lambda n : _add_setter(cls, n[0], n[1]) or 
-                 _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
-
-def property_reader(cls, *names):
-  map(lambda n : _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
-
-def property_writer(cls, *names):
-  map(lambda n : _add_setter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
-
-def _real_names(cls, names) :
-  cls_name = cls.__name__
-  return imap(lambda n : n.startswith(&quot;__&quot;) and &quot;_%s%s&quot;%(cls_name, n) or n, names)
-
-def _add_setter(cls, name, real_name) :
-  setter_name = &quot;set_%s&quot; % name.lstrip(&quot;_&quot;)
-  if cls.__dict__.has_key(setter_name): return 
-  setattr(cls, setter_name, lambda self, v: setattr(self, real_name, v))
-
-def _add_getter(cls, name, real_name) :
-  getter_name = &quot;get_%s&quot; % name.lstrip(&quot;_&quot;)
-  if cls.__dict__.has_key(getter_name): return 
-  setattr(cls, getter_name, lambda self: getattr(self, real_name))
-
-class AccessorType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    cls = type.__new__(cls, class_name, class_bases, classdict)
-    list = [&quot;__accessor__&quot;, &quot;__reader__&quot;, &quot;__writer__&quot;]
-    methods = imap(lambda n: eval(&quot;property_%s&quot;%n.strip(&quot;_&quot;)), list)
-    map(lambda n: 
-          classdict.has_key(n[0]) and
-            n[1](cls, *classdict[n[0]]), izip(list, methods))
-    return cls
-
-class Accessor:
-  __metaclass__ = AccessorType
-
-class Test(Accessor):
-  __accessor__ = [&quot;__test2&quot;, &quot;test3&quot;, &quot;_test4&quot;]
-  __reader__   = [&quot;__test&quot;]
-
-  def __init__(self):
-    self.__test = &quot;test_value&quot;
-    self.__test2 = &quot;test2_value&quot;
-    self.test3 = &quot;test3_value&quot;
-    self._test4 = &quot;test4_value&quot;
-
-  def get_test3(self) :
-    return &quot;changed_test3_value&quot;
-
-obj = Test()
-
-print obj.get_test2()
-# =&gt; &quot;test2_value&quot;
-print obj.get_test3()
-# =&gt; &quot;changed_test3_value&quot;
-
-property_writer(Test, &quot;__test&quot;)
-obj.set_test(&quot;new_test_value&quot;)
-print obj.get_test()
-# =&gt; &quot;new_test_value&quot;
-</code></pre>
-
-<p>テストもろくにしてないし、汚いコードだけどなんとなくそれっぽい動き。だいたい40行くらいで実装できる。パフォーマンスを考えなければitertoolsがなくても大丈夫。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span># vim: fileencoding=utf-8
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>from itertools import * 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>def property_accessor(cls, *names): 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  map(lambda n : _add_setter(cls, n[0], n[1]) or 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>                 _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>def property_reader(cls, *names):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  map(lambda n : _add_getter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>def property_writer(cls, *names):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  map(lambda n : _add_setter(cls, n[0], n[1]),izip(names, _real_names(cls, names)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>def _real_names(cls, names) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  cls_name = cls.__name__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  return imap(lambda n : n.startswith(&#34;__&#34;) and &#34;_%s%s&#34;%(cls_name, n) or n, names)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>def _add_setter(cls, name, real_name) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>  setter_name = &#34;set_%s&#34; % name.lstrip(&#34;_&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  if cls.__dict__.has_key(setter_name): return 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>  setattr(cls, setter_name, lambda self, v: setattr(self, real_name, v))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>def _add_getter(cls, name, real_name) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>  getter_name = &#34;get_%s&#34; % name.lstrip(&#34;_&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>  if cls.__dict__.has_key(getter_name): return 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  setattr(cls, getter_name, lambda self: getattr(self, real_name))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>class AccessorType(type):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>  def __new__(cls, class_name, class_bases, classdict):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>    cls = type.__new__(cls, class_name, class_bases, classdict)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    list = [&#34;__accessor__&#34;, &#34;__reader__&#34;, &#34;__writer__&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    methods = imap(lambda n: eval(&#34;property_%s&#34;%n.strip(&#34;_&#34;)), list)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>    map(lambda n: 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>          classdict.has_key(n[0]) and
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>            n[1](cls, *classdict[n[0]]), izip(list, methods))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>    return cls
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>class Accessor:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>  __metaclass__ = AccessorType
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>class Test(Accessor):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>  __accessor__ = [&#34;__test2&#34;, &#34;test3&#34;, &#34;_test4&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>  __reader__   = [&#34;__test&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>  def __init__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>    self.__test = &#34;test_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>    self.__test2 = &#34;test2_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>    self.test3 = &#34;test3_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>    self._test4 = &#34;test4_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>  def get_test3(self) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>    return &#34;changed_test3_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span>obj = Test()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>print obj.get_test2()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span># =&gt; &#34;test2_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58</span><span>print obj.get_test3()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59</span><span># =&gt; &#34;changed_test3_value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61</span><span>property_writer(Test, &#34;__test&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62</span><span>obj.set_test(&#34;new_test_value&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63</span><span>print obj.get_test()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64</span><span># =&gt; &#34;new_test_value&#34;
+</span></span></code></pre><p>テストもろくにしてないし、汚いコードだけどなんとなくそれっぽい動き。だいたい40行くらいで実装できる。パフォーマンスを考えなければitertoolsがなくても大丈夫。</p>
 <p>そして、回答をさがしてみる。とりあえず「python accessor __metaclass__」あたりでググるとすぐにコードが見つかる。</p>
-
 <ul>
 <li><a href="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/307969">ASPN : Python Cookbook : Generating get/set methods using a metaclass</a></li>
 </ul>
-
 <p>見事なくらい同じようなコード。ただ、自分で書いたやつのほうが、オーバーライドできる、あとからもアクセサが生成できる、という点ではいい感じ。</p>
-
-<h1>感想</h1>
-
+<h1 id="heading">感想</h1>
 <p>ここらへんのメタプログラミングはやっぱりRubyのほうが柔軟性があってかつ、一貫しているので楽かな。 Pythonはやっぱり関数をオブジェクトとして扱いやすい、というのが楽。Rubyのobj.some_methodでメソッドが呼び出せるのは便利だが、その点ではやっぱキツい。ループもPythonほうが好きだな。</p>
-
 <p>ま、やっぱり個人の好み、としかいいようがないなあ。最近ではWindowsの小物はほとんどpythonで書いてるけど（インストーラーがあって関連付けまでしてくれて、楽）、Linuxのほうはそうでもないし。</p>
 
 
@@ -216,7 +191,7 @@ print obj.get_test()
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/09/30/python-generating-accessors" class="hatena-bookmark-button" data-hatena-bookmark-title="Python:アクセサの生成" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/09/30/python-generating-accessors" class="hatena-bookmark-button" data-hatena-bookmark-title="Python:アクセサの生成" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

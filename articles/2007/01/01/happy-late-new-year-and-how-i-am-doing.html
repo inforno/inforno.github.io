@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,71 +73,49 @@
 </header>
   <div itemprop="articleBody">
     <p>2007年になりましたね。月に1回更新するか怪しいこのブログを購読してくださってる方々、ありがとうございます（笑</p>
-
 <p>無事卒論も提出し、気楽な学生気分を満喫しています。ちなみに、卒論は完璧にコンピュータは関係ないもので、まぁラットと戯れていました。生物、こと脳にかかわる話も面白いですよ。まったくもって大した研究ではないのですが、教授が今年ヨーロッパの学会で発表してくださるらしいです。とりあえず書けて何より。</p>
-
 <p>さて、プログラミング関連ですが、卒論もようやく終わり4月までは暇な学生生活、まとまった時間がとれるようになったので、ちょろちょろ書き始めています。</p>
-
 <p>書いているのは・・・なんと今更NESエミュレータ。</p>
-
 <p>一から自分で解析してエミュレータを書くのは達人ワザですが、十分なハードウェアの情報がある場合、実はそんなに難しくなかったりします。</p>
-
 <p>というわけで書いているんですが、ここで普通にC言語やアセンブラで書こうというような楽？はしてません！NESエミュレータをPythonで書いてみる、これがチャレンジング。ぶっちゃけPythonで速度がシビアに求められるものを書いたことがないので、チャレンジです。</p>
-
 <p>書く上で、とりあえず</p>
-
 <ul>
 <li>ctypesは使わない（Cの流儀をそのままもっていってもおもしろくない)</li>
 <li>当然Cで拡張モジュールは書かない</li>
 </ul>
-
 <p>というポリシーで書き進めています。</p>
-
 <p>しかしやっぱりキツイ。絶対Cの方が楽な気がするのは気のせいだろうか・・・。現在はだいたいCPU（6502）のコアが書き終わったので、メモリ周りを書き進めてます。とりあえず.NESファイルから読み込んでメモリに読み込み、PCをセットするあたりまで書きました。</p>
-
 <p>まず、NESのヘッダ読み込むのもめんどくさい。Cならfreadで構造体にマップしておわり、なのにPythonだとそうは行かない。そしてなんといってもポインタがない。これ。メモリのミラーリングとかめんどくさいだろうな・・・（笑</p>
-
 <p>そうこう書いてるうちに、Pythonでのバイナリの扱いが上手くなってきました（きたような気がします）。 　 　 　 今のところ以下のような関数が活躍しています。エディアンは今のところ決めうちです。</p>
-
-<pre class="prettyprint"><code>from struct import * 
-from array import array
-
-def unpack_byte(b):
-  return unpack(&quot;&lt;B&quot;, b)[0]
-
-def zero_filled(n):
-  n /= 2
-  return pack('h'*n, *([0]*n))
-
-def byte_array(v):
-  return array('c', v)
-
-class byte_ref(object):
-  def __init__(self, p):
-    self._value = p
-  def get_value(self):
-    return self._value
-  def set_value(self, v):
-    self.value[0:] = byte_array(v)
-  value = property(get_value, set_value)
-</code></pre>
-
-<p>まず、PythonでRAMをエミュレートしようと思うと、可変なunsigned charな配列が当然必要です。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>from struct import * 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>from array import array
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>def unpack_byte(b):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  return unpack(&#34;&lt;B&#34;, b)[0]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>def zero_filled(n):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  n /= 2
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  return pack(&#39;h&#39;*n, *([0]*n))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>def byte_array(v):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  return array(&#39;c&#39;, v)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>class byte_ref(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  def __init__(self, p):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    self._value = p
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>  def get_value(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>    return self._value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>  def set_value(self, v):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    self.value[0:] = byte_array(v)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>  value = property(get_value, set_value)
+</span></span></code></pre><p>まず、PythonでRAMをエミュレートしようと思うと、可変なunsigned charな配列が当然必要です。</p>
 <p>Pythonで <code>data = open(&quot;name&quot;, &quot;rb&quot;).read()</code> とした場合、きちんとバイナリデータがdataに入って、 <code>unpack_byte(data[0:1])</code> などとするとちゃんとデータを取り出せます。</p>
-
 <p>しかし、この場合、Pythonの内部では*不変な型である*文字列型として扱われているので <code>data[w_addr &amp; 0x7ff] = 0x12</code> みたいなことは出来ません。つまりROMにはなりますが、RAMになれません。じゃあどうやってunsigned charの配列を表現するか、ということで <code>array</code> モジュールの登場なわけです。 <code>data = byte_array(open(&quot;name&quot;, &quot;rb&quot;).read())</code> という感じで使っています。生成方法がことなるだけで <code>data[0]</code> みたいなインデックスによるアクセスも出来るし、部分書き換えも可能です。</p>
-
 <p>byte_refは・・・別になくてもいいかもしれませんが、byte配列に対する参照を表現するオブジェクトです。といっても注意して使わないと意味がないクラスで気持ちの問題かもしれません。</p>
-
 <p>ここをctypesでポインタを使えば考えなくてもよかったんですが、あえてPythonなんだ、ということで（笑</p>
-
 <p>　</p>
-
 <p>　 　</p>
-
 <p>近況はこんな感じです。</p>
-
 <p>ついに就職が近づいてきました。仕事はプログラマではないので、プログラムを書く時間はあんまり取れないかもしれません。でもまぁ、日曜プログラマとして細々やっていけたらなあ、と思っています。</p>
 
 
@@ -156,7 +132,7 @@ class byte_ref(object):
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/01/01/happy-late-new-year-and-how-i-am-doing" class="hatena-bookmark-button" data-hatena-bookmark-title="謹賀新年＆近況" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/01/01/happy-late-new-year-and-how-i-am-doing" class="hatena-bookmark-button" data-hatena-bookmark-title="謹賀新年＆近況" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

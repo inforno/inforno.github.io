@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,24 +69,17 @@
 </header>
   <div itemprop="articleBody">
     <p>ネットをただよってたらこんなの見つけた。古いのに突っ込んで申し訳ない。</p>
-
 <p><a href="http://sh1.2-d.jp/b/2006/Jun/2">sorted関数とreversed関数</a></p>
-
 <blockquote>
 <p>元のリストに副作用を起こさずに得ようと思ったら、 [x for x in reversed(l)] か、・・・</p>
 </blockquote>
-
 <p>これPython結構やってても知らない人が多い気がする。というかなかなか必要にならない気がする。</p>
-
-<pre class="prettyprint"><code>lst = [1,2,3,4,5]
-reversed(lst)
-# =&gt; &lt;listreverseiterator object at 0x00B90630&gt;
-lst[::-1]
-#=&gt; [5, 4, 3, 2, 1]
-</code></pre>
-
-<p>リストを非破壊的に逆順にするときってreversed使うんだけど、返ってくるのはイテレータ。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>lst = [1,2,3,4,5]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>reversed(lst)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span># =&gt; &lt;listreverseiterator object at 0x00B90630&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>lst[::-1]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>#=&gt; [5, 4, 3, 2, 1]
+</span></span></code></pre><p>リストを非破壊的に逆順にするときってreversed使うんだけど、返ってくるのはイテレータ。</p>
 <p>んじゃリストを得るときは、ってなるんだけど <code>lst[::-1]</code> ってする方法があったりする。リストスライスの3つめの値って忘れ去られがちな気がする・・・。</p>
 
 
@@ -105,7 +96,7 @@ lst[::-1]
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2007/05/13/python-reversed-list" class="hatena-bookmark-button" data-hatena-bookmark-title="Python:リストの逆順" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2007/05/13/python-reversed-list" class="hatena-bookmark-button" data-hatena-bookmark-title="Python:リストの逆順" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

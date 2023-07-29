@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,31 +75,18 @@
 </header>
   <div itemprop="articleBody">
     <p>最近の若いもんはマシン語をしらん、けしからん、みたいな話が盛り上がってますね。</p>
-
 <p>そんな若くもないのですが(22歳)、中学のころにはWindows95があって、携帯電話を持っていて、高校生のころには既にADSLなどの高速回線を普通に使っていた、そんな世代の俺の考え。まぁ俺はプログラマでもなんでもないんだけど。</p>
-
-<h1>全体的な結論</h1>
-
+<h1 id="heading">全体的な結論</h1>
 <p>全体的な結論を先に言うと、個人的にこういう原点回帰的な話というのはそんなに好きじゃない。もっと高次で活躍する人が増えてもいい、と思っているから。一人の人間の時間は有限で、それを高次レイヤにつぎ込んでもっとおもしろいことができるなら、そっちにつぎこめばいいんじゃないかな。俺はそれは全然アリ派。たとえば、音楽でいうと、DTMしかできないやつは音楽できる顔すんな、みたいなのが嫌い。DTMしかできなくてもいい曲かく人なんていっぱいいるし、それでいいと思う。なんていうか、努力とかよりも、感性にあこがれるタイプだからかな。上のレイヤからはいっても、きっと基礎を固めてちゃんとやりたい、それが必要だ、と思えば人は勉強する。だからあえて言うこと（必要だと言い切ること）でもないんじゃないかなあ。現に、だいたいコンピュータ技術者というものは最終的に下のレイヤへ下がっていく人が多いですよね。</p>
-
-<h1>マシン語とかについて</h1>
-
+<h1 id="heading-1">マシン語とかについて</h1>
 <p>きっと議論を呼んでいるのは「絶対必要」みたいに断定してしまったからで、知っていればこんないいことがあるんだよ、という感じならみんな納得するんじゃないかなあ。</p>
-
 <p>上に書いたように俺の世代ってのは中学ですでにWindows95があってVBやらVCやらDelphiがあった世代で。そんなに苦労しなくても見栄えのいいGUIアプリがかける環境があったわけで。当然意識しないとマシン語とかアセンブラには触れない。俺はたしかJAVAからプログラミングに入ったけど、別にマシン語知らなくても全然大丈夫だった。</p>
-
 <p>んでさらにはWebアプリの台頭。Webアプリを書いているときにマシン語をしらないから、という理由で困ったこともないし、新しい言語を覚えるときに困った覚えもない。つまりプログラマでも書くプログラムによってはそんなに必要ない、ということ。そういう時代まで、先人達の努力でやってきた、ということ。暇があるなら低レイヤを覚えておくにこしたことはないけど、他に覚えるべきことがあるなら、そっちを勉強したらいいと思う。</p>
-
 <p>ただ、知っといたほうがいろいろいいことがあるのも事実。なので覚えたい人はがんばりましょう、ということで。</p>
-
 <p>同じことを書いてる人もいるけど、むしろアセンブラとかにこだわりを持っている人のほうが、「ひどい」コードを書くこともあるよね。処理効率を優先しまくって可読性を落としたりとか、何をやってるのかわからないのがイヤ、と自分で必要ないものまで書いたりとか。</p>
-
-<h1>俺と低レイヤ技術</h1>
-
+<h1 id="heading-2">俺と低レイヤ技術</h1>
 <p>とそんなことを書きつつ、実は低レイヤも好きな俺。すみませんすみません。個人的に低レイヤの（特にCPUとか。ネットワークとかじゃなく。）ことを勉強したいなら、エミュレータは一度書いてみるべきだと思う。一個8bitCPUのエミュレータを書いて、そのCPUの逆アセンブラを書いて、デバッガ作って、できれば自分でアセンブラを書いて、アセンブリ言語をマシン語に落として、そのコードを実行させてみれば、CPUの基礎はかなりわかると思う。データがそろってる8bitCPUならそんなに苦労することなくかけるので、一度書いてみてはいかが。アセンブリ言語の書き方も、割り込みがどーたらも、なんMhzとかってなんなの、とかサイクルってなにとかメモリってどうなってんの、DMAってなにがうれしいんだよとかそういやビット演算ってなんの役にたつの、とか色々一気に疑問が解決する。それがわかっていればあとは順をおってCPU関連技術を勉強していけば理解もはやい気がする。自分で命令セットまで考えてそのCPUをソフトで実装すればもっと完璧。</p>
-
 <p>実装言語はなんでもいいんじゃないかなあ。手前味噌だけど、 <a href="/articles/2007/03/02/nes-emulator-development-with-python-5">Pythonでもエミュレータを書こうと思えばかける</a> わけで、PerlでもRubyでもJavascriptでもいいと思う。動作速度よりも理解する過程が楽しいかと。ちなみに自分の書いたPythonでのNESエミュレータだとCPU（6502)とメモリ関連で、簡易逆アセンブラ込みで1000行ほど。速度を犠牲にすればもっと短くかける。</p>
-
 <p>あと、これも書かれてるけどむしろネットワークとか、DBとかのほうがよっぽど低レイヤの知識が必要だよなあ。10BASE-Tと100BASE-Tでなんでつなげるリピータハブの数が違うのかとか、これならどれだけスループットが確保できるか、それをわかるためにもCSMA/CDはなんたるかとか、実際どうやってケーブル上で衝突を検出してんのかとか色々わかってないと困るしねえ。他のネットワーク技術でも一緒。生のパケット(orフレーム）を見なけりゃいけないことも多々あるし。ソフト使ってちゃんと設定がかけます、だけだと意味ない。OSIの層を上から下までカバーしないと。そういった意味でもネットワークっておもろい。</p>
 
   </div>
@@ -129,56 +114,47 @@
 </header>
   <div itemprop="articleBody">
     <p>ちょっと前にjavascriptで構文解析とかがはやった気がするので、javascriptのリハビリがてらかいてみた。</p>
-
 <p>ググってみると</p>
-
 <ul>
 <li><a href="http://t-code.org/blog/2007/06/jsparsec_javascript.htm">Jsparsec - JavaScriptパーザコンビネータライブラリ</a></li>
 <li><a href="http://d.hatena.ne.jp/bellbind/20060529/114884313">HaskellのMonadをJavaScriptで実装するとしたら</a></li>
 </ul>
-
 <p>あたりがあるのだが、まぁ勉強ということで。javascriptらしく書いてみようかと。</p>
-
 <p>ということで、モナドがどーたらとか難しい話はまぁおいておいて、簡単に値がとりだせますよ、という見栄え重視で作ってみた。基本的な機能しかない。けど拡張するのは簡単。せめて相互再帰くらいは実装したほうがよかったかな。まぁ、こんなの真剣に使う人もいないと思うので、要望があればってことで。ちなみに依存するライブラリはありません。</p>
-
 <p><strong>ダウンロード</strong> ： <a href="/statics/files/parsec.js">Inforno.Parsec</a></p>
-
 <p>たとえばこんな感じにCSVのパーサが定義できる。withを使ってDSLっぽくしてみた。</p>
-
-<pre class="prettyprint"><code>var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
-  this.chars = chrLike(function(c){ return c != '' &amp;&amp; c!=',' &amp;&amp; c!='\n' &amp;&amp; c!='&quot;';});
-  this.quote = chr('&quot;') 
-  this.quoteInQuote = str('&quot;&quot;') .ret(function(){return '&quot;';}); 
-  this.charInQuote  = chrLike(function(c){ return c!='&quot;';});
-  this.quotedField  = quote .and (rep((quoteInQuote) .or (charInQuote))) .and (quote)
-                      .ret(function(q1, cs, q2){
-                        return cs.join(&quot;&quot;);
-                      });
-  this.field        = rep1(chars) .ret(Return.str)
-  this.record       = sep( (field) .or (quotedField), chr(&quot;,&quot;), true) .ret(function(fields) {
-    return {fields: fields};
-  })
-  this.csv          = sep(record, chr(&quot;\n&quot;), true) .and(eof) .ret(function(records) {
-    return {records : records};
-  })
-}});
-
-var testCsv = [
-'&quot;aaa&quot;,&quot;b',
-'bb&quot;,&quot;ccc&quot;,zzz,&quot;y&quot;&quot;Y&quot;&quot;y&quot;,xxx'
-].join(&quot;\n&quot;);
-
-var parser = new CSVParser(testCsv);
-var parseResult = parser.csv.parse()
-if(parseResult.success()) {
-  var records = parseResult.result[0].records;
-  for(var i=0,l=records.length;i&lt;l;i++){
-    alert(&quot;row(&quot;+i+&quot;)    &quot;+records[i].fields);
-  }
-}
-</code></pre>
-
-<p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり 、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>var CSVParser = Inforno.Parsec.Parsers.define(function(){with(this){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  this.chars = chrLike(function(c){ return c != &#39;&#39; &amp;&amp; c!=&#39;,&#39; &amp;&amp; c!=&#39;\n&#39; &amp;&amp; c!=&#39;&#34;&#39;;});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  this.quote = chr(&#39;&#34;&#39;) 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  this.quoteInQuote = str(&#39;&#34;&#34;&#39;) .ret(function(){return &#39;&#34;&#39;;}); 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  this.charInQuote  = chrLike(function(c){ return c!=&#39;&#34;&#39;;});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  this.quotedField  = quote .and (rep((quoteInQuote) .or (charInQuote))) .and (quote)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>                      .ret(function(q1, cs, q2){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>                        return cs.join(&#34;&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>                      });
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  this.field        = rep1(chars) .ret(Return.str)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  this.record       = sep( (field) .or (quotedField), chr(&#34;,&#34;), true) .ret(function(fields) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    return {fields: fields};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  this.csv          = sep(record, chr(&#34;\n&#34;), true) .and(eof) .ret(function(records) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    return {records : records};
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>}});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>var testCsv = [
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>&#39;&#34;aaa&#34;,&#34;b&#39;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>&#39;bb&#34;,&#34;ccc&#34;,zzz,&#34;y&#34;&#34;Y&#34;&#34;y&#34;,xxx&#39;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>].join(&#34;\n&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>var parser = new CSVParser(testCsv);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>var parseResult = parser.csv.parse()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>if(parseResult.success()) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>  var records = parseResult.result[0].records;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>  for(var i=0,l=records.length;i&lt;l;i++){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>    alert(&#34;row(&#34;+i+&#34;)    &#34;+records[i].fields);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>}
+</span></span></code></pre><p>実はパーサコンビネータって簡単にかけるんだけど、世間的にちゃんと認識されているのかなあ。思うに、パーサコンビネータといえばHaskell界隈であり 、関数型界隈であり（もちろんちゃんとJAVAとかの実装もあるんだけど）、モナドでありそういうところって専門用語が多いから「ふつうの」プログラマからは簡単に見えてないような気がするなあ。</p>
 
   </div>
 </article>
@@ -205,67 +181,53 @@ if(parseResult.success()) {
 </header>
   <div itemprop="articleBody">
     <p>でましたね。 <a href="http://prototypejs.org/2007/8/15/prototype-1-6-0-release-candidat">Prototype 1.6.0 release candidate</a></p>
-
 <p>WEB界隈から離れてしばらくたちますが、またいつWEB界隈に戻るかわからないので一応追ってます。</p>
-
 <p>1.6ではついにClass周りに手が入りました。Prototype.jsといえばシンプルすぎるClass周りとプロパティをコピーするというなんちゃって継承がウリ（？）だったわけですが、1.6からは違います。もう <a href="http://inforno.net/articles/2006/01/24/inheritance-in-prototype-with-ease">オレオレクラス定義ライブラリ</a> をわざわざ使わなくても大丈夫。</p>
-
 <p>公式にも例がありますが、こんな感じでちゃんと継承できるようになりました。</p>
-
-<pre class="prettyprint"><code>var Animal = Class.create({
-  initialize: function(name) {
-    this.name = name;
-  },
-  eat: function() {
-    return this.say(&quot;Yum!&quot;);
-  },
-  say: function(message) {
-    return this.name + &quot;: &quot; + message;
-  }
-});
-
-var Eatable = {
-  eaten : function() {
-    return this.say(&quot;help me!!!&quot;);
-  }
-}
-
-var Mouse = Class.create(Animal, {
-});
-//syntax sugar for Object.extend
-Class.mixin(Mouse.prototype, Eatable);
-
-// subclass that augments a method
-var Cat = Class.create(Animal, {
-  eat: function($super, food) {
-    if (food instanceof Mouse) return [food.eaten(),$super()].join(&quot;\n&quot;);
-    else return this.say(&quot;Yuk! I only eat mice.&quot;);
-  }
-});
-
-var a = new Cat(&quot;Tama&quot;);
-alert(a.eat(new Mouse(&quot;Nezumy mouse&quot;)));
-</code></pre>
-
-<p>単にプロトタイプチェーンをつなげるだけではなくて、オーバライドされたメソッドの引数名を取得して（toStringしてgrepですね)、$superだった場合、自動的に親クラスのメソッドを$superとして渡してくれます。地味に便利。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>var Animal = Class.create({
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  initialize: function(name) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    this.name = name;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  eat: function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    return this.say(&#34;Yum!&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  },
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  say: function(message) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    return this.name + &#34;: &#34; + message;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>var Eatable = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  eaten : function() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    return this.say(&#34;help me!!!&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>var Mouse = Class.create(Animal, {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>//syntax sugar for Object.extend
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>Class.mixin(Mouse.prototype, Eatable);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>// subclass that augments a method
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>var Cat = Class.create(Animal, {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  eat: function($super, food) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>    if (food instanceof Mouse) return [food.eaten(),$super()].join(&#34;\n&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    else return this.say(&#34;Yuk! I only eat mice.&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>var a = new Cat(&#34;Tama&#34;);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>alert(a.eat(new Mouse(&#34;Nezumy mouse&#34;)));
+</span></span></code></pre><p>単にプロトタイプチェーンをつなげるだけではなくて、オーバライドされたメソッドの引数名を取得して（toStringしてgrepですね)、$superだった場合、自動的に親クラスのメソッドを$superとして渡してくれます。地味に便利。</p>
 <p>あとはsyntax sugarとしてClass.mixinがあります。まぁObject.extendなんですが、こっちの方がわかりやすいですよね。 　</p>
-
 <p>　</p>
-
 <p>　 そのほかもいっぱい機能が追加れさてれてますね。個人的には <code>document.observe(&quot;contentloaded&quot;, function() { ... })</code> て感じでサポートされたDOM完了時点でのイベントと、</p>
-
-<pre class="prettyprint"><code>$(&quot;container&quot;).observe(&quot;titleChanged&quot;, function(event) {
-  this.highlight({ duration: 0.5 });
-});
-
-$(&quot;title&quot;).fire(&quot;titleChanged&quot;);
-</code></pre>
-
-<p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>$(&#34;container&#34;).observe(&#34;titleChanged&#34;, function(event) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  this.highlight({ duration: 0.5 });
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>$(&#34;title&#34;).fire(&#34;titleChanged&#34;);
+</span></span></code></pre><p>って感じのカスタムイベントが必ず使いそうな機能かな。</p>
+<hr>
 <p>資格の勉強とかもそろそろしなきゃなー、と思いつつ、Scalaでパーサコンビネータライブラリがついたので、Schemeの処理系でも実装したいなあ、と思い始めてる今日この頃。</p>
 
   </div>

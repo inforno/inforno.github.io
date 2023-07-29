@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,44 +69,32 @@
 </header>
   <div itemprop="articleBody">
     <p>Windows XPを使用していると、とにかく開いているフォルダでcmd.exeを起動したい、となることは多いです。</p>
-
 <p>よくあるのは右クリックから開く、というやつ。まぁ当然、キーボード派の私にはありえない選択です。</p>
-
 <p>んで、昔からCのプログラムとWSHをくみあわせてキーボードから開けるようにしていたのですが、やっぱWSHが絡むので遅い。</p>
-
 <p>というわけでCだけで作ってみました。せっかくなのでおいておきます。</p>
-
-<h1>ダウンロード</h1>
-
+<h1 id="heading">ダウンロード</h1>
 <p><a href="/statics/files/explorexe.zip">explorexe.zip</a></p>
-
-<h1>使い方</h1>
-
+<h1 id="heading-1">使い方</h1>
 <p>解凍してできたexplorexe.exeのショートカットをデスクトップにつくります。</p>
-
 <p>んで、ショートカットを右クリックして、</p>
-
 <ul>
-<li><p>「リンク先」で <code>cmd.exe /k cd /d %s</code> を後ろに追加します。</p>
-
+<li>
+<p>「リンク先」で <code>cmd.exe /k cd /d %s</code> を後ろに追加します。</p>
 <ul>
 <li>例: <code>C:\Documents and Settings\yourname\デスクトップ\explorexe.exe cmd.exe /k cd /d %s</code></li>
-</ul></li>
-
-<li><p>「ショートカットキー」を適当に設定します。</p>
-
+</ul>
+</li>
+<li>
+<p>「ショートカットキー」を適当に設定します。</p>
 <ul>
 <li>例:Ctrl + Alt + C</li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
 <p>これでOK。あとはエクスプローラを表示して、 <code>Ctrl + Alt + C</code> を押せばそのエクスプローラに表示されているフォルダをカレントにしてcmd.exeが開きます。</p>
-
 <p>あとは、コマンドライン型ランチャーなんかに同様に登録するとめっさ快適です。</p>
-
-<h1>応用？</h1>
-
-<p>えー、見てのとおり引数の文字列に <code>printf</code> しているだけなので、cmd.exe以外にも使えます。 <code>%s</code> にあたるカレントフォルダのパスは空白が含まれている場合は自動的に「&rdquo;」で囲まれます。</p>
+<h1 id="heading-2">応用？</h1>
+<p>えー、見てのとおり引数の文字列に <code>printf</code> しているだけなので、cmd.exe以外にも使えます。 <code>%s</code> にあたるカレントフォルダのパスは空白が含まれている場合は自動的に「&quot;」で囲まれます。</p>
 
 
     <div class="seealso">
@@ -122,7 +108,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2009/06/28/open-cmd-here" class="hatena-bookmark-button" data-hatena-bookmark-title="一瞬で今いるフォルダでcmd.exeを開く" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2009/06/28/open-cmd-here" class="hatena-bookmark-button" data-hatena-bookmark-title="一瞬で今いるフォルダでcmd.exeを開く" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

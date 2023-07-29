@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,68 +73,53 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://inforno.net/articles/2008/07/04/strong-arm-approach-toward-gae-transactions">前のエントリー</a> でGAEにおけるトランザクションの問題は一応解決をみた。</p>
-
 <p>その後、GAEで開発を続けた結果、やはりGAEにブログを移行するのは断念した。理由としては</p>
-
 <ul>
 <li><code>os.listdir</code> などで不審な挙動が見られた</li>
 <li>スキーマを変更したときが非常に面倒</li>
 <li>インポート、エクスポートの難しさ</li>
 </ul>
-
 <p>が主なところ。</p>
-
 <p><code>os.listdir</code> については、web.pyでテンプレートを検索するときに <code>os.listdir</code> を使っているのだけど、どうも動きが怪しい。正しくファイルリストが帰ってきたり帰ってこなかったりするのだ。何回も本番にアップして試したところ、 <code>os.listdir(&quot;hoge&quot;);os.listdir(&quot;hoge&quot;)</code> というように同じ内容で2回連続で呼び出すとなぜか確実にファイルリストが帰ってくる、という･･･これはちょっと･･･</p>
-
 <p>スキーマの変更に関しては、まんま。変更したとき、それを本番に反映させるのがめんどくさい。</p>
-
 <p>インポートエクスポートも負荷を考えるとしんどい。現在もWEBはレンタルサーバで運用しているのでわざわざGAEにもっていく旨みもない。</p>
-
 <p>ということでせっかくブログをつくったのに移行をやめたのである。</p>
-
-<hr />
-
+<hr>
 <p>しかし、せっかく作ったのにもったいない。ということで今度はGAE用につくったブログを普通にMySQLを使うようにポーティングした。今回はそれに試験的に移行してみたのだ。</p>
-
 <p>なぜWordpressからわざわざ独自ブログソフトウェアに移行したのか。理由は前のエントリーにも書いたとおりだけど</p>
-
 <ul>
-<li>Wordpressのコードが気に食わない（OSSとしてバランスをとっている、というのはあるんですが）</li>
-<li>使用しているテンプレートや、プラグインも含めると出力されるHTMLが汚い。</li>
-
-<li><p>ついている機能の半分以上は使っていない。ブログライトユーザの俺には機能が多すぎる。</p>
-
+<li>
+<p>Wordpressのコードが気に食わない（OSSとしてバランスをとっている、というのはあるんですが）</p>
+</li>
+<li>
+<p>使用しているテンプレートや、プラグインも含めると出力されるHTMLが汚い。</p>
+</li>
+<li>
+<p>ついている機能の半分以上は使っていない。ブログライトユーザの俺には機能が多すぎる。</p>
 <ul>
 <li>自分の使う機能が固まった。それさえあれば俺には十分とわかり始めた。</li>
-</ul></li>
-
-<li><p>セキュリティ的にもWordpressはターゲットになっていて微妙。</p></li>
 </ul>
-
+</li>
+<li>
+<p>セキュリティ的にもWordpressはターゲットになっていて微妙。</p>
+</li>
+</ul>
 <p>以上のようなところをふまえ</p>
-
 <ul>
 <li>明快なコード。</li>
 <li>キレイなXHTML。</li>
 <li>自分が使う機能だけ実装。</li>
 <li>堅牢なコード。</li>
 </ul>
-
 <p>ということを心がけた。またレンタルサーバで動かすということで</p>
-
 <ul>
 <li>なるべく静的HTMLとしてキャッシュしてmod_rewriteで飛ばす</li>
 <li>見た目や外部連携に関する動的な部分はなるべくクライアントサイドで</li>
 </ul>
-
 <p>ということにも気を配った。</p>
-
 <p>このブログは3年目に入るのだけど、やはりWEBの世界というのは流れが速いもので大分変化があった。その中で、外部連携はほぼJSONPで行えるようになったのでサーバサイドでやらなくても良くなった。今回実装したブログでは各SBMのブクマ数を表示しているけど、これも全てJSONPでクライアントサイドで実現している。それに対し、旧ブログ(Wordpress)ではサーバサイドで定期的に取得していた。</p>
-
 <p>という感じで出来上がったのがこのブログだ。もうひとつ、実はこのブログ、XREAでしかもPython2.5で動かしている。あれ、XREAでPython2.5使えたっけ、というあなた。実は簡単に使えちゃうワザがあるんですよ。それについては、また。</p>
-
-<hr />
-
+<hr>
 <p>あまりテストもせず試験的に移行してみたのでおかしい部分もあるかと思いますが、そこはおいおい。パーマリンクはそのままになっていると思います。基本的にURLは変更していません。また、CGIで動かしていますので、負荷が高ければ前のに戻す予定です。</p>
 
 
@@ -153,7 +136,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/07/28/use-my-own-blog-software-on-a-trial-basis" class="hatena-bookmark-button" data-hatena-bookmark-title="試験的に自作ブログに移行しました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/07/28/use-my-own-blog-software-on-a-trial-basis" class="hatena-bookmark-button" data-hatena-bookmark-title="試験的に自作ブログに移行しました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

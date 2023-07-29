@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,145 +71,118 @@
 </header>
   <div itemprop="articleBody">
     <p>Go言語は標準の <code>net/http</code> が結構よくできてるので、WEBフレームワークはなくてもいいだとかそういう話がありますし、 <code>net/http</code> をラップした俺俺フレームワークが大量に作られています。</p>
-
 <p>というわけで、俺も遅ればせながら俺俺フレームワークを作りました。</p>
-
 <ul>
 <li><a href="http://yuin.github.io/cidre/">cidre</a></li>
 </ul>
-
 <p>読み方は「シードル」。お酒の名前つけるのが慣習ですからね。よくあるこんな感じ。</p>
-
-<pre class="prettyprint"><code>package main
-
-import (
-  &quot;github.com/yuin/cidre&quot;
-  &quot;net/http&quot;
-)
-
-func main() {
-    app := cidre.NewApp(cidre.DefaultAppConfig())
-    root := app.MountPoint(&quot;/&quot;)
-
-    root.Get(&quot;show_welcome&quot;, &quot;welcome&quot;, func(w http.ResponseWriter, r *http.Request) {
-        app.Renderer.Text(w, &quot;Welcome!&quot;)
-    })
-
-    app.Run()
-}
-</code></pre>
-
-<h1>特徴</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  <span style="color:#e6db74">&#34;github.com/yuin/cidre&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  <span style="color:#e6db74">&#34;net/http&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#a6e22e">app</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">cidre</span>.<span style="color:#a6e22e">NewApp</span>(<span style="color:#a6e22e">cidre</span>.<span style="color:#a6e22e">DefaultAppConfig</span>())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    <span style="color:#a6e22e">root</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">app</span>.<span style="color:#a6e22e">MountPoint</span>(<span style="color:#e6db74">&#34;/&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    <span style="color:#a6e22e">root</span>.<span style="color:#a6e22e">Get</span>(<span style="color:#e6db74">&#34;show_welcome&#34;</span>, <span style="color:#e6db74">&#34;welcome&#34;</span>, <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">w</span> <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">ResponseWriter</span>, <span style="color:#a6e22e">r</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">Request</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>        <span style="color:#a6e22e">app</span>.<span style="color:#a6e22e">Renderer</span>.<span style="color:#a6e22e">Text</span>(<span style="color:#a6e22e">w</span>, <span style="color:#e6db74">&#34;Welcome!&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    <span style="color:#a6e22e">app</span>.<span style="color:#a6e22e">Run</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>}
+</span></span></code></pre><h1 id="heading">特徴</h1>
 <ul>
-<li>よくあるSinatraチックなAPI</li>
-<li>できるだけ標準インタフェースを使用。いろんな既存ライブラリとの相性が良い。</li>
-
-<li><p>他の薄いフレームワークではオプションな機能も一部内包。</p>
-
+<li>
+<p>よくあるSinatraチックなAPI</p>
+</li>
+<li>
+<p>できるだけ標準インタフェースを使用。いろんな既存ライブラリとの相性が良い。</p>
+</li>
+<li>
+<p>他の薄いフレームワークではオプションな機能も一部内包。</p>
 <ul>
 <li>セッション、フラッシュメッセージ</li>
 <li>レイアウト機能をサポートした <code>html/template</code> のラッパー</li>
-</ul></li>
-
-<li><p>フック機能を提供していて、より柔軟に外部から拡張可能。</p></li>
 </ul>
-
-<h1>開発経緯</h1>
-
+</li>
+<li>
+<p>フック機能を提供していて、より柔軟に外部から拡張可能。</p>
+</li>
+</ul>
+<h1 id="heading-1">開発経緯</h1>
 <p>そもそもPythonistaの御多聞にもれず、2と3のはざまでもだえる中でGo言語書くことが多くなってたんですね。んでWEBもGo言語でさらっと書きたい、と。</p>
-
 <p>Go言語のWEBフレームワークはいっぱいあって、軽量だとMartiniだとかGinだとかnegroniだとか、重量級だとbeegoだとかrevelだとか。俺の好みとしてやっぱりシンプルなものが好きなので軽量フレームワークを使いたいところだけど、Martiniはtoo magicだし、Ginは40 times fasterってのが詐欺っぽいし、negroniはツールであってフレームワークじゃないと言っているしで、あんまりしっくりくるのがありませんでした。</p>
-
 <p>なので自分が最低限必要と思う機能を組み込んだフレームワークを作ったわけです。ミドルウェアで対応できるけど組み込まれてたほうが楽だし。SPAが流行ってるって言ってもさらっと作るときはフラッシュメッセージが楽だし、設定は外出ししときたいし、とか。</p>
-
 <p>基本的に <code>http.Handler</code> (もしくは <code>http.HandlerFunc</code> )で構成されるので他のいわゆる「ミドルウェア」と呼ばれているものもすんなり組み込めます。せっかく組み込みライブラリがよくできてるんだから、なるべくフレームワーク特有のことは覚えたくないのもある。</p>
-
 <p>テンプレートエンジンやSessionストアやロガーはInterfaceなので差し替え可能です。</p>
-
 <p>あと、適当に今風のプロジェクトページ作りました。</p>
-
-<h1>開発中に思ったこと</h1>
-
+<h1 id="heading-2">開発中に思ったこと</h1>
 <p>俺俺フレームワークを書きたい方のために、cidreを書いてる時に思ったこと、検討したことを書いておきます。</p>
-
-<h2>Contextの持ち方</h2>
-
+<h2 id="context">Contextの持ち方</h2>
 <p>どのフレームワークも <code>Context</code> という構造体がだいたいある。これは入れ子になってる <code>http.Handler</code> 間でデータを受け渡すのが主目的だ。</p>
-
 <p>でContextの考え方は3種類ある。</p>
-
 <ul>
-<li>1. <code>http.Handler</code> インタフェースを使わず独自インタフェースをつくって引数として渡す。</li>
-<li>2. <a href="https://github.com/gorilla/context">Gorilla context</a> のようなスレッドローカル変数を使う。</li>
-<li>1.  <code>http.Handler#ServeHTTP</code> の引数である <code>http.ResponseWriter</code> か <code>http.Request</code> のどこかに埋め込む。</li>
+<li>
+<ol>
+<li><code>http.Handler</code> インタフェースを使わず独自インタフェースをつくって引数として渡す。</li>
+</ol>
+</li>
+<li>
+<ol start="2">
+<li><a href="https://github.com/gorilla/context">Gorilla context</a> のようなスレッドローカル変数を使う。</li>
+</ol>
+</li>
+<li>
+<ol>
+<li><code>http.Handler#ServeHTTP</code> の引数である <code>http.ResponseWriter</code> か <code>http.Request</code> のどこかに埋め込む。</li>
+</ol>
+</li>
 </ul>
-
 <p>1はGinやnegroniなど大半のフレームワークが採用している方法。これはこれでシンプルでよい。ただし独自インタフェースになる。</p>
-
 <p>2はスレッドローカルにするためにgoなのにLock, Unlockが走りまくるのが難点だが見た目すごくクリーン。</p>
-
 <p>3は生成時にトリックが必要だけど標準インタフェースを使えて、ロックも発生しない。というわけでcidreは3の方式をとっている。Goで外部からオブジェクトを埋め込むためには</p>
-
 <ul>
 <li>それがインタフェースで</li>
 <li>Public</li>
 </ul>
-
 <p>じゃないといけない。というわけで <code>http.Request#Body</code> に埋め込んでいる。</p>
-
-<h2>拡張性</h2>
-
+<h2 id="heading-3">拡張性</h2>
 <p><a href="http://justinas.org/writing-http-middleware-in-go/">Writing HTTP Middleware in Go</a> という記事があるように、 <code>http.Handler</code> をPythonのWSGIミドルウェアのように扱う、というのは標準的な考え方だろう。</p>
-
 <p>ただ、結局この方式はただのフィルタであって柔軟性がない。HTTPボディを書く前に処理を差し込みたい、とかできない。正確にはできないことないけどめんどくさい(独自ResponseWriterを作って次のミドルウェアに渡すことになる)。Martiniでは独自ResponseWriterにコールバックが設定できるようになっていてHTTPボディ書く前にヘッダ書くというのができる。</p>
-
 <p>でも結局そういうポイントって随所にあって、統一的に扱える仕組みがあったほうがよいと思う。のでHookの仕組みをつくってサーバ起動時、とかいろんなところをフックできるようにしてある。</p>
-
-<h2>設定オブジェクト</h2>
-
+<h2 id="heading-4">設定オブジェクト</h2>
 <p>これは何を今さら、な話で設定を表すオブジェクトをどう扱うか、ということ。例えば以下のようなstructがあるとして</p>
-
-<pre class="prettyprint"><code>type Config struct {
-    Host string
-    Port int
-    Timeout time.Duration
-}
-</code></pre>
-
-<p>これにどうデフォルト値を適応するかっていうこと。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>type Config struct {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    Host string
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    Port int
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>    Timeout time.Duration
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>}
+</span></span></code></pre><p>これにどうデフォルト値を適応するかっていうこと。</p>
 <p>スクリプト言語ならundefinedなりnullなりnilなり未初期化を表す共通の値があるので、よいのだがCやGoではintは初期値0だし、0と設定したのか未設定なのかわからない。</p>
-
 <p>なので以下のようなデフォルト設定を返す関数をつくってそれに設定を追加していく形がよいと思う。</p>
-
-<pre class="prettyprint"><code>func DefaultConfig(init ...func(*Config)) *Config {
-    self := &amp;Config {
-        Host: &quot;localhost&quot;,
-        Port: &quot;8080&quot;,
-        Timeout: 180 * time.Second,
-    }
-    if len(init) &gt; 0 {
-        init[0](self)
-    }
-    return self
-}
-
-config := DefaultConfig()
-config.Timeout = 0
-</code></pre>
-
-<p>あと利便性のためこういう書き方もできるようにしてある。</p>
-
-<pre class="prettyprint"><code>app := NewApp(DefaultConfig(func (config *Config){
-    config.Timeout = 0
-})
-</code></pre>
-
-<p>といろいろあるけどこんなところで。</p>
-
-<h1>今後について</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>func DefaultConfig(init ...func(*Config)) *Config {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    self := &amp;Config {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>        Host: &#34;localhost&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>        Port: &#34;8080&#34;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>        Timeout: 180 * time.Second,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    if len(init) &gt; 0 {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>        init[0](self)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    return self
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>config := DefaultConfig()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>config.Timeout = 0
+</span></span></code></pre><p>あと利便性のためこういう書き方もできるようにしてある。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>app := NewApp(DefaultConfig(func (config *Config){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    config.Timeout = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>})
+</span></span></code></pre><p>といろいろあるけどこんなところで。</p>
+<h1 id="heading-5">今後について</h1>
 <p>今後も細々メンテしていくつもりですし、ミドルウェアなんかも追加していきたいなあと思っています。やっぱGo言語はさらっと書けるそれなりに速いし、いいっす。</p>
 
 
@@ -228,7 +199,7 @@ config.Timeout = 0
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2014/10/06/cidre-my-new-webframework-in-golang" class="hatena-bookmark-button" data-hatena-bookmark-title="cidre: 軽量Go言語用WEBフレームワーク" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2014/10/06/cidre-my-new-webframework-in-golang" class="hatena-bookmark-button" data-hatena-bookmark-title="cidre: 軽量Go言語用WEBフレームワーク" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,90 +71,75 @@
 </header>
   <div itemprop="articleBody">
     <p>なんの幸運か、Softbank（しかもJ-phone時代からの）ユーザだったので、SMS認証もアッサリ通ってGAEのアカウントをゲットしたわけですが･･･（ただしiPhoneには興味ほぼなし)。</p>
-
 <p>というわけで <a href="http://www.metareal.org/2008/05/20/porting-weblog-to-google-app-engine/">ishikawaさんがブログをGAEに移行された</a> 、というのを知って俺も移行しようかなあとか思いつつブログアプリ作りました。すでに今ブログで使っている機能は全て実装済みだったりします。デザインも全頁XHTMLTr validでCSSもvalidなことを確認済みだったりします。しかも <code>Django</code> じゃなくて <code>web.py</code> だったりします。慣れてるしね。</p>
-
 <p>それはおいといて、データストアまわりがそのままだと</p>
-
 <ul>
 <li><code>filter(&quot;hoge =&quot;, value)</code> が長ったらしい</li>
 <li>CRUDが微妙。</li>
 <li>フォーム作成用等に空のモデルを一時的に作成したいけど、作成した時点でvalidateされるので作成できない</li>
 </ul>
-
 <p>らへんがいまいちだったで、ちょっといじってみました。</p>
-
-<pre class="prettyprint"><code>def _getattr(self, name):
-  if name.endswith(&quot;_eq&quot;):
-    return lambda v: self.filter(&quot;%s =&quot;%name[:-3], v)
-  raise AttributeError(name)
-setattr(db.Query, &quot;__getattr__&quot;, _getattr)
-
-class ModelMixin(object):
-
-  default_order = None
-  _stab_class = None
-
-  @classmethod
-  def stab(cls):
-    if not cls._stab_class:
-      stab = type('Stab%s'%cls.__name__, (cls,), dict())
-      for k,v in stab._properties.iteritems():
-        v.required = False
-        v.choice   = None
-        v.validator= None
-      cls._stab_class = stab
-    stab = cls._stab_class()
-    for k,v in stab._properties.iteritems():
-      v.__set__(stab, v.default_value())
-    return stab
-
-  @classmethod
-  def create(cls, *a, **k):
-    obj = cls(*a, **k)
-    obj.put()
-    return obj
-
-  @classmethod
-  def find_all(cls):
-    result = cls.all()
-    if cls.default_order is not None:
-      return result.order(cls.default_order)
-    return result
-
-  def update(self, **k):
-    for prop in self.properties().values():
-      if prop.name in k:
-        prop.__set__(self, k[prop.name])
-    self.put()
-
-  def destroy(self):
-    self.delete()
-</code></pre>
-
-<p>これで</p>
-
-<pre class="prettyprint"><code>class Test(ModelMixin, db.Model):
-  name = db.StringProperty(require=True)
-  created_at = db.DatetTmeProperty(auto_now_add=True)
-
-  default_order=&quot;-created_at&quot;
-
-Test.find_all() # created_atの降順
-Test.all().name_eq(&quot;user&quot;).update(created_at = datetime.now())
-stab = Test.stab() #nameがなくても作成できる
-</code></pre>
-
-<p>こんな感じにかけます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>def _getattr(self, name):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  if name.endswith(&#34;_eq&#34;):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    return lambda v: self.filter(&#34;%s =&#34;%name[:-3], v)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  raise AttributeError(name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>setattr(db.Query, &#34;__getattr__&#34;, _getattr)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>class ModelMixin(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  default_order = None
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  _stab_class = None
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  @classmethod
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  def stab(cls):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    if not cls._stab_class:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>      stab = type(&#39;Stab%s&#39;%cls.__name__, (cls,), dict())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>      for k,v in stab._properties.iteritems():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>        v.required = False
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>        v.choice   = None
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>        v.validator= None
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>      cls._stab_class = stab
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    stab = cls._stab_class()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>    for k,v in stab._properties.iteritems():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>      v.__set__(stab, v.default_value())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>    return stab
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  @classmethod
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>  def create(cls, *a, **k):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    obj = cls(*a, **k)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>    obj.put()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>    return obj
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>  @classmethod
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>  def find_all(cls):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>    result = cls.all()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>    if cls.default_order is not None:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>      return result.order(cls.default_order)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>    return result
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>  def update(self, **k):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>    for prop in self.properties().values():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>      if prop.name in k:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>        prop.__set__(self, k[prop.name])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>    self.put()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>  def destroy(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>    self.delete()
+</span></span></code></pre><p>これで</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>class Test(ModelMixin, db.Model):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  name = db.StringProperty(require=True)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>  created_at = db.DatetTmeProperty(auto_now_add=True)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>  default_order=&#34;-created_at&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>Test.find_all() # created_atの降順
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>Test.all().name_eq(&#34;user&#34;).update(created_at = datetime.now())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>stab = Test.stab() #nameがなくても作成できる
+</span></span></code></pre><p>こんな感じにかけます。</p>
 <p>さて、そんなこんなでブログアプリを作ったのはいいんだけど、なんとなく移行する気にならない。現在はWordpressで運用しているけど、正直セキュリティホールは多いし、ソースコードを見ると泣きたくなるようなコードだし、頻繁なバージョンアップはめんどくさい･･･。プラグインのセキュリティホールまで考えるとなおめんどくさい。しかもそこまで機能を使い倒しているわけじゃないし。</p>
-
 <p>だからGAEにでも移行したいんだけど･･･。データがGoogleに握られるのはそこまで心配じゃない。ブログサービスでブログをやれば、そのブログサービス事業者にデータを握られるってのと同じだから気にならないんだな。移行作業自体も記事数がかなり少ないのでそんなにめんどくさそうではない。</p>
-
 <p>ひとつ引っかかっているのはトランザクションの問題。まぁめったにトランザクションで問題はおきないと思うけど、GAEのトランザクションは一応ある、といった程度でほとんど使えない。使おうとしたらtransactionの中でこれはしちゃだめ、これもしちゃだめ、とおこられまくったので現在トランザクション管理ができていない。GAEには集約系のメソッドがないので、月別記事数とか、タグ別記事数とかを記事のCRUD時に別モデルで管理しているわけだけど、ここのトランザクションが管理できないのは結構不安。</p>
-
 <p>もうひとつはなんとなーく使い切らないんだけど無料の上限である500Mという容量が微妙。画像のアップとかしなけりゃまず大丈夫なんだけど。</p>
-
 <p>その他にもなんとなくGoogleの罠じゃないかとかいろいろ気になって移行に踏み切れないでいる今日この頃。実際に本格的にGAEに移行した人の感想がききたいなあ。</p>
 
 
@@ -173,7 +156,7 @@ stab = Test.stab() #nameがなくても作成できる
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/06/30/gae-model-improvements" class="hatena-bookmark-button" data-hatena-bookmark-title="GoogleAppEngineのモデルをいじってみた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/06/30/gae-model-improvements" class="hatena-bookmark-button" data-hatena-bookmark-title="GoogleAppEngineのモデルをいじってみた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,170 +71,145 @@
 </header>
   <div itemprop="articleBody">
     <p>Googleが <a href="http://golang.org/">Goという新しいプログラミング言語</a> を出したようで。早速、インストールして軽くドキュメントを流し読みしてみました。</p>
-
 <p>英語なんて読みたくないよ、という人もいるかもしれないし、誰かの役に立つかもしれないので自分用メモおいときます。完全に自分用なんである程度他の言語の知識がある人向けな上、ざっくり流し読みなんで間違ってるかも。</p>
-
-<h1>どんな言語？</h1>
-
+<h1 id="heading">どんな言語？</h1>
 <ul>
-<li>ネイティブコードを吐く、コンパイル型。</li>
-<li>速度はCレベル。</li>
-<li>GC搭載。ポインタはあるけど、ポインタ演算はできません。</li>
-
-<li><p>各種アーキに最適化された、それぞれのコンパイラセットを持ちます。例：</p>
-
+<li>
+<p>ネイティブコードを吐く、コンパイル型。</p>
+</li>
+<li>
+<p>速度はCレベル。</p>
+</li>
+<li>
+<p>GC搭載。ポインタはあるけど、ポインタ演算はできません。</p>
+</li>
+<li>
+<p>各種アーキに最適化された、それぞれのコンパイラセットを持ちます。例：</p>
 <ul>
 <li>6g, 6l : amd64</li>
 <li>8g, 8l : i386</li>
-</ul></li>
-
-<li><p>linux, mac, naclに対応。</p></li>
-
-<li><p>動的型言語と静的型言語のおいしいとこどり。</p></li>
-
-<li><p>concurrent処理が組み込まれてます。</p></li>
 </ul>
-
-<h1>個人的雑感</h1>
-
+</li>
+<li>
+<p>linux, mac, naclに対応。</p>
+</li>
+<li>
+<p>動的型言語と静的型言語のおいしいとこどり。</p>
+</li>
+<li>
+<p>concurrent処理が組み込まれてます。</p>
+</li>
+</ul>
+<h1 id="heading-1">個人的雑感</h1>
 <ul>
-<li><p>こんな言語設計思想かなあと感じたり</p>
-
+<li>
+<p>こんな言語設計思想かなあと感じたり</p>
 <ul>
-<li><p>とにかく、シンプルな言語に。</p>
-
+<li>
+<p>とにかく、シンプルな言語に。</p>
 <ul>
-<li><p>C++の複雑な部分などはできるだけはずしているような。</p>
-
+<li>C++の複雑な部分などはできるだけはずしているような。
 <ul>
-<li><p>いわゆるクラスベースのオブジェクト指向はない。</p>
-
+<li>
+<p>いわゆるクラスベースのオブジェクト指向はない。</p>
 <ul>
 <li>継承はない。</li>
 <li>あるのはフラットなインタフェース空間のみ。</li>
-</ul></li>
-
-<li><p>例外もない。</p></li>
-</ul></li>
-</ul></li>
-
-<li><p>低レイヤからは離れすぎたくない。</p></li>
-
-<li><p>concurrentを言語的にサポートしたい。</p></li>
-</ul></li>
-
-<li><p>以下の言語からの影響を感じたり</p>
-
+</ul>
+</li>
+<li>
+<p>例外もない。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>低レイヤからは離れすぎたくない。</p>
+</li>
+<li>
+<p>concurrentを言語的にサポートしたい。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>以下の言語からの影響を感じたり</p>
 <ul>
 <li>言語コアはC。</li>
 <li>C++はパッケージの書き方、記法に影響がみられる。</li>
 <li>命名規則や記法にPythonの影響がみられる。</li>
 <li>concurrentな部分はErlangから影響をうけている。</li>
-</ul></li>
 </ul>
-
-<h1>言語仕様</h1>
-
+</li>
+</ul>
+<h1 id="heading-2">言語仕様</h1>
 <p>自分なりに簡単にまとめて見ます。</p>
-
-<h2>変数への代入</h2>
-
+<h2 id="heading-3">変数への代入</h2>
 <p>下へ行くほど省略形。 <code>var</code> もあるから <code>const</code> もあるでよ。</p>
-
-<pre class="prettyprint"><code>var s string = &quot;&quot;;
-var s = &quot;&quot;;
-s := &quot;&quot;;
-</code></pre>
-
-<h2>オブジェクト構造</h2>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>var s string = &#34;&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>var s = &#34;&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>s := &#34;&#34;;
+</span></span></code></pre><h2 id="heading-4">オブジェクト構造</h2>
 <p>値扱いの型と参照型があります。</p>
-
 <ul>
-<li><p>値扱い : 代入、関数への私はコピーとなる。配列もまるごとコピーされる。</p>
-
+<li>
+<p>値扱い : 代入、関数への私はコピーとなる。配列もまるごとコピーされる。</p>
 <ul>
 <li>各種数値 : <code>int</code> , <code>float</code> といったプラットフォームごとにサイズがきまる型と <code>int32</code> のようにサイズ固定の型。</li>
 <li><code>string</code> : 不変、UTF8、ただのバイト配列</li>
 <li>配列</li>
 <li><code>struct</code> : ユーザ定義型</li>
 <li>などなど</li>
-</ul></li>
-
-<li><p>参照 : 3つのみ</p>
-
+</ul>
+</li>
+<li>
+<p>参照 : 3つのみ</p>
 <ul>
 <li><code>map</code> : 辞書</li>
 <li><code>slice</code> : 明示的なサイズを持たない、配列のようなもの</li>
 <li><code>channel</code> : concurrentで使う</li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
 <p>値扱い型のアロケート方法 : <code>new -&gt; T*</code> を返す</p>
-
-<pre class="prettyprint"><code>var t *T = new(T);
-</code></pre>
-
-<p>参照型のアロケート方法 : <code>make -&gt; T</code> を返す</p>
-
-<pre class="prettyprint"><code>m := make(map[string]int);
-// これはダメ
-var m map[string]int;
-</code></pre>
-
-<h2>配列とスライス</h2>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>var t *T = new(T);
+</span></span></code></pre><p>参照型のアロケート方法 : <code>make -&gt; T</code> を返す</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>m := make(map[string]int);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>// これはダメ
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>var m map[string]int;
+</span></span></code></pre><h2 id="heading-5">配列とスライス</h2>
 <ul>
 <li>配列は「値」。でユーザがメモリ構造などを読める。スライスはコンパイラがよしなに確保する、参照型。</li>
 </ul>
-
 <p>例えば <code>int</code> 型配列のポインタを受け取る場合。</p>
-
 <p>標準配列(&amp;がいる)</p>
-
-<pre class="prettyprint"><code>s := sum(&amp;[3]int{1,2,3});
-s := sum(&amp;[...]int{1,2,3});
-</code></pre>
-
-<p>スライス</p>
-
-<pre class="prettyprint"><code>s := sum([]int{1,2,3});
-</code></pre>
-
-<h2>辞書型</h2>
-
-<pre class="prettyprint"><code>timeZone := map[string]int{
-  &quot;UTC&quot;: 0*60*60,
-  &quot;EST&quot;: -5*60*60,
-  &quot;CST&quot;: -6*60*60,
-  &quot;MST&quot;: -7*60*60,
-  &quot;PST&quot;: -8*60*60,
-}
-
-seconds, ok = timeZone[tz]
-//値がなければokはfalse
-if seconds, ok := timeZone[tz]; ok {
-    return seconds
-}
-//消す場合
-timeZone[&quot;UTC&quot;] = 0, false;
-</code></pre>
-
-<h2>パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h2>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>s := sum(&amp;[3]int{1,2,3});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>s := sum(&amp;[...]int{1,2,3});
+</span></span></code></pre><p>スライス</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>s := sum([]int{1,2,3});
+</span></span></code></pre><h2 id="heading-6">辞書型</h2>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>timeZone := map[string]int{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  &#34;UTC&#34;: 0*60*60,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  &#34;EST&#34;: -5*60*60,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  &#34;CST&#34;: -6*60*60,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  &#34;MST&#34;: -7*60*60,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  &#34;PST&#34;: -8*60*60,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>seconds, ok = timeZone[tz]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>//値がなければokはfalse
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>if seconds, ok := timeZone[tz]; ok {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    return seconds
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>//消す場合
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>timeZone[&#34;UTC&#34;] = 0, false;
+</span></span></code></pre><h2 id="heading-7">パッケージ、制御構造、型定義、関数とメソッド、インタフェース</h2>
 <p>命名規則に特徴があります。 <strong>大文字始まり以外は外部から見えない</strong> が原則。単なる命名規則ではなく、そういう仕様。</p>
-
-<h3>パッケージ</h3>
-
+<h3 id="heading-8">パッケージ</h3>
 <p>パッケージ文でファイルの先頭に書きます。これが基本的な単位となります。</p>
-
-<pre class="prettyprint"><code>package file
-</code></pre>
-
-<h3>制御構造</h3>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">file</span>
+</span></span></code></pre><h3 id="heading-9">制御構造</h3>
 <p>特徴は</p>
-
 <ul>
 <li>()がいらない。</li>
 <li><code>if</code> や <code>switch</code> などの条件部に複数の文がかける</li>
@@ -244,211 +217,145 @@ timeZone[&quot;UTC&quot;] = 0, false;
 <li><code>switch</code> が強力に(内容的にif-else if-elseチェイン)</li>
 <li>concurrent用に <code>select</code> がある</li>
 </ul>
-
 <p>という点。かと。</p>
-
 <p>ifの例</p>
-
-<pre class="prettyprint"><code>if i % prime != 0 {
-    fmt.Printf(&quot;%d&quot;, i);
-}
-</code></pre>
-
-<p>switchの例</p>
-
-<pre class="prettyprint"><code>switch nr, er := f.Read(&amp;buf); true {
-           case nr &lt; 0:
-               fmt.Fprintf(os.Stderr, &quot;cat: error reading from %s: %s\n&quot;, f.String(), er.String());
-               os.Exit(1);
-           case nr == 0: // EOF
-               return;
-           case nr &gt; 0:
-               if nw, ew := file.Stdout.Write(buf[0:nr]); nw != nr {
-                   fmt.Fprintf(os.Stderr, &quot;cat: error writing from %s: %s\n&quot;, f.String(), ew.String());
-               }
-}
-</code></pre>
-
-<p>caseに条件式がかける。breakは自動でされる。</p>
-
-<h3>型定義</h3>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>if i % prime != 0 {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    fmt.Printf(&#34;%d&#34;, i);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>}
+</span></span></code></pre><p>switchの例</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>switch nr, er := f.Read(&amp;buf); true {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>           case nr &lt; 0:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>               fmt.Fprintf(os.Stderr, &#34;cat: error reading from %s: %s\n&#34;, f.String(), er.String());
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>               os.Exit(1);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>           case nr == 0: // EOF
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>               return;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>           case nr &gt; 0:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>               if nw, ew := file.Stdout.Write(buf[0:nr]); nw != nr {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>                   fmt.Fprintf(os.Stderr, &#34;cat: error writing from %s: %s\n&#34;, f.String(), ew.String());
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>               }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>}
+</span></span></code></pre><p>caseに条件式がかける。breakは自動でされる。</p>
+<h3 id="heading-10">型定義</h3>
 <p><code>type</code> , <code>struct</code> キーワードを組み合わせる。 <strong>メンバにメソッドは含みません。</strong></p>
-
-<pre class="prettyprint"><code>type File struct {
-    fd int; // file descriptor number
-    name string; // file name at Open time
-}
-</code></pre>
-
-<p>メンバ名が小文字なので、パッケージ外からは見えません。</p>
-
-<h3>関数とメソッド</h3>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>type File struct {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    fd int; // file descriptor number
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    name string; // file name at Open time
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>}
+</span></span></code></pre><p>メンバ名が小文字なので、パッケージ外からは見えません。</p>
+<h3 id="heading-11">関数とメソッド</h3>
 <ul>
 <li>両方とも <code>func</code> キーワードで定義。</li>
 <li>違いはレシーバを指定するか否か。 レシーバを明示的に書くところはPythonっぽい。</li>
 <li>多値が返せる。</li>
 </ul>
-
 <p>この多値がかえせる、というのがGoでは非常に重要な意味をもっています。</p>
-
 <p>関数定義: 多値を返しています。大文字始まりなので、外部に公開されます。</p>
-
-<pre class="prettyprint"><code>func Open(name string, mode int, perm int) (file *File, err os.Error) {
-     r, e := syscall.Open(name, mode, perm);
-     if e != 0 {
-         err = os.Errno(e);
-     }
-     return newFile(r, name), err
-}
-</code></pre>
-
-<p>返す型に <code>(file *File, err os.Error)</code> と変数名がついてますね。これをつけておけば <code>return;</code> ってかくだけでその名前の変数を返してくれます。</p>
-
-<pre class="prettyprint"><code>func Open(name string, mode int, perm int) (file *File, err os.Error) {
-     r, e := syscall.Open(name, mode, perm);
-     if e != 0 {
-         err = os.Errno(e);
-     }
-     file = newFile(r, name)
-     return;
-}
-</code></pre>
-
-<p>こんな風にもかけるってことです。おそらく、エラー処理が絡む場合とかこっちのほうが書きやすかったりするんじゃないですかね。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>func Open(name string, mode int, perm int) (file *File, err os.Error) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>     r, e := syscall.Open(name, mode, perm);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>     if e != 0 {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>         err = os.Errno(e);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>     }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>     return newFile(r, name), err
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>}
+</span></span></code></pre><p>返す型に <code>(file *File, err os.Error)</code> と変数名がついてますね。これをつけておけば <code>return;</code> ってかくだけでその名前の変数を返してくれます。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>func Open(name string, mode int, perm int) (file *File, err os.Error) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>     r, e := syscall.Open(name, mode, perm);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>     if e != 0 {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>         err = os.Errno(e);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>     }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>     file = newFile(r, name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>     return;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>}
+</span></span></code></pre><p>こんな風にもかけるってことです。おそらく、エラー処理が絡む場合とかこっちのほうが書きやすかったりするんじゃないですかね。</p>
 <p>クロージャにもなります。いわゆる関数ポインタをとるようなところで、関数がそのままかけて外部変数も見えます。</p>
-
-<pre class="prettyprint"><code>startServer(func(a, b int) int { return a + b });
-</code></pre>
-
-<p>メソッド定義。 <code>(file *File)</code> がレシーバの指定。</p>
-
-<pre class="prettyprint"><code>func (file *File) Close() os.Error {
-    if file == nil {
-        return os.EINVAL
-    }
-    e := syscall.Close(file.fd);
-    file.fd = -1; // so it can't be closed again
-    if e != 0 {
-        return os.Errno(e);
-    }
-    return nil
-}
-</code></pre>
-
-<p>メソッド定義が <code>struct</code> での型定義時ではないことに注目。つまり <strong>組み込み型などに対してもあとからメソッドを作成できるのです</strong> 。こんな感じ。</p>
-
-<pre class="prettyprint"><code>type IntArray []int
-func (p IntArray) Len() int { return len(p); }
-</code></pre>
-
-<h3>インタフェース</h3>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>startServer(func(a, b int) int { return a + b });
+</span></span></code></pre><p>メソッド定義。 <code>(file *File)</code> がレシーバの指定。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>func (file *File) Close() os.Error {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    if file == nil {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>        return os.EINVAL
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    e := syscall.Close(file.fd);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    file.fd = -1; // so it can&#39;t be closed again
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    if e != 0 {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>        return os.Errno(e);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    return nil
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>}
+</span></span></code></pre><p>メソッド定義が <code>struct</code> での型定義時ではないことに注目。つまり <strong>組み込み型などに対してもあとからメソッドを作成できるのです</strong> 。こんな感じ。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>type IntArray []int
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>func (p IntArray) Len() int { return len(p); }
+</span></span></code></pre><h3 id="heading-12">インタフェース</h3>
 <p>これ重要。Goはいわゆるクラスがないので、継承などもなく <strong>インタフェースによるダックタイピングでそれらを片付けます</strong> 。 <code>interface</code> キーワードで定義。</p>
-
-<pre class="prettyprint"><code>type reader interface {
-     Read(b []byte) (ret int, err os.Error);
-     String() string;
-}
-</code></pre>
-
-<p>このように、 <code>Read</code> と <code>String</code> が定義されていればそれは <code>reader</code> なんだ、と考えます( <strong>ダックタイピング</strong> )。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>type reader interface {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>     Read(b []byte) (ret int, err os.Error);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>     String() string;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>}
+</span></span></code></pre><p>このように、 <code>Read</code> と <code>String</code> が定義されていればそれは <code>reader</code> なんだ、と考えます( <strong>ダックタイピング</strong> )。</p>
 <p>実行時、動的にインタフェースが実装されているかも検査できます。</p>
-
-<pre class="prettyprint"><code>s, ok := v.(Stringer);
-</code></pre>
-
-<blockquote>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>s, ok := v.(Stringer);
+</span></span></code></pre><blockquote>
 <p><code>v</code> が <code>Stringer</code> インタフェースを満たしていれば</p>
 </blockquote>
-
 <ul>
 <li><code>s</code> に <code>Stringer</code> オブジェクトとしてのv</li>
 <li><code>ok</code> に <code>true</code> が</li>
 </ul>
-
 <p>がかえってきます。</p>
-
-<h2>Concurrency</h2>
-
+<h2 id="concurrency">Concurrency</h2>
 <p>concurrentプログラミングはGoの大きな特徴。 <strong>CSP(Communicating Sequential Processes)</strong> に基づいてます。並行して動く「goroutines」という軽量プロセスが「channel」を介してやりとり。ガードと多重化のためにselect文があります。</p>
-
 <p>channelは単体ではなくchan 受け渡しする型という感じで書きます。以下はチュートリアルのコードまんまです。</p>
-
-<pre class="prettyprint"><code>func generate(ch chan int) {
-    for i := 2; ; i++ {
-        ch &lt;- i // Send 'i' to channel 'ch'.
-    }
-}
-</code></pre>
-
-<p><code>int</code> を扱う <code>channel</code> を受け取ってそれにiを送っていきます。</p>
-
-<pre class="prettyprint"><code>func filter(in, out chan int, prime int) {
-    for {
-        i := &lt;-in; // Receive value of new variable 'i' from 'in'.
-        if i % prime != 0 {
-            out &lt;- i // Send 'i' to channel 'out'.
-        }
-    }
-}
-</code></pre>
-
-<p>送られた <code>i</code> が一定の条件を満たしていたら、 <code>int</code> を扱う <code>out</code> というchannelに送ります。</p>
-
-<pre class="prettyprint"><code>func main() {
-    ch := make(chan int); // Create a new channel.
-    go generate(ch); // Start generate() as a goroutine.
-    for {
-        prime := &lt;-ch;
-        fmt.Println(prime);
-        ch1 := make(chan int);
-        go filter(ch, ch1, prime);
-        ch = ch1
-    }
-}
-</code></pre>
-
-<p>channelは参照型なので <code>make</code> で作ります。 <code>go</code> で実行します。これは丁寧に書いた感じ。クロージャを使えばもっとシンプル。</p>
-
-<pre class="prettyprint"><code>func generate() chan int {
-    ch := make(chan int);
-    go func(){
-        for i := 2; ; i++ {
-            ch &lt;- i
-        }
-    }();
-    return ch;
-}
-</code></pre>
-
-<h3>多重化とガード</h3>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>func generate(ch chan int) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    for i := 2; ; i++ {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>        ch &lt;- i // Send &#39;i&#39; to channel &#39;ch&#39;.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>}
+</span></span></code></pre><p><code>int</code> を扱う <code>channel</code> を受け取ってそれにiを送っていきます。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>func filter(in, out chan int, prime int) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    for {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>        i := &lt;-in; // Receive value of new variable &#39;i&#39; from &#39;in&#39;.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>        if i % prime != 0 {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>            out &lt;- i // Send &#39;i&#39; to channel &#39;out&#39;.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>        }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>}
+</span></span></code></pre><p>送られた <code>i</code> が一定の条件を満たしていたら、 <code>int</code> を扱う <code>out</code> というchannelに送ります。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>func main() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    ch := make(chan int); // Create a new channel.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    go generate(ch); // Start generate() as a goroutine.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    for {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>        prime := &lt;-ch;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>        fmt.Println(prime);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>        ch1 := make(chan int);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>        go filter(ch, ch1, prime);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>        ch = ch1
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>}
+</span></span></code></pre><p>channelは参照型なので <code>make</code> で作ります。 <code>go</code> で実行します。これは丁寧に書いた感じ。クロージャを使えばもっとシンプル。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>func generate() chan int {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    ch := make(chan int);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    go func(){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>        for i := 2; ; i++ {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>            ch &lt;- i
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>        }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>    }();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>    return ch;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>}
+</span></span></code></pre><h3 id="heading-13">多重化とガード</h3>
 <p>複数のチャンネルをとりあつかって、それらをガードにより振り分けられます。ErlangやScalaでおなじみの書き方です。</p>
-
-<pre class="prettyprint"><code>func server(op binOp, service chan *request, quit chan bool) {
-    for {
-        select {
-        case req := &lt;-service:
-            go run(op, req); // don't wait for it
-        case &lt;-quit:
-            return;
-        }
-    }
-}
-</code></pre>
-
-<p><code>request</code> 型のポインタを扱うchannelと <code>bool</code> 型を扱うchannelを使って、多重化しています。 <code>quit</code> チャンネルに値が送られてくるまでは、送られてきたものから良しなに処理してくれる、という感じですね。</p>
-
-<h1>というわけで</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>func server(op binOp, service chan *request, quit chan bool) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>    for {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>        select {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>        case req := &lt;-service:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>            go run(op, req); // don&#39;t wait for it
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>        case &lt;-quit:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>            return;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>        }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>}
+</span></span></code></pre><p><code>request</code> 型のポインタを扱うchannelと <code>bool</code> 型を扱うchannelを使って、多重化しています。 <code>quit</code> チャンネルに値が送られてくるまでは、送られてきたものから良しなに処理してくれる、という感じですね。</p>
+<h1 id="heading-14">というわけで</h1>
 <p>なぐり書きしたメモでした。変なことかいてたらすみません。まぁこんな感じな言語かなあ、という程度で。</p>
-
 <p>繰り替えしになりますが、C言語を元にシンプルに保ちながらconcurrentプログラミングしやすくしてます、って感じですね。完全にダックタイピングベースで多値を多様するスタイルはおもしろいですね。なんとなく見た目がキモく感じるのは私の気のせいでしょう。</p>
-
 <p>というか数ヶ月もブログ放置してたのかー。コード書いてないわけじゃないんですけど、たいしたもんかいてないんですよね。割合的には8割がたCかな。月一くらいはブログ書いていきたいなあ・・・</p>
 
 
@@ -461,7 +368,7 @@ func (p IntArray) Len() int { return len(p); }
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2009/11/11/go-language" class="hatena-bookmark-button" data-hatena-bookmark-title="個人的Go雑感&amp;メモ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2009/11/11/go-language" class="hatena-bookmark-button" data-hatena-bookmark-title="個人的Go雑感&amp;メモ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

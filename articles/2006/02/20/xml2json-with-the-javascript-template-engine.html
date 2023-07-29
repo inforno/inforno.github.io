@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -77,40 +75,29 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://www.drk7.jp/MT/archives/001011.html">drk7.jp</a> さんでXML2JSON serviceという面白いサービスが開始されました。</p>
-
 <p>ということで早速ハックしてみました。</p>
-
 <p><a href="http://inforno.net/articles/2006/02/15/the-embed-javascript-implementation">前のエントリーで書いた</a> Javascriptテンプレートと組み合わせてめちゃくちゃ簡単にRSSを表示できます。</p>
-
 <p><a href="/statics/files/xml2json.zip">サンプルはこちら</a></p>
-
 <p>使い方ですが、多分ソースをみてもらったほうが速いです。</p>
-
 <p>サンプルHTMLから抜粋</p>
-
-<pre class="prettyprint"><code>Event.observe(window, &quot;load&quot;, function(){
-        new XML2JSON(&quot;&lt;a href=&quot;http://feeds.feedburner.com/Inforno&quot;&gt;http://feeds.feedburner.com/Inforno&lt;/a&gt;&quot;, {container: &quot;test&quot;, template : {element:&quot;template&quot;}});
-});
-</code></pre>
-
-<p>初期化コードはｺﾚだけです。 containerでinnerHTMLに結果を流し込みたいElementを指定します。 templateは <a href="/articles/2006/02/15/the-embed-javascript-implementation">Lyase.View.render</a> の引数と同じです。 例ではtextareaエレメントのid:&ldquo;tempalte&rdquo;のinnerHTMLをテンプレートとして扱います。</p>
-
-<pre class="prettyprint"><code>//テンプレート
-  &lt;textarea id=&quot;template&quot; style=&quot;display:none;&quot;&gt;
-
-&lt;h3&gt;&lt; %= context.channel.title %&gt;&lt;/h3&gt;
-
-&lt;ul class=&quot;items&quot;&gt;
-      &lt; % context.channel.item.each(function(item,index){%&gt;
-
-    &lt;li&gt;&lt;a href=&quot;&lt;%= item.link%&gt;&quot; target=&quot;_blank&quot;&gt;&lt; %= item.title%&gt;&lt;/a&gt;&lt;/li&gt;
-        &lt; % if(index &gt; 5){throw $break;}%&gt;
-      &lt; %})%&gt;
-   &lt;/ul&gt;
-  &lt;/textarea&gt;
-</code></pre>
-
-<p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。 またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>Event.observe(window, &#34;load&#34;, function(){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>        new XML2JSON(&#34;&lt;a href=&#34;http://feeds.feedburner.com/Inforno&#34;&gt;http://feeds.feedburner.com/Inforno&lt;/a&gt;&#34;, {container: &#34;test&#34;, template : {element:&#34;template&#34;}});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>});
+</span></span></code></pre><p>初期化コードはｺﾚだけです。 containerでinnerHTMLに結果を流し込みたいElementを指定します。 templateは <a href="/articles/2006/02/15/the-embed-javascript-implementation">Lyase.View.render</a> の引数と同じです。 例ではtextareaエレメントのid:&ldquo;tempalte&quot;のinnerHTMLをテンプレートとして扱います。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>//テンプレート
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  &lt;textarea id=&#34;template&#34; style=&#34;display:none;&#34;&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>&lt;h3&gt;&lt; %= context.channel.title %&gt;&lt;/h3&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>&lt;ul class=&#34;items&#34;&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>      &lt; % context.channel.item.each(function(item,index){%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    &lt;li&gt;&lt;a href=&#34;&lt;%= item.link%&gt;&#34; target=&#34;_blank&#34;&gt;&lt; %= item.title%&gt;&lt;/a&gt;&lt;/li&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>        &lt; % if(index &gt; 5){throw $break;}%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>      &lt; %})%&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>   &lt;/ul&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  &lt;/textarea&gt;
+</span></span></code></pre><p>こんな感じでテンプレートがかけるので、デザインの変更が大変楽になります。 またJSONデータ取得時のonloadを好きなメソッドに置き換えることもできるのでLyase.Viewを使わなくてもXML2JSONライブラリだけで おいしくいただけます。すきに改造してやってください、たいしたものじゃないですし（笑</p>
 
 
     <div class="seealso">
@@ -126,7 +113,7 @@
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/02/20/xml2json-with-the-javascript-template-engine" class="hatena-bookmark-button" data-hatena-bookmark-title="XML2JSON&#43;javascriptテンプレートエンジンでRSS表示" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/02/20/xml2json-with-the-javascript-template-engine" class="hatena-bookmark-button" data-hatena-bookmark-title="XML2JSON&#43;javascriptテンプレートエンジンでRSS表示" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

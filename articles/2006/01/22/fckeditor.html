@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,9 +73,7 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://d.hatena.ne.jp/naoya/20060122/1137915083">naoyaさん</a> が <a href="http://tinymce.moxiecode.com/">TinyMCE</a> について書かれていますが、僕も以前使ったことがあります。 WYSYWIG な HTML エディタということでは、僕はこのページでも使ってるFCKeditorがオススメです。(実は昔TinyMCEからサーバーに日本語送った時に化けることがあったので(UTF-8で)それ以来FCKeditorなんですけど今はどうなんだろう・・・)</p>
-
 <p>こちらもTinyMCEと同じく</p>
-
 <ul>
 <li>JavaScript で記述された</li>
 <li>LGPL でオープンソースな</li>
@@ -85,30 +81,23 @@
 <li>多言語対応もしてて</li>
 <li>簡単に使える</li>
 </ul>
-
 <p>ライブラリなんです。かなり使いやすいですよ。</p>
-
 <p>導入も簡単です。typoの場合、</p>
-
-<pre class="prettyprint"><code>&lt;script src=&quot;http://inforno.net/FCKeditor_install_path/fckeditor.js&quot; type=&quot;text/javascript&quot;&gt;&lt;/script&gt;
-&lt;script language=&quot;javascript&quot;&gt;
-Event.observe(window, &quot;load&quot;, function(){
-  var list = [&quot;article_extended&quot;, &quot;article_body&quot;];
-  for(var i=0,l=list.length; i &lt; l; i++) {
-    var fck = new FCKeditor(list[i]);
-    fck.BasePath = &quot;FCKeditor_install_path&quot;;
-    fck.Config[&quot;CustomConfigurationsPath&quot;] = fck.BasePath + &quot;myconfig.js&quot;;
-    fck.Height = 400;
-    fck.ReplaceTextarea();
-  }
-});
-&lt;/script&gt;[/js]
-</code></pre>
-
-<p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
-
-<p><a href="/statics/files/fck.jpg"><img src="/statics/files/fck.thumbnail.jpg" alt="image" /></a></p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>&lt;script src=&#34;http://inforno.net/FCKeditor_install_path/fckeditor.js&#34; type=&#34;text/javascript&#34;&gt;&lt;/script&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>&lt;script language=&#34;javascript&#34;&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>Event.observe(window, &#34;load&#34;, function(){
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  var list = [&#34;article_extended&#34;, &#34;article_body&#34;];
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  for(var i=0,l=list.length; i &lt; l; i++) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>    var fck = new FCKeditor(list[i]);
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    fck.BasePath = &#34;FCKeditor_install_path&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    fck.Config[&#34;CustomConfigurationsPath&#34;] = fck.BasePath + &#34;myconfig.js&#34;;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    fck.Height = 400;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    fck.ReplaceTextarea();
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>});
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>&lt;/script&gt;[/js]
+</span></span></code></pre><p>こんな感じで初期化しています。IDを指定してこのtextareaを、というのも簡単ですね。</p>
+<p><a href="/statics/files/fck.jpg"><img src="/statics/files/fck.thumbnail.jpg" alt="image"></a></p>
 <p>海外ではAPIを使ったデスクトップクライアントが結構人気みたいですけど、日本じゃあんまり使ってる人聞かない・・・Typoもデフォルトはデスクトップクライアント使え！みたいな感じなんですけどFCKeditorで一件落着。便利便利。</p>
 
 
@@ -125,7 +114,7 @@ Event.observe(window, &quot;load&quot;, function(){
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2006/01/22/fckeditor" class="hatena-bookmark-button" data-hatena-bookmark-title="FCKEditor" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2006/01/22/fckeditor" class="hatena-bookmark-button" data-hatena-bookmark-title="FCKEditor" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

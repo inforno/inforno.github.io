@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,29 +69,23 @@
 </header>
   <div itemprop="articleBody">
     <p>ScalaにはStreamという無限リストがあるんだけど、微妙に使いづらい、というか分かりづらい。Haskellでいうcycleはどうだ、とかよく忘れるのでメモ。</p>
-
-<pre class="prettyprint"><code>def repeat[T](a:T) = Stream.const(a)
-def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
-def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
-def replicate[T](n:int, elem:T) = Stream.make(n, elem)
-</code></pre>
-
-<p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
-
-<pre class="prettyprint"><code>repeat(1) take 10 print
-// =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
-
-cycle(1 to 4) take 10 print
-// =&gt; 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, Stream.empty
-
-iterate((x:int)=&gt;x+1, 0) take 10 print
-// =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
-
-replicate(3, 1) take 10 print
-// =&gt; 1, 1, 1, Stream.empty
-</code></pre>
-
-<p>うんうん。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def repeat[T](a:T) = Stream.const(a)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>def cycle[T](a:Iterable[T]) = Stream.const(a).flatMap(v=&gt;v)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>def iterate[T](f:T =&gt; T,  x:T):Stream[T] = Stream.cons(x, iterate(f, f(x)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>def replicate[T](n:int, elem:T) = Stream.make(n, elem)
+</span></span></code></pre><p>こんな感じかな。cycleは結構使うから、Streamに標準でありそうな気がするんだけど、ないような。というわけで上のような定義となる。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>repeat(1) take 10 print
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>// =&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, Stream.empty
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>cycle(1 to 4) take 10 print
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>// =&gt; 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, Stream.empty
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>iterate((x:int)=&gt;x+1, 0) take 10 print
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>// =&gt; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Stream.empty
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>replicate(3, 1) take 10 print
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>// =&gt; 1, 1, 1, Stream.empty
+</span></span></code></pre><p>うんうん。</p>
 
 
     <div class="seealso">
@@ -109,7 +101,7 @@ replicate(3, 1) take 10 print
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/02/09/scala-infinite-list-like-a-haskell" class="hatena-bookmark-button" data-hatena-bookmark-title="Scalaで無限リスト：Haskellライクに" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/02/09/scala-infinite-list-like-a-haskell" class="hatena-bookmark-button" data-hatena-bookmark-title="Scalaで無限リスト：Haskellライクに" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

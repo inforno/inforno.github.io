@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -71,176 +69,117 @@
 </header>
   <div itemprop="articleBody">
     <p>どう書く？orgでScalaを書いてくれる人もでてきたので、超一部の方向けにScalaのことでも書いてみようと思います。言うなれば、基礎を終えた人のScalaミニtips。知っている人は知っている、でもあまり知られていないことを並べていきます。</p>
-
 <p>下に行くほどマニア度あがります、たぶん。FPよりの話が多いかもしれません。はやりのYコンビネータの話とか。たぶん。</p>
-
 <p>ではいってみましょう。</p>
-
-<h1>Predefされているものは把握しておきましょう</h1>
-
+<h1 id="predef">Predefされているものは把握しておきましょう</h1>
 <p>Scalaにはscala.Predefというオブジェクトがあります。この中で定義されているものは常にインポートされていて使える状態になっているので把握しておきましょう。</p>
-
 <p>例：</p>
-
-<pre class="prettyprint"><code>def exit(status: Int): Nothing = {
-  java.lang.System.exit(status)
-  throw new Throwable()
-}
-
-def assert(assertion: Boolean) {
-  if (!assertion)
-    throw new java.lang.AssertionError(&quot;assertion failed&quot;)
-}
-
-def print(x: Any) = Console.print(x)
-def println() = Console.println()
-def println(x: Any) = Console.println(x)
-</code></pre>
-
-<h1>C言語ライクなforはどうかくの？</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>def exit(status: Int): Nothing = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  java.lang.System.exit(status)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  throw new Throwable()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>def assert(assertion: Boolean) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  if (!assertion)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>    throw new java.lang.AssertionError(&#34;assertion failed&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>def print(x: Any) = Console.print(x)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>def println() = Console.println()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>def println(x: Any) = Console.println(x)
+</span></span></code></pre><h1 id="cfor">C言語ライクなforはどうかくの？</h1>
 <p>こうです。</p>
-
-<pre class="prettyprint"><code>val a = Array(1,2,3,4,5)
-var i= -1;while({i += 1; i &lt; a.size;}) {
-  println(a(i))
-}
-</code></pre>
-
-<h1>setterを使おう</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>val a = Array(1,2,3,4,5)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>var i= -1;while({i += 1; i &lt; a.size;}) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>  println(a(i))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>}
+</span></span></code></pre><h1 id="setter">setterを使おう</h1>
 <p>setHogeみたいなのは、カッコわるいです。RubyのアクセッサーしかりPythonのpropertyしかり、 <code>instance.name = value</code> 形式で扱えるのがモダンな言語というものです。</p>
-
-<pre class="prettyprint"><code>class Test {
-  var _name = &quot;default&quot;
-  def name_=(newValue:String) { _name = newValue }
-  def name = _name
-}
-
-val a = new Test
-a.name = &quot;new&quot;
-println(a.name)
-</code></pre>
-
-<h1>単項演算子も定義できます。</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>class Test {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  var _name = &#34;default&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>  def name_=(newValue:String) { _name = newValue }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  def name = _name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>val a = new Test
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>a.name = &#34;new&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>println(a.name)
+</span></span></code></pre><h1 id="heading">単項演算子も定義できます。</h1>
 <p>できます。</p>
-
-<pre class="prettyprint"><code>class Test {
-  var _name = &quot;default&quot;
-  def name_=(newValue:String) { _name = newValue }
-  def name = _name
-  def unary_- = &quot;unary:&quot; + name
-}
-
-val a = new Test
-a.name = &quot;new&quot;
-println(-a)
-</code></pre>
-
-<h1>applyでオブジェクトをメソッドのように呼び出せるよね？ <code>hoge(index) = value</code> はオーバーライドできないの？</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>class Test {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  var _name = &#34;default&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  def name_=(newValue:String) { _name = newValue }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  def name = _name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  def unary_- = &#34;unary:&#34; + name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>val a = new Test
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>a.name = &#34;new&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>println(-a)
+</span></span></code></pre><h1 id="apply-hogeindex--value-">applyでオブジェクトをメソッドのように呼び出せるよね？ <code>hoge(index) = value</code> はオーバーライドできないの？</h1>
 <p>できますよ。なんとupdateというすげーふつーの名前のメソッドを定義するんです。</p>
-
-<pre class="prettyprint"><code>object dictionary {
-val data = Array(null, &quot;A&quot;,&quot;B&quot;,&quot;C&quot;)
-
-def apply(x:String) = x match {
-  case &quot;one&quot; =&gt; data(1)
-  case &quot;two&quot; =&gt; data(2)
-  case &quot;three&quot; =&gt; data(3)
-}
-
-def update(x:String,y:String) = x match {
-  case &quot;one&quot; =&gt; data(1) = y 
-  case &quot;two&quot; =&gt; data(2) = y
-  case &quot;three&quot; =&gt; data(3) = y
-}
-
-}
-dictionary(&quot;one&quot;) = &quot;X&quot;   
-dictionary(&quot;two&quot;) = &quot;Y&quot;
-dictionary(&quot;three&quot;) = &quot;Z&quot;
-println(dictionary(&quot;one&quot;)+&quot;,&quot;+dictionary(&quot;two&quot;)+&quot;,&quot;+dictionary(&quot;three&quot;))
-</code></pre>
-
-<h1>可変長引数は取れますか。また、リストや配列を展開してメソッドにわたせますか。</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>object dictionary {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>val data = Array(null, &#34;A&#34;,&#34;B&#34;,&#34;C&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>def apply(x:String) = x match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  case &#34;one&#34; =&gt; data(1)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  case &#34;two&#34; =&gt; data(2)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  case &#34;three&#34; =&gt; data(3)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>def update(x:String,y:String) = x match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  case &#34;one&#34; =&gt; data(1) = y 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  case &#34;two&#34; =&gt; data(2) = y
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  case &#34;three&#34; =&gt; data(3) = y
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>dictionary(&#34;one&#34;) = &#34;X&#34;   
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>dictionary(&#34;two&#34;) = &#34;Y&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>dictionary(&#34;three&#34;) = &#34;Z&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>println(dictionary(&#34;one&#34;)+&#34;,&#34;+dictionary(&#34;two&#34;)+&#34;,&#34;+dictionary(&#34;three&#34;))
+</span></span></code></pre><h1 id="heading-1">可変長引数は取れますか。また、リストや配列を展開してメソッドにわたせますか。</h1>
 <p>もちろん。</p>
-
-<pre class="prettyprint"><code>def sumPlus(plus: Int, n: Int*) = plus + sum(n :_*)
-</code></pre>
-
-<h1>JAVAのObject型可変長変数をとるメソッドはどう呼びますか？</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def sumPlus(plus: Int, n: Int*) = plus + sum(n :_*)
+</span></span></code></pre><h1 id="javaobject">JAVAのObject型可変長変数をとるメソッドはどう呼びますか？</h1>
 <p>ちょっとめんどくさいですが、こうです。</p>
-
-<pre class="prettyprint"><code>String.format(&quot;%d %s&quot;, List(1, &quot;hoge&quot;).map(_.asInstanceOf[AnyRef]).toArray)
-</code></pre>
-
-<h1>インスタンスのメソッドを束縛できますか？そのとき、メソッドがオーバーロードされている場合はどうしますか？</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>String.format(&#34;%d %s&#34;, List(1, &#34;hoge&#34;).map(_.asInstanceOf[AnyRef]).toArray)
+</span></span></code></pre><h1 id="heading-2">インスタンスのメソッドを束縛できますか？そのとき、メソッドがオーバーロードされている場合はどうしますか？</h1>
 <p>こうします。オーバーロードされている場合は <code>_</code> の後ろに型をつけます。</p>
-
-<pre class="prettyprint"><code>val format = (new SimpleDateFormat(&quot;dd&quot;)).format _:Date =&gt; String
-</code></pre>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>val format = (new SimpleDateFormat(&#34;dd&#34;)).format _:Date =&gt; String
+</span></span></code></pre><hr>
 <p>ここからFPよりです。</p>
-
-<h1>カリー化はできますか？</h1>
-
+<h1 id="heading-3">カリー化はできますか？</h1>
 <p>Function.curriedを使います。uncurriedもあります。</p>
-
-<pre class="prettyprint"><code>def test(i:int, j:int) = {
-  printf(&quot;i:{0}, j:{1}&quot;, i, j)
-}
-val f = Function.curried(test _)(1)
-f(1)
-</code></pre>
-
-<h1>遅延評価は？</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def test(i:int, j:int) = {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  printf(&#34;i:{0}, j:{1}&#34;, i, j)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>val f = Function.curried(test _)(1)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>f(1)
+</span></span></code></pre><h1 id="heading-4">遅延評価は？</h1>
 <p>lazyを使います。Streamも使いこなせるとハッピーです。</p>
-
 <p>たとえば、無限フィボナッチ数列は以下のように定義します。</p>
-
-<pre class="prettyprint"><code>lazy val fib: Stream[Int] = Stream.cons(0,
-     Stream.cons(1, fib.zip(fib.tail).map(p =&gt; p._1 + p._2)))
-</code></pre>
-
-<h1>先生、関数合成がしたいです･･･</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>lazy val fib: Stream[Int] = Stream.cons(0,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>     Stream.cons(1, fib.zip(fib.tail).map(p =&gt; p._1 + p._2)))
+</span></span></code></pre><h1 id="heading-5">先生、関数合成がしたいです･･･</h1>
 <p>Haskellでは短く直感的にかけるからいいですよね。</p>
-
 <p>Scalaでは正直、逆に長ったらしくなりますが、どうしてもというなら･･･</p>
-
-<pre class="prettyprint"><code>({ x:int =&gt; x + 1 } andThen { x:int =&gt; x * 2 })(3) // =&gt; 8
-({ x:int =&gt; x + 1 } compose { x:int =&gt; x * 2 })(3) // =&gt; 7
-</code></pre>
-
-<h1>forはモナドに使える構文です。リスト内包表現用ではありません。</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>({ x:int =&gt; x + 1 } andThen { x:int =&gt; x * 2 })(3) // =&gt; 8
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>({ x:int =&gt; x + 1 } compose { x:int =&gt; x * 2 })(3) // =&gt; 7
+</span></span></code></pre><h1 id="for">forはモナドに使える構文です。リスト内包表現用ではありません。</h1>
 <p>リストはモナドですし、HaskellのMaybeに相当するOptionというモナドもあります。map, flatMap, filterメソッドを実装すればforで書けるオブジェクトを定義できます。</p>
-
-<h1>Yコンビネータとかいうものの話が(一部で)盛り上がってますが、そういうのってScalaでできるんですか。型があるから複雑だと思うんだけど。</h1>
-
+<h1 id="yscala">Yコンビネータとかいうものの話が(一部で)盛り上がってますが、そういうのってScalaでできるんですか。型があるから複雑だと思うんだけど。</h1>
 <p>えーと、無名関数で再帰したいんでしょうか？こんな感じでどうでしょう？ふつーはこんなの使いませんけどね。</p>
-
-<pre class="prettyprint"><code>def Y[A,B](f:((A=&gt;B),A)=&gt;B,x:A):B = f((x1:A)=&gt;Y(f,x1),x)
-
-println(
-  Y(
-    (f:((int,int)) =&gt; int, arg:(int,int)) =&gt; arg match { case (x, y) =&gt; x match {
-      case 0 =&gt; y
-      case _ =&gt; f((x - 1, y + x))
-    }} , (10, 0))
-)
-</code></pre>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>def Y[A,B](f:((A=&gt;B),A)=&gt;B,x:A):B = f((x1:A)=&gt;Y(f,x1),x)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>println(
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  Y(
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    (f:((int,int)) =&gt; int, arg:(int,int)) =&gt; arg match { case (x, y) =&gt; x match {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>      case 0 =&gt; y
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>      case _ =&gt; f((x - 1, y + x))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>    }} , (10, 0))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>)
+</span></span></code></pre><hr>
 <p>さて、数少ない日本人Scala好きの皆さん。どれくらいご存知でしたでしょうか。まぁ、基礎からちょっとScalaやればこれくらいは皆さんご存知だと思うんですが、やはりScalaはカオスな言語なので、なかなか見つけられない機能も多いんで、最近Scalaやりはじめた人は参考にしてもらえるとうれしいです。</p>
 
 
@@ -257,7 +196,7 @@ println(
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/02/03/some-scala-tips-for-beginners" class="hatena-bookmark-button" data-hatena-bookmark-title="基礎を終えた人のScalaミニtips" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/02/03/some-scala-tips-for-beginners" class="hatena-bookmark-button" data-hatena-bookmark-title="基礎を終えた人のScalaミニtips" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

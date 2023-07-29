@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,86 +71,58 @@
 </header>
   <div itemprop="articleBody">
     <p>やんごとなき事情によりxrea内でWEBサーバを移動しました。</p>
-
 <p>というわけで、このブログ(web.pyによる自作ブログ)を移したわけですが、今までのようにバイナリ化して動かすにはサーバと似た環境が手元にないといけません。が、移動した先のサーバでは環境がだめ。</p>
-
 <p>ということで、python2.5をxreaにインストールしました。virtual-pythonもいいんですが、xreaのサーバはpython2.4なので。ちょっと工夫すれば入るし、快適ですね。以下作業ログ。</p>
-
-<h1>Pythonをインストール</h1>
-
+<h1 id="python">Pythonをインストール</h1>
 <p>まずはPythonのソースをダウンロードしてコンパイル。 <code>~/root/usr/local</code> にいれます。</p>
-
-<pre class="prettyprint"><code>mkdir -p ~/root/usr/local/src
-cd ~/root/usr/local/src
-wget http://www.python.org/ftp/python/2.5.4/Python-2.5.4.tgz
-tar zxvf Python-2.5.4.tgz
-cd Python-2.5.4
-./configure --prefix=~/root/usr/local
-make
-make install
-</code></pre>
-
-<p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
-
-<h1>hashlibをインストール</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>mkdir -p ~/root/usr/local/src
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>cd ~/root/usr/local/src
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>wget http://www.python.org/ftp/python/2.5.4/Python-2.5.4.tgz
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>tar zxvf Python-2.5.4.tgz
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>cd Python-2.5.4
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>./configure --prefix=~/root/usr/local
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>make
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>make install
+</span></span></code></pre><p>サクっと入ります。で、次にeasy_installを入れるわけですが、はいりません。OpenSSLとの絡みで <code>hashlib.md5</code> が使えないから。 <code>easy_install</code> を入れるときに <code>md5</code> を検証するのに使ってるんですよね。</p>
+<h1 id="hashlib">hashlibをインストール</h1>
 <p>なんで、自前でhashlibを単体でいれます。</p>
-
-<pre class="prettyprint"><code>cd ~/root/usr/local/src
-wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
-tar zxvf hashlib-20081119.tar.gz
-cd hashlib-20081119
-vi setup.py
-</code></pre>
-
-<p>はい、 <code>setup.py</code> を編集しましょう。普通にbuildするとこれでも <code>md5</code> が入りません。</p>
-
-<pre class="prettyprint"><code>105　　 if (ssl_inc_dir and
-106　　　　 ssl_lib is not None and
-107　　　　 openssl_ver &gt;= 0x00907000):
-108
-109　　　　 print 'Using OpenSSL version 0x%08x from' % openssl_ver
-110　　　　 print ' Headers:\t', ssl_inc_dir
-111　　　　 print ' Library:\t', ssl_lib
-112
-113　　　　 # The _hashlib module wraps optimized implementations
-114　　　　 # of hash functions from the OpenSSL library.
-115　　　　 exts.append( Extension('_hashlib', ['_hashopenssl.c'],
-116　　　　　　　　　　　　　　　　include_dirs = [ ssl_inc_dir ],
-117　　　　　　　　　　　　　　　　library_dirs = [ os.path.dirname(ssl_lib) ],
-118　　　　　　　　　　　　　　　　libraries = osNameLibsMap[os.name]) )
-119　　 exts.append( Extension('_sha', ['shamodule.c']) )　　　　　　　　　
-120　　 exts.append( Extension('_md5',　　　　　　　　　　　　　　　　　　
-121　　　　　　　　　　 sources = ['md5module.c', 'md5.c'],
-122　　　　　　　　　　 depends = ['md5.h']) )
-</code></pre>
-
-<p>119-120あたり、強制的に <code>_md5</code> を入れるようにします。あとは</p>
-
-<pre class="prettyprint"><code>~/root/usr/local/bin/python setup.py build
-~/root/usr/local/bin/python setup.py install
-</code></pre>
-
-<p>で <code>hashlib</code> が入ります。</p>
-
-<h1>easy_installをインストール</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>cd ~/root/usr/local/src
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>wget http://code.krypto.org/python/hashlib/hashlib-20081119.tar.gz
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>tar zxvf hashlib-20081119.tar.gz
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>cd hashlib-20081119
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>vi setup.py
+</span></span></code></pre><p>はい、 <code>setup.py</code> を編集しましょう。普通にbuildするとこれでも <code>md5</code> が入りません。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#ae81ff">105</span><span style="color:#960050;background-color:#1e0010">　　</span> <span style="color:#66d9ef">if</span> (ssl_inc_dir and
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#ae81ff">106</span><span style="color:#960050;background-color:#1e0010">　　　　</span> ssl_lib <span style="color:#66d9ef">is</span> not <span style="color:#a6e22e">None</span> and
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#ae81ff">107</span><span style="color:#960050;background-color:#1e0010">　　　　</span> openssl_ver <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0x00907000</span>):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#ae81ff">108</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#ae81ff">109</span><span style="color:#960050;background-color:#1e0010">　　　　</span> print <span style="color:#e6db74">&#39;Using OpenSSL version 0x%08x from&#39;</span> <span style="color:#f92672">%</span> openssl_ver
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#ae81ff">110</span><span style="color:#960050;background-color:#1e0010">　　　　</span> print <span style="color:#e6db74">&#39; Headers:</span><span style="color:#ae81ff">\t</span><span style="color:#e6db74">&#39;</span>, ssl_inc_dir
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#ae81ff">111</span><span style="color:#960050;background-color:#1e0010">　　　　</span> print <span style="color:#e6db74">&#39; Library:</span><span style="color:#ae81ff">\t</span><span style="color:#e6db74">&#39;</span>, ssl_lib
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#ae81ff">112</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span><span style="color:#ae81ff">113</span><span style="color:#960050;background-color:#1e0010">　　　　</span> <span style="color:#f92672">#</span> <span style="color:#a6e22e">The</span> _hashlib <span style="color:#f92672">module</span> wraps optimized implementations
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#ae81ff">114</span><span style="color:#960050;background-color:#1e0010">　　　　</span> <span style="color:#f92672">#</span> of hash functions from the <span style="color:#a6e22e">OpenSSL</span> library.
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#ae81ff">115</span><span style="color:#960050;background-color:#1e0010">　　　　</span> exts.<span style="color:#a6e22e">append</span>( <span style="color:#a6e22e">Extension</span>(<span style="color:#e6db74">&#39;_hashlib&#39;</span>, [<span style="color:#e6db74">&#39;_hashopenssl.c&#39;</span>],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#ae81ff">116</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　　　　　　　</span>include_dirs <span style="color:#f92672">=</span> [ ssl_inc_dir ],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#ae81ff">117</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　　　　　　　</span>library_dirs <span style="color:#f92672">=</span> [ os.path.<span style="color:#a6e22e">dirname</span>(ssl_lib) ],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#ae81ff">118</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　　　　　　　</span>libraries <span style="color:#f92672">=</span> osNameLibsMap[os.name]) )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#ae81ff">119</span><span style="color:#960050;background-color:#1e0010">　　</span> exts.<span style="color:#a6e22e">append</span>( <span style="color:#a6e22e">Extension</span>(<span style="color:#e6db74">&#39;_sha&#39;</span>, [<span style="color:#e6db74">&#39;shamodule.c&#39;</span>]) )<span style="color:#960050;background-color:#1e0010">　　　　　　　　　</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#ae81ff">120</span><span style="color:#960050;background-color:#1e0010">　　</span> exts.<span style="color:#a6e22e">append</span>( <span style="color:#a6e22e">Extension</span>(<span style="color:#e6db74">&#39;_md5&#39;</span>,<span style="color:#960050;background-color:#1e0010">　　　　　　　　　　　　　　　　　　</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span><span style="color:#ae81ff">121</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　</span> sources <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;md5module.c&#39;</span>, <span style="color:#e6db74">&#39;md5.c&#39;</span>],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span><span style="color:#ae81ff">122</span><span style="color:#960050;background-color:#1e0010">　　　　　　　　　　</span> depends <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;md5.h&#39;</span>]) )
+</span></span></code></pre><p>119-120あたり、強制的に <code>_md5</code> を入れるようにします。あとは</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>~/root/usr/local/bin/python setup.py build
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>~/root/usr/local/bin/python setup.py install
+</span></span></code></pre><p>で <code>hashlib</code> が入ります。</p>
+<h1 id="easy-install">easy_installをインストール</h1>
 <p>これで <code>md5</code> が使えるようになったので</p>
-
-<pre class="prettyprint"><code>cd ~/root/usr/local/src
-wget http://peak.telecommunity.com/dist/ez_setup.py
-~/root/usr/local/bin/python ez_setup.py
-</code></pre>
-
-<p>これで無事 <code>easy_install</code> が入ります。あとは</p>
-
-<pre class="prettyprint"><code>~/root/usr/local/bin/easy_install -U -Z MySQL_Python
-</code></pre>
-
-<p>てな感じで必要なモジュールを入れていきましょう。</p>
-
-<h1>というわけで</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>cd ~/root/usr/local/src
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>wget http://peak.telecommunity.com/dist/ez_setup.py
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>~/root/usr/local/bin/python ez_setup.py
+</span></span></code></pre><p>これで無事 <code>easy_install</code> が入ります。あとは</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>~/root/usr/local/bin/easy_install -U -Z MySQL_Python
+</span></span></code></pre><p>てな感じで必要なモジュールを入れていきましょう。</p>
+<h1 id="heading">というわけで</h1>
 <p>わりと普通にxreaでPythonが使えています。</p>
 
 
@@ -169,7 +139,7 @@ wget http://peak.telecommunity.com/dist/ez_setup.py
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2" class="hatena-bookmark-button" data-hatena-bookmark-title="XREAで好きなバージョンのPythonを使う方法2" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2009/01/25/using-any-version-of-python-on-xrea-servers-part2" class="hatena-bookmark-button" data-hatena-bookmark-title="XREAで好きなバージョンのPythonを使う方法2" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

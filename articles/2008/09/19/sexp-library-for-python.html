@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -79,216 +77,207 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner">前のエントリー</a> で簡易S式パーサを <code>re.Scanner</code> で作ったのですが、まぁ個人的にまとめておいたほうが後々使えるだろう、ということでライブラリにまとめました。ダンパもついているので、S式の読み込みの他、PythonオブジェクトをS式で出力することができます。</p>
-
 <p>実装には引き続き <code>re.Scanner</code> を活用しています。おかげで短い行数でキレイにかけているのではないかと。</p>
-
-<h1>ダウンロード</h1>
-
+<h1 id="heading">ダウンロード</h1>
 <p><a href="/statics/files/simplesexp.zip">simplesexp.py</a></p>
-
 <p>ソースはこんな感じ（テストのぞく）。</p>
-
-<pre class="prettyprint"><code>import re, sys
-from unicodedata import east_asian_width
-
-try:
-  from re import Scanner
-except ImportError:
-  from sre import Scanner
-
-class ParseError(StandardError): pass
-
-class Ident(unicode):
-  def __repr__(self):
-    return &quot;Ident(%s)&quot;%unicode.__repr__(self)
-
-class Symbol(unicode):
-  def __repr__(self):
-    return &quot;Symbol(%s)&quot;%unicode.__repr__(self)
-
-class Pair(list): 
-  def __repr__(self):
-    return &quot;Pair(%s)&quot;%list.__repr__(self)
-
-class Token(object):
-  def __init__(self, value, pos):
-    self.value = value
-    self.pos   = pos
-  def __repr__(self):
-    return repr(self.value)
-
-class Binding(object):
-  def __init__(self, dct):
-    self.dct = dict(((k, k.__class__), v) for k,v in dct.iteritems())
-  __contains__ = lambda self, key: (key, key.__class__) in self.dct
-  __getitem__  = lambda self,key:  self.dct[(key, key.__class__)]
-
-default_binding = {&quot;#t&quot;:True, &quot;true&quot;:True, &quot;#f&quot;:False, &quot;false&quot;:False, &quot;nil&quot;:None, &quot;dict&quot;:Ident(u'alist-&gt;hash-table')}
-
-class Reader(object):
-  PAREN = {&quot;]&quot;:&quot;[&quot;, &quot;)&quot;:&quot;(&quot;}
-  def __init__(self, binding=None, symbol_marker=&quot;'&quot;, use_dict=True):
-    self.binding = binding or default_binding
-    self.symbol_marker = symbol_marker
-    self.use_dict = use_dict
-
-  def read(self, value):
-    self.result = []
-    self.paren_stack = []
-    self.source = value
-    self.pos = 0
-    self.scanner = Scanner([
-      (r&quot;\s+&quot;, self(&quot;skip&quot;)),
-      (r&quot;;[^\n]*\n&quot;, self(&quot;skip&quot;)),
-      (r&quot;&quot;&quot;&quot;(((?&lt;=\\)&quot;)|[^&quot;])*((?&lt;!\\)&quot;)&quot;&quot;&quot;, self(&quot;str&quot;)),
-      (r&quot;(\(|\[)&quot;, self(&quot;open&quot;)),
-      (r&quot;(\)|\])&quot;, self(&quot;close&quot;)),
-      (r&quot;(([\d]+|(((\d+)?\.[\d]+)|([\d]+\.)))e[\+\-]?[\d]+)|(((\d+)?\.[\d]+)|([\d]+\.))&quot;, self(&quot;number&quot;)),
-      (r&quot;\-?((0x[\da-f]+)|(0[0-7]+)|([1-9][\d]*)|0)[l]?&quot;, self(&quot;number&quot;)),
-      (r&quot;&quot;&quot;%s([^\(\[\)\]\s&quot;]+)&quot;&quot;&quot;%self.symbol_marker, self(&quot;symbol&quot;)),
-      (r&quot;&quot;&quot;([^\(\[\)\]\s&quot;]+)&quot;&quot;&quot;, self(&quot;ident&quot;)),
-      (r&quot;&quot;&quot;&quot;.*&quot;&quot;&quot;, self(&quot;unterm_str&quot;)),
-      (r&quot;.*&quot;, self(&quot;unknown_token&quot;))
-    ], re.M|re.S|re.I)
-    self.scanner.scan(self.source)
-    if self.paren_stack:
-      self.raise_error(&quot;missing closing parenthesis.&quot;)
-    return self.parse(self.result)
-
-  def append(self, v):
-    self.last().append(Token(v, self.pos))
-
-  def __call__(self, name):
-    def _(scanner, s):
-      self.pos += len(s)
-      return getattr(self, name)(s)
-    return _
-
-  def unknown_token(self,s): self.raise_error(&quot;unknown token: %s&quot;%s)
-  def skip(self, _): pass
-  def open(self, s):
-      new_lst = []
-      self.last().append(new_lst)
-      self.paren_stack.append([s, new_lst])
-  def close(self, s):
-      if not self.paren_stack:
-        self.raise_error(&quot;missing opening parenthesis.&quot;)
-      if self.PAREN[s] != self.paren_stack.pop()[0]:
-        self.raise_error(&quot;missing closing parenthesis.&quot;)
-  def str(self, s): self.append(eval('u&quot;&quot;'+s+'&quot;&quot;'))
-  def unterm_str(self, s): self.raise_error(&quot;unterminated string literal.&quot;)
-  def number(self, s): self.append(eval(s))
-  def symbol(self, s): self.append(Symbol(s[1:]))
-  def ident(self, s): 
-    if s in self.binding:
-      self.append(self.binding[s])
-    else:
-      self.append(Ident(s))
-
-  def last(self):
-    if self.paren_stack:
-      return self.paren_stack[-1][1]
-    else:
-      return self.result
-
-  def parse(self, rs):
-    def is_ident(value, expected):
-      return getattr(value,&quot;value&quot;, None) == Ident(expected)
-    def is_pair(rs):
-      return getattr(rs, &quot;__len__&quot;, lambda :0)()==3 and is_ident(rs[1], u&quot;.&quot;)
-
-    if isinstance(rs, list):
-      if not len(rs):
-        return []
-      elif self.use_dict and is_ident(rs[0], u&quot;alist-&gt;hash-table&quot;):
-        if len(rs) != 2:
-          self.raise_error(&quot;alist-&gt;hash-table: expected 1 arguments, got %d.&quot;%(len(rs)-1), rs[0].pos)
-        if not all(is_pair(a) for a in rs[1]):
-          self.raise_error(&quot;alist-&gt;hash-table: aruguments must be alist&quot;, rs[0].pos)
-        return dict((self.parse(i[0]), self.parse(i[2])) for i in rs[1])
-      elif len(rs)!=3 and any(is_ident(t, u&quot;.&quot;) for t in rs):
-        self.raise_error('illegal use of &quot;.&quot;', rs[0].pos)
-      elif is_pair(rs):
-        parsed = self.parse(rs[2])
-        if not isinstance(rs[2], list):
-          return Pair([rs[0].value, parsed])
-        if isinstance(parsed, Pair):
-          return Pair([rs[0].value, parsed])
-        elif isinstance(parsed, list):
-          return [rs[0].value]+parsed
-        else:
-          return [rs[0].value, parsed]
-      else:
-        return map(self.parse, rs)
-    else:
-      return rs.value
-
-  def raise_error(self, msg=&quot;parse error&quot;, pos=None, range=3):
-    pos = pos or self.pos
-    lines = self.source.split(&quot;\n&quot;)
-    curline = self.source[:pos].count(&quot;\n&quot;)
-    linepos = pos - len(&quot;\n&quot;.join(lines[:curline]))
-    buf = [&quot;\n&quot;]
-    for i in xrange(max(0, curline-range), curline+1):
-      buf.append(&quot;% 5d: %s&quot;%(i+1, lines[i]))
-    width = 7 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in unicode(lines[i]))
-    buf.append(&quot;%s~&quot;%(&quot; &quot;*width))
-    buf.append(&quot;line %d, %d: %s&quot;%(curline+1,linepos, msg))
-    raise ParseError((&quot;\n&quot;.join(buf)).encode(sys.stderr.encoding))
-
-class Dumper(object):
-  def __init__(self, binding=None ,symbol_marker=&quot;'&quot;):
-    binding = binding or default_binding
-    self.binding = Binding(dict(zip(binding.values(), binding)))
-    self.symbol_marker = symbol_marker
-
-  def dump(self, obj):
-    result = self.to_sexp(obj, [])
-    if isinstance(result, list) and len(result) and result[0]==&quot;(&quot;:
-      result = result[1:-1]
-    return u&quot; &quot;.join(result)
-
-  def to_sexp(self, obj, result):
-    ap = result.append
-    tos = lambda v: self.to_sexp(v, result)
-    if isinstance(obj, Pair):
-      ap(&quot;(&quot;)
-      tos(obj[0])
-      ap(&quot; . &quot;)
-      tos(obj[1])
-      ap(&quot;)&quot;)
-    elif isinstance(obj, (tuple, list)):
-      ap(&quot;(&quot;)
-      map(tos, obj)
-      ap(&quot;)&quot;)
-    else:
-      if isinstance(obj, dict):
-        ap(&quot;( alist-&gt;hash-table &quot;)
-        tos([(k, Ident(u&quot;.&quot;), v) for k,v in obj.items()])
-        ap(&quot; ) &quot;)
-      elif obj in self.binding:
-        ap(unicode(Ident(self.binding[obj])))
-      elif isinstance(obj, Symbol):
-        ap(u&quot;'%s&quot;%unicode(obj))
-      elif isinstance(obj, (Ident,int, float, long)):
-        ap(unicode(obj))
-      else:
-        s = unicode(repr(obj)).decode(&quot;unicode_escape&quot;)
-        m = re.match(r&quot;&quot;&quot;^[u|r]?[&quot;|'](.*)[&quot;|']$&quot;&quot;&quot;, s, re.M|re.S)
-        if m:
-          s = m.group(1)
-        ap(&quot;\&quot;%s\&quot;&quot;%s.replace('&quot;','\\&quot;').replace(&quot;\\'&quot;,&quot;'&quot;))
-    return result
-
-dumper = Dumper()
-read = Reader().read
-dump = dumper.dump
-</code></pre>
-
-<h1>概要</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1</span><span>import re, sys
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2</span><span>from unicodedata import east_asian_width
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4</span><span>try:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5</span><span>  from re import Scanner
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6</span><span>except ImportError:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7</span><span>  from sre import Scanner
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9</span><span>class ParseError(StandardError): pass
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11</span><span>class Ident(unicode):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12</span><span>  def __repr__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13</span><span>    return &#34;Ident(%s)&#34;%unicode.__repr__(self)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15</span><span>class Symbol(unicode):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16</span><span>  def __repr__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17</span><span>    return &#34;Symbol(%s)&#34;%unicode.__repr__(self)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19</span><span>class Pair(list): 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20</span><span>  def __repr__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21</span><span>    return &#34;Pair(%s)&#34;%list.__repr__(self)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23</span><span>class Token(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24</span><span>  def __init__(self, value, pos):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25</span><span>    self.value = value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26</span><span>    self.pos   = pos
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27</span><span>  def __repr__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28</span><span>    return repr(self.value)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30</span><span>class Binding(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31</span><span>  def __init__(self, dct):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32</span><span>    self.dct = dict(((k, k.__class__), v) for k,v in dct.iteritems())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33</span><span>  __contains__ = lambda self, key: (key, key.__class__) in self.dct
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34</span><span>  __getitem__  = lambda self,key:  self.dct[(key, key.__class__)]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36</span><span>default_binding = {&#34;#t&#34;:True, &#34;true&#34;:True, &#34;#f&#34;:False, &#34;false&#34;:False, &#34;nil&#34;:None, &#34;dict&#34;:Ident(u&#39;alist-&gt;hash-table&#39;)}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38</span><span>class Reader(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39</span><span>  PAREN = {&#34;]&#34;:&#34;[&#34;, &#34;)&#34;:&#34;(&#34;}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40</span><span>  def __init__(self, binding=None, symbol_marker=&#34;&#39;&#34;, use_dict=True):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41</span><span>    self.binding = binding or default_binding
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42</span><span>    self.symbol_marker = symbol_marker
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43</span><span>    self.use_dict = use_dict
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45</span><span>  def read(self, value):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46</span><span>    self.result = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47</span><span>    self.paren_stack = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48</span><span>    self.source = value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49</span><span>    self.pos = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50</span><span>    self.scanner = Scanner([
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51</span><span>      (r&#34;\s+&#34;, self(&#34;skip&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52</span><span>      (r&#34;;[^\n]*\n&#34;, self(&#34;skip&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53</span><span>      (r&#34;&#34;&#34;&#34;(((?&lt;=\\)&#34;)|[^&#34;])*((?&lt;!\\)&#34;)&#34;&#34;&#34;, self(&#34;str&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54</span><span>      (r&#34;(\(|\[)&#34;, self(&#34;open&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55</span><span>      (r&#34;(\)|\])&#34;, self(&#34;close&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56</span><span>      (r&#34;(([\d]+|(((\d+)?\.[\d]+)|([\d]+\.)))e[\+\-]?[\d]+)|(((\d+)?\.[\d]+)|([\d]+\.))&#34;, self(&#34;number&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57</span><span>      (r&#34;\-?((0x[\da-f]+)|(0[0-7]+)|([1-9][\d]*)|0)[l]?&#34;, self(&#34;number&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58</span><span>      (r&#34;&#34;&#34;%s([^\(\[\)\]\s&#34;]+)&#34;&#34;&#34;%self.symbol_marker, self(&#34;symbol&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59</span><span>      (r&#34;&#34;&#34;([^\(\[\)\]\s&#34;]+)&#34;&#34;&#34;, self(&#34;ident&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60</span><span>      (r&#34;&#34;&#34;&#34;.*&#34;&#34;&#34;, self(&#34;unterm_str&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61</span><span>      (r&#34;.*&#34;, self(&#34;unknown_token&#34;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62</span><span>    ], re.M|re.S|re.I)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63</span><span>    self.scanner.scan(self.source)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64</span><span>    if self.paren_stack:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65</span><span>      self.raise_error(&#34;missing closing parenthesis.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66</span><span>    return self.parse(self.result)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68</span><span>  def append(self, v):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69</span><span>    self.last().append(Token(v, self.pos))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71</span><span>  def __call__(self, name):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72</span><span>    def _(scanner, s):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73</span><span>      self.pos += len(s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74</span><span>      return getattr(self, name)(s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75</span><span>    return _
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77</span><span>  def unknown_token(self,s): self.raise_error(&#34;unknown token: %s&#34;%s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78</span><span>  def skip(self, _): pass
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79</span><span>  def open(self, s):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80</span><span>      new_lst = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81</span><span>      self.last().append(new_lst)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82</span><span>      self.paren_stack.append([s, new_lst])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83</span><span>  def close(self, s):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84</span><span>      if not self.paren_stack:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85</span><span>        self.raise_error(&#34;missing opening parenthesis.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86</span><span>      if self.PAREN[s] != self.paren_stack.pop()[0]:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87</span><span>        self.raise_error(&#34;missing closing parenthesis.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88</span><span>  def str(self, s): self.append(eval(&#39;u&#34;&#34;&#39;+s+&#39;&#34;&#34;&#39;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89</span><span>  def unterm_str(self, s): self.raise_error(&#34;unterminated string literal.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90</span><span>  def number(self, s): self.append(eval(s))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91</span><span>  def symbol(self, s): self.append(Symbol(s[1:]))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92</span><span>  def ident(self, s): 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93</span><span>    if s in self.binding:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94</span><span>      self.append(self.binding[s])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95</span><span>    else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96</span><span>      self.append(Ident(s))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98</span><span>  def last(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99</span><span>    if self.paren_stack:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100</span><span>      return self.paren_stack[-1][1]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101</span><span>    else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102</span><span>      return self.result
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104</span><span>  def parse(self, rs):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105</span><span>    def is_ident(value, expected):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106</span><span>      return getattr(value,&#34;value&#34;, None) == Ident(expected)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107</span><span>    def is_pair(rs):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108</span><span>      return getattr(rs, &#34;__len__&#34;, lambda :0)()==3 and is_ident(rs[1], u&#34;.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110</span><span>    if isinstance(rs, list):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111</span><span>      if not len(rs):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112</span><span>        return []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113</span><span>      elif self.use_dict and is_ident(rs[0], u&#34;alist-&gt;hash-table&#34;):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114</span><span>        if len(rs) != 2:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115</span><span>          self.raise_error(&#34;alist-&gt;hash-table: expected 1 arguments, got %d.&#34;%(len(rs)-1), rs[0].pos)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116</span><span>        if not all(is_pair(a) for a in rs[1]):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117</span><span>          self.raise_error(&#34;alist-&gt;hash-table: aruguments must be alist&#34;, rs[0].pos)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118</span><span>        return dict((self.parse(i[0]), self.parse(i[2])) for i in rs[1])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119</span><span>      elif len(rs)!=3 and any(is_ident(t, u&#34;.&#34;) for t in rs):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120</span><span>        self.raise_error(&#39;illegal use of &#34;.&#34;&#39;, rs[0].pos)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121</span><span>      elif is_pair(rs):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122</span><span>        parsed = self.parse(rs[2])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123</span><span>        if not isinstance(rs[2], list):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124</span><span>          return Pair([rs[0].value, parsed])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125</span><span>        if isinstance(parsed, Pair):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126</span><span>          return Pair([rs[0].value, parsed])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127</span><span>        elif isinstance(parsed, list):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128</span><span>          return [rs[0].value]+parsed
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129</span><span>        else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130</span><span>          return [rs[0].value, parsed]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131</span><span>      else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132</span><span>        return map(self.parse, rs)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133</span><span>    else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134</span><span>      return rs.value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136</span><span>  def raise_error(self, msg=&#34;parse error&#34;, pos=None, range=3):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137</span><span>    pos = pos or self.pos
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138</span><span>    lines = self.source.split(&#34;\n&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139</span><span>    curline = self.source[:pos].count(&#34;\n&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140</span><span>    linepos = pos - len(&#34;\n&#34;.join(lines[:curline]))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141</span><span>    buf = [&#34;\n&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142</span><span>    for i in xrange(max(0, curline-range), curline+1):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143</span><span>      buf.append(&#34;% 5d: %s&#34;%(i+1, lines[i]))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144</span><span>    width = 7 + sum(east_asian_width(c) == &#39;W&#39; and 2 or 1 for c in unicode(lines[i]))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145</span><span>    buf.append(&#34;%s~&#34;%(&#34; &#34;*width))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146</span><span>    buf.append(&#34;line %d, %d: %s&#34;%(curline+1,linepos, msg))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147</span><span>    raise ParseError((&#34;\n&#34;.join(buf)).encode(sys.stderr.encoding))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149</span><span>class Dumper(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150</span><span>  def __init__(self, binding=None ,symbol_marker=&#34;&#39;&#34;):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151</span><span>    binding = binding or default_binding
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152</span><span>    self.binding = Binding(dict(zip(binding.values(), binding)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153</span><span>    self.symbol_marker = symbol_marker
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155</span><span>  def dump(self, obj):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156</span><span>    result = self.to_sexp(obj, [])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157</span><span>    if isinstance(result, list) and len(result) and result[0]==&#34;(&#34;:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158</span><span>      result = result[1:-1]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159</span><span>    return u&#34; &#34;.join(result)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161</span><span>  def to_sexp(self, obj, result):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162</span><span>    ap = result.append
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163</span><span>    tos = lambda v: self.to_sexp(v, result)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164</span><span>    if isinstance(obj, Pair):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165</span><span>      ap(&#34;(&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166</span><span>      tos(obj[0])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167</span><span>      ap(&#34; . &#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168</span><span>      tos(obj[1])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169</span><span>      ap(&#34;)&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170</span><span>    elif isinstance(obj, (tuple, list)):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171</span><span>      ap(&#34;(&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172</span><span>      map(tos, obj)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173</span><span>      ap(&#34;)&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174</span><span>    else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175</span><span>      if isinstance(obj, dict):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176</span><span>        ap(&#34;( alist-&gt;hash-table &#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177</span><span>        tos([(k, Ident(u&#34;.&#34;), v) for k,v in obj.items()])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">178</span><span>        ap(&#34; ) &#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">179</span><span>      elif obj in self.binding:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">180</span><span>        ap(unicode(Ident(self.binding[obj])))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">181</span><span>      elif isinstance(obj, Symbol):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">182</span><span>        ap(u&#34;&#39;%s&#34;%unicode(obj))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">183</span><span>      elif isinstance(obj, (Ident,int, float, long)):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">184</span><span>        ap(unicode(obj))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">185</span><span>      else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">186</span><span>        s = unicode(repr(obj)).decode(&#34;unicode_escape&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">187</span><span>        m = re.match(r&#34;&#34;&#34;^[u|r]?[&#34;|&#39;](.*)[&#34;|&#39;]$&#34;&#34;&#34;, s, re.M|re.S)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">188</span><span>        if m:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">189</span><span>          s = m.group(1)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">190</span><span>        ap(&#34;\&#34;%s\&#34;&#34;%s.replace(&#39;&#34;&#39;,&#39;\\&#34;&#39;).replace(&#34;\\&#39;&#34;,&#34;&#39;&#34;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">191</span><span>    return result
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">192</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">193</span><span>dumper = Dumper()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">194</span><span>read = Reader().read
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">195</span><span>dump = dumper.dump
+</span></span></code></pre><h1 id="heading-1">概要</h1>
 <p>特徴は</p>
-
 <ul>
 <li>辞書を定義できる</li>
 <li>ドット対に対応</li>
@@ -296,51 +285,40 @@ dump = dumper.dump
 <li>わりとちゃんとエラー表示される</li>
 <li>シンボル表記、数値表記(python表記)に対応</li>
 </ul>
-
 <p>といった当たりでしょうか。具体的にはテストコードを見てもらうと分かるかと。</p>
-
-<pre class="prettyprint"><code>(あああ hoge-&gt;fuga123 (1 . (2 . 3)) &quot;hoge\\&quot;hoge&quot; ;comment2 
-foo &quot;aaa&quot; #t &lt;= 'foo 
-&quot;hogehoge
-foo
-&quot; (5 . (6 .()))
-)
-(dict (
-  (&quot;いいい&quot; .
-    (alist-&gt;hash-table (
-      (&quot;a-1&quot; . &quot;vvv&quot;)
-      (&quot;a-2&quot; . (
-        hoge foo bar 
-      ))
-    )))
-))
-(10 1L -45 010 0x10 -10 -0x10 3.14 10. .001 1e100 3.14e-10 0e0)
-; comment3 ()(
-
-&quot;&quot;&quot;)
-</code></pre>
-
-<p>という感じのS式が</p>
-
-<pre class="prettyprint"><code>[
-  [Ident(u'あああ'), Ident(u'hoge-&gt;fuga123'), Pair([1, Pair([2, 3])]), u'hoge&quot;hoge',
-  Ident(u'foo'), u'aaa', True, Ident(u'&lt;='), Symbol(u'foo'),
-  u'hogehoge\nfoo\n', [5,6]],
-  {u'いいい': 
-    {u'a-1': u'vvv', 
-    u'a-2': [Ident(u'hoge'), Ident(u'foo'), Ident(u'bar')]}},
-  [10, 1L, -45, 010, 0x10, -10, -0x10, 3.14, 10., .001, 1e100, 3.14e-10, 0e0]
-]
-</code></pre>
-
-<p>となります。 <code>Ident</code> や <code>Symbol</code> はunicodeのサブクラス、 <code>Pair</code> はリストのサブクラスになっているので、違和感なく使えると思います。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>(あああ hoge-&gt;fuga123 (1 . (2 . 3)) &#34;hoge\\&#34;hoge&#34; ;comment2 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>foo &#34;aaa&#34; #t &lt;= &#39;foo 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>&#34;hogehoge
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>foo
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>&#34; (5 . (6 .()))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>(dict (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  (&#34;いいい&#34; .
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    (alist-&gt;hash-table (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>      (&#34;a-1&#34; . &#34;vvv&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>      (&#34;a-2&#34; . (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>        hoge foo bar 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>      ))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    )))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>(10 1L -45 010 0x10 -10 -0x10 3.14 10. .001 1e100 3.14e-10 0e0)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>; comment3 ()(
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>&#34;&#34;&#34;)
+</span></span></code></pre><p>という感じのS式が</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>[
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>  [Ident(u&#39;あああ&#39;), Ident(u&#39;hoge-&gt;fuga123&#39;), Pair([1, Pair([2, 3])]), u&#39;hoge&#34;hoge&#39;,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>  Ident(u&#39;foo&#39;), u&#39;aaa&#39;, True, Ident(u&#39;&lt;=&#39;), Symbol(u&#39;foo&#39;),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  u&#39;hogehoge\nfoo\n&#39;, [5,6]],
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>  {u&#39;いいい&#39;: 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>    {u&#39;a-1&#39;: u&#39;vvv&#39;, 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>    u&#39;a-2&#39;: [Ident(u&#39;hoge&#39;), Ident(u&#39;foo&#39;), Ident(u&#39;bar&#39;)]}},
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>  [10, 1L, -45, 010, 0x10, -10, -0x10, 3.14, 10., .001, 1e100, 3.14e-10, 0e0]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>]
+</span></span></code></pre><p>となります。 <code>Ident</code> や <code>Symbol</code> はunicodeのサブクラス、 <code>Pair</code> はリストのサブクラスになっているので、違和感なく使えると思います。</p>
 <p>また、 <code>alist-&gt;hash-table</code> で辞書が作れます。デフォルトで <code>dict</code> に <code>alist-&gt;hash-table</code> をバインドしてますので、 <code>dict</code> でも辞書が作れます。この機能はオンオフ切り替えも可能です。</p>
-
 <p>その他、 <code>#t</code> を <code>True</code> などSchemeっぽくデフォルトバインディングが用意してあります。もちろん、バインディングは変更可能ですのでCLっぽくもできます。</p>
-
-<hr />
-
+<hr>
 <p>と、こんな感じです。一番便利なのはやっぱり辞書ですかねえ。なので、YAML,JSONで書いてる設定ファイルをS式で置き換え･･･なんてことができるかもしれません。</p>
 
 
@@ -357,7 +335,7 @@ foo
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/09/19/sexp-library-for-python" class="hatena-bookmark-button" data-hatena-bookmark-title="Python: S式パーサライブラリを作りました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/09/19/sexp-library-for-python" class="hatena-bookmark-button" data-hatena-bookmark-title="Python: S式パーサライブラリを作りました" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

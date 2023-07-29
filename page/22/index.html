@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,155 +71,134 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="/articles/2006/09/30/python-generating-accessors">以前書いてみたアクセサ</a> をpropertyを使って改良してみる。</p>
-
 <p>propertyというのはnew-styleクラスに対してのみ使える、メソッドで</p>
-
-<pre class="prettyprint"><code>class C(object):
-    def __init__(self): self.__x = None
-    def getx(self): return self.__x
-    def setx(self, value): self.__x = value
-    def delx(self): del self.__x
-    x = property(getx, setx, delx, &quot;I'm the 'x' property.&quot;)
-</code></pre>
-
-<p>こんな感じで使う。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>class C(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>    def __init__(self): self.__x = None
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    def getx(self): return self.__x
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>    def setx(self, value): self.__x = value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    def delx(self): del self.__x
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>    x = property(getx, setx, delx, &#34;I&#39;m the &#39;x&#39; property.&#34;)
+</span></span></code></pre><p>こんな感じで使う。</p>
 <p>Rubyを使った人なら分かると思うけど、プロパティ名でのアクセス＝アクセサ呼び出しになるのは結構便利。 ActiveRecordなんかでは、特に便利だと感じる。あ、このプロパティ、もういっそエンコードされた値を返したい、と思ったときにそのクラスにプロパティ名と同じメソッドを定義するだけでいいし。</p>
-
 <p>前につくったアクセサは「get_hoge()」や「set_hoge()」といった感じで呼び出されたけど、これにpropertyを使うことによってRubyと同じような属性アクセスが可能になる。</p>
-
 <p>とりあえずこんな感じ。</p>
-
-<pre class="prettyprint"><code>#!/usr/bin/python
-# vim: fileencoding=utf-8
-from itertools import * 
-
-def property_accessor(cls, *names): 
-  _property(cls, names)
-
-def property_reader(cls, *names):
-  _property(cls, names, True)
-
-def property_writer(cls, *names):
-  _property(cls, names, False, True)
-
-def _property(cls, names, error_setter = False, error_getter = False):
-  for attr_name, doc in _name_and_docs(names):
-    real_name = _real_name(cls, attr_name)
-    setter  = _add_setter(cls, attr_name, real_name, error_setter)
-    getter  = _add_getter(cls, attr_name, real_name, error_getter)
-    deleter = _add_deleter(cls, attr_name, real_name)
-    setattr(cls, attr_name, property(getter, setter, deleter, doc))
-
-def _name_and_docs(name_or_tuples):
-  return imap(_name_and_doc ,name_or_tuples)
-
-def _name_and_doc(name_or_tupple):
-  if isinstance(name_or_tupple, (&quot;&quot;.__class__, u&quot;&quot;.__class__)) :
-    return (name_or_tupple, &quot;&quot;)
-  else:
-    return name_or_tupple
-
-def _real_name(cls, name) :
-  return &quot;_%s__%s&quot;%(cls.__name__, name)
-
-def _add_method(cls, verb, name, method_to_add):
-  method_name = &quot;%s_%s&quot; % (verb, name)
-  method = cls.__dict__.get(method_name)
-  if not method :
-    method = method_to_add
-    setattr(cls, method_name, method)
-  return method
-
-def _add_setter(cls, name, real_name, error = False) :
-  if error:
-    def setter(self, v):
-      raise AttributeError, &quot;class %s: %s is a read-only attribute.&quot; % (cls.__name__, name)
-  else:
-    setter = lambda self, v : setattr(self, real_name, v)
-  return _add_method(cls, &quot;set&quot;, name, setter)
-
-def _add_getter(cls, name, real_name, error = False) :
-  if error:
-    def getter(self):
-      raise AttributeError, &quot;class %s: %s is a write-only attribute.&quot; % (cls.__name__, name)
-  else:
-    getter = lambda self : getattr(self, real_name)
-  return _add_method(cls, &quot;get&quot;, name, getter)
-
-def _add_deleter(cls, name, real_name) :
-  deleter = lambda self : delattr(self, real_name)
-  return _add_method(cls, &quot;delete&quot;, name, deleter)
-
-class AccessorType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    cls = type.__new__(cls, class_name, class_bases, classdict)
-    list = [&quot;__accessor__&quot;, &quot;__reader__&quot;, &quot;__writer__&quot;]
-    methods = imap(lambda n: eval(&quot;property_%s&quot;%n.strip(&quot;_&quot;)), list)
-    for accessor_type, method in izip(list, methods):
-        if classdict.has_key(accessor_type):
-          method(cls, *classdict[accessor_type])
-    return cls
-
-class Accessor(object):
-  __metaclass__ = AccessorType
-  def __init__(self, *args) :
-    list = [&quot;__accessor__&quot;, &quot;__reader__&quot;, &quot;__writer__&quot;]
-    for accessor_type in list:
-      if not self.__class__.__dict__.has_key(accessor_type) : continue
-      for name in self.__class__.__dict__.get(accessor_type):
-        attr_name, doc = _name_and_doc(name)
-        if not self.__dict__.get(attr_name):
-          exec(&quot;self._%s__%s = None&quot; % (self.__class__.__name__, attr_name))
-</code></pre>
-
-<p>使い方は</p>
-
-<pre class="prettyprint"><code>#!/usr/bin/python
-# vim: fenc=utf-8
-import accessor
-
-class Test(accessor.Accessor) :
-  __accessor__ = [(&quot;x&quot;, &quot;This is x value&quot;), &quot;y&quot;, &quot;z&quot;]
-  __reader__    = [&quot;r&quot;]
-
-  def __init__(self):
-    accessor.Accessor.__init__(self)
-
-  def get_y(self) :
-    return &quot;new y value&quot;
-
-obj = Test()
-obj.x = &quot;hoge&quot;
-
-print obj.x
-# =&gt; hoge
-
-print Test.x.__doc__
-# =&gt; This is x value
-
-print obj.y
-# =&gt; new y value
-
-obj.r = &quot;value&quot;
-# =&gt; AttributeError: class Test: r is a read-only attribute.
-</code></pre>
-
-<p>こんな感じ。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>#!/usr/bin/python
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span># vim: fileencoding=utf-8
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>from itertools import * 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>def property_accessor(cls, *names): 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  _property(cls, names)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>def property_reader(cls, *names):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  _property(cls, names, True)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>def property_writer(cls, *names):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  _property(cls, names, False, True)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>def _property(cls, names, error_setter = False, error_getter = False):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  for attr_name, doc in _name_and_docs(names):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    real_name = _real_name(cls, attr_name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    setter  = _add_setter(cls, attr_name, real_name, error_setter)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>    getter  = _add_getter(cls, attr_name, real_name, error_getter)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    deleter = _add_deleter(cls, attr_name, real_name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    setattr(cls, attr_name, property(getter, setter, deleter, doc))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>def _name_and_docs(name_or_tuples):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>  return imap(_name_and_doc ,name_or_tuples)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>def _name_and_doc(name_or_tupple):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  if isinstance(name_or_tupple, (&#34;&#34;.__class__, u&#34;&#34;.__class__)) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>    return (name_or_tupple, &#34;&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>  else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>    return name_or_tupple
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>def _real_name(cls, name) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>  return &#34;_%s__%s&#34;%(cls.__name__, name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>def _add_method(cls, verb, name, method_to_add):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>  method_name = &#34;%s_%s&#34; % (verb, name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>  method = cls.__dict__.get(method_name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>  if not method :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>    method = method_to_add
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>    setattr(cls, method_name, method)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>  return method
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>def _add_setter(cls, name, real_name, error = False) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>  if error:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>    def setter(self, v):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>      raise AttributeError, &#34;class %s: %s is a read-only attribute.&#34; % (cls.__name__, name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>  else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>    setter = lambda self, v : setattr(self, real_name, v)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>  return _add_method(cls, &#34;set&#34;, name, setter)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>def _add_getter(cls, name, real_name, error = False) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>  if error:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>    def getter(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>      raise AttributeError, &#34;class %s: %s is a write-only attribute.&#34; % (cls.__name__, name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span>  else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>    getter = lambda self : getattr(self, real_name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>  return _add_method(cls, &#34;get&#34;, name, getter)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58</span><span>def _add_deleter(cls, name, real_name) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59</span><span>  deleter = lambda self : delattr(self, real_name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60</span><span>  return _add_method(cls, &#34;delete&#34;, name, deleter)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62</span><span>class AccessorType(type):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63</span><span>  def __new__(cls, class_name, class_bases, classdict):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64</span><span>    cls = type.__new__(cls, class_name, class_bases, classdict)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65</span><span>    list = [&#34;__accessor__&#34;, &#34;__reader__&#34;, &#34;__writer__&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66</span><span>    methods = imap(lambda n: eval(&#34;property_%s&#34;%n.strip(&#34;_&#34;)), list)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67</span><span>    for accessor_type, method in izip(list, methods):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68</span><span>        if classdict.has_key(accessor_type):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69</span><span>          method(cls, *classdict[accessor_type])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70</span><span>    return cls
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72</span><span>class Accessor(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73</span><span>  __metaclass__ = AccessorType
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74</span><span>  def __init__(self, *args) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75</span><span>    list = [&#34;__accessor__&#34;, &#34;__reader__&#34;, &#34;__writer__&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76</span><span>    for accessor_type in list:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77</span><span>      if not self.__class__.__dict__.has_key(accessor_type) : continue
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78</span><span>      for name in self.__class__.__dict__.get(accessor_type):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79</span><span>        attr_name, doc = _name_and_doc(name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80</span><span>        if not self.__dict__.get(attr_name):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81</span><span>          exec(&#34;self._%s__%s = None&#34; % (self.__class__.__name__, attr_name))
+</span></span></code></pre><p>使い方は</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>#!/usr/bin/python
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span># vim: fenc=utf-8
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>import accessor
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>class Test(accessor.Accessor) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  __accessor__ = [(&#34;x&#34;, &#34;This is x value&#34;), &#34;y&#34;, &#34;z&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  __reader__    = [&#34;r&#34;]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  def __init__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    accessor.Accessor.__init__(self)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  def get_y(self) :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    return &#34;new y value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>obj = Test()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>obj.x = &#34;hoge&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>print obj.x
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span># =&gt; hoge
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>print Test.x.__doc__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span># =&gt; This is x value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>print obj.y
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span># =&gt; new y value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>obj.r = &#34;value&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span># =&gt; AttributeError: class Test: r is a read-only attribute.
+</span></span></code></pre><p>こんな感じ。</p>
 <p><code>get_*</code> とか <code>set_*</code> を定義すれば、独自のアクセサを定義できる。 属性は全て <code>private(__*)</code> として保存されているので、 <code>self.__x</code> みたいな感じでクラス内ではアクセスできる。</p>
-
 <p>これやっててはまったのはココ。</p>
-
-<pre class="prettyprint"><code>exec(&quot;self._%s__%s = None&quot; % (self.__class__.__name__, attr_name))
-</code></pre>
-
-<p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>exec(&#34;self._%s__%s = None&#34; % (self.__class__.__name__, attr_name))
+</span></span></code></pre><p>いや <code>self.__dict__[attr_name] = None</code> でいいんだけど、ふとexecを使うと予想外なことがおこったのであえて記事にのっけてみた。</p>
 <p>なんとこれじゃだめなのだ！！ふつうPythonでは <code>self.__x = hoge</code> とすると自動的に内部で <code>self.__dict__[&quot;_classname__x&quot;] = &quot;hoge&quot;</code> に変換される。</p>
-
 <p>でもexecでやるとどうやらこの過程をぶっ飛ばしてしまうらしい。要はprivateになってくれない。なので自分で変換してやることで解決する。</p>
-
 <p>ところでこういうアクセサ生成メタクラスってネットにいっぱい転がってるんだけど、そろそろ標準で組み込まれたりしないんだろうかねえ。</p>
 
   </div>
@@ -251,24 +228,14 @@ obj.r = &quot;value&quot;
 </header>
   <div itemprop="articleBody">
     <p>Pythonのコードをwindows用exeにするには当然、 <a href="http://www.py2exe.org/">py2exe</a> を使います。</p>
-
 <p>で、そのとき、</p>
-
-<pre class="prettyprint"><code>python setup.py py2exe --windows
-</code></pre>
-
-<p>とすれば、コンソールを表示しないようにできます。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>python setup.py py2exe --windows
+</span></span></code></pre><p>とすれば、コンソールを表示しないようにできます。</p>
 <p>これはもう古いやり方で、現在のバージョンのpy2exeでは動きません・・・。現在はターゲットファイルの拡張子を.pywにする、もしくは <code>windows = [{'script' : 'script.py', &quot;icon_resources&quot;: [(1,&quot;script.ico&quot;)]}]</code> というオプションをsetupに渡す、という方法になっています。</p>
-
 <p>今日、昔py2exeで作ったファイルが出てきたんですが、困ったことにpythonのソースファイルはない。いや、別に改良とかもうしないしいいんだけど。 ふと起動してみるとGUI with console。かっちょわりい。</p>
-
 <p>コンソールが表示される、というのは単純にPEファイルのオプションなわけで。</p>
-
-<p><img src="/statics/files/pe.jpg" alt="image" /></p>
-
+<p><img src="/statics/files/pe.jpg" alt="image"></p>
 <p>この部分を変更してやればとりあえずは直る。ちなみに、</p>
-
 <ul>
 <li>00 00:未知のサブシステム</li>
 <li>01 00:デバイス ライバおよびWindowsNTネイティブプロセス用</li>
@@ -277,33 +244,28 @@ obj.r = &quot;value&quot;
 <li>07 00:Posixコンソールで実行されるファイル</li>
 <li>09 00:WindowsCEで実行されるファイル</li>
 </ul>
-
 <p>なので02h 00hにしてやればオッケー。</p>
-
 <p>Pythonでバイナリファイルの読み書きとかしたことないので練習もかねて。</p>
-
-<pre class="prettyprint"><code># vim: fileencoding=utf-8
-import sys
-from struct import * 
-target_file = len(sys.argv) &gt; 1 and sys.argv[1] or sys.exit(&quot;Target file is not specified.&quot;)
-target_file = unicode(target_file, &quot;mbcs&quot;)
-out_file    = open(target_file + &quot;_gui&quot;, &quot;wb&quot;)
-
-io = open(target_file, &quot;rb&quot;)
-while 1 :
-  if io.read(1) == &quot;P&quot; and io.read(1) == &quot;E&quot; : break
-subsystem_pos = io.tell() +90 
-io.seek(0)
-out_file.write(io.read(subsystem_pos))
-io.seek(4, 1)
-out_file.write(pack('hh', 2, 0))
-out_file.write(io.read())
-
-io.close()
-out_file.close()
-</code></pre>
-
-<p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span># vim: fileencoding=utf-8
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>import sys
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>from struct import * 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>target_file = len(sys.argv) &gt; 1 and sys.argv[1] or sys.exit(&#34;Target file is not specified.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>target_file = unicode(target_file, &#34;mbcs&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>out_file    = open(target_file + &#34;_gui&#34;, &#34;wb&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>io = open(target_file, &#34;rb&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>while 1 :
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  if io.read(1) == &#34;P&#34; and io.read(1) == &#34;E&#34; : break
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>subsystem_pos = io.tell() +90 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>io.seek(0)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>out_file.write(io.read(subsystem_pos))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>io.seek(4, 1)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>out_file.write(pack(&#39;hh&#39;, 2, 0))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>out_file.write(io.read())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>io.close()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>out_file.close()
+</span></span></code></pre><p>こんな感じ。引数にexeファイルを渡せばオッケー。でも、適当なので全部のケースで動くかはあやしいｗ pythonではバイナリを扱うときはstructモジュールを使う、ということが分かりました（笑</p>
 
   </div>
 </article>
@@ -334,92 +296,79 @@ out_file.close()
 </header>
   <div itemprop="articleBody">
     <p>Windowsの小物はほぼPythonで作っているわけですが。</p>
-
 <p>WindowsにPythonをインストーラーを使ってインストールすると*.pyにデフォルトだとpython.exeを関連付けしてくれます。 これは非ﾌﾟﾛｸﾞﾗﾏな人にプログラムを渡すとき非常に便利で、とりあえずPythonをインストールして、このファイルをダブルクリックしろ、というだけでオッケー。exe化して無駄な容量を食わなくても大丈夫なのです。</p>
-
 <p>んで、作るのはだいたいコンソールで実行するもの。 これがダブルクリックで実行できるのはいいんですが、当然、プログラムが終了するとウインドウ（DOSプロンプト）が閉じちゃうから結果が見れない。 いちいちDOSプロンプトから実行するのもめんどくさい。しかも見た目的に非ﾌﾟﾛｸﾞﾗﾏにはいかつい。</p>
-
 <p>なんとかならないかなー、と思ってTkを使ってコンソールアプリを作るためのライブラリを作ってみた。</p>
-
-<pre class="prettyprint"><code># vim: fileencoding=utf-8
-from Tkinter import *
-from ScrolledText import ScrolledText
-import sys
-import thread
-import time
-
-class GUIConsole(Frame):
-  def init(self):
-    self.init_input()
-    self.init_output()
-
-  def init_input(self):
-    self.input_var = StringVar()
-    self.input = Entry(self, width=100, textvariable=self.input_var)
-    self.input.pack(side=TOP)
-    self.input.bind('&lt;Return&gt;', self.input_enter)
-
-    self.input_var.readline = self.readline
-    sys.stdin = self.input_var
-
-  def init_output(self):
-    self.out = ScrolledText(self, width=100, height=30)
-    self.out.pack(side=TOP)
-    self.out.write = self.write
-    sys.stdout = self.out
-
-  def write(self, str):
-    self.out.insert(END, str)
-    time.sleep(0.0001)
-    self.out.yview_scroll(str.count(&quot;\n&quot;) + 1, &quot;units&quot;)
-
-  def readline(self, size=None):
-    self.input.focus()
-    self.input_entered = False
-    while True:
-      time.sleep(0.5)
-      if self.input_entered == True:
-        break
-    result = self.input_var.get()
-    self.input_var.set(&quot;&quot;)
-    return result
-
-  def input_enter(self, event):
-    self.input_entered = True
-
-  def __init__(self, title, master=None):
-    self.input_entered = False
-    Frame.__init__(self, master)
-    self.pack()
-    self.master.title(title)
-    self.init()
-
-def start(main_func, title=&quot;Python&quot;) : 
-  app = GUIConsole(title)
-  thread.start_new_thread(main_func, ())
-  app.mainloop()
-</code></pre>
-
-<p>使い方はこんなかんじ。</p>
-
-<pre class="prettyprint"><code>import guiconsole
-
-def main():
-  while True:
-    var = raw_input()
-    print var
-
-guiconsole.start(main, &quot;GUIコンソールのテスト&quot;)
-</code></pre>
-
-<p>でこんな風にみえる。</p>
-
-<p><a href="/statics/files/python_tk_cui.jpg"><img src="/statics/files/python_tk_cui.thumbnail.jpg" alt="image" /></a></p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span># vim: fileencoding=utf-8
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>from Tkinter import *
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>from ScrolledText import ScrolledText
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>import sys
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>import thread
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>import time
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>class GUIConsole(Frame):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  def init(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    self.init_input()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    self.init_output()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  def init_input(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    self.input_var = StringVar()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    self.input = Entry(self, width=100, textvariable=self.input_var)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    self.input.pack(side=TOP)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>    self.input.bind(&#39;&lt;Return&gt;&#39;, self.input_enter)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    self.input_var.readline = self.readline
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    sys.stdin = self.input_var
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>  def init_output(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>    self.out = ScrolledText(self, width=100, height=30)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>    self.out.pack(side=TOP)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>    self.out.write = self.write
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>    sys.stdout = self.out
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>  def write(self, str):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>    self.out.insert(END, str)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>    time.sleep(0.0001)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    self.out.yview_scroll(str.count(&#34;\n&#34;) + 1, &#34;units&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>  def readline(self, size=None):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>    self.input.focus()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>    self.input_entered = False
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>    while True:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>      time.sleep(0.5)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>      if self.input_entered == True:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>        break
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>    result = self.input_var.get()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>    self.input_var.set(&#34;&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>    return result
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>  def input_enter(self, event):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>    self.input_entered = True
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>  def __init__(self, title, master=None):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>    self.input_entered = False
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>    Frame.__init__(self, master)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>    self.pack()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>    self.master.title(title)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>    self.init()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span>def start(main_func, title=&#34;Python&#34;) : 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>  app = GUIConsole(title)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>  thread.start_new_thread(main_func, ())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span>  app.mainloop()
+</span></span></code></pre><p>使い方はこんなかんじ。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>import guiconsole
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>def main():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  while True:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    var = raw_input()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>    print var
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>guiconsole.start(main, &#34;GUIコンソールのテスト&#34;)
+</span></span></code></pre><p>でこんな風にみえる。</p>
+<p><a href="/statics/files/python_tk_cui.jpg"><img src="/statics/files/python_tk_cui.thumbnail.jpg" alt="image"></a></p>
 <p>一番上に入力欄があって、その下に結果表示エリア。</p>
-
 <p>Pythonの場合、stdoutはwriteというメソッド、stdinはreadlineというメソッドさえもっていればどんなオブジェクトでもオッケー。 なので単純にstdoutとstdinをTkのウィジットに置き換えてメインループに入り、別スレッドでメインの処理を実行してやっているだけ。</p>
-
 <p>見栄えも生のDOSプロンプトよりはいいし、処理が終わってもウィンドウを閉じない限り結果を見ることができる。 プチ便利なので、はやくも自分で使いまくりです（笑</p>
 
   </div>

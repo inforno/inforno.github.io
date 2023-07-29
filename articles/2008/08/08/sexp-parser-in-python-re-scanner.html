@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,169 +71,144 @@
 </header>
   <div itemprop="articleBody">
     <p>Rubyの <code>StringScanner</code> は個人的にかなり好きなモジュールで、Rubyでちょっとしたパーサなどを書くときに重宝しています。</p>
-
 <p>一方、Pythonにはexperimentalながら <code>re.Scanner</code> というクラスがあります( <code>&gt;= 2.4</code> )。experimentalなのでマニュアルにはのっていませんが。この <code>re.Scanner</code> はかなりシンプルなんですが典型的な <code>StringScanner</code> の使い方の範疇では、こちらのほうがキレイに書けるような気がします。</p>
-
-<h1><code>re.Scanner</code> の使い方</h1>
-
+<h1 id="rescanner-"><code>re.Scanner</code> の使い方</h1>
 <p>使い方は非常に簡単で</p>
-
 <ul>
-<li><p><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</p>
-
+<li>
+<p><code>(regex, action)</code> のリストを渡してScannerオブジェクトを作成</p>
 <ul>
 <li><code>action</code> は(scanner, string_matched) =&gt; stringな関数、Noneを返せば結果は無視される。</li>
-</ul></li>
-
-<li><p>scanメソッドでスキャン。結果が配列で返ってくる</p></li>
 </ul>
-
+</li>
+<li>
+<p>scanメソッドでスキャン。結果が配列で返ってくる</p>
+</li>
+</ul>
 <p>といった感じ。関数を渡すので、 <code>StringScanner</code> のようなwhileループを作る必要がなく、キレイにまとまります。</p>
-
-<h1>例：S式パーサ</h1>
-
+<h1 id="s">例：S式パーサ</h1>
 <p><code>re.Scanner</code> は簡単、ということでS式パーサでも。トークナイズ+αな処理をするので、 <code>action</code> をインスタンスメソッドにして状態を保存することにします。</p>
-
 <p>目標は</p>
-
 <ul>
 <li>数値(っぽいもの)、文字列、シンボルが使える</li>
 <li>シンボルのみ、新たにクラスを定義して(unicodeのサブクラス)それにマップ。それ以外は組み込み型に。</li>
 <li>パースエラーも分かりやすく</li>
 <li>結果はPythonのリストorオブジェクトとして返る</li>
 </ul>
-
 <p>で</p>
-
-<pre class="prettyprint"><code>import re, sys
-from unicodedata import east_asian_width
-
-try:
-  from re import Scanner
-except ImportError:
-  from sre import Scanner
-
-class ParseError(StandardError): pass
-
-class Symbol(unicode):
-  def __repr__(self):
-    return &quot;Symbol(%s)&quot;%unicode.__repr__(self)
-
-class TokenProcessor(object):
-  PAREN = {&quot;]&quot;:&quot;[&quot;, &quot;)&quot;:&quot;(&quot;}
-  def __init__(self, value):
-    self.result = []
-    self.append = self.result.append
-    self.string = value
-    self.paren_stack = []
-    self.pos = 0
-
-  def __call__(self, name):
-    def _(*a):
-      self.before(*a)
-      return getattr(self, name)(*a)
-    return _
-
-  def before(self, scanner, s):
-    self.pos += len(s)
-    self.skip(scanner, s)
-
-  def error(self, scanner, s): self.raise_error(&quot;unknown token: %s&quot;%s)
-
-  def skip_whitespaces(self, scanner, s): self.append(&quot;,&quot;)
-
-  def skip(self, scanner, s):
-    last = &quot;&quot;.join(self.result[-2:])
-    if last in [&quot;[,&quot;, &quot;,,&quot;, &quot;,]&quot;]: 
-      self.result[-2:] = sorted(last, key=ord)[1]
-
-  def atom(self, scanner, s):
-    if s in [&quot;(&quot;, &quot;[&quot;]:
-      self.append(&quot;[&quot;)
-      self.paren_stack.append(s)
-    elif s in [&quot;)&quot;, &quot;]&quot;]:
-      if not self.paren_stack:
-        self.raise_error(&quot;missing opening parenthesis.&quot;)
-      if self.PAREN[s] != self.paren_stack.pop():
-        self.raise_error(&quot;missing closing parenthesis.&quot;)
-      self.append(&quot;]&quot;)
-    elif re.match(r&quot;&quot;&quot;^(&quot;.*)$&quot;&quot;&quot;, s or &quot;&quot;):
-      self.append(&quot;u&quot;+s)
-    elif re.match(r&quot;&quot;&quot;^((\-?\d[\de\.]+)|(\s*)|(.*&quot;))$&quot;&quot;&quot;, s or &quot;&quot;):
-      self.append(s)
-    else:
-      self.append(&quot;Symbol(u\&quot;%s\&quot;)&quot;%s)
-
-  def raise_error(self, msg=&quot;parse error&quot;, range=3):
-    lines = self.string.split(&quot;\n&quot;)
-    curline = self.string[:self.pos].count(&quot;\n&quot;)
-    linepos = self.pos - len(&quot;\n&quot;.join(lines[:curline]))
-    buf = [&quot;\n&quot;] 
-    for i in xrange(max(0, curline-range), curline+1):
-      buf.append(&quot;% 5d: %s&quot;%(i+1, lines[i]))
-    width = 6 + sum(east_asian_width(c) == 'W' and 2 or 1 for c in lines[i])
-    buf.append(&quot;%s~&quot;%(&quot; &quot;*width))
-    buf.append(&quot;line %d, %d: %s&quot;%(curline+1,linepos, msg))
-    raise ParseError((&quot;\n&quot;.join(buf)).encode(sys.stderr.encoding))
-
-def read_sexp(sexp):
-  processor = TokenProcessor(sexp)
-  scanner = Scanner([
-    (r&quot;\s+&quot;, processor(&quot;skip_whitespaces&quot;)),
-    (r&quot;;[^\n]*\n&quot;, processor(&quot;skip&quot;)),
-    (r&quot;&quot;&quot;&quot;(?:[^&quot;])*&quot;|(\]|\[|\)|\(|[^\(\)\s]+)&quot;&quot;&quot;, processor(&quot;atom&quot;)),
-    (r&quot;.*&quot;, processor(&quot;error&quot;))
-  ], re.M)
-  scanner.scan(processor.string)
-  if processor.paren_stack:
-    processor.raise_error(&quot;missing closing parenthesis.&quot;)
-  result = eval(&quot;&quot;.join(processor.result).lstrip(&quot;,&quot;))
-  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]
-</code></pre>
-
-<p>こんな感じ。非常にシンプルな気がします。</p>
-
-<pre class="prettyprint"><code>print read_sexp(u&quot;&quot;&quot;(&quot;ほげほげ&quot;
-;comment
-  ;comment
-  (hogehoge 123) ;aaaaaaa
-  &quot;hoge\\&quot;aaaa&quot;
-;comment
-;comment
-
-aaaa          b)&quot;&quot;&quot;)
-</code></pre>
-
-<p>output:</p>
-
-<pre class="prettyprint"><code>[u'\u307b\u3052\u307b\u3052', [Symbol(u'hogehoge'), 123], u'hoge&quot;aaaa', Symbol(u'aaaa'), Symbol(u'b')]
-</code></pre>
-
-<p>エラーも一応。</p>
-
-<pre class="prettyprint"><code>print read_sexp(u&quot;&quot;&quot;(
-aaaa
-bbbb (ccc ddd) )
-(eee 
-ああああああ&quot;&quot;&quot;)
-</code></pre>
-
-<p>output:</p>
-
-<pre class="prettyprint"><code>__main__.ParseError:
-
-    2: aaaa
-    3: bbbb (ccc ddd) )
-    4: (eee
-    5: ああああああ
-                  ~
-line 5, 7: missing closing parenthesis.
-</code></pre>
-
-<p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
-
-<h1>というわけで</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>import re, sys
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>from unicodedata import east_asian_width
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>try:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  from re import Scanner
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>except ImportError:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  from sre import Scanner
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>class ParseError(StandardError): pass
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>class Symbol(unicode):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  def __repr__(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>    return &#34;Symbol(%s)&#34;%unicode.__repr__(self)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>class TokenProcessor(object):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  PAREN = {&#34;]&#34;:&#34;[&#34;, &#34;)&#34;:&#34;(&#34;}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>  def __init__(self, value):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>    self.result = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    self.append = self.result.append
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    self.string = value
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    self.paren_stack = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>    self.pos = 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>  def __call__(self, name):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>    def _(*a):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>      self.before(*a)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>      return getattr(self, name)(*a)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>    return _
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>  def before(self, scanner, s):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>    self.pos += len(s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>    self.skip(scanner, s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>  def error(self, scanner, s): self.raise_error(&#34;unknown token: %s&#34;%s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>  def skip_whitespaces(self, scanner, s): self.append(&#34;,&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>  def skip(self, scanner, s):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>    last = &#34;&#34;.join(self.result[-2:])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>    if last in [&#34;[,&#34;, &#34;,,&#34;, &#34;,]&#34;]: 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>      self.result[-2:] = sorted(last, key=ord)[1]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43</span><span>  def atom(self, scanner, s):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44</span><span>    if s in [&#34;(&#34;, &#34;[&#34;]:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45</span><span>      self.append(&#34;[&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46</span><span>      self.paren_stack.append(s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47</span><span>    elif s in [&#34;)&#34;, &#34;]&#34;]:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48</span><span>      if not self.paren_stack:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49</span><span>        self.raise_error(&#34;missing opening parenthesis.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50</span><span>      if self.PAREN[s] != self.paren_stack.pop():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51</span><span>        self.raise_error(&#34;missing closing parenthesis.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52</span><span>      self.append(&#34;]&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53</span><span>    elif re.match(r&#34;&#34;&#34;^(&#34;.*)$&#34;&#34;&#34;, s or &#34;&#34;):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54</span><span>      self.append(&#34;u&#34;+s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55</span><span>    elif re.match(r&#34;&#34;&#34;^((\-?\d[\de\.]+)|(\s*)|(.*&#34;))$&#34;&#34;&#34;, s or &#34;&#34;):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56</span><span>      self.append(s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57</span><span>    else:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58</span><span>      self.append(&#34;Symbol(u\&#34;%s\&#34;)&#34;%s)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60</span><span>  def raise_error(self, msg=&#34;parse error&#34;, range=3):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61</span><span>    lines = self.string.split(&#34;\n&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62</span><span>    curline = self.string[:self.pos].count(&#34;\n&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63</span><span>    linepos = self.pos - len(&#34;\n&#34;.join(lines[:curline]))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64</span><span>    buf = [&#34;\n&#34;] 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65</span><span>    for i in xrange(max(0, curline-range), curline+1):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66</span><span>      buf.append(&#34;% 5d: %s&#34;%(i+1, lines[i]))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67</span><span>    width = 6 + sum(east_asian_width(c) == &#39;W&#39; and 2 or 1 for c in lines[i])
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68</span><span>    buf.append(&#34;%s~&#34;%(&#34; &#34;*width))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69</span><span>    buf.append(&#34;line %d, %d: %s&#34;%(curline+1,linepos, msg))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70</span><span>    raise ParseError((&#34;\n&#34;.join(buf)).encode(sys.stderr.encoding))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72</span><span>def read_sexp(sexp):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73</span><span>  processor = TokenProcessor(sexp)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74</span><span>  scanner = Scanner([
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75</span><span>    (r&#34;\s+&#34;, processor(&#34;skip_whitespaces&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76</span><span>    (r&#34;;[^\n]*\n&#34;, processor(&#34;skip&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77</span><span>    (r&#34;&#34;&#34;&#34;(?:[^&#34;])*&#34;|(\]|\[|\)|\(|[^\(\)\s]+)&#34;&#34;&#34;, processor(&#34;atom&#34;)),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78</span><span>    (r&#34;.*&#34;, processor(&#34;error&#34;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79</span><span>  ], re.M)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80</span><span>  scanner.scan(processor.string)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81</span><span>  if processor.paren_stack:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">82</span><span>    processor.raise_error(&#34;missing closing parenthesis.&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">83</span><span>  result = eval(&#34;&#34;.join(processor.result).lstrip(&#34;,&#34;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">84</span><span>  return (isinstance(result, tuple) and (result[0],0) or (result,0))[0]
+</span></span></code></pre><p>こんな感じ。非常にシンプルな気がします。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>print read_sexp(u&#34;&#34;&#34;(&#34;ほげほげ&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>;comment
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>  ;comment
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>  (hogehoge 123) ;aaaaaaa
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>  &#34;hoge\\&#34;aaaa&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>;comment
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>;comment
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>aaaa          b)&#34;&#34;&#34;)
+</span></span></code></pre><p>output:</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>[u&#39;\u307b\u3052\u307b\u3052&#39;, [Symbol(u&#39;hogehoge&#39;), 123], u&#39;hoge&#34;aaaa&#39;, Symbol(u&#39;aaaa&#39;), Symbol(u&#39;b&#39;)]
+</span></span></code></pre><p>エラーも一応。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>print read_sexp(u&#34;&#34;&#34;(
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>aaaa
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>bbbb (ccc ddd) )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>(eee 
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>ああああああ&#34;&#34;&#34;)
+</span></span></code></pre><p>output:</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>__main__.ParseError:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>    2: aaaa
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>    3: bbbb (ccc ddd) )
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>    4: (eee
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>    5: ああああああ
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>                  ~
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>line 5, 7: missing closing parenthesis.
+</span></span></code></pre><p>エラー表示もいい感じ。フォントにもよりますが(等幅なら大丈夫)、一応文字幅を考慮して <code>~</code> をエラー箇所に出すようにしています。HTML上だと日本語はずれちゃうかもだけど。</p>
+<h1 id="heading">というわけで</h1>
 <p>Pythonでトークナイズするときにはかなり便利なんじゃないかと思いました。</p>
 
 
@@ -252,7 +225,7 @@ line 5, 7: missing closing parenthesis.
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner" class="hatena-bookmark-button" data-hatena-bookmark-title="Python:re.ScannerでS式パーサ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/08/08/sexp-parser-in-python-re-scanner" class="hatena-bookmark-button" data-hatena-bookmark-title="Python:re.ScannerでS式パーサ" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

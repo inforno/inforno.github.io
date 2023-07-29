@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,140 +71,97 @@
 </header>
   <div itemprop="articleBody">
     <p><a href="http://qiita.com/advent-calendar/2016/go">Go Advent Calendar 2016</a> 16日目です。去年に引き続き今年も3つカレンダーがあり相変わらずの人気ですね。</p>
-
 <p>さて、Go1.8では待望？のShared Libraryのロードが可能になります。 <a href="https://tip.golang.org/pkg/plugin/">pluginパッケージ</a> を使います。</p>
-
 <p>Go1.8beta1ではLinuxとMacOSがサポートされていたのですが、MacOSで問題が見つかりbeta2ではLinuxのみで利用可能な機能となります。</p>
-
 <p>Advent Calendar 2の <a href="http://qiita.com/qt-luigi/items/47a7913145fc747da0c7">qt-luigiさんのネタ</a> と被ってしまったのですが実戦的に使ってみました、ということで許してください。</p>
-
-<h1>プラグインの作成とコンパイル</h1>
-
+<h1 id="heading">プラグインの作成とコンパイル</h1>
 <p>マニュアルページにあるとおり、以下のようになります。</p>
-
-<pre class="prettyprint"><code class="language-go">package main
-
-// // No C code needed.
-import &quot;C&quot;
-
-import &quot;fmt&quot;
-
-var V int
-
-func F() { fmt.Printf(&quot;Hello, number %d\n&quot;, V) }
-</code></pre>
-
-<p>ポイントは</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#75715e">// // No C code needed.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#75715e"></span><span style="color:#f92672">import</span> <span style="color:#e6db74">&#34;C&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#f92672">import</span> <span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">V</span> <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">F</span>() { <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Hello, number %d\n&#34;</span>, <span style="color:#a6e22e">V</span>) }
+</span></span></code></pre><p>ポイントは</p>
 <ul>
 <li>Cのコードはないが、 <code>import &quot;C&quot;</code> が必要</li>
 <li><code>package</code> は <code>main</code></li>
 </ul>
-
 <p>という２点です。コンパイルは</p>
-
-<pre class="prettyprint"><code class="language-bash">$ go build -buildmode=plugin -o plugin.so plugin.go
-</code></pre>
-
-<p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
-
-<h1>プラグインのロード</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>$ go build -buildmode<span style="color:#f92672">=</span>plugin -o plugin.so plugin.go
+</span></span></code></pre><p>でOK。簡単ですね。これで <code>plugin.so</code> が生成されます。</p>
+<h1 id="heading-1">プラグインのロード</h1>
 <p>これまたマニュアルページどおりですが</p>
-
-<pre class="prettyprint"><code class="language-go">p, err := plugin.Open(&quot;plugin.so&quot;)
-if err != nil {
-    panic(err)
-}
-v, err := p.Lookup(&quot;V&quot;)
-if err != nil {
-    panic(err)
-}
-f, err := p.Lookup(&quot;F&quot;)
-if err != nil {
-    panic(err)
-}
-*v.(*int) = 7
-f.(func())() // prints &quot;Hello, number 7&quot;
-</code></pre>
-
-<p>のように非常に直感的に使えます。</p>
-
-<h1>GopherLuaで使ってみた</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#a6e22e">p</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">plugin</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#e6db74">&#34;plugin.so&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#a6e22e">v</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">Lookup</span>(<span style="color:#e6db74">&#34;V&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span><span style="color:#a6e22e">f</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">Lookup</span>(<span style="color:#e6db74">&#34;F&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#f92672">*</span><span style="color:#a6e22e">v</span>.(<span style="color:#f92672">*</span><span style="color:#66d9ef">int</span>) = <span style="color:#ae81ff">7</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#a6e22e">f</span>.(<span style="color:#66d9ef">func</span>())() <span style="color:#75715e">// prints &#34;Hello, number 7&#34;
+</span></span></span></code></pre><p>のように非常に直感的に使えます。</p>
+<h1 id="gopherlua">GopherLuaで使ってみた</h1>
 <p>拙作のPure GoによるLua実装 <a href="https://github.com/yuin/gopher-lua">GopherLua</a> ですが(何気にstarいっぱいでうれしいですね)、当然ながらC言語実装のように共有ライブラリをロードできませんでした。</p>
-
 <p>そのため、必要なライブラリはすべて事前に組み込んでおく必要がありました。そこでGo1.8で共有ライブラリロードを実装できるのか、実装できるだろうけどちゃんと動くのか、と思い試してみました。</p>
-
 <p>こちらは <a href="https://github.com/yuin/gopher-lua/tree/feature-exp-go1.8plugins">feature-exp-go1.8pluginsブランチ</a> で実際に動かせます。プラグイン部分のコミットは <a href="https://github.com/yuin/gopher-lua/commit/571b031ebefafde258037fa84fc1ff6c6f12227b">571b031</a> です。</p>
-
 <p>まずプラグイン側から。Luaのお作法通りです。</p>
-
-<pre class="prettyprint"><code class="language-go">package main
-
-import (
-    &quot;C&quot;
-    &quot;github.com/yuin/gopher-lua&quot;
-)
-
-func Add(L *lua.LState) int {
-    v1 := L.CheckInt(1)
-    v2 := L.CheckInt(2)
-    L.Push(lua.LNumber(v1 + v2))
-    return 1
-}
-
-func LuaOpenPlugin(L *lua.LState) int {
-    L.Push(
-        L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
-            &quot;add&quot;: Add,
-        }))
-    return 1
-}
-</code></pre>
-
-<p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>    <span style="color:#e6db74">&#34;C&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>    <span style="color:#e6db74">&#34;github.com/yuin/gopher-lua&#34;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">L</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LState</span>) <span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    <span style="color:#a6e22e">v1</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">CheckInt</span>(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    <span style="color:#a6e22e">v2</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">CheckInt</span>(<span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">Push</span>(<span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LNumber</span>(<span style="color:#a6e22e">v1</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">v2</span>))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">LuaOpenPlugin</span>(<span style="color:#a6e22e">L</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LState</span>) <span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">Push</span>(
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>        <span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">SetFuncs</span>(<span style="color:#a6e22e">L</span>.<span style="color:#a6e22e">NewTable</span>(), <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#a6e22e">lua</span>.<span style="color:#a6e22e">LGFunction</span>{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>            <span style="color:#e6db74">&#34;add&#34;</span>: <span style="color:#a6e22e">Add</span>,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>        }))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>}
+</span></span></code></pre><p>C実装のLuaでは <code>luaopen_共有ライブラリファイル名</code> が実行されるのですがそこはGoの命名規則に合わせました。違いはそれくらいですね。</p>
 <p>こいつをコンパイルして・・・</p>
-
-<pre class="prettyprint"><code class="language-bash">$ cd /home/yuin/tmp/plugin
-$ go build -buildmode=plugin -o plugin.so plugin.go
-</code></pre>
-
-<p>こうじゃ</p>
-
-<pre class="prettyprint"><code>$ glua
-&gt; package.cpath = package.cpath .. &quot;;&quot; .. &quot;/home/yuin/tmp/plugin/?.so&quot;
-&gt; adder = require(&quot;plugin&quot;)
-&gt; print(adder.add(1, 2))
-3
-</code></pre>
-
-<p>おおおおおおおおおおおおお</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>$ cd /home/yuin/tmp/plugin
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>$ go build -buildmode<span style="color:#f92672">=</span>plugin -o plugin.so plugin.go
+</span></span></code></pre><p>こうじゃ</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>$ glua
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>&gt; package.cpath = package.cpath .. &#34;;&#34; .. &#34;/home/yuin/tmp/plugin/?.so&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>&gt; adder = require(&#34;plugin&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>&gt; print(adder.add(1, 2))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>3
+</span></span></code></pre><p>おおおおおおおおおおおおお</p>
 <p>普通に動きますね。素晴らしい。ちなみに、「ロードする側」と「ロードされる側(すなわちプラグイン)」のバージョンが違うと以下のようにエラーになります。この判定が結構厳しいので（プラグインが参照していない部分の更新でもダメっぽい）、事前にプラグインをコンパイルしておいて配布、は難しいのではないでしょうか。</p>
-
-<pre class="prettyprint"><code>&lt;string&gt;:1: plugin.Open: plugin was built with a different version of package github.com/yuin/gopher-lua
-</code></pre>
-
-<p><code>package.loadlib</code> も実装しました。</p>
-
-<pre class="prettyprint"><code>$ glua
-&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/notfound&quot;, &quot;foo&quot;))
-nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
-&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/plugin.so&quot;, &quot;foo&quot;))
-nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
-&gt; print(package.loadlib(&quot;/home/yuin/tmp/plugin/plugin.so&quot;, &quot;LuaOpenPlugin&quot;))
-function: 0xc4200c9840
-&gt; 
-</code></pre>
-
-<p>完璧ですね。</p>
-
-<h1>pluginパッケージ、使えそうですが・・・</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>&lt;<span style="color:#66d9ef">string</span>&gt;:<span style="color:#ae81ff">1</span>: <span style="color:#a6e22e">plugin</span>.<span style="color:#a6e22e">Open</span>: <span style="color:#a6e22e">plugin</span> <span style="color:#a6e22e">was</span> <span style="color:#a6e22e">built</span> <span style="color:#a6e22e">with</span> <span style="color:#a6e22e">a</span> <span style="color:#a6e22e">different</span> <span style="color:#a6e22e">version</span> <span style="color:#a6e22e">of</span> <span style="color:#f92672">package</span> <span style="color:#a6e22e">github</span>.<span style="color:#a6e22e">com</span><span style="color:#f92672">/</span><span style="color:#a6e22e">yuin</span><span style="color:#f92672">/</span><span style="color:#a6e22e">gopher</span><span style="color:#f92672">-</span><span style="color:#a6e22e">lua</span>
+</span></span></code></pre><p><code>package.loadlib</code> も実装しました。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>$ glua
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>&gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/notfound&#34;, &#34;foo&#34;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>nil plugin.Open(/home/yuin/tmp/plugin/notfound): realpath failed    open
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>&gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/plugin.so&#34;, &#34;foo&#34;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>nil plugin: symbol foo not found in plugin plugin/unnamed-16c3f13f46f4b66b64ad316d78cd61078d12ac64  init
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>&gt; print(package.loadlib(&#34;/home/yuin/tmp/plugin/plugin.so&#34;, &#34;LuaOpenPlugin&#34;))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>function: 0xc4200c9840
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>&gt; 
+</span></span></code></pre><p>完璧ですね。</p>
+<h1 id="plugin">pluginパッケージ、使えそうですが・・・</h1>
 <p>少なくとも、Linuxでは <code>plugin</code> パッケージは使えそうです。ただし、本体と共有ライブラリのコンパイル時、完全にバージョンを合わせる必要があるところが難しそう。</p>
-
 <p>Goの大きなメリットである単一バイナリ配布や、クロスコンパイルと相性は悪いですがうまく使っていければいいなと思います。</p>
 
 
@@ -223,7 +178,7 @@ function: 0xc4200c9840
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2016/12/16/gopher-lua-plugins-in-go18" class="hatena-bookmark-button" data-hatena-bookmark-title="Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2016/12/16/gopher-lua-plugins-in-go18" class="hatena-bookmark-button" data-hatena-bookmark-title="Go1.8のpluginパッケージでGopherLuaに共有ライブラリロードを実装してみた" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

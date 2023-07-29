@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -73,198 +71,168 @@
 </header>
   <div itemprop="articleBody">
     <p>誰もが一度使うと便利さと気軽さに感動するRubyが誇るライブラリ、 <a href="http://raa.ruby-lang.org/project/rake/">Rake</a> 。</p>
-
 <p>プログラムのビルドもそうなんですが、雑多なタスクを簡単に書けて、整理できるのがなんといっても魅力的。RailsなんかではDBの作成から何から、ばんばんRakeタスクにされていますよね。</p>
-
 <p>　</p>
-
 <p>さて、俺はPythonistasなので、PythonでRakeみたいなのがほしいわけです。ビルドに限っていえばPythonは <a href="http://www.scons.org/">Scons</a> という素晴らしいツールがあります。C言語はおろか、JAVA、PDF、PostScriptなどなど、さらにはSubversionもサポートしていますし、並列コンパイルもでき、実績も多数で申し分ありません。</p>
-
 <p>でも俺がしたいのは、雑多なタスクを放り込む、コレ。そういうのを簡単にやるライブラリってPythonではないんでしょうか。RubyではRakeが標準添付されるというのに。いえ、あります。前からあるんです。それが <a href="http://www.python.jp/doc/nightly/lib/module-distutils.html">distutils</a> 。</p>
-
 <p>distutils(およびその拡張のsetuptools)はPythonの標準的なパッケージ配布システムとして有名です。でも実は自分でコマンドを定義してRakeのように使うことができることはあまりしられていないのではないでしょうか。</p>
-
-<h1>distutilsでコマンドを定義する</h1>
-
+<h1 id="distutils">distutilsでコマンドを定義する</h1>
 <p>distutilsでコマンドを定義するにはdistutils.core.Commandクラスを継承し、色々オーバーライドします。説明もつけられますし、オプションもとれて、sub_commandsで依存関係(コマンド分割)を設定することもできます。</p>
-
-<pre class="prettyprint"><code>class MyCommand(Command):
-  description = &quot;コマンドの説明&quot;
-  user_options = [(&quot;host=&quot;, &quot;h&quot;, &quot;hostname&quot;)] # オプション
-  sub_commands = [(&quot;pre_task&quot;, None)] # サブコマンド
-  def run(self): pass # 実行する内容
-  def initialize_options(self): # オプションの初期化
-    self.host = None
-  def finalize_options(self):
-    if not self.host: raise &quot;Error&quot;
-
-setup(cmdclass={&quot;my_command&quot;:MyCommand})
-</code></pre>
-
-<p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
-
-<h1>もっと簡単にdistutilsでタスク</h1>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>class MyCommand(Command):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  description = &#34;コマンドの説明&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  user_options = [(&#34;host=&#34;, &#34;h&#34;, &#34;hostname&#34;)] # オプション
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  sub_commands = [(&#34;pre_task&#34;, None)] # サブコマンド
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  def run(self): pass # 実行する内容
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  def initialize_options(self): # オプションの初期化
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>    self.host = None
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  def finalize_options(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    if not self.host: raise &#34;Error&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>setup(cmdclass={&#34;my_command&#34;:MyCommand})
+</span></span></code></pre><p>といった具合です。非常にPythonicなやり方ですね。ただ、いろいろオーバーライドしないといけないので面倒です。そこで、俺がコピペで使っている自家製テンプレの登場です。</p>
+<h1 id="distutils-1">もっと簡単にdistutilsでタスク</h1>
 <p>30行程度のテンプレを足して、簡単にタスクを定義できるようにしましょう。namespace機能はPython2.5以上限定です。</p>
-
-<pre class="prettyprint"><code>from __future__ import with_statement
-from distutils.core import Command, setup
-from contextlib import contextmanager
-
-_cmds = {}
-_namespace = []
-_get_ns = lambda:_namespace and &quot;_&quot;.join(_namespace)+&quot;_&quot; or &quot;&quot;
-class CommandType(type):
-  def __new__(cls, class_name, class_bases, classdict):
-    d = dict(user_options=[], finalize_options=lambda s:None)
-    d.update(classdict)
-    def _(self):
-      [setattr(self,i[0].rstrip(&quot;=&quot;),None) for i in d[&quot;user_options&quot;]]
-    d[&quot;initialize_options&quot;] = _
-    d[&quot;boolean_options&quot;] = [i for i,j,k in d[&quot;user_options&quot;] if not i.endswith(&quot;=&quot;)]
-    def _(self):
-      map(self.run_command, self.get_sub_commands())
-      return classdict[&quot;run&quot;](self)
-    d[&quot;run&quot;] = _
-    name = _get_ns()+class_name.lower()
-    cls = type.__new__(cls, name, class_bases + (object,), d)
-    cls.description = cls.__doc__
-    if class_name != &quot;BaseCommand&quot; : _cmds[name] = cls
-    return cls
-class BaseCommand(Command): __metaclass__ = CommandType
-
-@contextmanager
-def namespace(name):
-  _namespace.append(name)
-  yield _get_ns()
-  _namespace.pop()
-</code></pre>
-
-<p>これだけです。これでかなり簡単にタスクが作れるようになります。例を示しましょう。</p>
-
-<pre class="prettyprint"><code>with namespace(&quot;db&quot;) as ns:
-  with namespace(&quot;create&quot;) as ns:
-    class Test1(BaseCommand):
-      &quot;&quot;&quot;test1 discription
-      &quot;&quot;&quot;
-      user_options = [ (&quot;host=&quot;, &quot;h&quot;, &quot;hostname&quot;),
-                      (&quot;port=&quot;, &quot;p&quot;, &quot;port&quot;),
-                      (&quot;force&quot;, &quot;f&quot;, &quot;force execute&quot;)]
-      def run(self):
-        print self.host
-        print self.force
-        print &quot;hello, &quot;, self.__class__.__name__
-
-      sub_commands = [(ns+&quot;test2&quot;,None)]
-
-    class Test2(BaseCommand):
-      &quot;&quot;&quot;test2 discription
-      &quot;&quot;&quot;
-      def run(self):
-        print &quot;hello, &quot;, self.__class__.__name__
-
-
-  class Test3(BaseCommand):
-    &quot;&quot;&quot;test3 discription
-    &quot;&quot;&quot;
-    def run(self):
-      print &quot;hello, &quot;, self.__class__.__name__
-
-class Test4(BaseCommand):
-  &quot;&quot;&quot;test4 discription
-  &quot;&quot;&quot;
-  user_options = [ (&quot;host=&quot;, &quot;h&quot;, &quot;hostname&quot;) ]
-  def run(self):
-    print &quot;hello, &quot;, self.__class__.__name__
-
-  def finalize_options(self):
-    if not self.host:
-      raise ValueError(&quot;host must not be None&quot;)
-
-
-setup(cmdclass=_cmds)
-</code></pre>
-
-<p>かなり直感的になったのではないでしょうか。withを使えば名前空間も結構簡単に実現できます。コマンドのヘルプを見てみましょう。</p>
-
-<pre class="prettyprint"><code># python task.py --help-commands
-Standard commands:
-  build            build everything needed to install
-  build_py         &quot;build&quot; pure Python modules (copy to build directory)
-  build_ext        build C/C++ extensions (compile/link to build directory)
-  build_clib       build C/C++ libraries used by Python extensions
-  build_scripts    &quot;build&quot; scripts (copy and fixup #! line)
-  clean            clean up temporary files from 'build' command
-  install          install everything from build directory
-  install_lib      install all Python modules (extensions and pure Python)
-  install_headers  install C/C++ header files
-  install_scripts  install scripts (Python or otherwise)
-  install_data     install data files
-  sdist            create a source distribution (tarball, zip file, etc.)
-  register         register the distribution with the Python package index
-  bdist            create a built (binary) distribution
-  bdist_dumb       create a &quot;dumb&quot; built distribution
-  bdist_rpm        create an RPM distribution
-  bdist_wininst    create an executable installer for MS Windows
-
-Extra commands:
-  db_test3         test3 discription
-
-  db_create_test2  test2 discription
-
-  db_create_test1  test1 discription
-
-  test4            test4 discription
-
-
-usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: task.py --help [cmd1 cmd2 ...]
-  or: task.py --help-commands
-  or: task.py cmd --help
-</code></pre>
-
-<p>こんな感じで、標準コマンドに加え「Extra commands」という形で定義したタスクが使えるようになります。もちろん、distutilsのビルド機能、パッケージ管理機能も使えますよ。</p>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>from __future__ import with_statement
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>from distutils.core import Command, setup
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>from contextlib import contextmanager
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>_cmds = {}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>_namespace = []
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>_get_ns = lambda:_namespace and &#34;_&#34;.join(_namespace)+&#34;_&#34; or &#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>class CommandType(type):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  def __new__(cls, class_name, class_bases, classdict):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    d = dict(user_options=[], finalize_options=lambda s:None)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    d.update(classdict)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>    def _(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>      [setattr(self,i[0].rstrip(&#34;=&#34;),None) for i in d[&#34;user_options&#34;]]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>    d[&#34;initialize_options&#34;] = _
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>    d[&#34;boolean_options&#34;] = [i for i,j,k in d[&#34;user_options&#34;] if not i.endswith(&#34;=&#34;)]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    def _(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>      map(self.run_command, self.get_sub_commands())
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>      return classdict[&#34;run&#34;](self)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>    d[&#34;run&#34;] = _
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>    name = _get_ns()+class_name.lower()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>    cls = type.__new__(cls, name, class_bases + (object,), d)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>    cls.description = cls.__doc__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>    if class_name != &#34;BaseCommand&#34; : _cmds[name] = cls
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>    return cls
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>class BaseCommand(Command): __metaclass__ = CommandType
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>@contextmanager
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>def namespace(name):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>  _namespace.append(name)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>  yield _get_ns()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>  _namespace.pop()
+</span></span></code></pre><p>これだけです。これでかなり簡単にタスクが作れるようになります。例を示しましょう。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>with namespace(&#34;db&#34;) as ns:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  with namespace(&#34;create&#34;) as ns:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>    class Test1(BaseCommand):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>      &#34;&#34;&#34;test1 discription
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>      &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>      user_options = [ (&#34;host=&#34;, &#34;h&#34;, &#34;hostname&#34;),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>                      (&#34;port=&#34;, &#34;p&#34;, &#34;port&#34;),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>                      (&#34;force&#34;, &#34;f&#34;, &#34;force execute&#34;)]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>      def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>        print self.host
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>        print self.force
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>        print &#34;hello, &#34;, self.__class__.__name__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>      sub_commands = [(ns+&#34;test2&#34;,None)]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>    class Test2(BaseCommand):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>      &#34;&#34;&#34;test2 discription
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>      &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>      def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>        print &#34;hello, &#34;, self.__class__.__name__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>  class Test3(BaseCommand):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>    &#34;&#34;&#34;test3 discription
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>    &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>    def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>      print &#34;hello, &#34;, self.__class__.__name__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>class Test4(BaseCommand):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>  &#34;&#34;&#34;test4 discription
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span>  &#34;&#34;&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>  user_options = [ (&#34;host=&#34;, &#34;h&#34;, &#34;hostname&#34;) ]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>  def run(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>    print &#34;hello, &#34;, self.__class__.__name__
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>  def finalize_options(self):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>    if not self.host:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span>      raise ValueError(&#34;host must not be None&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41</span><span>setup(cmdclass=_cmds)
+</span></span></code></pre><p>かなり直感的になったのではないでしょうか。withを使えば名前空間も結構簡単に実現できます。コマンドのヘルプを見てみましょう。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#960050;background-color:#1e0010">#</span> <span style="color:#a6e22e">python</span> <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span><span style="color:#f92672">-</span><span style="color:#a6e22e">commands</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#a6e22e">Standard</span> <span style="color:#a6e22e">commands</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  <span style="color:#a6e22e">build</span>            <span style="color:#a6e22e">build</span> <span style="color:#a6e22e">everything</span> <span style="color:#a6e22e">needed</span> <span style="color:#a6e22e">to</span> <span style="color:#a6e22e">install</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  <span style="color:#a6e22e">build_py</span>         <span style="color:#e6db74">&#34;build&#34;</span> <span style="color:#a6e22e">pure</span> <span style="color:#a6e22e">Python</span> <span style="color:#a6e22e">modules</span> (<span style="color:#a6e22e">copy</span> <span style="color:#a6e22e">to</span> <span style="color:#a6e22e">build</span> <span style="color:#a6e22e">directory</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  <span style="color:#a6e22e">build_ext</span>        <span style="color:#a6e22e">build</span> <span style="color:#a6e22e">C</span><span style="color:#f92672">/</span><span style="color:#a6e22e">C</span><span style="color:#f92672">++</span> <span style="color:#a6e22e">extensions</span> (<span style="color:#a6e22e">compile</span><span style="color:#f92672">/</span><span style="color:#a6e22e">link</span> <span style="color:#a6e22e">to</span> <span style="color:#a6e22e">build</span> <span style="color:#a6e22e">directory</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  <span style="color:#a6e22e">build_clib</span>       <span style="color:#a6e22e">build</span> <span style="color:#a6e22e">C</span><span style="color:#f92672">/</span><span style="color:#a6e22e">C</span><span style="color:#f92672">++</span> <span style="color:#a6e22e">libraries</span> <span style="color:#a6e22e">used</span> <span style="color:#a6e22e">by</span> <span style="color:#a6e22e">Python</span> <span style="color:#a6e22e">extensions</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>  <span style="color:#a6e22e">build_scripts</span>    <span style="color:#e6db74">&#34;build&#34;</span> <span style="color:#a6e22e">scripts</span> (<span style="color:#a6e22e">copy</span> <span style="color:#a6e22e">and</span> <span style="color:#a6e22e">fixup</span> <span style="color:#960050;background-color:#1e0010">#</span>! <span style="color:#a6e22e">line</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  <span style="color:#a6e22e">clean</span>            <span style="color:#a6e22e">clean</span> <span style="color:#a6e22e">up</span> <span style="color:#a6e22e">temporary</span> <span style="color:#a6e22e">files</span> <span style="color:#a6e22e">from</span> <span style="color:#960050;background-color:#1e0010">&#39;</span><span style="color:#a6e22e">build</span><span style="color:#960050;background-color:#1e0010">&#39;</span> <span style="color:#a6e22e">command</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  <span style="color:#a6e22e">install</span>          <span style="color:#a6e22e">install</span> <span style="color:#a6e22e">everything</span> <span style="color:#a6e22e">from</span> <span style="color:#a6e22e">build</span> <span style="color:#a6e22e">directory</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  <span style="color:#a6e22e">install_lib</span>      <span style="color:#a6e22e">install</span> <span style="color:#a6e22e">all</span> <span style="color:#a6e22e">Python</span> <span style="color:#a6e22e">modules</span> (<span style="color:#a6e22e">extensions</span> <span style="color:#a6e22e">and</span> <span style="color:#a6e22e">pure</span> <span style="color:#a6e22e">Python</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  <span style="color:#a6e22e">install_headers</span>  <span style="color:#a6e22e">install</span> <span style="color:#a6e22e">C</span><span style="color:#f92672">/</span><span style="color:#a6e22e">C</span><span style="color:#f92672">++</span> <span style="color:#a6e22e">header</span> <span style="color:#a6e22e">files</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>  <span style="color:#a6e22e">install_scripts</span>  <span style="color:#a6e22e">install</span> <span style="color:#a6e22e">scripts</span> (<span style="color:#a6e22e">Python</span> <span style="color:#a6e22e">or</span> <span style="color:#a6e22e">otherwise</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>  <span style="color:#a6e22e">install_data</span>     <span style="color:#a6e22e">install</span> <span style="color:#a6e22e">data</span> <span style="color:#a6e22e">files</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  <span style="color:#a6e22e">sdist</span>            <span style="color:#a6e22e">create</span> <span style="color:#a6e22e">a</span> <span style="color:#a6e22e">source</span> <span style="color:#a6e22e">distribution</span> (<span style="color:#a6e22e">tarball</span>, <span style="color:#a6e22e">zip</span> <span style="color:#a6e22e">file</span>, <span style="color:#a6e22e">etc</span>.)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  <span style="color:#a6e22e">register</span>         <span style="color:#a6e22e">register</span> <span style="color:#a6e22e">the</span> <span style="color:#a6e22e">distribution</span> <span style="color:#a6e22e">with</span> <span style="color:#a6e22e">the</span> <span style="color:#a6e22e">Python</span> <span style="color:#f92672">package</span> <span style="color:#a6e22e">index</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  <span style="color:#a6e22e">bdist</span>            <span style="color:#a6e22e">create</span> <span style="color:#a6e22e">a</span> <span style="color:#a6e22e">built</span> (<span style="color:#a6e22e">binary</span>) <span style="color:#a6e22e">distribution</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>  <span style="color:#a6e22e">bdist_dumb</span>       <span style="color:#a6e22e">create</span> <span style="color:#a6e22e">a</span> <span style="color:#e6db74">&#34;dumb&#34;</span> <span style="color:#a6e22e">built</span> <span style="color:#a6e22e">distribution</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  <span style="color:#a6e22e">bdist_rpm</span>        <span style="color:#a6e22e">create</span> <span style="color:#a6e22e">an</span> <span style="color:#a6e22e">RPM</span> <span style="color:#a6e22e">distribution</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>  <span style="color:#a6e22e">bdist_wininst</span>    <span style="color:#a6e22e">create</span> <span style="color:#a6e22e">an</span> <span style="color:#a6e22e">executable</span> <span style="color:#a6e22e">installer</span> <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">MS</span> <span style="color:#a6e22e">Windows</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span><span style="color:#a6e22e">Extra</span> <span style="color:#a6e22e">commands</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>  <span style="color:#a6e22e">db_test3</span>         <span style="color:#a6e22e">test3</span> <span style="color:#a6e22e">discription</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>  <span style="color:#a6e22e">db_create_test2</span>  <span style="color:#a6e22e">test2</span> <span style="color:#a6e22e">discription</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  <span style="color:#a6e22e">db_create_test1</span>  <span style="color:#a6e22e">test1</span> <span style="color:#a6e22e">discription</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>  <span style="color:#a6e22e">test4</span>            <span style="color:#a6e22e">test4</span> <span style="color:#a6e22e">discription</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span><span style="color:#a6e22e">usage</span>: <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> [<span style="color:#a6e22e">global_opts</span>] <span style="color:#a6e22e">cmd1</span> [<span style="color:#a6e22e">cmd1_opts</span>] [<span style="color:#a6e22e">cmd2</span> [<span style="color:#a6e22e">cmd2_opts</span>] <span style="color:#f92672">...</span>]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span>  <span style="color:#a6e22e">or</span>: <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span> [<span style="color:#a6e22e">cmd1</span> <span style="color:#a6e22e">cmd2</span> <span style="color:#f92672">...</span>]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>  <span style="color:#a6e22e">or</span>: <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span><span style="color:#f92672">-</span><span style="color:#a6e22e">commands</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>  <span style="color:#a6e22e">or</span>: <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> <span style="color:#a6e22e">cmd</span> <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span>
+</span></span></code></pre><p>こんな感じで、標準コマンドに加え「Extra commands」という形で定義したタスクが使えるようになります。もちろん、distutilsのビルド機能、パッケージ管理機能も使えますよ。</p>
 <p>db_create_test1のヘルプを見てみましょう。</p>
-
-<pre class="prettyprint"><code># python task.py db_create_test1 --help
-Common commands: (see '--help-commands' for more)
-
-  setup.py build      will build the package underneath 'build/'
-  setup.py install    will install the package
-
-Global options:
-  --verbose (-v)  run verbosely (default)
-  --quiet (-q)    run quietly (turns verbosity off)
-  --dry-run (-n)  don't actually do anything
-  --help (-h)     show detailed help message
-
-Options for 'db_create_test1' command:
-  --host (-h)   hostname
-  --port (-p)   port
-  --force (-f)  force execute
-
-usage: task.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
-  or: task.py --help [cmd1 cmd2 ...]
-  or: task.py --help-commands
-  or: task.py cmd --help
-</code></pre>
-
-<p>ちゃんとオプションが表示されていますね。最後に、db_create_test1タスクを実行してみましょう。</p>
-
-<pre class="prettyprint"><code># python task.py db_create_test1 --host=localhost
-running db_create_test1
-running db_create_test2
-hello,  Test2
-localhost
-None
-hello,  Test1
-</code></pre>
-
-<p>サブコマンドのdb_create_test2が実行されていること、きちんとオプションがselfの属性として設定されていることがわかりますね。</p>
-
-<hr />
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#960050;background-color:#1e0010">#</span> <span style="color:#a6e22e">python</span> <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> <span style="color:#a6e22e">db_create_test1</span> <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#a6e22e">Common</span> <span style="color:#a6e22e">commands</span>: (<span style="color:#a6e22e">see</span> <span style="color:#960050;background-color:#1e0010">&#39;</span><span style="color:#f92672">--</span><span style="color:#a6e22e">help</span><span style="color:#f92672">-</span><span style="color:#a6e22e">commands</span><span style="color:#960050;background-color:#1e0010">&#39;</span> <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">more</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  <span style="color:#a6e22e">setup</span>.<span style="color:#a6e22e">py</span> <span style="color:#a6e22e">build</span>      <span style="color:#a6e22e">will</span> <span style="color:#a6e22e">build</span> <span style="color:#a6e22e">the</span> <span style="color:#f92672">package</span> <span style="color:#a6e22e">underneath</span> <span style="color:#960050;background-color:#1e0010">&#39;</span><span style="color:#a6e22e">build</span><span style="color:#f92672">/</span><span style="color:#960050;background-color:#1e0010">&#39;</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>  <span style="color:#a6e22e">setup</span>.<span style="color:#a6e22e">py</span> <span style="color:#a6e22e">install</span>    <span style="color:#a6e22e">will</span> <span style="color:#a6e22e">install</span> <span style="color:#a6e22e">the</span> <span style="color:#f92672">package</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#a6e22e">Global</span> <span style="color:#a6e22e">options</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  <span style="color:#f92672">--</span><span style="color:#a6e22e">verbose</span> (<span style="color:#f92672">-</span><span style="color:#a6e22e">v</span>)  <span style="color:#a6e22e">run</span> <span style="color:#a6e22e">verbosely</span> (<span style="color:#66d9ef">default</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>  <span style="color:#f92672">--</span><span style="color:#a6e22e">quiet</span> (<span style="color:#f92672">-</span><span style="color:#a6e22e">q</span>)    <span style="color:#a6e22e">run</span> <span style="color:#a6e22e">quietly</span> (<span style="color:#a6e22e">turns</span> <span style="color:#a6e22e">verbosity</span> <span style="color:#a6e22e">off</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  <span style="color:#f92672">--</span><span style="color:#a6e22e">dry</span><span style="color:#f92672">-</span><span style="color:#a6e22e">run</span> (<span style="color:#f92672">-</span><span style="color:#a6e22e">n</span>)  <span style="color:#a6e22e">don</span><span style="color:#960050;background-color:#1e0010">&#39;</span><span style="color:#a6e22e">t</span> <span style="color:#a6e22e">actually</span> <span style="color:#a6e22e">do</span> <span style="color:#a6e22e">anything</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>  <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span> (<span style="color:#f92672">-</span><span style="color:#a6e22e">h</span>)     <span style="color:#a6e22e">show</span> <span style="color:#a6e22e">detailed</span> <span style="color:#a6e22e">help</span> <span style="color:#a6e22e">message</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#a6e22e">Options</span> <span style="color:#66d9ef">for</span> <span style="color:#960050;background-color:#1e0010">&#39;</span><span style="color:#a6e22e">db_create_test1</span><span style="color:#960050;background-color:#1e0010">&#39;</span> <span style="color:#a6e22e">command</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  <span style="color:#f92672">--</span><span style="color:#a6e22e">host</span> (<span style="color:#f92672">-</span><span style="color:#a6e22e">h</span>)   <span style="color:#a6e22e">hostname</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>  <span style="color:#f92672">--</span><span style="color:#a6e22e">port</span> (<span style="color:#f92672">-</span><span style="color:#a6e22e">p</span>)   <span style="color:#a6e22e">port</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>  <span style="color:#f92672">--</span><span style="color:#a6e22e">force</span> (<span style="color:#f92672">-</span><span style="color:#a6e22e">f</span>)  <span style="color:#a6e22e">force</span> <span style="color:#a6e22e">execute</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span><span style="color:#a6e22e">usage</span>: <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> [<span style="color:#a6e22e">global_opts</span>] <span style="color:#a6e22e">cmd1</span> [<span style="color:#a6e22e">cmd1_opts</span>] [<span style="color:#a6e22e">cmd2</span> [<span style="color:#a6e22e">cmd2_opts</span>] <span style="color:#f92672">...</span>]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>  <span style="color:#a6e22e">or</span>: <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span> [<span style="color:#a6e22e">cmd1</span> <span style="color:#a6e22e">cmd2</span> <span style="color:#f92672">...</span>]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>  <span style="color:#a6e22e">or</span>: <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span><span style="color:#f92672">-</span><span style="color:#a6e22e">commands</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>  <span style="color:#a6e22e">or</span>: <span style="color:#a6e22e">task</span>.<span style="color:#a6e22e">py</span> <span style="color:#a6e22e">cmd</span> <span style="color:#f92672">--</span><span style="color:#a6e22e">help</span>
+</span></span></code></pre><p>ちゃんとオプションが表示されていますね。最後に、db_create_test1タスクを実行してみましょう。</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span># python task.py db_create_test1 --host=localhost
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>running db_create_test1
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>running db_create_test2
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>hello,  Test2
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>localhost
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>None
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>hello,  Test1
+</span></span></code></pre><p>サブコマンドのdb_create_test2が実行されていること、きちんとオプションがselfの属性として設定されていることがわかりますね。</p>
+<hr>
 <p>標準的な機能だけでもRakeのようなタスクはつくれますが、30行程度の工夫で断然便利になります。Rakeと違いrakeコマンドのような外部コマンドも必要なく、pythonのスクリプト1つで実現できるのも手軽です。というわけで、雑多なタスクはdistutilsでまとめてみてはいかがでしょうか。</p>
 
 
@@ -281,7 +249,7 @@ hello,  Test1
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules" class="hatena-bookmark-button" data-hatena-bookmark-title="Python標準モジュールでRakeもどき" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/01/23/pseudo-rake-in-python-standard-modules" class="hatena-bookmark-button" data-hatena-bookmark-title="Python標準モジュールでRakeもどき" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>

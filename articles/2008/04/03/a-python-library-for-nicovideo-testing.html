@@ -8,8 +8,6 @@
     <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link href="/statics/css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" href="http://feeds.feedburner.com/Inforno" />
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <link rel="stylesheet" href="http://jmblog.github.com/color-themes-for-google-code-prettify/css/themes/github.css">
     <script>
       function get(id) {return document.getElementById(id)};
       function load(path, id) {var req = new XMLHttpRequest();req.open('GET', path, true);req.onerror = function() {};req.onload = function() {if (req.status >= 200 && req.status < 400) { get(id).innerHTML = req.responseText;} else {req.onerror();};};req.send();}
@@ -75,124 +73,97 @@
 </header>
   <div itemprop="articleBody">
     <p>※あくまで試験的に公開しています</p>
-
 <p>まぁありきたりというか、なんというかなんですけどニコニコ動画の自分用ライブラリを以前から作っていました。公開してもよかったんですけど、需要があるかわかんないし、まとまってないですし、ニコニコ動画的にもこういうライブラリをつかってごにゃごにゃするのはちょっと･･･という感じらしいので公開してませんでした。</p>
-
 <p>なんですけど、公開されてるライブラリもありますし、せっかくなんで試験的に公開しておけばなんかの役に立つかな、と思いまして。使ってくれる人が多かったりすれば、まとめなおしてCodeReposに突っ込むかもしれません。</p>
-
-<h1>ダウンロードしてみる奇特な方はどうぞ</h1>
-
+<h1 id="heading">ダウンロードしてみる奇特な方はどうぞ</h1>
 <p><a href="/statics/files/nicovideo.zip">nicovideo.zip</a></p>
-
-<h2>必要なもの</h2>
-
-<pre class="prettyprint"><code>easy_install mechanize
-easy_install lxml
-</code></pre>
-
-<h2>使い方</h2>
-
-<pre class="prettyprint"><code>import nicovideo as n
-client = n.NicoClient(&quot;mail&quot;, &quot;pass&quot;, cookie_file=&quot;&quot;)
-
-print &quot;nickname: %s&quot; % client.nickname
-
-client.video(&quot;sm9&quot;).download(with_comments=True)
-
-print &quot;search&quot;
-for video in client.video_search(&quot;test&quot;, by=n.SEARCH_KEYWORD, sort=n.SORT_POSTED_AT, order=n.ORDER_DESC)[:10]:
-  print video.title
-
-print &quot;ranking&quot;
-for video in client.video_ranking(by=n.RANKING_MYLIST, span=n.RANKING_DAILY, category=&quot;all&quot;)[:10]:
-  print video.title
-
-print &quot;new arrival&quot;
-for video in client.video_newarrival()[100:110]:
-  print video.title
-
-print &quot;mylist&quot;
-for video in client.video_mylist(2792158)[100:110]:
-  print video.title
-
-print &quot;random&quot;
-for video in client.video_random():
-  print video.title
-</code></pre>
-
-<p>こんな感じです。ニコニコ動画に負荷をかけないように、各httpリクエストの間に最低1秒待つので遅いです。ですが、できるかぎり情報はlazyにとりに行くようになっています。たとえば、 <code>video_search</code> でかえってくる <code>Video</code> はidとタイトルの情報のみもっていて、その他の情報(lengthなど)にアクセスすると自動的にメタ情報を取りにいきます。メタ情報は</p>
-
-<pre class="prettyprint"><code>print client.video(&quot;sm9&quot;).meta
-# =&gt;
-description レッツゴー！陰陽師（フルコーラスバージョン）
-tags {'#text': '', u'tag': [u'\u9670\u967d\u5e2b', u'\u30ec\u30c3\u30c4\u30b4\u30fc\uff01\u9670\u967d\u5e2b', u'\u516c\u5f0f', u'\u904b\u55b6\u516c\u8a8d\u52d5\u753b', u'\u3053\u306e\u52d5\u753b\u306e\u3046\uff50\u4e3b\u306fnicovideo', u'\u97f3\u697d', u'\u4f1d\u8aac\u306esm9', u'\u03b2\u6642\u4ee3\u306e\u82f1\u96c4', u'\u5439\u3044\u305f\u3089\u6210\u4ecf', u'\u30de\u30a4\u30ea\u30b9\uff15\uff10\u4e07\u796d\u308a\u4f1a\u5834']}
-file_type flv
-comment_num 2618200
-l 320
-is_premium 0
-thread_id 1173108780
-view_counter 3839233
-link http://www.smilevideo.jp/view/9/350170
-nickname name
-user_id 00000
-title 新・豪血寺一族 -煩悩解放 - レッツゴー！陰陽師
-url http://smile-clb42.nicovideo.jp/smile?v=9.0468
-posted_at 2007-03-06 00:33:00
-video_id sm9
-thumb_type video
-watch_url http://www.nicovideo.jp/watch/sm9
-first_retrieve 2007-03-06 00:33:00
-mylist_counter 49956
-length 00:05:20
-thumbnail_url http://tn-skr.smilevideo.jp/smile?i=9
-ms http://msg.nicovideo.jp/10/api/
-time 1207225894
-done true
-#text
-last_res_body 1人だけじゃね
-</code></pre>
-
-<p>こんな感じのがとれます。基本的にthubnail APIからとってきて適当に型変換しています。thumbnail APIでの情報に加えて、file_typeなんかが付け加えられます。file_typeもちゃんと判別するのでflvでもmp4でもswfでももちろんちゃんとダウンロードできます。</p>
-
+<h2 id="heading-1">必要なもの</h2>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>easy_install mechanize
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>easy_install lxml
+</span></span></code></pre><h2 id="heading-2">使い方</h2>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>import nicovideo as n
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>client = n.NicoClient(&#34;mail&#34;, &#34;pass&#34;, cookie_file=&#34;&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>print &#34;nickname: %s&#34; % client.nickname
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>client.video(&#34;sm9&#34;).download(with_comments=True)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>print &#34;search&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>for video in client.video_search(&#34;test&#34;, by=n.SEARCH_KEYWORD, sort=n.SORT_POSTED_AT, order=n.ORDER_DESC)[:10]:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>  print video.title
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>print &#34;ranking&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>for video in client.video_ranking(by=n.RANKING_MYLIST, span=n.RANKING_DAILY, category=&#34;all&#34;)[:10]:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>  print video.title
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>print &#34;new arrival&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>for video in client.video_newarrival()[100:110]:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>  print video.title
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>print &#34;mylist&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>for video in client.video_mylist(2792158)[100:110]:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>  print video.title
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>print &#34;random&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>for video in client.video_random():
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>  print video.title
+</span></span></code></pre><p>こんな感じです。ニコニコ動画に負荷をかけないように、各httpリクエストの間に最低1秒待つので遅いです。ですが、できるかぎり情報はlazyにとりに行くようになっています。たとえば、 <code>video_search</code> でかえってくる <code>Video</code> はidとタイトルの情報のみもっていて、その他の情報(lengthなど)にアクセスすると自動的にメタ情報を取りにいきます。メタ情報は</p>
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>print client.video(&#34;sm9&#34;).meta
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span># =&gt;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>description レッツゴー！陰陽師（フルコーラスバージョン）
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>tags {&#39;#text&#39;: &#39;&#39;, u&#39;tag&#39;: [u&#39;\u9670\u967d\u5e2b&#39;, u&#39;\u30ec\u30c3\u30c4\u30b4\u30fc\uff01\u9670\u967d\u5e2b&#39;, u&#39;\u516c\u5f0f&#39;, u&#39;\u904b\u55b6\u516c\u8a8d\u52d5\u753b&#39;, u&#39;\u3053\u306e\u52d5\u753b\u306e\u3046\uff50\u4e3b\u306fnicovideo&#39;, u&#39;\u97f3\u697d&#39;, u&#39;\u4f1d\u8aac\u306esm9&#39;, u&#39;\u03b2\u6642\u4ee3\u306e\u82f1\u96c4&#39;, u&#39;\u5439\u3044\u305f\u3089\u6210\u4ecf&#39;, u&#39;\u30de\u30a4\u30ea\u30b9\uff15\uff10\u4e07\u796d\u308a\u4f1a\u5834&#39;]}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>file_type flv
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>comment_num 2618200
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>l 320
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>is_premium 0
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>thread_id 1173108780
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>view_counter 3839233
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>link http://www.smilevideo.jp/view/9/350170
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>nickname name
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>user_id 00000
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>title 新・豪血寺一族 -煩悩解放 - レッツゴー！陰陽師
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>url http://smile-clb42.nicovideo.jp/smile?v=9.0468
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>posted_at 2007-03-06 00:33:00
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>video_id sm9
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>thumb_type video
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>watch_url http://www.nicovideo.jp/watch/sm9
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>first_retrieve 2007-03-06 00:33:00
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>mylist_counter 49956
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>length 00:05:20
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>thumbnail_url http://tn-skr.smilevideo.jp/smile?i=9
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>ms http://msg.nicovideo.jp/10/api/
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>time 1207225894
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>done true
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>#text
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>last_res_body 1人だけじゃね
+</span></span></code></pre><p>こんな感じのがとれます。基本的にthubnail APIからとってきて適当に型変換しています。thumbnail APIでの情報に加えて、file_typeなんかが付け加えられます。file_typeもちゃんと判別するのでflvでもmp4でもswfでももちろんちゃんとダウンロードできます。</p>
 <p>ほかにも <code>client.video_newarrival()[100:110]</code> とすると、自動的に何ページ目かを計算してそのページからhttpアクセスしてとりにいきます。</p>
-
 <p>あと、ちょっとダウンロード中の表示がリッチな感じです。</p>
-
-<h1>ちょっと設計について</h1>
-
+<h1 id="heading-3">ちょっと設計について</h1>
 <p>基本的に、NicoClientを拡張して機能を実装します。拡張方法は <code>NicoClientExtension</code> クラスを拡張したクラスを定義する、以上です。これでNicoClientに自動的にクラス名をunderscoreしたメソッドが生えます。</p>
-
 <p>たとえば <code>Video</code> も <code>NicoClientExtension</code> です。</p>
-
-<pre class="prettyprint"><code>class Video(NicoClientExtension):
-  URL_WATCH = NicoClient.URL_BASE + &quot;watch/%s&quot;
-  URL_API_GET_FLV = NicoClient.URL_BASE + &quot;api/getflv/%s&quot;
-  URL_API_GET_THUMB_INFO = NicoClient.URL_BASE + &quot;api/getthumbinfo/%s&quot;
-
-  FILE_TYPE_RE = re.compile(&quot;.*/smile\?([a-z]{1})\=.*&quot;)
-
-  def __init__(self, client, id, meta = None):
-    self.client = client
-    self.id = id
-    self.meta = meta or {}
-
-# ...
-</code></pre>
-
-<p>という定義で <code>client.video</code> というメソッドが生えるという設計になっています。メタクラスにはこういう使い方があります。検索機能も、新着も、気まぐれも全部 <code>NicoClientExtension</code> として実装されています。</p>
-
-<h2>問題点</h2>
-
+<pre style="color:#f8f8f2;background-color:#272822;"><code><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span>class Video(NicoClientExtension):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>  URL_WATCH = NicoClient.URL_BASE + &#34;watch/%s&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>  URL_API_GET_FLV = NicoClient.URL_BASE + &#34;api/getflv/%s&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  URL_API_GET_THUMB_INFO = NicoClient.URL_BASE + &#34;api/getthumbinfo/%s&#34;
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>  FILE_TYPE_RE = re.compile(&#34;.*/smile\?([a-z]{1})\=.*&#34;)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>  def __init__(self, client, id, meta = None):
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>    self.client = client
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>    self.id = id
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>    self.meta = meta or {}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span># ...
+</span></span></code></pre><p>という定義で <code>client.video</code> というメソッドが生えるという設計になっています。メタクラスにはこういう使い方があります。検索機能も、新着も、気まぐれも全部 <code>NicoClientExtension</code> として実装されています。</p>
+<h2 id="heading-4">問題点</h2>
 <ul>
 <li>まとまってません。1ファイルに適当につめこんでいます。</li>
 <li>全然テストしてません。</li>
 <li>sm9(陰陽師)が消されると動かなくなります</li>
 </ul>
-
 <p>　</p>
-
-<h3>　</h3>
-
+<h3 id="heading-5">　</h3>
 <p>こんな感じです。</p>
 
 
@@ -209,7 +180,7 @@ last_res_body 1人だけじゃね
   <footer>
     <dl>
       <dt>
-        <a href="http://b.hatena.ne.jp/entry/http://inforno.net/articles/2008/04/03/a-python-library-for-nicovideo-testing" class="hatena-bookmark-button" data-hatena-bookmark-title="Python版ニコニコ動画ライブラリを試しに公開してみる" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+        <a href="http://b.hatena.ne.jp/entry/./http://inforno.net/articles/2008/04/03/a-python-library-for-nicovideo-testing" class="hatena-bookmark-button" data-hatena-bookmark-title="Python版ニコニコ動画ライブラリを試しに公開してみる" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only.gif" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
        <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-lang="ja">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
       </dt>
       <dd> </dd>
